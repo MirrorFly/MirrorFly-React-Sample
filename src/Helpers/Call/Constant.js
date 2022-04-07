@@ -17,16 +17,18 @@ export const CALL_CONVERSION_STATUS_REQUEST = 'request';
 export const CALL_STATUS_RECONNECT = 'reconnecting';
 export const CALL_STATUS_CONNECTED = 'connected';
 export const CALL_STATUS_DISCONNECTED = 'disconnected';
+export const CALL_STATUS_ENDED = 'ended';
 export const CALL_STATUS_CONNECTING = 'connecting';
 export const CALL_STATUS_CALLING = 'calling';
 export const CALL_STATUS_BUSY = 'busy';
 export const CALL_STATUS_ENGAGED = 'engaged';
 export const CALL_STATUS_RINGING = 'ringing';
 export const CALL_STATUS_HOLD = 'hold';
+export const CALL_STATUS_ATTENDED = 'attended';
 
 // MESSAGE BASED ON CALL STATUS
 export const CALL_BUSY_STATUS_MESSAGE = 'User is busy...';
-export const CALL_ENGAGED_STATUS_MESSAGE = 'Call engaged...';
+export const CALL_ENGAGED_STATUS_MESSAGE = 'Busy on another call';
 export const CALL_HOLD_STATUS_MESSAGE = 'Call on hold';
 // CALL TYPE
 export const CALL_TYPE_AUDIO = "audio";

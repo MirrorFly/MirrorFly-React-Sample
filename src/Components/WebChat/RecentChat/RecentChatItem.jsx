@@ -19,7 +19,9 @@ import {
   AudioOff,
   RecentDeletedMessage,
   ChatMute,
-  DropdownArrow
+  DropdownArrow,
+  IconMissedCallAudio,
+  IconMissedCallVideo
 } from "../../../assets/images";
 import { groupstatus } from "../../../Helpers/Chat/RecentChat";
 import IndexedDb from "../../../Helpers/IndexedDb";
@@ -68,6 +70,7 @@ import { toast } from "react-toastify";
 import { updateArchiveStatusRecentChat } from "../../../Actions/RecentChatActions";
 import OutsideClickHandler from "react-outside-click-handler";
 
+const allowedIds = ["recent-menu", "recent-menu-archive", "recent-menu-archive-icon", "recent-menu-archive-text"];
 class RecentChatItem extends Component {
   constructor(props = {}) {
     super(props);
@@ -87,16 +90,13 @@ class RecentChatItem extends Component {
     return getContactNameFromRoster(item.roster);
   };
 
-  handleToggleMute = () => {
+  handleToggleMute = async () => {
     const { callLogData: { callAudioMute = false } = {} } = this.props;
-    if (!callAudioMute) {
-      SDK.muteAudio(true);
-      muteLocalAudio(true);
-      Store.dispatch(isMuteAudioAction(true));
-    } else {
-      SDK.muteAudio(false);
-      muteLocalAudio(false);
-      Store.dispatch(isMuteAudioAction(false));
+    const audioMuteResult = await SDK.muteAudio(!callAudioMute);
+    console.log('Recentchat audioMuteResult :>> ', audioMuteResult?.statusCode);
+    if (audioMuteResult?.statusCode === 200) {
+      muteLocalAudio(!callAudioMute);
+      Store.dispatch(isMuteAudioAction(!callAudioMute));
     }
   };
 
@@ -117,7 +117,7 @@ class RecentChatItem extends Component {
       // Media type icon mapping
       const icons = {
         image: (
-          <i className="chat-camera">
+          <i className="chat-missedcall">
             <Camera />
           </i>
         ),
@@ -127,7 +127,7 @@ class RecentChatItem extends Component {
           </i>
         ),
         audio: (
-          <i className="chat-audio">
+          <i className={` ${_get(msgBody, "media.audioType", "") !== "recording" ? "audio" : "mic"} chat-audio`}>
             {_get(msgBody, "media.audioType", "") !== "recording" ? <Audio2 /> : <ChatAudioRecorderDark />}
           </i>
         ),
@@ -145,10 +145,21 @@ class RecentChatItem extends Component {
           <i className="chat-location">
             <Location />
           </i>
-        )
+        ),
+        missedCallAudio: (
+          <i className="chat-missedcall">
+            <IconMissedCallAudio />
+          </i>
+        ),
+        missedCallVideo: (
+          <i className="chat-missedcall">
+            <IconMissedCallVideo />
+          </i>
+        ),
+
       };
       message = msgBody && typeof msgBody === "object" && msgBody.media ? msgBody.media.caption : undefined;
-      message = message || capitalizeFirstLetter(msgType);
+      message = message || (msgType === "image" ? "Photo" : capitalizeFirstLetter(msgType));
       message = renderHTML(getFormattedRecentChatText(message));
       return (
         <>
@@ -296,8 +307,7 @@ class RecentChatItem extends Component {
         image: image || groupImage
       },
       () => {
-        if (this.props.pageType === "recent")
-          this.setUnreadCount();
+        this.setUnreadCount();
       }
     );
   }
@@ -384,7 +394,8 @@ class RecentChatItem extends Component {
         recent: {
           chatType,
           msgBody: { message_type, message },
-          publisherId
+          publisherId,
+          fromUserId
         },
         roster: { image, groupImage }
       } = recentChat;
@@ -407,11 +418,11 @@ class RecentChatItem extends Component {
         .getImageByKey(imageToken, "profileimages")
         .then((blob) => {
           const blobUrl = window.URL.createObjectURL(blob);
-          sendNotification(updateDisplayName, blobUrl, updateMessage);
+          sendNotification(updateDisplayName, blobUrl, updateMessage, fromUserId);
         })
         .catch((err) => {
           const avatarImage = chatType === "chat" ? getAvatarImage : groupAvatar;
-          sendNotification(updateDisplayName, avatarImage, updateMessage);
+          sendNotification(updateDisplayName, avatarImage, updateMessage, fromUserId);
         });
     } catch (error) {}
   };
@@ -533,6 +544,10 @@ class RecentChatItem extends Component {
           data-name="list"
           data-chat-id={fromUserId}
           ref={(event) => (this.listElement = event)}
+          onClick={(e) => {
+            if (allowedIds.includes(e.target.id)) return;
+            this.clickListener(e, item);
+          }}
         >
           <ProfileImage
             chatType={chatType}
@@ -542,14 +557,13 @@ class RecentChatItem extends Component {
             imageToken={image || groupImage}
             emailId={emailId}
             name={iniTail}
-            onclickHandler={(e) => this.clickListener(e, item)}
           />
           <div className="recentchats">
-            <div className="recent-username-block" onClick={(e) => this.clickListener(e, item)}>
+            <div className="recent-username-block">
               <div className="recent-username">
-                <span className="username">
+                <div className="username">
                   <h3 title={contactName}>{hightlightText}</h3>
-                </span>
+                </div>
               </div>
               {lastMessage && (
                 <span className={unreadCount && parseInt(unreadCount) !== 0 ? "messagetime-plus" : "messagetime"}>
@@ -586,7 +600,6 @@ class RecentChatItem extends Component {
                 publisherId={item.recent.publisherId}
                 fromUser={vCardData.data.fromUser}
                 deleteStatus={deleteStatus}
-                onClickHandler={(e) => this.clickListener(e, item)}
               />
               <div className="recent-message-icon">
                 {((muteStatus === 1 && pageType === "recent") ||
@@ -597,23 +610,23 @@ class RecentChatItem extends Component {
                 )}
                 {pinChat && (
                   <i className="pinChat">
-                    <IconPinChat style={{ color: "#4879F9" }} />
+                    <IconPinChat style={{ color: "#2698F9" }} />
                   </i>
                 )}
                 {parseInt(unreadCount) !== 0 && (
                   <p className="notifi">{parseInt(unreadCount) > 99 ? "99+" : unreadCount}</p>
                 )}
                 {archiveStatus === 1 && searchTerm && <span className="recent-badge">Archived</span>}
-                {enableDropDown && (
+                {enableDropDown && (fromUserId !== callUserJID) && (
                   <span
                     style={{
-                      width: recentDrop ? "0.9em" : "0",
+                      width: recentDrop ? "1.5em" : "0",
                       height: recentDrop ? "auto" : "0"
                     }}
                     className="recentMenu"
                   >
-                    <div className="recentMenuOverlay" onClick={this.handleDrop}></div>
-                    <DropdownArrow style={{ fill: `${recentDrop ? "#4879f9" : "#C6CBD8"}` }} />
+                    <div className="recentMenuOverlay" id="recent-menu" onClick={this.handleDrop}></div>
+                    <DropdownArrow style={{ fill: `${recentDrop ? "#2698F9" : "#C6CBD8"}` }} />
                   </span>
                 )}
               </div>
@@ -626,9 +639,12 @@ class RecentChatItem extends Component {
                       onClick={() => this.handleArchivedChat(fromUserId, chatType, archiveStatus)}
                       className="ArchiveChat"
                       title={archiveChat ? "Archived Chat" : "Unarchived Chat"}
+                      id="recent-menu-archive"
                     >
-                      <i>{archiveStatus === 0 ? <Archived /> : <IconUnarchive />}</i>
-                      <span>{archiveStatus === 0 ? "Archive chat" : "Unarchive chat"}</span>
+                      <i id="recent-menu-archive-icon">{archiveStatus === 0 ? <Archived /> : <IconUnarchive />}</i>
+                      <span id="recent-menu-archive-text">
+                        {archiveStatus === 0 ? "Archive chat" : "Unarchive chat"}
+                      </span>
                     </li>
                     {pinChat && (
                       <li onClick={this.handlePinChat} className="Unpinchat" title={pinChat ? "" : "Pin Chat"}>

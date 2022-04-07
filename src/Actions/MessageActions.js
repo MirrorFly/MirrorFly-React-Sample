@@ -19,7 +19,8 @@ import {
   DELETE_MESSAGE_FOR_EVERYONE,
   MESSAGE_INFO_UPDATE,
   UPDATE_STARRED_MESSAGE_LIST,
-  UPDATE_STARRED_MESSAGE_STATUS
+  UPDATE_STARRED_MESSAGE_STATUS,
+  CLEAR_ALL_CHAT
 } from "./Constants";
 import { getFormatPhoneNumber } from "../Helpers/Utility";
 import { deleteChatSeenPendingMsg } from "./SingleChatMessageActions";
@@ -37,9 +38,10 @@ import {
   MSG_SEEN_STATUS_ID
 } from "../Helpers/Chat/Constant";
 import { getContactNameFromRoster, getDataFromRoster } from "../Helpers/Chat/User";
-import { TYPE_DELAY_TIME } from "../Helpers/Constants";
-import SDK from "../Components/SDK";
 import { handleArchiveActions, handleTempArchivedChats } from "../Helpers/Chat/ChatHelper";
+import { TYPE_DELAY_TIME } from "../Helpers/Constants";
+import { UnreadCountDelete } from "./UnreadCount"
+import SDK from "../Components/SDK";
 
 const getTypingUserDetails = (newChatFrom) => {
   const rosterDetail = getDataFromRoster(newChatFrom);
@@ -200,6 +202,16 @@ export const MessageAction = (data) => (dispatch, getState) => {
     });
   }
 
+  if (msgType === "carbonClearAllChat") {
+    dispatch({
+      type: CLEAR_ALL_CHAT,
+      payload: {
+        id: uuidv4(),
+        data
+      }
+    });
+  }
+ 
   dispatch({
     type: MESSAGE_DATA,
     payload: {
@@ -224,6 +236,10 @@ export const MessageAction = (data) => (dispatch, getState) => {
 
   if (msgType === "carbonSentSeen") {
     updateMessageUnreadCount(data, getcurrentState);
+  }
+
+  if (msgType === "unreadUpdate") {
+    dispatch(UnreadCountDelete(data));
   }
 };
 

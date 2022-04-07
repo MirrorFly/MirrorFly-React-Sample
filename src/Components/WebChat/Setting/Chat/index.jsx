@@ -8,27 +8,34 @@ import { blockOfflineAction, getLocalWebsettings, isAppOnline, setLocalWebsettin
 import Store from "../../../../Store";
 import { webSettingLocalAction } from "../../../../Actions/BrowserAction";
 import { useSelector } from "react-redux";
+import OutsideClickHandler from "react-outside-click-handler";
+import BoxedLayout from './BoxedLayout';
+import config from "../../../../config";
 
 const Chat = (props = {}) => {
 
   const globalStoteData = useSelector((state) => state || {})
-  const { TranslateLanguage: { translateLanguages: { translateLanguages = [] } } } = globalStoteData
+  const { TranslateLanguage: { translateLanguages: { translateLanguages = [] } }, webLocalStorageSetting : {isEnableArchived} = {} } = globalStoteData;
   const { handleBackToSetting , setSelectedLaun = "English" } = props;
   const [enableTranslate, setEnableTranslate] = useState(false);
   const [language, setLaunguage] = useState(setSelectedLaun)
   const [showDrop, setshowDrop] = useState(false);
   const [translate, setTranslate] = useState(false);
+  const [boxedLayout, setBoxedLayout] = useState(false);
 
   useEffect(() => {
     const webSettings = getLocalWebsettings();
     if (webSettings && Object.keys(webSettings).length) {
       setEnableTranslate(webSettings.translate || false);
       setTranslate(webSettings.translate || false );
+      setBoxedLayout(webSettings.boxLayout || false );
       Store.dispatch(webSettingLocalAction({
-        "translate":webSettings.translate || false
+        "translate": webSettings.translate || false,
+        "isEnableArchived": webSettings.archive
       }));
     }
   }, []);
+
   useEffect(() => {
     setLaunguage(setSelectedLaun);
   }, [setSelectedLaun]);
@@ -42,7 +49,8 @@ const Chat = (props = {}) => {
     if (blockOfflineAction()) return;
     setTranslate(value);
     Store.dispatch(webSettingLocalAction({
-      "translate":value
+      "translate":value,
+      "isEnableArchived": isEnableArchived
     }));
     setLocalWebsettings("translate", value);
     setEnableTranslate(value);
@@ -53,6 +61,9 @@ const Chat = (props = {}) => {
     setLaunguage(value.name);
     setshowDrop(false);
   };
+  const outsidePopupClick = () => {
+    setshowDrop(false);
+  }
 
   const handleDrop = (event={}) => {
     if (blockOfflineAction()) return;
@@ -80,6 +91,11 @@ const Chat = (props = {}) => {
         <div className="settinglist">
           <SettingsHeder handleBackFromSetting={handleBackToSetting} label={"Chat"} />
           <ul className="setting-list-ul chat-setting">
+            {config.boxLayout && <BoxedLayout
+              dafaultValue={boxedLayout}
+              id={"boxedLayout"}
+              label={"Boxed View"}
+              />}
             <SettingCheckBox
               getaAtion={handleTranslationState}
               chat={true}
@@ -103,6 +119,7 @@ const Chat = (props = {}) => {
                     />
                     <DropdownArrow />
                   </div>
+                  <OutsideClickHandler  onOutsideClick={() => outsidePopupClick()}>
                   <div className="drop-wrapper">
                     {showDrop && (
                       <div>
@@ -116,6 +133,7 @@ const Chat = (props = {}) => {
                       </div>
                     )}
                   </div>
+                  </OutsideClickHandler>
                   <p className="info">
                     <i>
                       <InfoIcon />

@@ -3,11 +3,12 @@ import Store from '../../Store';
 import { selectLargeVideoUser, pinUser, showConfrence } from '../../Actions/CallAction';
 import { CALL_RINGING_DURATION, CALL_SESSION_STATUS_CLOSED, CALL_STATUS_CALLING, CALL_STATUS_DISCONNECTED, CALL_STATUS_RINGING, DISCONNECTED_SCREEN_DURATION } from '../../Helpers/Call/Constant';
 import callLogs from '../../Components/WebCall/CallLogs/callLog';
-import { getLocalUserDetails, getUserDetails } from '../Chat/User';
+import { getLocalUserDetails, getUserDetails, initialNameHandle } from '../Chat/User';
 import { REACT_APP_MAX_USERS_CALL } from '../../Components/processENV';
 import SDK from '../../Components/SDK';
 import { removeRemoteStream, resetCallData } from '../../Components/callbacks';
 import browserNotify from '../Browser/BrowserNotify';
+import { callLinkToast } from '../../Components/ToastServices/CustomToast';
 
 let callingRemoteStreamRemovalTimer = null;
 let missedCallNotificationTimer = null;
@@ -49,8 +50,6 @@ export function getCallUsersDetails(callData, localUserData, {localRoster: local
     if(!callData || !localUserData){
         return userDetailObj;
     }
-    console.log("callData", callData);
-    console.log("groupList", groupList);
     let currentUser  = localUserData?.fromuser;
     let userListArr = callData.userList ? callData.userList.split(',') : [];
     let userListLength = userListArr.length;
@@ -84,9 +83,7 @@ export function getCallUsersDetails(callData, localUserData, {localRoster: local
         groupList.map((group) => {
             let groupJid = group.groupId;
             let user = callData.groupId || callData.to;
-            console.log("groupJid", groupJid);
             user = user && user.includes("@") ? user.split('@')[0] : user;
-            console.log("user", user);
             if(groupJid === user){
                 userDetailObj['displayName'] = group.groupName;
                 userDetailObj['image'] = group.groupImage;
@@ -96,7 +93,6 @@ export function getCallUsersDetails(callData, localUserData, {localRoster: local
     }
     userDetailObj['totalMembers'] = userListLength;
     userDetailObj['chatType'] = callData.callMode === 'onetomany' ? 'groupchat' : 'chat';
-    console.log("userDetailObj", userDetailObj);
     return {...userDetailObj};
 }
 
@@ -162,7 +158,6 @@ export function dispatchDisconnected(statusMessage, remoteStreams = []){
 
 export const disconnectCallConnection = (remoteStreams = []) => {
     const callConnectionData = JSON.parse(localStorage.getItem('call_connection_status'))
-    console.log("call data ending call in the connected screen");
     SDK.endCall();
     dispatchDisconnected(CALL_STATUS_DISCONNECTED, remoteStreams);
     callLogs.update(callConnectionData.roomId, {
@@ -278,19 +273,21 @@ export const startCallingTimer = () => {
 
 export const getMaxUsersInCall = () => REACT_APP_MAX_USERS_CALL ? REACT_APP_MAX_USERS_CALL : 8;
 
-export const getCallDisplayDetailsForOnetoManyCall = (userList) => {
+export const getCallDisplayDetailsForOnetoManyCall = (userList, type) => {
     let rosterData = {};
     let displayNames = [];
     let displayName = "";
     let vcardData = getLocalUserDetails();
-    displayNames.push("You");
     let participantsData = [];
-    participantsData.push({
-        image: vcardData.image, 
-        userId: vcardData.fromUser, 
-        name: vcardData.nickName,
-        initialName: getInitialsFromName(vcardData.nickName)
-    }); 
+    if (type !== "subscribe") {
+        displayNames.push("You");
+        participantsData.push({
+            image: vcardData.image, 
+            userId: vcardData.fromUser, 
+            name: vcardData.nickName,
+            initialName: getInitialsFromName(vcardData.nickName)
+        }); 
+    }
     let currentUserPresentInCall = false;   
     userList.map((us) => {
         const phoneNumber = us.includes("@") ? us.split("@")[0] : us;
@@ -301,14 +298,16 @@ export const getCallDisplayDetailsForOnetoManyCall = (userList) => {
                 participantsData.push({
                     image: roster.image,
                     userId: getUserIdFromJid(us),
-                    name: roster.displayName
+                    name: roster.displayName,
+                    initialName: roster.initialName
                 });
             } else {
                 displayNames.push(getFormatPhoneNumber(phoneNumber));
                 participantsData.push({
                     image: "",
                     userId: getUserIdFromJid(us),
-                    name: ""
+                    name: "",
+                    initialName: ""
                 });
             }
         } else {
@@ -357,8 +356,14 @@ export const startMissedCallNotificationTimer = (res) => {
 
 export const clearMissedCallNotificationTimer = () => {
     if(missedCallNotificationTimer !== null){
-        console.log("clearing missed call notification timer");
         clearTimeout(missedCallNotificationTimer);
         missedCallNotificationTimer = null;
     }
 }
+
+export const handleCallParticipantToast = (userJid, type) => {
+    const userDetails = getUserDetails(userJid);
+    const { displayName = getUserIdFromJid(userJid), image = "", initialName = "" } = userDetails;
+    const initial = initialNameHandle(userDetails, initialName);
+    callLinkToast(type, displayName, image, initial, "callParticipantList");
+};

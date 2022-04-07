@@ -5,6 +5,7 @@ import DeletedMessage from "./Common/DeletedMessage";
 import CreateTemplate from "./index";
 import autoscroll from "./Scroll";
 import { GROUP_CHAT_PROFILE_UPDATED_NOTIFY } from "../../../../Helpers/Chat/Constant";
+import { convertUTCDateToLocalDate } from "../../WebChatTimeStamp";
 
 class ChatTemplate extends Component {
   iterateArrayOfTemplate = (chatmessages) => {
@@ -61,6 +62,7 @@ class ChatTemplate extends Component {
           chatType={chatType}
           pageType={"conversation"}
           handleTranslateLanguage = {handleTranslateLanguage}
+          handleShowCallScreen={this.props.handleShowCallScreen}
         />
       ) : (
         <DeletedMessage
@@ -94,7 +96,7 @@ class ChatTemplate extends Component {
 
   constructMessageTemplate = () => {
     const { chatmessages } = this.props;
-    const updatedMessage = groupBy(chatmessages, (date) => (date.createdAt || "").split(/[\s]/)[0]);
+    const updatedMessage = groupBy(chatmessages, (date) => (convertUTCDateToLocalDate(date.createdAt) || "").split(/[\s]/)[0]);
     return Object.keys(updatedMessage).map((messageInDate) => {
       const { [messageInDate]: splitBlockByDate } = updatedMessage;
       return this.dateBlock(splitBlockByDate, messageInDate);

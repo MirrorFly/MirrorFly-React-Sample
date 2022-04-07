@@ -1,8 +1,8 @@
-@import "../../../assets/scss/variables.scss";
-@import "../../../assets/scss/mixins.scss";
+@import '../../../assets/scss/SassMixins.scss';
 
 .logout-popup {
-    width: 20.625em;
+    width: 100%;
+    max-width: 20.625em;
     padding: 1.563em 1.875em;
     background-color: $white;
     @include border-radius(5px);
@@ -10,9 +10,16 @@
     
     
     .logout-label {
-      label {
-        font-size: $font15;
+      h5{
+        font-size: $font18;
         font-family: $semibold;
+        color: $popupHeadingLabel;
+        margin-bottom: 0.625em;
+      }
+      label {
+        font-size: $font14;
+        font-family: $regular;
+        line-height: 1.3125rem;
         color: $popupHeadingLabel;
       }
     }
@@ -30,10 +37,14 @@
         color: $popuptext;
         @include border-radius(2px);
         cursor: pointer;
+        text-transform: uppercase;
       }
       button.btn-logout {
         background-color: $primary;
         color: $white;
       }
+    }
+    &.lg{
+      max-width: 24em;
     }
   }

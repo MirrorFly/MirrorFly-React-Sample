@@ -33,7 +33,7 @@ background: #FFFFFF;
 }
 .MediaDetails{
 width: 100%;
-height: calc(100vh - 5.5625em);
+height: calc(var(--maxParentheight) - 5.5625em);
 overflow-y: auto;
 display: flex;
 justify-content: center;

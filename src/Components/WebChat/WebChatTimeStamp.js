@@ -1,7 +1,7 @@
 import { DateTime } from "luxon";
+import moment from "moment";
 
 const TIME_FORMAT = "HH:mm";
-const FINAL_FORMAT = "d MMM yyyy";
 
 /**
  * formatAMPM() method to perform the am or pm format with time.
@@ -30,7 +30,6 @@ export const formatChatDate = (date) => {
   if (!datesDiff) {
     return null; /** change ? to null */
   }
-
   const diffRounded = Math.round(datesDiff);
 
   if (diffRounded === 0) {
@@ -40,7 +39,8 @@ export const formatChatDate = (date) => {
   } else if (diffRounded > 1 && diffRounded <= 6) {
     return DateTime.fromJSDate(date).toFormat("cccc");
   } else {
-    return DateTime.fromJSDate(date).toFormat(FINAL_FORMAT);
+    const isCurrentYear = date.getFullYear() === new Date().getFullYear()
+    return DateTime.fromJSDate(date).toFormat(isCurrentYear ? "d MMM" : "d MMM yyyy");
   }
 };
 
@@ -161,3 +161,7 @@ export const getLastseen = (secs) => {
     }
   }
 };
+
+export const convertUTCDateToLocalDate = (date) => {
+  return moment(date + '+00:00').local().format('YYYY-MM-DD HH:mm:ss');
+}

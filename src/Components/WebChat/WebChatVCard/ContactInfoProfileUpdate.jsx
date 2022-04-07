@@ -231,7 +231,6 @@ class ContactInfoProfileUpdate extends React.Component {
      * setWebcamImage() method to maintain state to set a image taken from webcamera.
      */
     setWebcamImage = (webcamImageProfile = {}) => {
-        console.log(webcamImageProfile, "webcamImageProfile");
         if (webcamImageProfile.size > 0) {
             let fileProfileData = new FileReader();
             fileProfileData.readAsDataURL(webcamImageProfile);

@@ -1,3 +1,4 @@
+@import '../../assets/scss/SassMixins.scss';
 @import "../../assets/scss/mixins.scss";
 .CallingScreenWrapper {
     // position: fixed;
@@ -153,8 +154,8 @@
                 .toggleAnimation{
                 background: #0d2752;
                 opacity: 1;
-                width: 2.125em;
-                height: 2.125em;
+                width: 2em;
+                height: 2em;
                 transition: all linear 100ms;
                 -webkit-transition: all linear 100ms;
                 -moz-transition: all linear 100ms;
@@ -186,14 +187,19 @@
             width: 1.25em;
             height: 1.25em;
         }
-        .tileView  i svg {
-            width: 0.938em;
-            height: 0.938em;
+        .tileView  i{
+            height: 1em;
+        svg {
+            width: 1.1em;
+            height: 1em;
+            }
         }
-        .tileViewRemove  i svg {
-            width: 1.2em;
-            height: auto;
-        }   
+        .tileViewRemove  i{
+            height: 1em;
+         svg {
+            width: 1.1em;
+            height: 1em;
+        }   }
 
         .disabled-btn{
             cursor: default;
@@ -312,7 +318,12 @@
                 border-radius: 10px;
                 background: #fff;
                 transition:height 50ms steps(42,jump-none);
+                // animation:volumeLevel 1000ms steps(9,jump-none) 0s infinite;
             }
+            // @keyframes volumeLevel{
+            //     0%{transform:scaleY(0.8)}
+            //     50%{transform:scaleY(1)}to{transform:scaleY(0.8)}
+            // }
         }
     }
         video{
@@ -953,7 +964,11 @@
         overflow: hidden;
         text-overflow: ellipsis;
         z-index: 1;
-        background: linear-gradient(to top, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0));
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.5) 10%, rgba(0, 0, 0, 0));
+        min-width: 100%;
+        margin-bottom: 0;
+        padding-bottom: 1.25em;
+        padding-top: 1.875em;
         &.lg{
             font-size: 0.875rem;
         }
@@ -977,11 +992,7 @@
             flex-wrap: wrap;
             margin: 0;
             background: #101726;
-            padding: 5.8% 0;
-            
-            .pin-user{
-                border-color: #131C2E!important;
-            }
+            // padding: 5.8% 0;
             .RemoteVideo-contianer{
                 display: flex;
                 flex-direction: row;
@@ -991,8 +1002,7 @@
                 height: 50%;
                 min-width:auto; 
                 min-height:auto;
-                margin: 0.375em;
-                flex: 0 1 45%;
+                margin: 0.375em 0;
                 border-radius: 0.375em;
                 &:before{
                     display: none;
@@ -1041,7 +1051,7 @@
                     font-size: 0.75rem;
                 }
             .remoteCallStatus {
-                position: static;
+                // position: static;
                 align-self: flex-start;
                 padding-right: 0.5em;
                 padding-top: 0.5em;
@@ -1076,8 +1086,11 @@
             text-shadow: 0px 0px 5px #00000080;
             height: 1.8125em;
             align-items: center;
-            margin-bottom:0.5625em;
-            background: linear-gradient(to top, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0));
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.5) 10%, rgba(0, 0, 0, 0));
+            min-width: 100%;
+            margin-bottom: 0;
+            padding-bottom: 30px;
+            padding-top: 15px;
             &.lg{
 				font-size: 0.875rem;
 			}
@@ -1098,7 +1111,7 @@
         display: flex;
         flex:  1 1 100%;
         height: auto;
-        max-width: calc(100% - 2.5em);
+        max-width: calc(100% - 0.8em);
         margin: 0 auto;
         position: relative;
         border-radius: 0.375em;
@@ -1142,7 +1155,7 @@
     display: flex;
     flex:  1 1 100%;
     height: auto;
-    max-width: calc(100% - 2.5em);
+    max-width: calc(100% - 0.8em);
     margin: 0 auto;
     position: relative;
     border-radius: 0.375em;
@@ -1158,6 +1171,7 @@
     .RemoteVideo-list{ 
     overflow: hidden auto;
     white-space: normal;
+    padding: 0;
     .RemoteVideo-contianer{
     background:#333D52;
     .remoteCallStatus{
@@ -1213,6 +1227,24 @@
         .pinned{
             opacity: 1;
             transition: 100ms linear;
+        }
+    }
+    &.UserSpeaking{
+        border: 1px solid #4996EF;
+        position: relative;
+        &:after{
+            content: "..." !important;
+            position: absolute;
+            top:10px;
+            right: 10px;
+            width: 25px;
+            height: 25px;
+            background: #3ABF87;
+            color: #fff;
+            line-height: 10px;
+            border-radius: 100px;
+            text-align: center;
+            font-size: 25px;
         }
     }
     }}
@@ -1547,3 +1579,37 @@
     //     flex: 0 1 25%;
     // }
     // }
+    @media screen and (max-width:480px) {
+        .CallingScreenWrapper.fit-layout 
+        .subject{
+            padding:1em 4.75em .4em;
+        }
+        .content-body{
+            flex-direction: column;
+        }
+        .CallingScreenWrapper.group-video-call .RemoteVideo-wrapper 
+        {
+            width: 100%;
+            flex: 1 1 auto;
+            height:20em;
+        .RemoteVideo-list{
+            flex-wrap: nowrap;
+            overflow: auto hidden;
+            justify-content: left;
+            width: 100%;
+            flex: 1 1 100%;
+            &::-webkit-scrollbar-track {
+                background:#131C2E !important;
+            }
+            
+            &::-webkit-scrollbar-track:hover {
+                background-color: #102246;
+            }
+            &::-webkit-scrollbar-thumb {
+                background-color: #3d3e41;
+                @include border-radius(16px);
+                border: 1px solid #3d3e41;
+            }
+        }
+    }
+    }

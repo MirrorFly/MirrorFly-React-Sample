@@ -5,7 +5,10 @@ import {
     PIN_USER,
     LARGE_VIDEO_USER,
     CALL_DURATION_TIMESTAMP,
-    AUDIO_CALL_MUTE
+    AUDIO_CALL_MUTE,
+    CALL_INTERMEDIATE_SCREEN,
+    RESET_CALL_INTERMEDIATE_SCREEN,
+    RESET_CONFRENCE_POPUP_STATUS
 } from './Constants';
 import uuidv4 from 'uuid/v4';
 import { getLocalUserDetails } from '../Helpers/Chat/User';
@@ -33,6 +36,15 @@ export const showConfrence = (data) => {
         payload: {
             id: uuidv4(),
             data
+        }
+    }
+}
+
+export const resetConferencePopup = () => {
+    return {
+        type: RESET_CONFRENCE_POPUP_STATUS,
+        payload: {
+            id: uuidv4()
         }
     }
 }
@@ -80,11 +92,12 @@ export const selectLargeVideoUser = (userJid, volumelevel) => {
         } = showConfrenceData || {};
 
         let volumeLevelClassName = 0.50;
+        let volumeLevelVideo = 0;
         if (userJid) {
             if (!volumeLevelsBasedOnUserJid[userJid]) {
                 volumeLevelsBasedOnUserJid[userJid] = 0.50;
             }
-            volumeLevelsInDBBasedOnUserJid[userJid] = volumelevel ? volumelevel : -100;
+            volumeLevelsInDBBasedOnUserJid[userJid] = volumelevel ? volumelevel : 0;
             if (Object.keys(volumeLevelsInDBBasedOnUserJid).length > 1) {
                 let largest = Object.values(volumeLevelsInDBBasedOnUserJid)[0];
                 userJid = Object.keys(volumeLevelsInDBBasedOnUserJid)[0];
@@ -112,28 +125,30 @@ export const selectLargeVideoUser = (userJid, volumelevel) => {
                 speakingUser.jid = userJid
                 speakingUser.count = 1;
             }
-
-            if (parseInt(volumeLevelsInDBBasedOnUserJid[userJid]) > -10) {
-                volumeLevelClassName = 0.80;
-            } else if (parseInt(volumeLevelsInDBBasedOnUserJid[userJid]) > -20) {
-                volumeLevelClassName = 0.76;
-            } else if (parseInt(volumeLevelsInDBBasedOnUserJid[userJid]) > -30) {
-                volumeLevelClassName = 0.72;
-            } else if (parseInt(volumeLevelsInDBBasedOnUserJid[userJid]) > -40) {
-                volumeLevelClassName = 0.68;
-            } else if (parseInt(volumeLevelsInDBBasedOnUserJid[userJid]) > -50) {
-                volumeLevelClassName = 0.62;
-            } else if (parseInt(volumeLevelsInDBBasedOnUserJid[userJid]) > -60) {
-                volumeLevelClassName = 0.58;
-            } else if (parseInt(volumeLevelsInDBBasedOnUserJid[userJid]) > -70) {
+            volumeLevelVideo = volumeLevelsInDBBasedOnUserJid[userJid];
+            if (parseInt(volumeLevelsInDBBasedOnUserJid[userJid]) <= 0) {
+                volumeLevelClassName = 0.50;
+            } else if (parseInt(volumeLevelsInDBBasedOnUserJid[userJid]) <= 1) {
+                volumeLevelClassName = 0.52;
+            } else if (parseInt(volumeLevelsInDBBasedOnUserJid[userJid]) <= 2) {
                 volumeLevelClassName = 0.54;
-            } else if (parseInt(volumeLevelsInDBBasedOnUserJid[userJid]) > -80) {
-                volumeLevelClassName = 0.50;
-            } else if (parseInt(volumeLevelsInDBBasedOnUserJid[userJid]) > -90) {
-                volumeLevelClassName = 0.50;
-            } else if (parseInt(volumeLevelsInDBBasedOnUserJid[userJid]) > -95) {
-                volumeLevelClassName = 0.50;
-            }
+            } else if (parseInt(volumeLevelsInDBBasedOnUserJid[userJid]) <= 3) {
+                volumeLevelClassName = 0.58;
+            } else if (parseInt(volumeLevelsInDBBasedOnUserJid[userJid]) <= 4) {
+                volumeLevelClassName = 0.60;
+            } else if (parseInt(volumeLevelsInDBBasedOnUserJid[userJid]) <= 5) {
+                volumeLevelClassName = 0.64;
+            } else if (parseInt(volumeLevelsInDBBasedOnUserJid[userJid]) <= 6) {
+                volumeLevelClassName = 0.68;
+            } else if (parseInt(volumeLevelsInDBBasedOnUserJid[userJid]) <= 7) {
+                volumeLevelClassName = 0.72;
+            } else if (parseInt(volumeLevelsInDBBasedOnUserJid[userJid]) <= 8) {
+                volumeLevelClassName = 0.76;
+            } else if (parseInt(volumeLevelsInDBBasedOnUserJid[userJid]) <= 9) {
+                volumeLevelClassName = 0.78;
+            } else if (parseInt(volumeLevelsInDBBasedOnUserJid[userJid]) <= 10) {
+                volumeLevelClassName = 0.80;
+            }            
 
             showVoiceDetect = false;
             if (volumeLevelsBasedOnUserJid[userJid]) {
@@ -161,7 +176,8 @@ export const selectLargeVideoUser = (userJid, volumelevel) => {
             payload: {
                 userJid: largeUserJid,
                 volumeLevelsBasedOnUserJid,
-                showVoiceDetect
+                showVoiceDetect,
+                volumeLevelVideo: volumeLevelVideo
             }
         });
         if (volumeLevelResettingTimeout !== null && userJid === largeUserJid) {
@@ -170,16 +186,6 @@ export const selectLargeVideoUser = (userJid, volumelevel) => {
         }
 
         volumeLevelResettingTimeout = setTimeout(() => {
-            volumeLevelsBasedOnUserJid[largeUserJid] = 0.50;
-            showVoiceDetect = true;
-            dispatch({
-                type: LARGE_VIDEO_USER,
-                payload: {
-                    userJid: largeUserJid,
-                    volumeLevelsBasedOnUserJid,
-                    showVoiceDetect
-                }
-            });
             setTimeout(() => {
                 showVoiceDetect = false;
                 dispatch({
@@ -212,4 +218,23 @@ export const resetData = () => {
     largeUserJid = null;
     showVoiceDetect = false;
     pinUserData = {};
+}
+
+export const callIntermediateScreen = (data) => {
+    return {
+        type: CALL_INTERMEDIATE_SCREEN,
+        payload: {
+            id: uuidv4(),
+            data
+        }
+    }
+}
+
+export const resetCallIntermediateScreen = () => {
+    return {
+        type: RESET_CALL_INTERMEDIATE_SCREEN,
+        payload: {
+            id: uuidv4()
+        }
+    }
 }

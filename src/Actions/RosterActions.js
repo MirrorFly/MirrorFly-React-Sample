@@ -1,7 +1,7 @@
 import uuidv4 from 'uuid/v4';
 import { REACT_APP_API_URL } from '../Components/processENV';
 import SDK from '../Components/SDK';
-import { decryption, encryption } from '../Components/WebChat/WebChatEncryptDecrypt';
+import { decryption } from '../Components/WebChat/WebChatEncryptDecrypt';
 import { formatUserIdToJid } from '../Helpers/Chat/User';
 import { compare, parsedContacts } from '../Helpers/Utility';
 import { ROSTER_DATA, ROSTER_DATA_ADD } from './Constants';
@@ -100,7 +100,6 @@ const fetchMailContacts = async(token, data, dispatch) => {
                 let concateData = [ ...data, ...mailContacts];
                 let parsedData = await parsedContacts(concateData);
                 let contacts = await parsedData.sort(compare);
-                encryption("roster_data", contacts);
                 dispatch(RosterData(contacts));
             } else if (res.status === 401) {
                 let decryptResponse = decryption("auth_user");
@@ -111,12 +110,10 @@ const fetchMailContacts = async(token, data, dispatch) => {
                 }
             } else {
                 let contacts = await data.sort(compare);
-                encryption("roster_data", contacts);
                 dispatch(RosterData(contacts));
             }
         }).catch((error) => {
             let contacts = data.sort(compare);
-            encryption("roster_data", contacts);
             dispatch(RosterData(contacts));
             console.log("error message for email contact sync: ", error);
         });

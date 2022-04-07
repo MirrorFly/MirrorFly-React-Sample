@@ -17,9 +17,9 @@ const CallDurationCommon = (props = {}) => {
             <div className="callInfo">
                 <div className="recent-username-block">
                     <div className="recent-username">
-                        <span className="username">
+                        <div className="username">
                             <h3 title={displayName}>{displayName}</h3>
-                        </span>
+                        </div>
                     </div>
                 </div>
                 <div className="CallStatus">

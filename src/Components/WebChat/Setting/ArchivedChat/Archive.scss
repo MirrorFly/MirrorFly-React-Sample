@@ -1,10 +1,11 @@
 @import '../../../../assets/scss/variables.scss';
+@import '../../../../assets/scss/SassMixins.scss';
 @import '../../../../assets/scss/mixins.scss';
 
 .chat-setting{
     .checkbox{
         @extend .checkbox-common;
-        margin-left: 0.625em;
+        margin-left:0.25em;
 
     label:before{
     border-color: #707070 !important;
@@ -14,14 +15,6 @@
         }
     }
 
-    
-    .setting-list{
-    border:none !important;
-    &:hover{
-        box-shadow:none !important
-    }
-    }
-    
     .setting-option{
         width: 100%;
         padding:0.625em 1.25em !important;
@@ -38,26 +31,26 @@
     }
     .label{
         user-select: none;
-        margin-left: 0.625em;
-        font-size: 1rem;
+        margin-left: 1em;
+        font-size: $font13;
         color:#181818;
-        line-height: 1.125em;
+        line-height: 1.125rem;
         display: flex; 
         flex-direction: column;
     }
     .label-info{
-        padding: 0 1.25em 0 4.4em;
+        padding: 0 4em 0 4.75em;
         display: block;
-        font: normal normal 0.8125rem/0.9375rem $regular;
+        font: normal normal 0.6875rem/0.9375rem $regular;
         letter-spacing: 0px;
         color: #767676;
-        margin-top: -0.5em;
+        margin: -0.5em 0 0.625em 0;
     }
     .language-select{
-        margin-top: 1.125em;
-        padding: 0 1.25em 0 3.4em;
+        margin-top: .5em;
+        padding: 0 1.25em 0 3.2em;
         h4{
-        font: normal normal 13px/18px $medium;
+        font: normal normal 0.8125rem/1.125rem $regular;
         color: #181818;
         margin-bottom: 0.625em;
         }
@@ -100,7 +93,7 @@
             margin-top: 0.625em;
            span{
             align-items: flex-start;
-            font: normal normal 0.8125rem/120% $regular;
+            font: normal normal 0.6875rem/0.9375rem $regular;
             letter-spacing: 0px;
             color: #767676;
            }

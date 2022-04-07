@@ -1,0 +1,310 @@
+// --------------------------------------------------
+// Flexbox SASS mixins
+// The spec: http://www.w3.org/TR/css3-flexbox
+// --------------------------------------------------
+// Flexbox display
+@mixin flexbox() {
+    display: -webkit-box;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+  }
+  @mixin flexboxinline() {
+  display:-webkit-inline-box;
+  display:-webkit-inline-flex;
+  display:-ms-inline-flexbox;
+  display:inline-flex;
+  }
+  // The 'flex' shorthand
+  // - applies to: flex items
+  // <positive-number>, initial, auto, or none
+  @mixin flex($values) {
+    -webkit-box-flex: $values;
+    -moz-box-flex: $values;
+    -webkit-flex: $values;
+    -ms-flex: $values;
+    flex: $values;
+  }
+  
+  // Flex Flow Direction
+  // - applies to: flex containers
+  // row | row-reverse | column | column-reverse
+  @mixin flex-direction($direction) {
+    -webkit-flex-direction: $direction;
+    -moz-flex-direction: $direction;
+    -ms-flex-direction: $direction;
+    flex-direction: $direction;
+  }
+  
+  // Flex Line Wrapping
+  // - applies to: flex containers
+  // nowrap | wrap | wrap-reverse
+  @mixin flex-wrap($wrap) {
+    -webkit-flex-wrap: $wrap;
+    -moz-flex-wrap: $wrap;
+    -ms-flex-wrap: $wrap;
+    flex-wrap: $wrap;
+  }
+  
+  // Flex Direction and Wrap
+  // - applies to: flex containers
+  // <flex-direction> || <flex-wrap>
+  @mixin flex-flow($flow) {
+    -webkit-flex-flow: $flow;
+    -moz-flex-flow: $flow;
+    -ms-flex-flow: $flow;
+    flex-flow: $flow;
+  }
+  
+  // Display Order
+  // - applies to: flex items
+  // <integer>
+  @mixin order($val) {
+    -webkit-box-ordinal-group: $val;
+    -moz-box-ordinal-group: $val;
+    -ms-flex-order: $val;
+    -webkit-order: $val;
+    order: $val;
+  }
+  
+  // Flex grow factor
+  // - applies to: flex items
+  // <number>
+  @mixin flex-grow($grow) {
+    -webkit-flex-grow: $grow;
+    -moz-flex-grow: $grow;
+    -ms-flex-grow: $grow;
+    flex-grow: $grow;
+  }
+  
+  // Flex shrink
+  // - applies to: flex item shrink factor
+  // <number> 
+  @mixin flex-shrink($shrink) {
+    -webkit-flex-shrink: $shrink;
+    -moz-flex-shrink: $shrink;
+    -ms-flex-shrink: $shrink;
+    flex-shrink: $shrink;
+  }
+  
+  // Flex basis
+  // - the initial main size of the flex item
+  // - applies to: flex itemsnitial main size of the flex item
+  // <width> 
+  @mixin flex-basis($width) {
+    -webkit-flex-basis: $width;
+    -moz-flex-basis: $width;
+    -ms-flex-basis: $width;
+    flex-basis: $width;
+  }
+  
+  // Axis Alignment
+  // - applies to: flex containers
+  // flex-start | flex-end | center | space-between | space-around 
+  @mixin justify-content($justify) {
+    -webkit-justify-content: $justify;
+    -moz-justify-content: $justify;
+    -ms-justify-content: $justify;
+    justify-content: $justify;
+    -ms-flex-pack: $justify;
+  }
+  
+  // Packing Flex Lines
+  // - applies to: multi-line flex containers
+  // flex-start | flex-end | center | space-between | space-around | stretch 
+  @mixin align-content($align) {
+    -webkit-align-content: $align;
+    -moz-align-content: $align;
+    -ms-align-content: $align;
+    align-content: $align;
+  }
+  
+  // Cross-axis Alignment
+  // - applies to: flex containers
+  // flex-start | flex-end | center | baseline | stretch 
+  @mixin align-items($align) {
+    -webkit-align-items: $align;
+    -moz-align-items: $align;
+    -ms-align-items: $align;
+    -ms-flex-align: $align;
+    align-items: $align;
+  }
+  
+  // Cross-axis Alignment
+  // - applies to: flex items
+  // auto | flex-start | flex-end | center | baseline | stretch 
+  @mixin align-self($align) {
+    -webkit-align-self: $align;
+    -moz-align-self: $align;
+    -ms-align-self: $align;
+    align-self: $align;
+  }
+  
+  
+  /**additional**/
+  
+  @import 'variables.scss';
+  @mixin border-radius($radius) {
+  -webkit-border-radius: $radius;
+  -moz-border-radius: $radius;
+  -ms-border-radius: $radius;
+  border-radius: $radius;
+  }
+  
+  @mixin box-shadow($value) {
+  -webkit-box-shadow: $value;
+  -moz-box-shadow: $value;
+  box-shadow: $value;
+  }
+  
+  @mixin transform($value) {
+  transform: ($value);
+  -webkit-transform: ($value);
+  -moz-transform: ($value);
+  -o-transform: ($value);
+  -ms-transform: ($value);
+  }
+  
+  @mixin transition($value) {
+    -webkit-transition: $value;
+    -moz-transition: $value;
+    -o-transition: $value;
+    -ms-transition: $value;
+    transition: $value;
+  }
+  
+  @mixin transitions($value, $value2) {
+  transition: $value, $value2;
+  -webkit-transition: $value, $value2;
+  -moz-transition: $value, $value2;
+  -o-transition: $value, $value2;
+  -ms-transition: $value, $value2;
+  }
+  
+  @mixin animation($value) {
+  -webkit-animation: $value;
+  -moz-animation: $value;
+  -o-animation: $value;
+  animation: $value;
+  }
+  
+  @mixin placeholder-color($value) {
+  &::-webkit-input-placeholder {
+      /* Chrome/Opera/Safari */
+      color: $value;
+  }
+  &::-moz-placeholder {
+      /* Firefox 19+ */
+      color: $value;
+  }
+  &:-ms-input-placeholder {
+      /* IE 10+ */
+      color: $value;
+  }
+  &:-moz-placeholder {
+      /* Firefox 18- */
+      color: $value;
+  }
+  }
+  
+  @mixin placeholder-family($value) {
+  &::-webkit-input-placeholder {
+      /* Chrome/Opera/Safari */
+      font-family: $value;
+  }
+  &::-moz-placeholder {
+      /* Firefox 19+ */
+      font-family: $value;
+  }
+  &:-ms-input-placeholder {
+      /* IE 10+ */
+      font-family: $value;
+  }
+  &:-moz-placeholder {
+      /* Firefox 18- */
+      font-family: $value;
+  }
+  }
+  
+  @mixin placeholder-size($value) {
+  &::-webkit-input-placeholder {
+      /* Chrome/Opera/Safari */
+      font-size: $value;
+  }
+  &::-moz-placeholder {
+      /* Firefox 19+ */
+      font-size: $value;
+  }
+  &:-ms-input-placeholder {
+      /* IE 10+ */
+      font-size: $value;
+  }
+  &:-moz-placeholder {
+      /* Firefox 18- */
+      font-size: $value;
+  }
+  }
+  
+  @mixin filter($value) {
+  -webkit-filter: blur($value);
+  -moz-filter: blur($value);
+  -o-filter: blur($value);
+  -ms-filter: blur($value);
+  filter: blur($value);
+  }
+  
+  @mixin gradiant-two-colors-top-bottom($color1, $color2) {
+  background: $color1;
+  background: -moz-linear-gradient(top, $color1 0%, $color2 100%);
+  background: -webkit-gradient(left top, left bottom, color-stop(0%, $color1), color-stop(100%, $color2));
+  background: -webkit-linear-gradient(top, $color1 0%, $color2 100%);
+  background: -o-linear-gradient(top, $color1 0%, $color2 100%);
+  background: -ms-linear-gradient(top, $color1 0%, $color2 100%);
+  background: linear-gradient(to bottom, $color1 0%, $color2 100%);
+  }
+  
+  @mixin gradiant-two-colors-left-right($color1, $color2) {
+  background: $color1;
+  background: -moz-linear-gradient(left, $color1 0%, $color2 100%);
+  background: -webkit-gradient(left top, right top, color-stop(0%, $color1), color-stop(100%, $color2));
+  background: -webkit-linear-gradient(left, $color1 0%, $color2 100%);
+  background: -o-linear-gradient(left, $color1 0%, $color2 100%);
+  background: -ms-linear-gradient(left, $color1 0%, $color2 100%);
+  background: linear-gradient(to right, $color1 0%, $color2 100%);
+  }
+  
+  @mixin gradiant-three-colors-left-right($color1, $color2, $color3) {
+  background: $color1;
+  background: -moz-linear-gradient(left, $color1 0%, $color2 51%, $color3 100%);
+  background: -webkit-gradient(left top, right top, color-stop(0%, $color1), color-stop(51%, $color2), color-stop(100%, $color3));
+  background: -webkit-linear-gradient(left, $color1 0%, $color2 51%, $color3 100%);
+  background: -o-linear-gradient(left, $color1 0%, $color2 51%, $color3 100%);
+  background: -ms-linear-gradient(left, $color1 0%, $color2 51%, $color3 100%);
+  background: linear-gradient(to right, $color1 0%, $color2 51%, $color3 100%);
+  }
+  
+  @mixin gradiant-two-colors-top-bottom($color1, $color2) {
+  background: $color1;
+  background: -moz-linear-gradient(top, $color1 0%, $color2 100%);
+  background: -webkit-gradient(left top, left bottom, color-stop(0%, $color1), color-stop(100%, $color2));
+  background: -webkit-linear-gradient(top, $color1 0%, $color2 100%);
+  background: -o-linear-gradient(top, $color1 0%, $color2 100%);
+  background: -ms-linear-gradient(top, $color1 0%, $color2 100%);
+  background: linear-gradient(to bottom, $color1 0%, $color2 100%);
+  }
+  
+  
+  
+  //common mixins
+  
+  @mixin box-center() {
+  @include flexbox();
+  @include align-items(center);
+  @include justify-content(center);
+  }
+  @mixin box($var) {
+  width: $var;
+  height: $var;
+  }
+  

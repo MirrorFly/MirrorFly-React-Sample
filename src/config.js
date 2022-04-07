@@ -12,6 +12,7 @@ const config = {
   maximumCharForwardPopUp: 60,
   internetErrorMessage: "Please check your Internet connection",
   helpUrl: "https://app.mirrorfly.com/webchat-log-in/index.html",
-  demoUrl: "localhost"
+  demoUrl: "localhost",
+  boxLayout: true
 };
 export default config;

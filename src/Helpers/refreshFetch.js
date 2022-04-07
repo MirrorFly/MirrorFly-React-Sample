@@ -41,7 +41,6 @@ const refreshFetch = (configuration) => {
                         refreshingTokenPromise = new Promise((resolve, reject) => {
                             refreshToken()
                                 .then(() => {
-                                    console.log('refresh token')
                                     refreshingTokenPromise = null
                                     resolve()
                                 })

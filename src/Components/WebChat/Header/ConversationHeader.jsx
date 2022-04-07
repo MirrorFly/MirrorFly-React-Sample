@@ -19,6 +19,7 @@ import { CONNECTED, NO_INTERNET } from '../../../Helpers/Constants';
 import { formatUserIdToJid, getContactNameFromRoster, getIdFromJid, initialNameHandle } from '../../../Helpers/Chat/User';
 import { muteLocalVideo } from "../../callbacks";
 import { isGroupChat, isSingleChat } from '../../../Helpers/Chat/ChatHelper';
+import JoinCallPopup from '../../WebCall/JoinCallPopup';
 
 let groupId = "";
 let groupName = "";
@@ -32,7 +33,10 @@ class ConversationHeader extends React.Component {
             blocked: false,
             image: null,
             displayName: null,
-            userstatus: null
+            userstatus: null,
+            emailId: null,
+            localRoster: {},
+            joinCallPopup: false
         }
         this.preventMultipleClick = false;
         this.premissionConst = "Permission denied";
@@ -59,7 +63,9 @@ class ConversationHeader extends React.Component {
         this.setState({
             displayName,
             image: image || groupImage,
-            userstatus: roster.status
+            userstatus: roster.status,
+            emailId: roster.emailId,
+            localRoster: roster
         })
     }
 
@@ -92,7 +98,9 @@ class ConversationHeader extends React.Component {
                 this.setState({
                     displayName: getContactNameFromRoster(rosterInfo),
                     image,
-                    userstatus: rosterInfo.status
+                    userstatus: rosterInfo.status,
+                    emailId: rosterInfo.emailId,
+                    localRoster: rosterInfo
                 })
             }
             return true;
@@ -150,8 +158,8 @@ class ConversationHeader extends React.Component {
             this.preventMultipleClick = false;
             try {
                 if (callType === "audio") {
-                    muteLocalVideo(true);
-                    call = await SDK.makeVoiceCall([activeChatId], null);
+                    muteLocalVideo(true);                    
+                    call = await SDK.makeVoiceCall([activeChatId], null);                    
                 } else if (callType === "video") {
                     muteLocalVideo(false);
                     call = await SDK.makeVideoCall([activeChatId], null);
@@ -401,15 +409,27 @@ class ConversationHeader extends React.Component {
         return false;
     }
 
+    showJoinCallPopup = () => {
+        this.setState({
+            joinCallPopup: true
+        });
+    }
+
+    cancelJoinCallPopup = () => {
+        this.setState({
+            joinCallPopup: false
+        });
+    }
+
     render() {
         const { groupMemberDetails, activeChatId, displayNames,
-            userData: { data: { recent: { chatType = "", fromUserId = "" }, roster = {} } = {} } = {} } = this.props || {};
+            userData: { data: { recent: { chatType = "", fromUserId = "" } } = {} } = {} } = this.props || {};
         const token = ls.getItem('token');
         const avatarIcon = chatType === 'chat' ? SampleChatProfile : SampleGroupProfile;
         let canSendMessage = this.canSendMessage();
-        const { emailId, mobileNumber } = roster
-        const { image, displayName } = this.state
-        const iniTail=initialNameHandle(roster,displayName);
+        const { mobileNumber } = this.state.localRoster
+        const { image, displayName, emailId } = this.state
+        const iniTail=initialNameHandle(this.state.localRoster, displayName);
         groupName = displayName;
         let blockedContactArr = this.props.blockedContact.data;
         const isBlocked = blockedContactArr.indexOf(formatUserIdToJid(activeChatId)) > -1;
@@ -472,8 +492,11 @@ class ConversationHeader extends React.Component {
                         participants={groupMemberDetails}
                         handlePopUpClassActive={this.props.handlePopUpClassActive}
                         mobileNumber={mobileNumber}
-                        roster={roster}
+                        roster={this.state.localRoster}
                     />
+                }
+                {this.state.joinCallPopup &&
+                    <JoinCallPopup closePopup={this.cancelJoinCallPopup}/>
                 }
             </Fragment>
         )

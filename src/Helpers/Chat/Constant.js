@@ -50,3 +50,11 @@ export const THIS_MESSAGE_WAS_DELETED = "This message was deleted";
 export const YOU_DELETED_THIS_MESSAGE = "You deleted this message";
 export const BRAND_NAME = "MirrorFly";
 export const MAP_URL = "https://maps.googleapis.com/maps/api/staticmap"
+export const GROUP_UPDATE_ACTIONS = [
+  GROUP_USER_ADDED,
+  GROUP_USER_REMOVED,
+  GROUP_USER_MADE_ADMIN,
+  GROUP_PROFILE_INFO_UPDATED,
+  GROUP_USER_LEFT
+];
+

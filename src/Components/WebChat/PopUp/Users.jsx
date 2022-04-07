@@ -6,20 +6,18 @@ import { getHighlightedText } from '../../../Helpers/Utility';
 import { REACT_APP_XMPP_SOCKET_HOST } from '../../processENV';
 import ProfileImage from '../Common/ProfileImage';
 import UserStatus from '../Common/UserStatus';
-import { arrayRoasterinitialNameHandle, getIdFromJid } from "../../../Helpers/Chat/User";
+import { getIdFromJid, initialNameHandle } from "../../../Helpers/Chat/User";
 import { isSingleChat } from "../../../Helpers/Chat/ChatHelper";
 import { BlockedIcon } from "../Setting/images";
-import { useSelector } from "react-redux";
 
 const { maximumAllowedUsersToForward } = Config
 
 export default function Users(props) {
-    const rosterData = useSelector((state) => state.rosterData || {});
-    const { data: roster = {} } = rosterData;
+
     const { contactName, image, groupImage, emailId, statusMsg, status,
         searchValue, updateJid, addContact, removeContact,
-        temporary, chatType, selectedContact, isChanged = -1, isBlockedUser } = props;
-    const iniTail = arrayRoasterinitialNameHandle(roster, contactName);
+        temporary, chatType, selectedContact, isChanged = -1, isBlockedUser, roster } = props;
+    const iniTail = initialNameHandle(roster, contactName);
     const [selectState, setSelectState] = useState(false)
 
     useEffect(() => {
@@ -85,7 +83,7 @@ export default function Users(props) {
                 <div className="recentchats">
                     <div className="recent-username-block">
                         <div className="recent-username">
-                            <span className="username">
+                            <div className="username">
                                 <h3 title={contactName}>
                                     <span>{hightlightText}</span>
                                     {isBlockedUser &&
@@ -94,7 +92,7 @@ export default function Users(props) {
                                         </div>
                                     }
                                 </h3>
-                            </span>
+                            </div>
                         </div>
                     </div>
                     <div className="recent-message-block">

@@ -1,4 +1,5 @@
 @import '../../../../assets/scss/variables.scss';
+@import '../../../../assets/scss/SassMixins.scss';
 @import '../../../../assets/scss/mixins.scss';
 @import '../../../../assets/scss/message-mixins.scss';
 
@@ -19,7 +20,7 @@
     
 }
     .chat-list-ul.BlockedList {
-        height: calc(100vh - 4.063em);
+        height: calc(var(--maxParentheight) - 4.063em);
         overflow: auto;
         @include chat-list-li-mixin;
         .chat-list-li:hover{

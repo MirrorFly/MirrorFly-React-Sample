@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { broadcast, GroupChatAvatarImg, SingleChatAvatarImg, Loader } from "../../../assets/images";
+import { broadcast, GroupChatAvatarImg, SingleChatAvatarImg, Loader,ImgUserPlaceholder } from "../../../assets/images";
 import { classNames, isSingleChat } from "../../../Helpers/Chat/ChatHelper";
 import IndexedDb from "../../../Helpers/IndexedDb";
 import { getColorCodeInitials, getInitialsFromName } from "../../../Helpers/Utility";
@@ -8,7 +8,8 @@ import SvgProfileName from "./SvgProfileName";
 const avatarIconObject = {
   chat: SingleChatAvatarImg,
   groupchat: GroupChatAvatarImg,
-  broadcast: broadcast
+  broadcast: broadcast,
+  loginProfile: ImgUserPlaceholder
 };
 
 const ImageComponent = React.memo(

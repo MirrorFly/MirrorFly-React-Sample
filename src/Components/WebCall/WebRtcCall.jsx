@@ -1,11 +1,12 @@
 import React from 'react';
 import "./webRtcCallStyle.scss";
+import "./audio-detection.scss";
 import { connect } from 'react-redux';
 import Logo from '../../assets/images/new-images/logoNew.png';
 import Timer from './Timer';
-import { getFormatPhoneNumber } from '../../Helpers/Utility';
+import { getFormatPhoneNumber, getGridDimensions } from '../../Helpers/Utility';
 import Store from '../../Store';
-import { callConversion, isMuteAudioAction } from '../../Actions/CallAction';
+import { callConversion, callIntermediateScreen, isMuteAudioAction, showConfrence } from '../../Actions/CallAction';
 import SDK from '../SDK';
 import CallControlButtons from './CallControlButtons';
 import BigVideo from './BigVideo';
@@ -13,14 +14,14 @@ import SmallVideo from './SmallVideo';
 import AudioComponent from './Audio';
 import InviteParticipants from './InviteParticipants';
 import { CALL_STATUS_RECONNECT, CALL_STATUS_DISCONNECTED, CALL_STATUS_CONNECTED, CALL_STATUS_HOLD } from '../../Helpers/Call/Constant';
-import { disconnectCallConnection, getMaxUsersInCall, updateCallTypeAfterCallSwitch } from '../../Helpers/Call/Call';
+import { disconnectCallConnection, getCallDisplayDetailsForOnetoManyCall, updateCallTypeAfterCallSwitch } from '../../Helpers/Call/Call';
 import { REACT_APP_XMPP_SOCKET_HOST } from '../../Components/processENV';
 import { muteLocalAudio, muteLocalVideo } from '../../Components/callbacks';
 import { getLocalUserDetails, getUserDetails } from '../../Helpers/Chat/User';
 import { getGroupData } from '../../Helpers/Chat/Group';
 import { hideModal } from '../../Actions/PopUp';
 import _get from "lodash/get"
-import { BackToChat, ClosePopup, IconInvite, IconParticiants } from '../../assets/images';
+import { BackToChat, ClosePopup, IconInvite, IconParticiants, TileView,TileViewRemove } from '../../assets/images';
 import CallParticipantList from './CallParticipantList/index';
 import OutsideClickHandler from 'react-outside-click-handler';
 
@@ -33,6 +34,7 @@ class WebRtcCall extends React.Component {
             invite: false,
             callState: true,
             tileView: false,
+            tileViewStyle: {},
             visible: true,
             localVideoMuted: this.props.localVideoMuted,
             isAllUserReconnecting: false,
@@ -54,11 +56,33 @@ class WebRtcCall extends React.Component {
         this.audio.currentTime = 0;
     }
 
-    componentDidMount() {
-        this.startTimer();
+    handleGridDimensions = () => {
+        
+        const parentElement = document.querySelectorAll('[data-overlap-id="call-thumbnail-view"]');
+        let height = parentElement.length > 0 && window.getComputedStyle(parentElement[0], null).getPropertyValue("height");
+        height = height && height.replace("px", "");
+        const { width, height: newHeight } = getGridDimensions(height, this.props?.remoteStream?.length)
+        
+        this.setState({
+            tileViewStyle: {
+                margin: "5px",
+                width: `calc(${width}% - 10px)`,
+                height: `calc(${newHeight}px - 0px)`
+            }
+        });
     }
 
-    componentDidUpdate(prevProps) {
+    updateWindowDimensions = (event) => {
+        if (this.state.tileView) this.handleGridDimensions();
+    }
+
+    componentDidMount() {
+        this.startTimer();
+        window.addEventListener("resize", this.updateWindowDimensions);
+    }
+
+    componentDidUpdate(prevProps, preState) {
+        
         if (prevProps.localVideoMuted !== this.props.localVideoMuted) {
             this.setState({ localVideoMuted: this.props.localVideoMuted });
         }
@@ -72,6 +96,18 @@ class WebRtcCall extends React.Component {
         }
 
         this.setLocalVideoStatus(prevProps);
+
+        if ((preState.tileView !== this.state.tileView) || (prevProps.showConfrenceDataId !== this.props.showConfrenceDataId)) {
+            if (this.state.tileView) {
+                setTimeout(() => {
+                    this.handleGridDimensions();
+                }, 100);
+            } else {
+                this.setState({
+                    tileViewStyle: {}
+                });
+            }
+        }
     }
 
     componentWillUnmount() {
@@ -156,6 +192,7 @@ class WebRtcCall extends React.Component {
         let remoteAudioMuted = this.props.remoteAudioMuted;
         let remoteVideoMuted = this.props.remoteVideoMuted;
         let volumeLevel = this.props.volumeLevel;
+        let volumeVideo = this.props.volumeLevelVideo;
         let showVoiceDetect = this.props.showVoiceDetect;
         let vcardData = {...this.props.vCardData.data};
         const isThumbnailViewOverlap = this.isThumbnailViewOverlap();
@@ -193,6 +230,7 @@ class WebRtcCall extends React.Component {
                 rosterData.chatType = "chat";
                 stream = this.props.localStream;
                 inverse = true;
+                remoteVideoMuted[fromJid] = this.state.localVideoMuted;
             } else {
                 rosterData = getUserDetails(anotherUser);
                 stream = remoteStreamDatas[keyFound].stream;
@@ -202,7 +240,7 @@ class WebRtcCall extends React.Component {
         
         return (
             <>
-                <BigVideo
+                {!this.state.tileView && <BigVideo
                     key={fromJid}
                     videoMuted={remoteVideoMuted[fromJid] ? remoteVideoMuted[fromJid] : false}
                     audioMuted={remoteAudioMuted[fromJid] ? remoteAudioMuted[fromJid] : false}
@@ -213,29 +251,31 @@ class WebRtcCall extends React.Component {
                     remoteStreamLength={remoteStreamDatas.length}
                     callStatus={callStatus}
                     volumeLevel={volumeLevel}
+                    volumeVideo={volumeVideo}
                     showVoiceDetect={showVoiceDetect}
                     inverse={inverse}
                     handleVideoFullView={this.handleVideoFullView}
                     pinUserJid={this.props.pinUserJid}
                     setPinUser={pinUser}
-                />
+                />}
                 {(callMode === "onetoone") && remoteStream && remoteStream.stream && remoteStream.stream.audio && <AudioComponent stream={remoteStream.stream.audio} id={remoteStream.stream.audio.id} muted={false}/>}
                 <div className={videoWrapperClass}>
                     <div data-overlap-id="call-thumbnail-view" className="RemoteVideo-list">
-                        {(callMode === "onetomany") && this.renderVideoStreamMulti(pinUser)}
+                        {(callMode === "onetomany" || this.state.tileView) && this.renderVideoStreamMulti(pinUser)}
                         {this.renderLocalVideoStream(pinUser)}
                     </div>
                 </div>
             </>
         );
     }
+
     renderVideoStreamMulti = (pinUser) => {
         let pinuser = false;
         let remoteStreams = [...remoteStreamDatas];
         let remoteAudioMuted = this.props.remoteAudioMuted;
         let remoteVideoMuted = this.props.remoteVideoMuted;
         let vcardData = {...this.props.vCardData.data};
-        console.log("remoteStreams => ", remoteStreams);
+        
         if (_get(remoteStreams,"length",0) > 0) {
             return remoteStreams.map((remoteStream, index) => {
                 let id = remoteStream.fromJid;
@@ -270,21 +310,38 @@ class WebRtcCall extends React.Component {
                             pinuser = false;
                         }
                     }
+
+                    let videoMuted = remoteVideoMuted[remoteStream.fromJid] ? remoteVideoMuted[remoteStream.fromJid] : false, 
+                        audioMuted = remoteAudioMuted[remoteStream.fromJid] ? remoteAudioMuted[remoteStream.fromJid] : false;
+                    if (id === vcardData.fromUser && this.state.tileView) {
+                        const { callLogData: { callAudioMute = false } = {} } = this.props;
+                        stream = this.props.localStream;
+                        videoMuted = this.state.localVideoMuted;
+                        audioMuted = callAudioMute;
+                    }
                     
+                    let videoTrackId = stream?.video?.getVideoTracks().length > 0 ? stream?.video?.getVideoTracks()[0].id : "";
+                    let audioTrackId = stream?.audio?.getAudioTracks().length > 0 ? stream?.audio?.getAudioTracks()[0].id : "";
+
                     return (
                         <SmallVideo
-                            key={`remote-user-video-${rosterData.jid}-${index}`}
-                            videoMuted={remoteVideoMuted[remoteStream.fromJid] ? remoteVideoMuted[remoteStream.fromJid] : false}
-                            audioMuted={remoteAudioMuted[remoteStream.fromJid] ? remoteAudioMuted[remoteStream.fromJid] : false}
+                            elKey={`remote-user-video-${fromJid}`}
+                            videoMuted={videoMuted}
+                            audioMuted={audioMuted}
                             stream={stream}
                             rosterData={rosterData}
-                            jid={remoteStream.fromJid}
+                            jid={fromJid}
                             showConfrenceDataId={this.props.showConfrenceDataId}
                             pinUserJid={this.props.pinUserJid}
                             setPinUser={pinuser}
                             callStatus={callStatus}
                             userStatus={remoteStream.status}
                             inverse={false}
+                            usersCount={remoteStreams.length}
+                            tileView={this.state.tileView}
+                            tileViewStyle={this.state.tileViewStyle}
+                            videoTrackId={videoTrackId}
+                            audioTrackId={audioTrackId}
                         />
                     )
                 } else {
@@ -303,9 +360,12 @@ class WebRtcCall extends React.Component {
         let fromUser = vcardData.fromUser;
         fromUser = fromUser.includes(REACT_APP_XMPP_SOCKET_HOST) ? fromUser : fromUser + "@" + REACT_APP_XMPP_SOCKET_HOST;
         const callStatus = this.getCallStatus();
+        let videoTrackId = stream?.video?.getVideoTracks().length > 0 ? stream?.video?.getVideoTracks()[0].id : "";
+        let audioTrackId = stream?.audio?.getAudioTracks().length > 0 ? stream?.audio?.getAudioTracks()[0].id : "";
+
         return (
             <SmallVideo
-                key={`local-user-video-${vcardData.fromuser}`}
+                elKey={`local-user-video-${vcardData.fromUser}`}
                 videoMuted={this.state.localVideoMuted}
                 audioMuted={callAudioMute}
                 stream={stream}
@@ -316,12 +376,18 @@ class WebRtcCall extends React.Component {
                 setPinUser={pinUser}
                 callStatus={callStatus}
                 inverse={true}
+                usersCount={remoteStreamDatas.length}
+                tileView={this.state.tileView}
+                tileViewStyle={this.state.tileViewStyle}
+                videoTrackId={videoTrackId}
+                audioTrackId={audioTrackId}
             />
         )
     }
 
     handleHideCallScreen = e => {
         e.stopPropagation();
+        Store.dispatch(callIntermediateScreen({ show: false }));
         this.props.hideCallScreen();
     }
 
@@ -341,17 +407,17 @@ class WebRtcCall extends React.Component {
         this.setState({ visible: !visible })
     }
 
-    handleAudioMute = (audioMute) => {
+    handleAudioMute = async (audioMute) => {
         const callStatus = this.getCallStatus();
         if(callStatus && (callStatus.toLowerCase() === CALL_STATUS_CONNECTED || callStatus.toLowerCase() === CALL_STATUS_HOLD)){
-            if (audioMute) {
-                SDK.muteAudio(true);
-                muteLocalAudio(true);
-                Store.dispatch(isMuteAudioAction(true));
-            } else {
-                SDK.muteAudio(false);
-                muteLocalAudio(false);
-                Store.dispatch(isMuteAudioAction(false));
+            const audioMuteResult = await SDK.muteAudio(audioMute);
+            if (audioMuteResult?.statusCode === 200) {
+                muteLocalAudio(audioMute);
+                Store.dispatch(isMuteAudioAction(audioMute));
+                Store.dispatch(showConfrence({
+                    ...this.props.showConfrenceData?.data,
+                    localAudioMuted: !audioMute
+                }));
             }
         }
     }
@@ -367,15 +433,15 @@ class WebRtcCall extends React.Component {
                 return;
             }
 
-            if (videoMute) {
-                SDK.muteVideo(true);
-                muteLocalVideo(true);
-                this.setState({ localVideoMuted: true })
-                updateCallTypeAfterCallSwitch(true);
-            } else {
-                SDK.muteVideo(false);
-                muteLocalVideo(false);
-                this.setState({ localVideoMuted: false })
+            const videoMuteResult = await SDK.muteVideo(videoMute);
+            console.log('Call videoMuteResult :>> ', videoMuteResult?.statusCode, this.props.showConfrenceData?.data?.localVideoMuted, videoMute);
+            if (videoMuteResult?.statusCode === 200) {
+                muteLocalVideo(videoMute);
+                this.setState({ localVideoMuted: videoMute })
+                if (videoMute) updateCallTypeAfterCallSwitch(videoMute);
+            } else if (videoMuteResult?.statusCode === 500) {
+                const { data = {} } = this.props.showConfrenceData || {};
+                Store.dispatch(showConfrence({ ...data, videoPermissionDisabled: true }));
             }
         }
 
@@ -476,7 +542,6 @@ class WebRtcCall extends React.Component {
         let vcardData = {...this.props.vCardData.data};
         let remoteAudioMuted = this.props.remoteAudioMuted;
         let remoteVideoMuted = this.props.remoteVideoMuted;
-        console.log(remoteStreamDatas , "remoteStreamDatas")
         const currentUserData = remoteStreamDatas.filter((e) => {
             let id = e.fromJid;
             id = id.includes("@") ? id.split("@")[0] : id;
@@ -520,7 +585,8 @@ class WebRtcCall extends React.Component {
     }
 
     render() {
-        const { callLogData: { callAudioMute = false } = {} } = this.props;
+        const { tileView } = this.state;
+        const { callLogData: { callAudioMute = false } = {}, showConfrenceData: { data: { videoPermissionDisabled = false } = {}} = {} } = this.props;
 
         let { invite, callState} = this.state;
         const callConnectionData = JSON.parse(localStorage.getItem('call_connection_status'))
@@ -544,20 +610,36 @@ class WebRtcCall extends React.Component {
                 let user = callConnectionData.groupId !== undefined && callConnectionData.groupId !== null ? callConnectionData.groupId : callConnectionData.from;
                 if (callConnectionData.groupId) {
                     groupDetails = this.getGroupDetails(user);
+                    rosterData = getUserDetails(largeVideoUserJid);
+                } else {
+                    if (this.props.remoteStream?.length) {
+                        let userList = this.props.remoteStream.map((item, key) =>  item.fromJid);
+                        rosterData = getCallDisplayDetailsForOnetoManyCall(userList);
+                    } else {
+                        rosterData = getUserDetails(largeVideoUserJid);
+                    }
                 }
-                rosterData = getUserDetails(largeVideoUserJid);
             }
             const callStatus = this.getCallStatus(largeVideoUserJid);
+
             return (
                 <>
                     {callState &&
-                        <div className={`CallingScreenWrapper fit-layout group-video-call `} onMouseMove={this.handleMouseMove} onClick={this.hanldeOnClick}>
+                        <div 
+                            className={`CallingScreenWrapper fit-layout ${tileView ? "tileView" : "group-video-call"} `} 
+                            onMouseMove={this.handleMouseMove} 
+                            onClick={this.hanldeOnClick}
+                            id="webrtc-call-screen"
+                            >
                             <div className={this.state.visible ? "subject visible" : "subject"}>
                                 <div style={{visibility:"hidden"}} className="logosm"><img src={Logo} alt="Logo" /></div>
-                                {groupDetails && <span style={{display:"none"}} className="meeting-type-text">
-                                    {groupDetails.displayName ? groupDetails.displayName : getFormatPhoneNumber(callConnectionData.from)}
-                                </span>}
-                                <span className="meeting-type-text">{rosterData.displayName ? rosterData.displayName : getFormatPhoneNumber(callConnectionData.from)}</span>
+                                {groupDetails ? 
+                                    <span className="meeting-type-text">
+                                        {groupDetails.displayName ? groupDetails.displayName : getFormatPhoneNumber(callConnectionData.from)}
+                                    </span>
+                                    :
+                                    <span className="meeting-type-text">{rosterData.displayName ? rosterData.displayName : getFormatPhoneNumber(callConnectionData.from)}</span>
+                                    }
                                 <span className="subject-conference-timer"><Timer callStatus={callStatus} /></span>
                             </div>
                             <div className={this.state.visible ? "optionButton visible" : "optionButton"}>
@@ -567,6 +649,18 @@ class WebRtcCall extends React.Component {
                                     </span>
                                 </div>
                                 <div className="optionBtnGroup">
+                                    <span
+                                        className={`${callStatus && callStatus.toLowerCase() === CALL_STATUS_RECONNECT ? "disabled-btn" : ""}${
+                                            !tileView ? " tileViewRemove " : " tileView "
+                                        } `}
+                                        title="Toggle tile view"
+                                        >
+                                        <i className="tileView" onClick={this.handleTileView}>
+                                            <span className="toggleAnimation"></span>
+                                            {!tileView ? <TileView /> : <TileViewRemove />}
+                                        </i>
+                                    </span>
+
                                     {callStatus && callStatus.toLowerCase() !== CALL_STATUS_DISCONNECTED && remoteStreamDatas.length > 2 && 
                                         <OutsideClickHandler
                                             onOutsideClick={() => {
@@ -598,14 +692,14 @@ class WebRtcCall extends React.Component {
                                     </span>
                                     </OutsideClickHandler>
                                     }
-                                    {callStatus && callStatus.toLowerCase() !== CALL_STATUS_DISCONNECTED  && remoteStreamDatas.length < getMaxUsersInCall() &&
+                                    {callStatus && callStatus.toLowerCase() !== CALL_STATUS_DISCONNECTED &&
                                     <span className={callStatus && callStatus.toLowerCase() === CALL_STATUS_RECONNECT ?
                                          "invitePeople disabled-btn" : "invitePeople"} title="">
                                         <i className="invite" onClick={this.handleInvitePeople}>
                                             <span className="toggleAnimation"></span>
                                             <IconInvite /></i>
                                     </span>                                    
-                                    }
+                                    }   
                                 </div>
                             </div>
 
@@ -623,6 +717,7 @@ class WebRtcCall extends React.Component {
                                     handleVideoMute={this.handleVideoMute}
                                     audioControl={audioControl}
                                     videoControl={videoControl}
+                                    videoPermissionDisabled={videoPermissionDisabled}
                                 />
                             </div>
                             <InviteParticipants remoteStream={this.props.remoteStream} invite={invite} closePopup={this.handleCloseInvitePeople}/>
@@ -641,6 +736,7 @@ const mapStateToProps = state => {
     const pinUserJid = pinUserData && pinUserData.userJid;
     const largeVideoUserJid = pinUserJid || (largeVideoUserData && largeVideoUserData.userJid);
     const volumeLevel = largeVideoUserData && largeVideoUserData.volumeLevelsBasedOnUserJid && largeVideoUserData.volumeLevelsBasedOnUserJid[largeVideoUserJid];
+    const volumeLevelVideo = largeVideoUserData && largeVideoUserData.volumeLevelsBasedOnUserJid && largeVideoUserData.volumeLevelVideo;
     const showVoiceDetect = largeVideoUserData.showVoiceDetect ? largeVideoUserData.showVoiceDetect : false;
     return {
         callConnectionDate: state.callConnectionDate,
@@ -649,6 +745,7 @@ const mapStateToProps = state => {
         pinUserJid,
         volumeLevel,
         showVoiceDetect,
+        volumeLevelVideo,
         popUpData: state.popUpData,
         vCardData: state.vCardData,
         callLogData: state.callLogData

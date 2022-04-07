@@ -1,3 +1,4 @@
+@import '../../../assets/scss/SassMixins.scss';
 @import '../../../assets/scss/mixins.scss';
 
 
@@ -294,7 +295,7 @@
 
 @media (max-width:767px){
   .mediaAttachCamera .camera-popup-visible .cameraview{
-    height: calc(100vh - 2.125em - 4.063em);
+    height: calc(var(--maxParentheight) - 2.125em - 4.063em);
   }
   .mediaAttachCamera .camera-popup-visible .captured-picture .react-html5-camera-photo,.mediaAttachCamera .camera-popup-visible .cameraview .croppie-container
   {

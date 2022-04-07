@@ -83,7 +83,7 @@ class InviteParticipants extends React.Component {
                 let rosterData = {};
                 let user = member.userJid || member.GroupUser || member.username;
                 const userId = user.includes("@") ? user.split('@')[0] : user;
-                if(userId !== this.props?.vCardData?.data?.fromUser  && this.currentCallUsersArray.indexOf(userId) === -1){
+                if(userId !== this.props?.vCardData?.data?.fromUser  && this.currentCallUsersArray.indexOf(userId) === -1 && (member.isFriend || callMode === 'onetomany')){
                     rosterData = {
                         userJid: user
                     }
@@ -93,7 +93,8 @@ class InviteParticipants extends React.Component {
             });
         }
 
-        if(groupMembers.length === 0){
+        const disableParticipantPopup = false;
+        if(groupMembers.length === 0 && disableParticipantPopup){
             toastr.info(emptyMembersMsg)
             return;
         }

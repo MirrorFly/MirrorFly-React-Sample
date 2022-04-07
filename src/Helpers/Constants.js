@@ -74,7 +74,7 @@ export const MIN_HEIGHT_AND = 80;
 export const MIN_OFFSET_WIDTH = 280;
 export const MIN_OFFSET_HEIGHT = 280;
 
-export const MIN_THUMB_WIDTH = 180;
+export const MIN_THUMB_WIDTH = 322;
 
 export const PREVIEW_MEDIA_TYPES = ["image", "video", "audio"];
 export const MEDIA_MESSAGE_TYPES = ["image", "video", "audio", "file"];

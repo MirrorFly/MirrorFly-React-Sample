@@ -212,6 +212,7 @@ class ParticipantPopUp extends Component {
                                                         prepareContactToAdd={this.prepareContactToAdd}
                                                         prepareContactToRemove={this.prepareContactToRemove}
                                                         key={updateJid}
+                                                        roster={contact}
                                                         {...contact}
                                                     />
                                                 )

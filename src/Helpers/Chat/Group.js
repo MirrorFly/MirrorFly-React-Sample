@@ -1,12 +1,10 @@
 import Store from '../../Store';
 import IndexedDb from '../IndexedDb';
-import {encryption} from '../../Components/WebChat/WebChatEncryptDecrypt';
 import { GroupsMemberListAction, GroupsMemberParticipantsListAction } from '../../Actions/GroupsAction';
 import { getUserIdFromJid } from '../Utility';
 const indexedDb = new IndexedDb()
 
 export const setGroupParticipants = (res) => {
-    encryption("group_members_list_data", res);
     Store.dispatch(GroupsMemberListAction(res));
 }
 

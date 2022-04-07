@@ -30,7 +30,7 @@ import LocationComponent from "../Conversation/Templates/Chat/LocationComponent"
 import Modal from "../Common/Modal";
 import { toast } from "react-toastify";
 import moment from "moment";
-import { blockOfflineAction } from "../../../Helpers/Utility";
+import { blockOfflineAction, isCallLink } from "../../../Helpers/Utility";
 
 const StarredMessages = (props = {}) => {
   const [unstarDrop, setUnstarDrop] = useState(false);
@@ -41,7 +41,7 @@ const StarredMessages = (props = {}) => {
   const [starredMessages, setStarredMessages] = useState([]);
 
   useEffect(() => {
-    const sortedData = starData.sort((x, y) => new Date(y.favDate).getTime() - new Date(x.favDate).getTime());
+    const sortedData = starData.sort((x, y) => new Date(y.createdAt).getTime() - new Date(x.createdAt).getTime());
     setStarredMessages(sortedData);
   }, [starData]);
 
@@ -78,8 +78,6 @@ const StarredMessages = (props = {}) => {
     Store.dispatch(RemoveAllStarredMessagesHistory(starredMessages));
   };
 
-  const getParentClass = (data) => (isLocalUser(data.publisherId) ? "starred-own" : "Starred-others");
-
   const getChildClass = (data) => (isLocalUser(data.publisherId) ? "receiver" : "sender");
 
   const singleFileClass = (data) =>
@@ -88,9 +86,9 @@ const StarredMessages = (props = {}) => {
   const singleFileClassLocation = (data) =>
     data.msgType === "location" ? " singleFile location-message image-block" : "";
 
-    const captionFinderClass = (data) =>
+  const captionFinderClass = (data) =>
     ((data.msgType === "image" || data.msgType === "video") && data?.msgBody?.media?.caption !== "") ? " has-caption " : "";
-
+  
   const getProfileElement = (data) => {
     const userDetails = getUserDetails(data.publisherId);
     const iniTail = initialNameHandle(userDetails, userDetails.initialName);
@@ -106,8 +104,9 @@ const StarredMessages = (props = {}) => {
             />
           </span>
           <span className="sender-name">
-            <span className="senderName">{getSenderName(data)}</span> <IconStaredArrow />{" "}
-            <span className="receiverName">{getReceiverName(data)}</span>
+          <span className="receiverName">{getReceiverName(data)}</span>
+             <IconStaredArrow />{" "}
+            <span className="senderName">{getSenderName(data)}</span>
           </span>
         </div>
       </div>
@@ -211,12 +210,13 @@ const StarredMessages = (props = {}) => {
                 {starredMessages.map(
                   (el, i) =>
                     Object.keys(el).length > 0 && (
-                      <li className={`${getParentClass(el)}`} key={el.msgId}>
+                      <li className={`Starred-others`} key={el.msgId}>
                         {getProfileElement(el)}
                         <div
                           className={`${getChildClass(el)}-row ${singleFileClass(el)}  ${singleFileClassLocation(el)} ${captionFinderClass(el)}`}
                         >
-                          <div className={`${getChildClass(el)} ${el.msgType}-message`}>
+                          <div className={`${getChildClass(el)} ${el.msgType}-message 
+                          ${isCallLink(el.msgBody.message)? " meetinglink " : " " }`}>
                             {getMessageElement(el)}
                             {getMessageTimeElement(
                               getMsgStatusEle(el.msgStatus, el.publisherId),

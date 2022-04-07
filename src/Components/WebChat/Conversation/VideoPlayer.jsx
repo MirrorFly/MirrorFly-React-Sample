@@ -41,7 +41,6 @@ export default class VideoPlayer extends React.Component {
         videoElement.addEventListener("play", () => this.props.handlePlay(true));
         videoElement.addEventListener("pause", () => this.props.handlePlay(false));
       }
-
     });
   }
 
@@ -49,6 +48,15 @@ export default class VideoPlayer extends React.Component {
   componentWillUnmount() {
     if (this.player) {
       this.player.dispose();
+      const callElement = document.getElementById("webrtc-call-screen");
+      if (callElement) {
+        const videoElements = callElement.querySelectorAll("video");
+        if (videoElements.length) {
+          videoElements.forEach((el) => {
+            el.play();
+          });
+        }
+      }
     }
   }
 
@@ -85,21 +93,17 @@ export default class VideoPlayer extends React.Component {
   // see https://github.com/videojs/video.js/pull/3856
   render() {
     const { palyStatus = true } = this.state;
-    const { deleteOption = false, msgId, autoPlay, fileType = "", } = this.props;
+    const { deleteOption = false, msgId, autoPlay, fileType = "" } = this.props;
     return (
-      <div
-        data-jest-id={"jest_onClick"}
-        onClick={fileType === "audio" ? () => this._onClick() : null}
-      >
-
-        {fileType === "audio" &&
+      <div data-jest-id={"jest_onClick"} onClick={fileType === "audio" ? () => this._onClick() : null}>
+        {fileType === "audio" && (
           <i className={`AudioDetails ${palyStatus === true ? "default" : ""}`}>
             {this.props.audioType !== "recording" ? <ChatAudioSender2 /> : <ChatAudioRecorder />}
             <span className="audioDuration">{this.props.audioDuration}</span>
-          </i>}
+          </i>
+        )}
 
-        { deleteOption &&
-          <div className="uploadImagePreview"></div>}
+        {deleteOption && <div className="uploadImagePreview"></div>}
         <div style={this.props.fileType === "video" ? this.getStyle() : {}} data-vjs-player>
           <video
             preload="auto"
@@ -110,7 +114,7 @@ export default class VideoPlayer extends React.Component {
             ref={(node) => (this.videoNode = node)}
           ></video>
         </div>
-      </div >
+      </div>
     );
   }
 }

@@ -60,6 +60,7 @@ export const getContactNameFromRoster = (roster) => {
 }
 
 export const initialNameHandle = (roster = {}, name = "") => {
+    if (isLocalUser(roster.fromUser)) return name;
     if (_get(roster, "isFriend", false) !== false || _get(roster, "image", "") !== "") {
         return name;
     }
@@ -159,6 +160,7 @@ export const getUserDetails = (userJid = "") => {
     let vcardData = getLocalUserDetails() || {};
     if (user === vcardData?.fromUser) {
         rosterData.displayName = "You";
+        rosterData.isFriend = true;
         rosterData.image = vcardData.image;
         rosterData.jid = user;
         rosterData.chatType = "chat";

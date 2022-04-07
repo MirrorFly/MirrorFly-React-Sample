@@ -43,9 +43,9 @@ const ContactInfoCheckBox = (props = {}) => {
                     <div className="recentchats">
                         <div className="recent-username-block">
                             <div className="recent-username">
-                                <span className="username">
+                                <div className="username">
                                     <h3 title={contactName}><span>{hightlightText}</span></h3>
-                                </span>
+                                </div>
                             </div>
                         </div>
                         <div className="recent-message-block">

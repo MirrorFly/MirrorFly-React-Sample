@@ -1,4 +1,5 @@
 @import '../../assets/scss/variables.scss';
+@import '../../assets/scss/SassMixins.scss';
 @import '../../assets/scss/mixins.scss';
 .popup-wraper{
   @include flexbox();
@@ -8,6 +9,7 @@
   height: 100vh;
   background:#fff url(../../assets/images/bg-use-here.png) no-repeat 100% 100%;
   background-size: cover;
+  z-index: 1;
 .popup-inner {
     width: 24em;
     padding: 1.563em 1.875em;

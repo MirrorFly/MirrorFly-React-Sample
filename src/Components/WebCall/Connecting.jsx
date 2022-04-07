@@ -3,7 +3,6 @@ import SDK from '../SDK';
 import { connect } from 'react-redux';
 import {showConfrence} from '../../Actions/CallAction';
 import Store from '../../Store';
-import WebChatProfileImg from '../WebChat/Profile/WebChatProfileImg';
 import callLogs from './CallLogs/callLog';
 import NetworkError from './NetworkError/NetworkError'
 import { ReactComponent as BackToChat } from '../../assets/images/webcall/backToChat.svg';
@@ -13,6 +12,7 @@ import  Logo from '../../assets/images/new-images/logoNew.png';
 import  { resetCallData } from '../../Components/callbacks';
 import { getGroupData } from '../../Helpers/Chat/Group';
 import { getUserDetails,initialNameHandle } from '../../Helpers/Chat/User';
+import ProfileImage from '../WebChat/Common/ProfileImage';
 
 let timer;
 
@@ -49,7 +49,6 @@ class Connecting extends Component{
 
     endCall = async () => {
         const callConnectionData = this.props?.callConnectionDate?.data;
-        console.log("call data ending call in the connecting screen");
         SDK.endCall();
         resetCallData();
         callLogs.update(callConnectionData.roomId, {
@@ -81,7 +80,6 @@ class Connecting extends Component{
         rosterData.chatType = "groupchat";
         return rosterData;
     }
-
     render(){
         const  callConnectionData = JSON.parse(localStorage.getItem('call_connection_status'))
         const containerStyle = {
@@ -90,7 +88,7 @@ class Connecting extends Component{
         };
 
         let rosterData = {};
-        let initialName=initialNameHandle(rosterData, rosterData.initialName);
+        
         if(callConnectionData){
             let user = "";
             if(callConnectionData.callMode === "onetoone"){
@@ -115,6 +113,8 @@ class Connecting extends Component{
                 toUser = callConnectionData.from.includes('@') ? callConnectionData.from.split('@')[0] : callConnectionData.from
             }
         }
+        let initialName = initialNameHandle(rosterData, rosterData.initialName);
+        
         return (
                 <div  className="calling-Popup webcall-calling" style={containerStyle}>
                    <div className="optionButton visible">
@@ -131,10 +131,11 @@ class Connecting extends Component{
                             <span className="callerName">{rosterData.displayName ? rosterData.displayName: toUser }</span>
                     </div>
                     <div className="avatar" id="dominantSpeakerAvatar">
-                        <WebChatProfileImg
-                        chatType={chatType}
-                        rostersnap={rosterData.image}
-                        name = {initialName} 
+                        <ProfileImage
+                            name = {initialName}
+                            chatType={chatType}
+                            temporary={false}
+                            imageToken={rosterData.image}
                         />
                     </div>      
                     <CallControlButtons 

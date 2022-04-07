@@ -9,7 +9,11 @@ import { getLocalUserDetails, getUserDetails, getUserInfoForSearch } from "../..
 import ParticipantsBadge from './ParticipantsBadge';
 import { toast } from 'react-toastify';
 import { getMaxUsersInCall } from '../../Helpers/Call/Call';
-import { FloatingCallAudio, FloatingCallVideo } from '../../assets/images';
+import { FloatingCallAudio, FloatingCallVideo, IconCopy, IconLink } from '../../assets/images';
+import SDK from '../SDK';
+import { getCallFullLink } from '../../Helpers/Utility';
+import Store from '../../Store';
+import { callIntermediateScreen } from '../../Actions/CallAction';
 
 let rosterDatas = [];
 
@@ -27,7 +31,9 @@ class ParticipantPopUp extends Component {
             participantToAdd: this.isCallLogModelType ? groupMembers : [],
             errorMesage: '',
             isLoading: true,
-            filteredContacts: []
+            filteredContacts: [],
+            copyToast:false,
+            callLink: ""
         }
         this.timer = 0;
 
@@ -55,7 +61,26 @@ class ParticipantPopUp extends Component {
         this.renderParticpantPopup();
     }
 
+    getCallInfoDetails = async () => {
+        if (this.isInviteModelType) {
+            const { callIntermediateScreen: { data: { link = "" } = {} } = {} } = this.props;
+            let callLink;
+            if (!link) {
+                const roomLink = await SDK.getCallLink();
+                console.log('roomLink :>> ', roomLink);
+                if (roomLink && roomLink.statusCode === 200) {
+                    callLink = roomLink.data
+                }
+            } else {
+                callLink = link;
+            }
+            this.setState({ callLink });
+            Store.dispatch(callIntermediateScreen({ link: callLink }));
+        }
+    }
+
     componentDidMount() {
+        this.getCallInfoDetails();
         this.setState({ isLoading: false })
     }
 
@@ -177,7 +202,7 @@ class ParticipantPopUp extends Component {
         }
         membersCount = membersCount + (currentCallUsersLength || 0);
         if (membersCount > (getMaxUsersInCall() - 1)) {
-            toast.error("Maximum " + getMaxUsersInCall() + " members can be in a call");
+            toast.error("Maximum " + getMaxUsersInCall() + " members allowed in a call");
             return
         }
         if (membersCount <= (getMaxUsersInCall() - 1)) {
@@ -210,18 +235,33 @@ class ParticipantPopUp extends Component {
         return this.isInviteModelType ? 'Invite Participants' : "Group Call"
     };
 
+    handleCopyLink = () => {
+        navigator.clipboard.writeText(getCallFullLink(this.state.callLink));
+        this.setState({
+            copyToast:true
+        })
+        setTimeout(() => {
+            this.setState({
+                copyToast:false
+            })
+        }, 3000);
+    }
+
     render() {
-        const { filteredContacts, searchValue, participantToAdd, errorMesage } = this.state
+        const { filteredContacts, searchValue, participantToAdd, errorMesage,copyToast } = this.state
         const { isLoading } = this.props;
         const { popUpData: { modalProps: { groupName, currentCallUsersLength,callType, closePopup } } } = this.props;
         let BadgeList = this.selectedBadge();
-
+        
         const title = this.isCallLogModelType ? 'Participants' : this.invideModeFun();
         const hideSerachBox = this.isCallLogModelType;
         const hideCheckbox = this.isCallLogModelType;
         const hideBadgeList = this.isCallLogModelType;
         const maxMemberReached = Boolean((participantToAdd.length + (currentCallUsersLength || 0)) >= (getMaxUsersInCall() - 1));
+        const hideCallNow = Boolean((participantToAdd.length + (currentCallUsersLength || 0)) >= (getMaxUsersInCall()));
         const blockedContactArr = this.props.blockedContact.data;
+        const isAllUsersExists = filteredContacts.length === 0 && !searchValue;
+
         return (
             <Fragment>
                 <div className="popup-wrapper">
@@ -235,6 +275,18 @@ class ParticipantPopUp extends Component {
                                 </h5>
                                 {/* <span className="webcallConnet" onClick={ this.addUsersInCall }>Connect</span> */}
                             </div>
+                            {this.state.callLink && <div className={`meetingLinkCopy`}>
+                                <h3 className='meeting_heading'>Call Link</h3>
+                                <div className='meeting_body'>
+                                    <i className='linkIcon'><IconLink/></i>
+                                    <div className='link_desc'>
+                                        <strong className='link_details'>{this.state.callLink}</strong>
+                                    </div>
+                                    <i className='linkCopyIcon' onClick={() => this.handleCopyLink()}>
+                                        <IconCopy/>
+                                    </i>
+                                </div>
+                            </div>}
 
                             {!hideSerachBox && <RecentSearch search={this.searchFilterList} />}
 
@@ -255,6 +307,9 @@ class ParticipantPopUp extends Component {
                                             }
                                             {filteredContacts.length === 0 && searchValue &&
                                                 <span className="searchErrorMsg"><Info /> {NO_SEARCH_CHAT_CONTACT_FOUND}</span>
+                                            }
+                                            {isAllUsersExists &&
+                                                <span className="searchErrorMsg"><Info /> All members of your contacts are already in the call.</span>
                                             }
                                             <li>{errorMesage && <div className="errorMesage"><Info /><span>{errorMesage}</span></div>}</li>
                                             {filteredContacts.map(contact => {
@@ -289,13 +344,17 @@ class ParticipantPopUp extends Component {
                                         </ul>
                                     </div>
                                 }
-
                             </div>
-                            <div className="webcallConnet" onClick={this.state.participantToAdd.length >= 1 ? this.addUsersInCall : ()=>{toast.info("Please select any Participant");}}>
+                            <div className={`webcallConnet ${(isAllUsersExists || hideCallNow) ? "disabled": ""}`} onClick={this.state.participantToAdd.length >= 1 ? this.addUsersInCall : ()=>{toast.info("Please select any Participant");}}>
                                <span className="callBtn"><i>{callType === "audio" ? <FloatingCallAudio /> : <FloatingCallVideo/> }</i>
                                <span>Call now {this.state.participantToAdd.length ? `(${this.state.participantToAdd.length})` : null}</span></span>
                             </div>
                         </div>
+                         {copyToast &&
+                            <div className='copy_toast'>
+                                <span>Call Link Copied</span>
+                            </div>
+                        }
                     </div>
                 </div>
             </Fragment>
@@ -308,7 +367,8 @@ const mapStateToProps = (state, props) => {
     return {
         rosterData: state.rosterData,
         popUpData: state.popUpData,
-        blockedContact: state.blockedContact
+        blockedContact: state.blockedContact,
+        callIntermediateScreen: state.callIntermediateScreen
     }
 }
 

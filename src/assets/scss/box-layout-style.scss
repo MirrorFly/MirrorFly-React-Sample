@@ -1,0 +1,57 @@
+@media screen and (min-width : 1441px) {
+    .boxLayout {
+        padding: var(--parent-gap) 0;
+        background: #D8DBE3 url(../images/box-layout/bg-bubble.svg) center no-repeat;
+        background-size: 86%;
+
+        .containerLayout {
+            max-width: 1440px;
+            margin: 0 auto;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        &::before {
+            width: 100%;
+            height: var(--maxParentheight);
+            max-width: 1440px;
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 16px;
+            @include box-shadow(0px 2px 5px rgba(0, 0, 0, 0.06));
+        }
+
+        .mediaAttachCamera {
+            width: 100%;
+            margin-top: 0px;
+        }
+
+        .chat-conversion .chatconversation-container footer .message-area-container .message-area .intraction.icon i.attachment.open:before {
+            display: none;
+        }
+
+        .mediaAttachCamera .camera-popup-visible .cameraview {
+            height: calc(80vh - 2.5rem);
+        }
+
+        .mediaAttachmemtUpload .carousel.carousel-slider {
+            height: calc(100vh - 110px);
+        }
+
+        .msg-content.bg-overlay {
+            &::before {
+                position: absolute;
+                content: '';
+                left: 0;
+                right: 0;
+                bottom: 0;
+                top: 0;
+                background: rgba(226, 233, 240, 0.7);
+                z-index: 1;
+            }
+        }
+    }
+}

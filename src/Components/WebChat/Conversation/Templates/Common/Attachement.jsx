@@ -16,9 +16,12 @@ export default class Attachement extends Component {
     };
     document.addEventListener("keydown", this.handleOnKeyPress, false);
   }
-
+componentDidMount () {
+  document.getElementById("msgContent").classList.add("bg-overlay");
+}
   componentWillUnmount() {
     document.removeEventListener("keydown", this.handleOnKeyPress, false);
+    document.getElementById("msgContent").classList.remove("bg-overlay");
   }
 
   handleOnKeyPress = (event = {}) => {

@@ -54,7 +54,10 @@ class WebChatMediaPreview extends React.Component {
       isPlaying: false,
       palyStatus: true,
       NeedDevelopment: false,
-      favouriteMsgs: {}
+      favouriteMsgs: {},
+      starStatusCheck: false,
+      allowInitialCall: false,
+      seletedMsgId: "",
     };
     this.tempSelectedItem = 0;
     this.localDb = new IndexedDb();
@@ -116,7 +119,7 @@ class WebChatMediaPreview extends React.Component {
                           <div className="tools zoomTools">
                             <button onClick={zoomIn}>
                               <ZoomIn />
-                         
+
                             </button>
                             <button onClick={zoomOut}>
                               <ZoomOut />
@@ -148,8 +151,8 @@ class WebChatMediaPreview extends React.Component {
                     <p className="legend document-name">{`${fileName} , ${fileSize}`}</p>
                   </div>
                 ) : (
-                  ""
-                )
+                    ""
+                  )
             };
             break;
 
@@ -202,8 +205,8 @@ class WebChatMediaPreview extends React.Component {
                       {caption}
                     </p>
                   ) : (
-                    ""
-                  )}
+                      ""
+                    )}
                 </div>
               )
             };
@@ -319,6 +322,13 @@ class WebChatMediaPreview extends React.Component {
   };
 
   handleMediaOnChange = (index, item) => {
+    const dataMsgIdValue = item?.props?.id || "";
+    const removeLastIndexValue = dataMsgIdValue.slice(0, -1);
+    if (removeLastIndexValue) {
+      const { starredMessages: { data = [] } = {} } = this.props;
+      const checkInitalStar = data.some((ele) => ele.msgId === removeLastIndexValue);
+      this.setState({ starStatusCheck: checkInitalStar, seletedMsgId: removeLastIndexValue })
+    }
     this.tempSelectedItem = index;
     // Load Next Pagination on Media Slide/Selection
     // And Also if its has Load More i.e. If the Previous "Load More Media" has Data
@@ -406,7 +416,23 @@ class WebChatMediaPreview extends React.Component {
     } else this.handleGetMedia();
   }
 
+  initialCall = () => {
+    const { mediaList = [], allowInitialCall = false, selectedItem = 0 } = this.state;
+    const { starredMessages: { data = [] } = {} } = this.props;
+    if (mediaList.length > 0 && !allowInitialCall) {
+      const checkInitalStar = data.some((ele) => ele.msgId === mediaList[selectedItem].msgId)
+      this.setState(
+        {
+          allowInitialCall: true,
+          starStatusCheck: checkInitalStar,
+          seletedMsgId: mediaList[0].msgId,
+        })
+    }
+  };
+
   componentDidUpdate(prevProps, prevState) {
+    this.initialCall();
+
     if (prevProps.messageData.id !== this.props.messageData.id) {
       if (
         this.props.messageData.data &&
@@ -515,7 +541,7 @@ class WebChatMediaPreview extends React.Component {
 
   getSelectedMsgObj = () => {
     if (this.tempSelectedItem > -1 && this.state.mediaList.length > 0) {
-      return this.state.mediaList[this.tempSelectedItem];
+      return this.state.mediaList[this.tempSelectedItem] || {};
     }
     return {};
   };
@@ -550,22 +576,18 @@ class WebChatMediaPreview extends React.Component {
     return 0;
   };
 
-  handleStarMessage = async (isFavourite) => {
-    const msgId = this.getSelectedMsgId();
-    this.setState((prevState) => ({
-      favouriteMsgs: {
-        ...prevState.favouriteMsgs,
-        [msgId]: isFavourite ? 0 : 1
-      }
-    }));
-    SDK.updateFavouriteStatus(formatUserIdToJid(this.props.jid), [msgId], !isFavourite);
+  handleStarMessage = async () => {
+    const { starStatusCheck = false, seletedMsgId = "" } = this.state;
+    SDK.updateFavouriteStatus(formatUserIdToJid(this.props.jid), [seletedMsgId], !starStatusCheck);
+    this.setState({ starStatusCheck: !starStatusCheck })
   };
 
   render() {
-    const { previewData, selectedItem } = this.state;
-    const selectedFavStatus = this.getSelectedFavouriteStatus();
+    const { previewData, selectedItem, starStatusCheck = false } = this.state;
+
     return (
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense
+        fallback={<div>Loading...</div>}>
         <Fragment>
           <div>
             <div
@@ -581,9 +603,20 @@ class WebChatMediaPreview extends React.Component {
                     </i>
                   </li>
 
-                  <li onClick={() => this.handleStarMessage(selectedFavStatus)}>
-                    <i className="icon-star" title={selectedFavStatus === 0 ? "Star" : "Unstar"}>
-                      {selectedFavStatus === 0 ? <PreviewStar fill="#fff" /> : <PreviewStarActive />}
+                  <li
+                    onClick={() => this.handleStarMessage()}>
+                    <i
+                      className="icon-star"
+                      title={starStatusCheck === true ? "Star" : "Unstar"}
+                    >
+                      <PreviewStar fill="#fff"
+                        id={"starFillId"}
+                        style={{ display: starStatusCheck ? "none" : "inline-block" }}
+                      />
+                      <PreviewStarActive
+                        id={"starFillId"}
+                        style={{ display: starStatusCheck ? "inline-block" : "none" }}
+                      />
                     </i>
                   </li>
 
@@ -608,7 +641,6 @@ class WebChatMediaPreview extends React.Component {
                   </li>
                 </ul>
               </div>
-
               {previewData.length && (
                 <Carousel
                   key={this.state.mediaList[0].msgId}
@@ -635,7 +667,8 @@ class WebChatMediaPreview extends React.Component {
 
 const mapStateToProps = (state) => {
   return {
-    messageData: state.messageData
+    messageData: state.messageData,
+    starredMessages: state.starredMessages,
   };
 };
 

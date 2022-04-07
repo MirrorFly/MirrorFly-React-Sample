@@ -2,6 +2,19 @@
   "name": "mirrorfly-webchat",
   "version": "0.1.0",
   "private": true,
+  "scripts": {
+    "start": "env-cmd -f .env.development react-scripts start",
+    "start:dev": "env-cmd -f .env.dev react-scripts start",
+    "start:qa": "env-cmd -f .env.qa react-scripts start",
+    "start:uat": "env-cmd -f .env.uat react-scripts start",
+    "start:prod": "env-cmd -f .env.prod react-scripts start",
+    "start:sandbox": "env-cmd -f .env.prod react-scripts start",
+    "build": "react-scripts build",
+    "eject": "react-scripts eject",
+    "test": "npm run test:codeCoverage  -- --coverage --watchAll=false",
+    "test:coverage": "react-scripts test '$FILE'",
+    "test:codeCoverage": "react-scripts test"
+  },
   "dependencies": {
     "@loadable/component": "^5.12.0",
     "@testing-library/jest-dom": "^4.2.4",
@@ -10,6 +23,7 @@
     "croppie": "^2.6.5",
     "emoji-mart": "^2.11.2",
     "env-cmd": "^10.1.0",
+    "firebase": "^8.10.0",
     "google-libphonenumber": "^3.2.10",
     "history": "^4.10.1",
     "js-levenshtein": "^1.1.6",
@@ -27,6 +41,7 @@
     "react-bootstrap-typeahead": "^3.4.7",
     "react-component-caching": "^1.1.1",
     "react-dom": "^16.13.1",
+    "react-error-overlay": "^6.0.9",
     "react-fast-compare": "^2.0.4",
     "react-file-viewer": "^1.2.1",
     "react-h5-audio-player": "^2.4.2",
@@ -55,15 +70,6 @@
     "sync-request": "^6.1.0",
     "toastr": "^2.1.4",
     "uuid": "^3.4.0"
-  },
-  "scripts": {
-    "start": "react-scripts start",
-    "start:sandbox": "env-cmd -f .env.uat react-scripts start",
-    "build": "react-scripts build",
-    "eject": "react-scripts eject",
-    "test": "npm run test:codeCoverage  -- --coverage --watchAll=false",
-    "test:coverage": "react-scripts test '$FILE'",
-    "test:codeCoverage": "react-scripts test"
   },
   "eslintConfig": {
     "extends": "react-app"

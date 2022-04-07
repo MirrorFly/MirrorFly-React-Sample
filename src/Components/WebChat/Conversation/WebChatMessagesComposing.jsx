@@ -19,7 +19,7 @@ import { setCaretPosition } from "../../../Helpers/Chat/ContentEditableEle";
 import Camera from "../Camera";
 import { getCameraPermission } from "./Templates/Common/Media";
 import { TYPE_DELAY_TIME } from "../../../Helpers/Constants";
-import { blockOfflineMsgAction } from "../../../Helpers/Utility";
+import { blockOfflineMsgAction, isBoxedLayoutEnabled } from "../../../Helpers/Utility";
 import { get as _get } from "lodash";
 import Store from "../../../Store";
 import { UpdateTypedMessage } from "../../../Actions/ChatHistory";
@@ -223,8 +223,8 @@ class WebChatMessagesComposing extends Component {
     const showEmoji = this.state.showEmoji;
     this.setState(
       {
-        showEmoji: false,
         typingMessage: "",
+        showEmoji: false,
         showPreview: false,
         showAttachement: false
       },
@@ -435,6 +435,41 @@ class WebChatMessagesComposing extends Component {
     return { autoReplay: autoReplay, autoMsgfind: replyMessages };
   };
 
+  renderCameraPopup = () => {
+    return(
+        <div className="camera-container mediaAttachCamera">
+          <div className="camera-popup">
+            <h4>{PERMISSION_DENIED}</h4>
+            <i>
+              <CameraIcon />
+            </i>
+            <p>{CAMERA_PERMISSION_DENIED}</p>
+            <div className="popup-controls">
+              <button
+                type="button"
+                className="btn-okay"
+                onClick={(e) => this.handleCameraPopupClose(e)}
+                name="btn-cancel"
+              >
+                {"Okay"}
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+   };
+
+   renderCameraCapture = () => {
+     return(
+      <Camera
+      stopCameraPermissionTracks={this.stopCameraPermissionTracks}
+      onClickClose={this.closeCamera}
+      cropEnabled={false}
+      onSuccess={this.handleCameraTakenFile}
+    />
+     );
+   };
+
   render() {
     const {
       selectedSlide,
@@ -478,35 +513,34 @@ class WebChatMessagesComposing extends Component {
         )}
 
         {showCamera && (
-          <Camera
-            stopCameraPermissionTracks={this.stopCameraPermissionTracks}
-            onClickClose={this.closeCamera}
-            cropEnabled={false}
-            onSuccess={this.handleCameraTakenFile}
-          />
+          <>
+          {isBoxedLayoutEnabled() ?
+          <>
+            <Modal containerId="container">
+              {this.renderCameraCapture()}
+          </Modal>
+          </>
+          :
+          <>
+          {this.renderCameraCapture()}
+          </>
+        }
+        </>
         )}
 
         {cameraPermission === 2 && (
-          <div className="camera-container mediaAttachCamera">
-            <div className="camera-popup">
-              <h4>{PERMISSION_DENIED}</h4>
-              <i>
-                <CameraIcon />
-              </i>
-              <p>{CAMERA_PERMISSION_DENIED}</p>
-              <div className="popup-controls">
-                <button
-                  type="button"
-                  className="btn-okay"
-                  onClick={(e) => this.handleCameraPopupClose(e)}
-                  name="btn-cancel"
-                >
-                  {"Okay"}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+          <>
+           {isBoxedLayoutEnabled() ?
+            <Modal containerId="container">
+              {this.renderCameraPopup()}
+            </Modal>
+          :
+          <>
+            {this.renderCameraPopup()}
+          </>
+        }
+      </>
+    )}
 
         {showPreview && (
           <Modal containerId="container">
@@ -557,7 +591,7 @@ class WebChatMessagesComposing extends Component {
               jid={this.props.jid}
               handleSendMediaMsg={this.handleSendMediaMsg}
               recordingStatus={this.recordingStatus}
-              avoidRecord = {this.props.avoidRecord}
+              avoidRecord={this.props.avoidRecord}
             />
           )}
           {this.isTypingMessageHasData() && (

@@ -1,6 +1,5 @@
 import { contactWhoBlockedMeAction } from '../../Actions/BlockAction';
 import Store, { getStoreState } from '../../Store';
-import { encryption } from '../../Components/WebChat/WebChatEncryptDecrypt';
 import { formatUserIdToJid } from './User';
 
 /**
@@ -11,7 +10,6 @@ export const formatToArrayofJid = (dataArr) => {
 }
 
 export const setContactWhoBleckedMe = (data) => {
-    encryption('blockuserlist_data', data);
     Store.dispatch(contactWhoBlockedMeAction(data));
 }
 

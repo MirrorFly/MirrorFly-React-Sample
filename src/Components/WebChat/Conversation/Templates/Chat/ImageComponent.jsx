@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import ProgressLoader from "../../ProgressLoader";
 import IndexedDb from "../../../../../Helpers/IndexedDb";
 import Translate from "./Translate";
-import { captionLink, getDbInstanceName, getThumbBase64URL } from "../../../../../Helpers/Utility";
+import { captionLink, getDbInstanceName, getThumbBase64URL, isBlobUrl } from "../../../../../Helpers/Utility";
 
 const ImageComponent = (props = {}) => {
   const {
@@ -20,7 +20,7 @@ const ImageComponent = (props = {}) => {
     msgId = "",
     msgBody: {
       translatedMessage = "",
-      message_type ="",
+      message_type = "",
       media: { caption = "", file_url = "", thumb_image = "", webWidth, webHeight } = {}
     } = {}
   } = messageObject;
@@ -48,9 +48,13 @@ const ImageComponent = (props = {}) => {
 
   useEffect(() => {
     if (message_type === "image" && file_url) {
-      localDb.getImageByKey(file_url, getDbInstanceName("image")).then((blob) => {
-        setImageSource(window.URL.createObjectURL(blob));
-      });
+      if (isBlobUrl(file_url)) {
+        setImageSource(file_url);
+      } else {
+        localDb.getImageByKey(file_url, getDbInstanceName("image")).then((blob) => {
+          setImageSource(window.URL.createObjectURL(blob));
+        });
+      }
     }
   }, [file_url, message_type]);
 

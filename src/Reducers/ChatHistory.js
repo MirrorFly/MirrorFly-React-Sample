@@ -11,7 +11,8 @@ import {
   RETRY_MEDIA_UPLOAD,
   UPDATE_FAVOURITE_STATUS,
   REMOVE_ALL_FAVOURITE_STATUS,
-  TRANSLATE_MESSAGE
+  TRANSLATE_MESSAGE,
+  CLEAR_ALL_CHAT
 } from "../Actions/Constants";
 import {
   getChatHistoryData,
@@ -98,6 +99,15 @@ export function ChatConversationHistoryReducer(state = initialState, action = {}
               messages: {}
             }
           }
+        }
+      };
+
+    case CLEAR_ALL_CHAT:
+      return {
+        ...state,
+        ...{
+          id: id,
+          data: {}
         }
       };
 

@@ -12,21 +12,24 @@ window.addEventListener("DOMContentLoaded", function() {
  });
 window.onbeforeunload = function() {
     sessionStorage.removeItem("isLogout");
-    const  callConnectionData = JSON.parse(localStorage.getItem('call_connection_status'))
-    if(callConnectionData && callConnectionData.from){
-      let vcardData = getLocalUserDetails();
-      let userJid = callConnectionData.userJid ? callConnectionData.userJid : callConnectionData.from;
-      userJid = userJid.includes("@") ? userJid.split('@')[0] : userJid;
-      if (userJid === vcardData.fromUser){
-        console.log("call data ending call in the browser refresh");
-        SDK.endCall();
+    if (localStorage.getItem("sessionId") !== sessionStorage.getItem("sessionId")) {
+      const  callConnectionData = JSON.parse(localStorage.getItem('call_connection_status'))
+      if(callConnectionData && callConnectionData.from){
+        let vcardData = getLocalUserDetails();
+        let userJid = callConnectionData.userJid ? callConnectionData.userJid : callConnectionData.from;
+        userJid = userJid.includes("@") ? userJid.split('@')[0] : userJid;
+        if (userJid === vcardData.fromUser){
+          console.log("call data ending call in the browser refresh");
+          SDK.endCall();
+        }
       }
+      localStorage.removeItem('roomName');
+      localStorage.removeItem('callType');
+      localStorage.removeItem('call_connection_status');
+      localStorage.removeItem('connecting');
+      localStorage.setItem('callingComponent',false);
     }
-    localStorage.removeItem('roomName');
-    localStorage.removeItem('callType');
-    localStorage.removeItem('call_connection_status');
-    localStorage.removeItem('connecting');
-    localStorage.setItem('callingComponent',false);
+
   };
 
 let ProviderComponent = React.lazy(() => import('./Provider/ProviderComponent'));

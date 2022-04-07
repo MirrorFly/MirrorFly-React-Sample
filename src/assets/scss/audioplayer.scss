@@ -1,5 +1,6 @@
-@import "mixins.scss";
+@import './SassMixins.scss';
 @import "variables.scss";
+@import "mixins.scss";
 
 //Sender audio design start
 .audio-message{
@@ -12,7 +13,6 @@
       }
     .audio-message-container{
         border-radius: 0.5625em;
-        background-color:#efefef;
         padding: 0.525em .15em 0.525em 0.475em;
         @include flexbox();
         @include align-items(center);
@@ -55,7 +55,7 @@
                     background-color: #C9CACB;
                 }
                 .rhap_progress-indicator,.rhap_progress-filled{
-                    background-color: #4879F9;
+                    background-color: #3f95fb;
                 }
                 .rhap_progress-indicator{
                     width: 0.5em;
@@ -178,11 +178,11 @@ margin-top: 0 !important;
         color: #fff !important;
     }
     .audio-message-container{
-        background-color:#154AD4;
+        background-color:transparent;
         i.audio{
             background-color: #fff;
             svg{
-                color:#3464E3;
+                color:#3f95fb;
             }
         }
     }

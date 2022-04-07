@@ -1,0 +1,24 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1318" height="506" viewBox="0 0 1318 506">
+  <defs>
+    <clipPath id="clip-path">
+      <rect id="Rectangle_7794" data-name="Rectangle 7794" width="259" height="230" transform="translate(0 205)" fill="#fff" stroke="#707070" stroke-width="1"/>
+    </clipPath>
+  </defs>
+  <g id="Group_30830" data-name="Group 30830" transform="translate(0 -67)">
+    <g id="Mask_Group_162" data-name="Mask Group 162" clip-path="url(#clip-path)">
+      <g id="video-camera-fill" transform="translate(-103.09 205)" opacity="0.14">
+        <path id="Path_13754" data-name="Path 13754" d="M261.745,112.415v145a24.2,24.2,0,0,1-24.166,24.166H68.416A60.485,60.485,0,0,1,8,221.163v-145A24.194,24.194,0,0,1,32.166,52H201.33A60.485,60.485,0,0,1,261.745,112.415Zm102.73-28.575a12.088,12.088,0,0,0-12.059-.041L292,118.323a12.083,12.083,0,0,0-6.089,10.491v75.95A12.083,12.083,0,0,0,292,215.256l60.415,34.523a12.083,12.083,0,0,0,18.077-10.492v-145a12.08,12.08,0,0,0-6.019-10.45Z" transform="translate(-8 -52)" fill="#b3ceee"/>
+      </g>
+    </g>
+    <g id="Group_16603" data-name="Group 16603" transform="translate(23 22)">
+      <circle id="Ellipse_1630" data-name="Ellipse 1630" cx="18" cy="18" r="18" transform="translate(87 81)" fill="#f4f8fd"/>
+      <circle id="Ellipse_1637" data-name="Ellipse 1637" cx="18" cy="18" r="18" transform="translate(1250 515)" fill="#f4f8fd"/>
+      <circle id="Ellipse_1633" data-name="Ellipse 1633" cx="18" cy="18" r="18" transform="translate(41 108)" fill="#f4f8fd"/>
+      <circle id="Ellipse_1634" data-name="Ellipse 1634" cx="9" cy="9" r="9" transform="translate(124 146)" fill="#f4f8fd"/>
+      <circle id="Ellipse_1632" data-name="Ellipse 1632" cx="27" cy="27" r="27" transform="translate(26 45)" fill="#f4f8fd"/>
+      <circle id="Ellipse_1631" data-name="Ellipse 1631" cx="9" cy="9" r="9" transform="translate(114 47)" fill="#f4f8fd"/>
+      <circle id="Ellipse_1638" data-name="Ellipse 1638" cx="9" cy="9" r="9" transform="translate(1277 481)" fill="#f4f8fd"/>
+    </g>
+  </g>
+</svg>

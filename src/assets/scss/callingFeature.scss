@@ -1,4 +1,5 @@
 @import './variables.scss';
+@import './SassMixins.scss';
 @import './mixins.scss';
 
 .calling-Popup {
@@ -361,6 +362,10 @@
 				}
 			}
 		}
+		&.disabled{
+			pointer-events: none;
+			background-color: #3BA34C;
+		}
 		}
 		// header style
 		.popup-container-header{
@@ -467,17 +472,17 @@
 							 
 				div {
 				  display: flex;
-				  justify-content: centerPrabhu M;
+				  justify-content: center;
 				  align-items: center;
 				  max-width: 9.375em;
 				  .badgeImg {
 					min-width: 14px;
 					width: 14px;
 					height: 14px;
-					display: inline-block;
 					line-height: 14px;
 					overflow: hidden;
 					border-radius: 50%;
+					display: none;
 					img{
 						overflow: hidden;
 					border-radius: 50%;
@@ -513,6 +518,109 @@
 	  }
 	  @include chat-list-li-blocked;
 		}
+		.meetingLinkCopy{
+			padding: 0.9375em 1.1em 0.3125em;
+			--clr-meeting-dark:#181818;
+			--clr-meeting-lite:#767676;
+			.meeting_heading{
+				font: normal normal 0.875rem/120% var(--semibold);
+				color: var(--clr-meeting-dark);
+				padding-bottom: 0.625em;
+			}
+			.meeting_body{
+				height: 3.125em;
+				@include flexbox();
+				@include justify-content(space-between);
+				@include align-items(center);
+				.linkIcon{
+					cursor: default;
+					border-radius: 50%;
+					width: 3.125em;
+					height: 3.125em;
+					background: #3276E263;
+					color: var(--clr-meeting-dark);
+					margin-right: 0.875em;
+					@include flexbox();
+					@include justify-content(center);
+					@include align-items(center);
+					svg{
+						width: 1em;
+						height: auto;
+					}
+				}
+				.link_desc{
+					@include flex(1 1 auto);
+					@include flexbox();
+					@include flex-direction(column);
+					.link_details{
+						font: normal normal 0.875rem/120% var(--semibold);
+						letter-spacing: 0px;
+						color: var(--clr-meeting);
+						margin-bottom: 0.25em;
+					}
+					.link_created{
+						font: normal normal 0.75rem/120% var(--regular);
+						letter-spacing: 0px;
+						color: var(--clr-meeting-lite);
+					}
+				}
+				.linkCopyIcon{
+					transition: 200ms linear;
+					&:hover{
+						transition: 200ms linear;
+						svg path{
+							fill: $primary;
+							transition: 200ms linear;
+						}
+					}
+					&:active{
+						svg path{
+							fill: $primary-dark;
+							transition: 200ms linear;
+						}
+					}
+				}
+			}
+			&.disabled{
+				.meeting_body{
+					position: relative;
+					pointer-events: none;
+					&:before{
+						content: "";
+						position: absolute;
+						width: 100%;
+						height: 100%;
+						left: 0;
+						top: 0;
+						background: #fff;
+						opacity: 0.5;
+					}
+					.linkIcon{
+						pointer-events: none;
+					}
+				}
+			}
+		}
+		.copy_toast{
+			padding: 0.1875em 0.625em;
+			position: absolute;
+			left: 50%;
+			top: 50%;
+			background: #e0e0e0;
+			transform: translate(-50%, -50%);
+			border-radius: 0.8125em;
+			span{
+			font: normal normal 0.875rem/120% var(--medium);
+			letter-spacing: 0.24px;
+			color: #565656;
+			}
+		}
+		.popup-body{
+			min-height: auto;
+			.searchErrorMsg{
+				justify-content: center;
+			}
+		}
 	  }
 	}
 }// End Group call popup design styles
@@ -529,6 +637,34 @@
 	background: #000000b5;
 	border-radius: 0px;
 	overflow: hidden;
+	.avatar {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		flex-direction: column;
+		object-fit: cover;
+		object-position: center;
+		position: absolute;
+		left: 50%;
+		top: 40%;
+		transform: translate(-50%, -60%);
+		border-radius: 50%;
+		height: 9.375em;
+    	width: 9.375em;
+		.profile-image {
+			height: 9.375em;
+    	width: 9.375em;
+		img{
+			background: linear-gradient(#152134, #0D2852, #152134) no-repeat;
+			border-radius: 50%;
+			height: 9.375em;
+    		width: 9.375em;
+			max-width: 200px;
+			max-height: 200px;
+			z-index: 2;
+		}
+		}
+	}
 	.svgProfile{
 		width: 9.375em;
 		height: 9.375em;
@@ -967,4 +1103,11 @@
 		margin-top: 2.3em;
 }
 }
+}
+.call-state-busy{
+	color: #F43753;
+}
+.call-status {
+	font: normal normal 0.875rem/1rem var(--semibold);
+	letter-spacing: 0px;
 }

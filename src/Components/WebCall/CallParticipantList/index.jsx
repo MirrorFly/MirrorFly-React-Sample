@@ -38,7 +38,7 @@ class CallParticipantList extends React.Component  {
             return userStatusText === CALL_STATUS_RINGING || userStatusText === CALL_STATUS_CONNECTING ||  userStatusText === CALL_STATUS_RECONNECT || userStatusText === CALL_STATUS_CALLING ? true : false;
         }
         return (            
-            <li>
+            <li key={this.props.roster?.userId}>
                 <div>
                     <ProfileImage
                         name = {this.props.initialName}

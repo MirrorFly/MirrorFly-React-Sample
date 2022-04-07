@@ -137,7 +137,7 @@ class WebChatConversationHistory extends Component {
         this.requestChatMessages(chatType);
       } else {
         updateMsgSeenStatus();
-        this.setState({ jid: chatId, loaderStatus: false });
+        this.setState({ jid: chatId, loaderStatus: false, forwardOption: false });
       }
     }
   }
@@ -963,6 +963,7 @@ class WebChatConversationHistory extends Component {
                 onScrolled={this.onScrolled}
                 scrollToBottom={this.scrollToBottom}
                 handleTranslateLanguage = {this.handleTranslateLanguage}
+                handleShowCallScreen={this.props.handleShowCallScreen}
               />
             )}
 

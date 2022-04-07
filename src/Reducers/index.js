@@ -51,6 +51,7 @@ import { UpdateMediaUploadStateReducer } from "./Media";
 import { StarredMessagesReducer } from "./StarredReducer";
 import { TranslateLanguage } from "./TranslateLanguage";
 import { CommonDataReducer } from "./CommonReducer";
+import { callIntermediateScreenReducer } from "./CallIntermediateScreen";
 
 export default combineReducers({
   TranslateLanguage:TranslateLanguage,
@@ -103,5 +104,6 @@ export default combineReducers({
   mediaUploadData: UpdateMediaUploadStateReducer,
   starredMessages: StarredMessagesReducer,
   webLocalStorageSetting : webLocalStorageSettingReducer,
-  commonData: CommonDataReducer
+  commonData: CommonDataReducer,
+  callIntermediateScreen: callIntermediateScreenReducer
 });

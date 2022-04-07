@@ -319,7 +319,7 @@
     min-width: 190px;
 
     .sender-name {
-      font-size: 0.63rem;
+      font-size: .75rem;
       font-family: $semibold;
       letter-spacing: 0.11px;
       color: $clr-send-document-message;
@@ -328,7 +328,7 @@
       overflow: hidden;
       text-overflow: ellipsis;
       width: 100%;
-      margin-left: 0.125em;
+      margin-left: 3px;
     }
     .image-caption {
       padding: 0 0.25em;
@@ -338,7 +338,6 @@
       margin: 0.1875em;
       position: relative;
       padding: 0.3em 0.3em 0.3em 0.250em;
-      background-color: $bgc-send-document-message-block;
       @include border-radius(0.5625em);
       @include flexbox();
       @include align-items(center);
@@ -380,13 +379,11 @@
       font-family: $light;
       color: $clr-send-document-message;
       margin: 0 1em 0 0.5em;
-      // padding-right: 2em;
       width: 100%;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
       cursor: pointer;
-      // text-transform: lowercase;
     }
   }
 
@@ -398,7 +395,7 @@
       @extend .msg-inner;
       @include border-radius(0.313em);
       color: $white;
-      background-color: $primary;
+      background-color: #2698F9;
       .message-text {
         color: $white;
         @extend .msg-inner-text;
@@ -572,7 +569,7 @@
       }
       .sendingFailed{
         left:auto;
-        right: -1.8rem;
+        right: -1.5rem;
       }
     }
     + .sender-row {
@@ -609,7 +606,6 @@
         position: relative;
         padding: 0.938em;
         @include flexbox();
-        // background-color: #3464e3;
         @include border-radius(0.313em);
         .message-time{
           bottom: 0.4em;
@@ -700,9 +696,7 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        // padding-right: 2em;
         cursor: pointer;
-        // text-transform: lowercase;
       }
     }
     .file-caption{
@@ -755,7 +749,6 @@
           }
         }
         .audio-icon {
-          // background-color: $white !important;
           svg {
             path {
               fill: #fff !important;
@@ -771,7 +764,6 @@
       cursor: pointer;
       @include flexbox();
       background: $bgc-reply-block-container;
-      // padding: 0.375em;
       overflow: hidden;
       @include border-radius(0.313em);
       @include justify-content(space-between);
@@ -780,16 +772,14 @@
         padding: 0.375em;
         width: calc(100%) !important;
         min-width: 100px;
-        // height: 34px;
         &.reply-text {
           width: 100%;
         }
         .sender-name {
           width: 100%;
           display: block;
-          font-size: .63rem;
+          font-size: .75rem;
           font-family: $semibold;
-          // margin-bottom: 0.313em;
           text-overflow: ellipsis;
           overflow: hidden;
           white-space: nowrap;
@@ -833,16 +823,6 @@
           height: 10px;
           
         }
-        // .AudioMessage:before{
-        //   content:'';
-        //   display: inline-block;
-        //   vertical-align: text-top;
-        //   margin-right:6px;
-        //   background: url(../../assets/images/reply-icons/audioMessage.svg) no-repeat;
-        //   background-size:contain;
-        //   width: 12px;
-        //   height: 13px;
-        // }
         .ReplyContact:before{
           content:'';
           display: inline-block;
@@ -902,7 +882,6 @@
               width: 2.25em;
             }
             &.audio-icon {
-              // background-color: $bgc-rep-reply-message-type-icon;
               @include border-radius(50%);
               width: 1.2em;
               height: 1.2em;
@@ -927,8 +906,8 @@
             }
           }
           &.no-caption{
-            height:2.8125rem;
-            max-height:2.8125rem;
+            height:2.83em;
+            max-height:2.83em;
             .message-location{
               width: 100%;
               height: 100%;
@@ -1181,7 +1160,6 @@
       .recent-username-block {
         @include flexbox();
         @include align-items(center);
-        margin-bottom: 0.2em;
         .recent-username {
           @include flexbox();
           @include align-items(center);
@@ -1199,7 +1177,7 @@
               text-overflow: ellipsis;
               white-space: pre;
               color: $rechathead;
-              line-height: 16px;
+              line-height: 1.3em;
               letter-spacing: 0.3px;
             }
           }
@@ -1211,6 +1189,10 @@
       @include align-items(center);
       & > span {
         max-width: 90%;
+      }
+      .status-text{
+        margin-top:0.22em;
+        display: inline-block;
       }
       span {
         font-size: 0.69rem;
@@ -1246,8 +1228,6 @@
 }
 
 .document-message-block.fileThumb{
-  // @include flex-wrap(wrap);
-  // padding: 0em !important;
   .fileThumb-img{
     max-height: 5.625em;
     width: 100%;
@@ -1265,9 +1245,6 @@
   width: 100%;
   align-items: center;
 }
-// .doc_name{
-//   width: calc(100% - 1.875em) !important;
-// }
 }
 .receiver-row , .sender-row{
     .video-message, .location-message, .image-message,.image-block{
@@ -1288,3 +1265,9 @@ border-bottom-left-radius: 0 !important;
   border-bottom-right-radius: 0 !important;
 }
   }}
+
+  .reply-block.file-message{
+    .reply-container{
+      margin: 0.25em;
+    }
+  }

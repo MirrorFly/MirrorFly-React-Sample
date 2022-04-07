@@ -3,7 +3,7 @@ import { getNameAndStatus } from '../../../Helpers/Chat/ChatHelper';
 import { timeFormat } from '../../../Helpers/Chat/RecentChat';
 import { ls } from '../../../Helpers/LocalStorage';
 import ProfileImage from '../Common/ProfileImage';
-import { arrayRoasterinitialNameHandle, getContactNameFromRoster } from '../../../Helpers/Chat/User';
+import { getContactNameFromRoster, initialNameHandle } from '../../../Helpers/Chat/User';
 import { getUserFromGroup } from '../../../Helpers/Chat/Group';
 
 const Members = (props = {}) => {
@@ -24,7 +24,7 @@ const Members = (props = {}) => {
     const token = ls.getItem('token');
     let username = getContactNameFromRoster(getDetails)
     const updateTime = timeFormat(time);
-    const iniTail = arrayRoasterinitialNameHandle(rosterArray, username);
+    const iniTail = initialNameHandle(getDetails, username);
 
     return (
         <li className="chat-list-li">
@@ -39,9 +39,9 @@ const Members = (props = {}) => {
             <div className="recentchats">
                 <div className="recent-username-block">
                     <div className="recent-username">
-                        <span className="username">
+                        <div className="username">
                             <h3 title={username}>{username}</h3>
-                        </span>
+                        </div>
                     </div>
                 </div>
                 <div className="recent-message-block"><span>{updateTime}</span></div>

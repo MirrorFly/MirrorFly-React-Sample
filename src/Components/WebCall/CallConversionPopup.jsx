@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { toast } from 'react-toastify';
-import { callConversion } from '../../Actions/CallAction';
+import { callConversion, showConfrence } from '../../Actions/CallAction';
 import Store from '../../Store';
 import SDK from '../SDK';
 import {
@@ -14,6 +14,7 @@ import {
 } from '../../Helpers/Call/Constant';
 import { getFormatPhoneNumber } from '../../Helpers/Utility';
 import { getLocalUserDetails, getUserDetails } from '../../Helpers/Chat/User';
+import { showModal } from '../../Actions/PopUp';
 
 
 // Need to declare as a global variable to maintian call conversion interval state
@@ -55,15 +56,21 @@ class CallConversionPopup extends Component {
             callConversionRes = await SDK.requestVideoCallSwitch();    
         } else if(statusToUpdate === CALL_CONVERSION_STATUS_REQ_WAITING){
             callConversionRes = await SDK.requestVideoCallSwitch();    
-        }        
+        }
 
-        if(callConversionRes && callConversionRes.error){
+        if(callConversionRes && callConversionRes.statusCode === 500){
             Store.dispatch(callConversion({status: CALL_CONVERSION_STATUS_CANCEL}));
             // When user accept the request & If camera access thrown error, then send the decline request.
             if(statusToUpdate === CALL_CONVERSION_STATUS_ACCEPT){
-                // await SDK.callConversion(CALL_CONVERSION_STATUS_DECLINE);
                 await SDK.declineVideoCallSwitchRequest();
             }
+            Store.dispatch(showModal({
+                open: true,
+                modelType: 'mediaPermissionDenied',
+                statusCode: 100607
+            }));
+            const { data = {} } = Store.getState().showConfrenceData;
+            Store.dispatch(showConfrence({ ...data, videoPermissionDisabled: true }));
             return;
         }
         Store.dispatch(callConversion({status: statusToUpdate}));

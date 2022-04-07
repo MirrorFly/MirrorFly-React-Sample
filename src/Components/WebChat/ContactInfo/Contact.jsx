@@ -13,7 +13,7 @@ import { BlockPopUp } from "../PopUp/BlockPopUp";
 import ContactInfoCheckBox from "./ContactInfoCheckBox";
 
 export default function Contact(props) {
-    const { roster = {}, contactName, initialName, image, emailId, statusMsg, status, isChanged = -1, searchValue, userId, userJid, prepareContactToAdd, prepareContactToRemove, hideCheckbox, maxMemberReached, isBlocked } = props
+    const { roster = {}, contactName, image, emailId, statusMsg, status, isChanged = -1, searchValue, userId, userJid, prepareContactToAdd, prepareContactToRemove, hideCheckbox, maxMemberReached, isBlocked } = props
     const [selectState, setSelectState] = useState(false);
     const [showModal, setshowModal] = useState(false);
     const [blockId, setBlockId] = useState(null);
@@ -24,7 +24,7 @@ export default function Contact(props) {
         if (!isBlocked) {
             const stateToUpdate = !selectState;
             if (maxMemberReached && stateToUpdate) {
-                toast.error("Maximum " + getMaxUsersInCall() + " members can be in a call");
+                toast.error("Maximum " + getMaxUsersInCall() + " members allowed in a call");
                 return;
             }
             setSelectState(stateToUpdate)
@@ -95,7 +95,7 @@ export default function Contact(props) {
                 statusMsg={statusMsg}
                 selectState={selectState}
                 contactName={contactName}
-                initialName={initialName}
+                initialName={contactName}
                 handleChange={handleChange}
                 hideCheckbox={hideCheckbox}
                 hightlightText={hightlightText}

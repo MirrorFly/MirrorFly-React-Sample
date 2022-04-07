@@ -24,6 +24,8 @@ class CalleScreen extends Component {
     constructor(props) {
         super(props);
         this.preventMultipleClick = false;
+        this.audio.autoplay = true;
+        this.audio.muted = true;
     }
     componentDidMount = () => {
 
@@ -35,6 +37,7 @@ class CalleScreen extends Component {
         document.querySelectorAll('audio').forEach(element => {
             element.pause();
         });
+        this.handleIncomingCallAudio();
 
         this.callingTimer = setTimeout(() => {
             this.endCall();
@@ -46,11 +49,10 @@ class CalleScreen extends Component {
     }
 
     checkMediaPermission = (prevProps) => {
-        const { popUpData:{ modalProps:{ callProcess, modelType } } } = this.props;
-        const { popUpData:{ modalProps:{ callProcess: prevPropsCallProcess } } } = prevProps;
-        if(callProcess && callProcess !== prevPropsCallProcess &&
-            callProcess === 'attendCall' && ["mediaPermissionDenied","mediaAccessError"].indexOf(modelType) > -1
-        ){
+        const { popUpData:{ modalProps:{ statusCode } } } = this.props;
+        const { popUpData:{ modalProps:{ statusCode: prevStatusCode } } } = prevProps;
+
+        if(statusCode && statusCode !== prevStatusCode){
             this.declineCall();
         }
     }
@@ -58,7 +60,6 @@ class CalleScreen extends Component {
     endCall = async () => {
         clearTimeout(this.callingTimer);
         const {callConnectionDate} = this.props;
-        console.log("call data ending call in the incoming call screen");
         SDK.endCall();
         dispatchDisconnected();
         resetCallData();
@@ -209,7 +210,7 @@ class CalleScreen extends Component {
         if (this.props.callStatus === CALL_STATUS_DISCONNECTED.toLowerCase()) {
             return capitalizeFirstLetter(this.props.callStatus);
         }
-        return `Incoming ${isGroupCall ? 'Group' : ''} ${callType} Call`;
+        return `Incoming ${isGroupCall ? 'Group' : ''} ${callType} Call...`;
     };
 
     checkOneToManyCall = () => {
@@ -222,7 +223,6 @@ class CalleScreen extends Component {
         const {callConnectionDate} = this.props;
         
         let rosterData = {}
-        this.handleIncomingCallAudio();
         let isGroupCall = false;
         let callConnectionData = "";
         if(callConnectionDate && callConnectionDate.data){

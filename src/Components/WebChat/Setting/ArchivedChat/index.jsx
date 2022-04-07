@@ -27,7 +27,7 @@ const ArchivedChat = (props = {}) => {
     <div className="setting-container">
       <div>
         <div className="settinglist">
-          <SettingsHeder handleBackFromSetting={handleBackToSetting} label={"Archive settings"} />
+          <SettingsHeder handleBackFromSetting={handleBackToSetting} label={"Archived Settings"} />
           <ul className="setting-list-ul chat-setting">
             <SettingCheckBox
               getaAtion={handleTranslationState}

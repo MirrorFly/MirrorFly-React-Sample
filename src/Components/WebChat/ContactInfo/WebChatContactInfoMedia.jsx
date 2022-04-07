@@ -123,6 +123,10 @@ class WebChatContactInfoMedia extends React.Component {
       Store.dispatch(SingleChatSelectedMediaAction(data));
     }
   };
+  handleSelectedMediaAction = (messageObject) => {
+    const data = { jid: getActiveConversationChatJid(), chatType: this.props.chatType, selectedMessageData: messageObject };
+    Store.dispatch(SingleChatSelectedMediaAction(data));
+  }
 
   getImage = (imageToken) => {
     if (!imageToken) return null;
@@ -174,13 +178,13 @@ class WebChatContactInfoMedia extends React.Component {
 
                 if (message_type === "image") {
                   return (
-                    <li key={index}>
+                    <li onClick={() => this.handleSelectedMediaAction(media)} key={index}>
                       <img src={imageSrc} alt="" />
                     </li>
                   );
                 } else if (message_type === "video") {
                   return (
-                    <li key={index} className="media-video">
+                    <li onClick={() => this.handleSelectedMediaAction(media)} key={index} className="media-video">
                       <img src={imageSrc} alt="" />
                       <div className="overlay">
                         <img src={mediaVideo} className="video-icon" alt="" />

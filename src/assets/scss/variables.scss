@@ -11,6 +11,8 @@
 --regularNova: ProximaNova-Regular,sans-serif;
 --lightNova: ProximaNova-Light,sans-serif;
 --SemiboldNova: ProximaNova-Semibold,sans-serif;
+--parent-top-gap : 0px;
+--maxParentheight:calc(100vh - var(--parent-top-gap));
 }
 
 // Fonts family 
@@ -71,7 +73,7 @@ $font45: 2.8125rem;
 
 // font sizes 
 $fontPrimary: 0rem;
-$fontProfileName: 0.775rem;
+$fontProfileName: 0.795rem;
 $fontProfilePopupLabel: 1.063em;
 $fontProfileDetailsLabel: 0.675rem;
 $fontProfileDetailsInfo: 0.65rem;
@@ -82,7 +84,7 @@ $StartChartH3: 1.875rem;
 $StartChartP: 1.125rem;
 $fontNorecentChatH4: 1.125rem;
 $fontNetworkoffline: 1rem;
-$fontchatStatusBar: 0.62rem;
+$fontchatStatusBar: 0.57rem;
 $fontPopupLabel: 0.9375rem;
 $fontPopupNoteinfoButton: 0.75rem;
 $font-profile-label:0.675rem;
@@ -110,7 +112,7 @@ $lightdark: #333333;
 $mediainnerbg: #E3E3E3;
 $mediainnerborder: #BEBEBE;
 $mediacontactinfoborder:#E7E7E7;
-$msgtime:$textDark;
+$msgtime:#4B5667;
 $rechatmsgactive:$darkGray;
 $mediainnertext:$lightdark;
 $profiledropdownbg:#F3F8FF;
@@ -135,7 +137,7 @@ $bgc-chatMessage-date: #97b2ce;
 $bgc-tomoto:#fba843;
 $bgc-light-blue:#f3f7ff;
 // secondary color codes
-$clr-send-message-text:$textblack;
+$clr-send-message-text:#444343;
 $clr-send-message-time:#949494;
 $clr-rev-message-time:#fff;
 $fill-send-message-star:#545454;
@@ -161,7 +163,7 @@ $clr-send-document-message: $textblack;
 $bgc-send-document-message-block: #EFEFEF;
 $fill-send-document-message-download-svg: #747474;
 $clr-rev-document-message: $white;
-$bgc-rev-document-message-block: #154AD4;
+$bgc-rev-document-message-block: transparent;
 $fill-rev-document-message-download-svg: $white;
 $bgQrLoadContainer: rgba(255, 255, 255, 0.71);
 $colorlogoBlockLink: #3ec3fa;
@@ -179,6 +181,8 @@ $bgc-emoji-picker-react:$white;
 $clr-profile-label:#95aac5;
 
 $clr-profile-info-span:rgba(138, 141, 145, 0.65);
+$video-controls: #1b64d8;
+$particpant-count:#12233E;
 
 // recent
 $bgc-recent-chatlist: $white;
@@ -364,7 +368,7 @@ $bgc-blockedContainer:$primary;
 $bgc-blockedContainer-span:$white;
 $bgc-send-reply-block-tagged:$white;
 $bgc-send-reply-block-tagged-attach:$primary;
-$bgc-rev-reply-block-container:#154AD4;
+$bgc-rev-reply-block-container:#2c77d1;
 $bgc-reply-block-container:#EFEFEF;
 $fill-rep-message-sender-sends-svg:$white;
 $clr-rev-rep-reply-message-type:#fff;
@@ -378,7 +382,7 @@ $bgc-rep-reply-message-type-videoOverlay:rgba(0, 0, 0, 0.49);
 $clr-contact-detail-popup-text:$white;
 $bgc-chat-list-li-active:#edf4f9;
 $bgc-chat-list-li-hover:#edf4f9;
-$bgc-chat-list-li-recent-msg:#4a5568;
+$bgc-chat-list-li-recent-msg:#73777E;
 
 // .mediaAttachCamera
 $bgc-mediaAttachCamera:#DEE1E8;

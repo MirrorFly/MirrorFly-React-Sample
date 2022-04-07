@@ -17,11 +17,14 @@ import {
   MODAL_ACTIVE_CLASS,
   RECONNECT_RECENT_CHAT_UPDATE,
   UPDATE_MUTE_RECENT_CHAT,
-  UPDATE_ARCHIVE_RECENT_CHAT
+  UPDATE_ARCHIVE_RECENT_CHAT,
+  UNREAD_MESSAGE_DELETE,
+  UPDATE_MESSAGE_STATUS,
+  CLEAR_ALL_CHAT
 } from "../Actions/Constants";
 import { updateRecall, emptyMessage } from "../Helpers/Chat/Recall";
 import { MEDIA_MESSAGE_TYPES } from "../Helpers/Constants";
-import { removeTempMute, setTempMute } from "../Helpers/Chat/ChatHelper";
+import { getMsgStatusInOrder, removeTempMute, setTempMute } from "../Helpers/Chat/ChatHelper";
 
 const updateRecentChat = (filterBy, newMessage, recentChatArray = []) => {
   const checkalreadyExist = recentChatArray.find((message) => message.fromUserId === filterBy);
@@ -60,6 +63,24 @@ const updateMuteRecentChat = (data, stateData) => {
   return newstate;
 };
 
+const updateRecentUnreadCount = (data, stateData) => {
+  return stateData.map((element) => {
+    if (element.fromUserId === data.fromUserId) {
+      element.unreadCount = 0;
+    }
+    return element;
+  });
+};
+
+const updateRecentChatMessageStatus = (data, stateData) => {
+  return stateData.map((element) => {
+    if (element.fromUserId === data.fromUserId) {
+      element.msgStatus = getMsgStatusInOrder(element.msgStatus, data.msgStatus);
+    }
+    return element;
+  });
+};
+
 const updateArchiveRecentChat = (data, stateData) => {
   return stateData.map((element) => {
     if (element.fromUserId === data.fromUserId) {
@@ -79,8 +100,8 @@ const updateReconnectRecentChat = (newRecentChat, oldRecentChat = []) => {
     const pendingChat = pendingMsgChats.find((pending) => pending.fromUserId === recentItem.fromUserId);
     if (pendingChat) {
       return {
-        ...recentItem,
-        ...pendingChat
+        ...pendingChat,
+        ...recentItem
       };
     } else {
       return {
@@ -98,7 +119,7 @@ const deletedChatList = (deleteData, currentArray) => {
 const clearMessageInRecentChat = (data, id) => {
   return data.find((element) => {
     if (element.recent.fromUserId === id) {
-      element.recent.msgBody = "";
+      element.recent.msgBody = {};
       element.recent.msgType = "";
       element.recent.createdAt = "";
       element.recent.msgStatus = 4;
@@ -111,10 +132,22 @@ const clearMessageInRecentChat = (data, id) => {
 const updateMsgByLastMsgId = (newMessage, recentChatList = []) => {
   const msgIndex = recentChatList.findIndex((msg) => msg.lastMsgId === newMessage.msgId);
   if (msgIndex > -1) {
-    recentChatList[msgIndex] = {...recentChatList[msgIndex], ...newMessage};
+    recentChatList[msgIndex] = { ...recentChatList[msgIndex], ...newMessage };
     recentChatList[msgIndex]["msgType"] = newMessage?.msgBody?.message_type || newMessage.msgType;
   }
   return recentChatList.sort((a, b) => (b.msgId > a.msgId ? 1 : -1));
+};
+
+const clearAllRecentChat = (stateData) => {
+  return stateData.map((element) => {
+    if (element) {
+      element.msgBody = {};
+      element.msgType = "";
+      element.createdAt = "";
+      element.msgStatus = 4;
+      return element;
+    }
+  });
 };
 
 export function RecentChatReducer(state = [], action = {}) {
@@ -128,6 +161,13 @@ export function RecentChatReducer(state = [], action = {}) {
         ...state,
         id,
         data: updateReconnectRecentChat(action.payload?.data, state.data),
+        refreshUnreadCount
+      };
+    case UPDATE_MESSAGE_STATUS:
+      return {
+        ...state,
+        id,
+        data: updateRecentChatMessageStatus(action.payload?.data, state.data),
         refreshUnreadCount
       };
     case ACTIVE_CHAT_UPDATE:
@@ -204,6 +244,20 @@ export function RecentChatReducer(state = [], action = {}) {
         data: updateArchiveRecentChat(data, state.data),
         refreshUnreadCount
       };
+    case UNREAD_MESSAGE_DELETE:
+      return {
+        ...state,
+        id,
+        data: updateRecentUnreadCount(data, state.data),
+        refreshUnreadCount
+      };
+    case CLEAR_ALL_CHAT:
+      return {
+        ...state,
+        id,
+        data: clearAllRecentChat(state.data)
+      };
+
     default:
       return state;
   }

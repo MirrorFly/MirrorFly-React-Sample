@@ -12,7 +12,7 @@ const AboutDetails = (props) => {
           <div className="setting-list-ul Details">
             <div className="content-block">
               <p className="content">
-                Mirror Fly is a ready-to-go messaging solution for building enterprise-grade real-time chat IM
+                MirrorFly is a ready-to-go messaging solution for building enterprise-grade real-time chat IM
                 applications that meet various degrees of requirements like team discussion, data sharing, task
                 delegation and information handling on the go.
               </p>
@@ -24,12 +24,12 @@ const AboutDetails = (props) => {
             <div className="content-block">
               <h3 className="subheading">FAQ</h3>
               <p className="content">
-                Kindly checkout FAQ section for doubts regarding Mirror fly. We might have already answered your
+                Kindly checkout FAQ section for doubts regarding MirrorFly. We might have already answered your
                 question.
               </p>
               <div>
                 <a className=" content content-link" target="_blank" href="https://www.mirrorfly.com/" rel="noopener noreferrer">
-                  Mirror Fly
+                  MirrorFly
                 </a>
               </div>
             </div>

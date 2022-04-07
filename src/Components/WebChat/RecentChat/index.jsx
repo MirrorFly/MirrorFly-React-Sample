@@ -298,6 +298,7 @@ class RecentChatSection extends Component {
       pageType,
       unreadCountData: { unreadDataObj = {} } = {}
     } = this.props;
+
     const updatedRecentChat = searchEnable ? filteredRecentChat : recentChatItems;
     const loaderStyle = {
       width: 80,
@@ -382,13 +383,17 @@ class RecentChatSection extends Component {
                 recentChatExist={this.chatExist}
                 refreshUnreadCount={this.state.refreshUnreadCount}
                 handlePopupState={this.props.handlePopupState}
-                archiveLength = {archivedChats.length}
+                archiveLength={archivedChats.length}
               />
 
               <RosterContacts searchTerm={searchValue} filteredContacts={filteredContacts} />
 
               {!this.chatExist && filteredContacts.length === 0 && searchValue && (
-                <div className={`no-search-record-found ${pageType === "recent" && archivedChats.length ? "has-archive" : ""}`}>
+                <div
+                  className={`no-search-record-found ${
+                    pageType === "recent" && archivedChats.length ? "has-archive" : ""
+                  }`}
+                >
                   <div className={`norecent-chat`}>
                     <i className="norecent-chat-img">
                       <EmptySearch />
@@ -398,10 +403,12 @@ class RecentChatSection extends Component {
                 </div>
               )}
               {((archivedChats.length === 0 && pageType === "archive") ||
-                (pageType === "recent" && (updatedRecentChat.length - archivedChats.length) === 0)) &&
+                (pageType === "recent" && updatedRecentChat.length - archivedChats.length === 0)) &&
                 !searchValue && (
                   <Fragment>
-                    <div className={`norecent-chat ${pageType === "recent" && archivedChats.length ? "has-archive" : ""}`}>
+                    <div
+                      className={`norecent-chat ${pageType === "recent" && archivedChats.length ? "has-archive" : ""}`}
+                    >
                       {pageType === "archive" ? (
                         <Fragment>
                           <i className="norecent-chat-img">

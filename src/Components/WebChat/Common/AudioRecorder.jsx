@@ -68,7 +68,6 @@ const AudioRecorder = (props = {}) => {
         });
       })
       .catch((e) => {
-        console.log("We could not retrieve your message");
         console.log(e);
       })
     return sendStatus;

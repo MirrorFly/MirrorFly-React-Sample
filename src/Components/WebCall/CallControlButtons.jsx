@@ -17,13 +17,11 @@ class CallControlButtons extends Component{
     }
 
     handleEndCall = (e) => {
-        console.log("call data ending call in the call control button start");
         e.stopPropagation();
-        console.log("call data ending call in the call control button end");
         this.props.handleEndCall();
     }
     render(){
-        let { audioControl, videoControl, cssClassName} = this.props;
+        let { audioControl, videoControl, cssClassName, videoPermissionDisabled} = this.props;
         return(
             <div className="caling-button-group button-group-center">
                 { audioControl &&
@@ -35,7 +33,7 @@ class CallControlButtons extends Component{
                 }
                 <span title="Hangup" className="btnHangup rejectCall" onClick={this.handleEndCall}><i><RejectCall/></i></span>
                 { videoControl &&
-                    <span className={`${cssClassName}  ${this.props.videoMute ? "mute" : ""}`} title="Start / Stop Camera" onClick={this.handleVideoMute}>
+                    <span className={`${cssClassName}  ${this.props.videoMute ? "mute" : ""} ${videoPermissionDisabled ? "not-allowed": ""} `} title={videoPermissionDisabled ? "Camera Permission Disabled":"Start / Stop Camera"} onClick={videoPermissionDisabled ? undefined : this.handleVideoMute}>
                         <i className={this.props.videoMute ? "videoBtn mute" : "videoBtn"}>
                         { this.props.videoMute ? <VideoOff/> : <VideoOn/> }
                         </i>

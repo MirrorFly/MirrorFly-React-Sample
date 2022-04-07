@@ -4,7 +4,6 @@ import { ReconnectRecentChatAction } from "../../../Actions/RecentChatActions";
 import Store from "../../../Store";
 import { formatToArrayofJid, setContactWhoBleckedMe } from "../../../Helpers/Chat/BlockContact";
 import { blockedContactAction } from "../../../Actions/BlockAction";
-import { encryption } from "../WebChatEncryptDecrypt";
 import { GroupsDataAction } from "../../../Actions/GroupsAction";
 import { isAppOnline } from "../../../Helpers/Utility";
 import { setConnectionStatus } from "../Common/FileUploadValidation";
@@ -13,8 +12,12 @@ import { WebChatConnectionState } from "../../../Actions/ConnectionState";
 import {
   getAllStarredMessages,
   getLastMsgFromHistoryById,
+  getRecentChatData,
+  handleArchivedChats,
+  handleUserSettings,
   isActiveConversationUserOrGroup,
-  isGroupChat
+  isGroupChat,
+  arrayToObject
 } from "../../../Helpers/Chat/ChatHelper";
 import { getIdFromJid, formatUserIdToJid, isLocalUser } from "../../../Helpers/Chat/User";
 import { RECONNECT_GET_CHAT_LIMIT } from "../../../Helpers/Constants";
@@ -36,7 +39,7 @@ const handleBlockMethods = async () => {
   }
 };
 
-const getAndUpdateChatMessages = async (rowId, chatId, chatType) => {
+const getAndUpdateChatMessages = async (chatId, chatType, rowId) => {
   let position = rowId ? "down" : "up";
   const chatMessageRes = await SDK.getChatMessages(
     formatUserIdToJid(chatId, chatType),
@@ -66,24 +69,38 @@ const getAndUpdateChatMessages = async (rowId, chatId, chatType) => {
   }
 };
 
-const handleChatHistoryUpdate = (recentChatArr) => {
+const checkIfConversationRefreshNeeded = (newRecent, oldRecent) => {
+  const { msgStatus: newMsgStatus } = newRecent;
+  const { msgStatus: oldMsgStatus } = oldRecent;
+  return newMsgStatus !== oldMsgStatus;
+};
+
+const handleChatHistoryUpdate = (recentChatArr, oldRecentChatData) => {
   const { chatConversationHistory: { data } = {} } = Store.getState();
   const chatHistoryIds = Object.keys(data);
   const recentChatArrNew = recentChatArr.reverse();
+  const oldRecentChatObj = arrayToObject(oldRecentChatData, "fromUserId");
 
   for (let i = 0; i < recentChatArrNew.length; i++) {
-    const recent = recentChatArrNew[i];
-    const { fromUserId: chatId, msgId: recentMsgId, chatType } = recent;
+    const newRecentChat = recentChatArrNew[i];
+    const { fromUserId: chatId, msgId: recentMsgId, chatType } = newRecentChat;
+    const oldRecentChat = oldRecentChatObj[chatId];
 
     if (chatHistoryIds.includes(chatId)) {
       const { msgId: lastMsgId, rowId } = getLastMsgFromHistoryById(chatId);
+      const isRefreshNeeded = checkIfConversationRefreshNeeded(newRecentChat, oldRecentChat);
+
+      // If Message Status Changed - Refresh Conversation History
+      if (isRefreshNeeded) {
+        getAndUpdateChatMessages(chatId, chatType);
+      }
 
       if (recentMsgId !== lastMsgId) {
         // When there is no message, the position fetching should be 'UP'
         // Because no message in current conversation screen. So we should
         // get the recent messages only. Otherwise 'DOWN'
 
-        getAndUpdateChatMessages(rowId, chatId, chatType);
+        getAndUpdateChatMessages(chatId, chatType, rowId);
       } else {
         break;
       }
@@ -138,10 +155,10 @@ export async function login() {
 
         const groupListRes = await SDK.getGroupsList();
         if (groupListRes && groupListRes.statusCode === 200) {
-          encryption("groupslist_data", groupListRes.data);
           Store.dispatch(GroupsDataAction(groupListRes.data));
         }
 
+        const oldRecentChatData = getRecentChatData();
         const recentChatsRes = await SDK.getRecentChats();
         let recentChatArr = [];
         if (recentChatsRes && recentChatsRes.statusCode === 200) {
@@ -149,7 +166,9 @@ export async function login() {
           Store.dispatch(ReconnectRecentChatAction(recentChatsRes.data, true));
         }
 
-        handleChatHistoryUpdate(recentChatArr);
+        handleUserSettings();
+        handleChatHistoryUpdate(recentChatArr, oldRecentChatData);
+        handleArchivedChats();
         handleBlockMethods();
         handleFavouriteMessages();
       }

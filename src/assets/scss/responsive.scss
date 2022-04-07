@@ -1,5 +1,6 @@
 @import "fonts.scss";
 @import "reset.scss";
+@import './SassMixins.scss';
 @import "mixins.scss";
 @import "variables.scss";
 
@@ -243,13 +244,13 @@ body {
   }
 }
   .mirrorfly .login-wrapper .login-content {
-    margin: 0px 30px;
     flex-direction: column;
     width: 100%;
     height: auto;
-
     border-radius: 0;
     box-shadow: none;
+    padding: 0.9375em;
+    margin: 0 auto;
   }
   .mirrorfly .login-wrapper .left-section {
     width: 100%;
@@ -266,9 +267,18 @@ body {
     margin-top: 30px;
     margin-bottom: 20px;
   }
-  .mirrorfly .login-wrapper .left-section:after {
+  .mirrorfly .login-wrapper {
+  overflow: hidden auto;
+  &.otpWrapper{
+    height: auto;
+  }
+  .left-section:after {
     display: none;
   }
+  &:after{
+    display: none;
+  }
+}
 
   .container {
     .chat-conversion {
@@ -294,6 +304,12 @@ body {
     }
     .popup-controls{
       display: flex;
+    }
+  }
+  .newLoginScreen .right-col{
+    margin: 2em auto;
+    .company_logo,h4,.register_help_text span{
+      text-align: center;
     }
   }
 }
@@ -415,13 +431,6 @@ body {
       }
     }
   }
-}
-@media only screen and (max-height: 568px) {
-  .mirrorfly{
-.login-wrapper {
-  height: auto;
-  overflow: hidden auto;
-}}
 }
 
 @media only screen and (max-width: 320px) {

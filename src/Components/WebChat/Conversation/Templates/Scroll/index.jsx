@@ -24,8 +24,8 @@ const ScrollContainner = (Component, { isScrolledDownThreshold = 150 } = {}) => 
                 this.updateHeigth()
             });
             this.state = {
-                isVisibleScroll:false,
-                msgCount : false
+                isVisibleScroll: false,
+                msgCount: false
             }
         }
 
@@ -49,11 +49,11 @@ const ScrollContainner = (Component, { isScrolledDownThreshold = 150 } = {}) => 
                 this.setState({
                     isVisibleScroll: false
                 });
-                } else {
+            } else {
                 this.setState({
                     isVisibleScroll: true
                 });
-                }
+            }
         }
 
         updateHeigth = () => {
@@ -63,7 +63,7 @@ const ScrollContainner = (Component, { isScrolledDownThreshold = 150 } = {}) => 
             const header = document.querySelector('.conversation-header')
             const containerChildren = Array.from(document.querySelectorAll('.chatconversation-container > *:not(.msg-content), .emojiPicker-container')).reduce(function getSum(total, num) {
                 return total + Math.round(num.clientHeight);
-              }, 0);
+            }, 0);
             const windowHeights = window.innerHeight;
             const finalHeigth = windowHeights - header.clientHeight - containerChildren
             container.style.height = finalHeigth + "px";
@@ -78,7 +78,7 @@ const ScrollContainner = (Component, { isScrolledDownThreshold = 150 } = {}) => 
             // When message type container goes to new line need update the chat content view
             // height
             const mesgTypingEle = document.getElementById('typingContainer');
-            if(mesgTypingEle){
+            if (mesgTypingEle) {
                 new ResizeObserver(() => {
                     this.scrollDownIfNeeded();
                     this.updateHeigth();
@@ -87,26 +87,26 @@ const ScrollContainner = (Component, { isScrolledDownThreshold = 150 } = {}) => 
             }
         }
 
-        componentWillUnmount(){
+        componentWillUnmount() {
             clearTimeout(this.timer)
         }
 
         componentDidUpdate(prevProps) {
             this.isScrolledUp = isScrolledUp(this.scrollContainner)
-            if(prevProps.replyMessageData.id !== this.props.replyMessageData.id) {
+            if (prevProps.replyMessageData.id !== this.props.replyMessageData.id) {
                 this.timer = setTimeout(() => {
                     this.scrollContainner && this.scrollDownIfNeeded()
                 }, 1000);
                 return
             }
 
-            if(prevProps.conversationState.popUpId !== this.props.conversationState.popUpId) {
+            if (prevProps.conversationState.popUpId !== this.props.conversationState.popUpId) {
                 this.updateHeigth();
                 this.scrollDownIfNeeded();
                 return
             }
 
-            if(prevProps.scrollBottomChatHistory.id !== this.props.scrollBottomChatHistory.id && !this.isScrolledDown){
+            if (prevProps.scrollBottomChatHistory.id !== this.props.scrollBottomChatHistory.id && !this.isScrolledDown) {
                 scrollDown(this.scrollContainner);
             }
 
@@ -114,13 +114,13 @@ const ScrollContainner = (Component, { isScrolledDownThreshold = 150 } = {}) => 
                 const difference = this.scrollContainner.scrollHeight - this.scrollHeight
                 this.scrollHeight = null
                 scrollDownBy(difference, this.scrollContainner)
-             }
+            }
             else {
                 this.scrollDownIfNeeded()
             }
         }
         render() {
-            const { containerId = 'message-containner' , scrollToBottom } = this.props;
+            const { containerId = 'message-containner', scrollToBottom } = this.props;
             return (
                 <Fragment>
                     <div
@@ -130,19 +130,21 @@ const ScrollContainner = (Component, { isScrolledDownThreshold = 150 } = {}) => 
                         className={containerId} >
                         <div className="extraSpace"></div>
                         <div>
-                        <Component
-                            {...this.props}
-                        />
+                            <Component
+                                {...this.props}
+                            />
                         </div>
                         <span id="InBottom" className="InBottom"></span>
-                        <div className="more-messages" onClick={scrollToBottom}>
-                            {this.state.msgCount && <span className="count-unread">
-                                <span>100+</span>
-                            </span>
-                            }
-                            {this.state.isVisibleScroll && <IconScroltToDown /> }
-                        </div>
-                        </div>
+                        {this.state.isVisibleScroll &&
+                            <div className="more-messages" onClick={scrollToBottom}>
+                                {this.state.msgCount && <span className="count-unread">
+                                    <span>100+</span>
+                                </span>
+                                }
+                                <IconScroltToDown />
+                            </div>
+                        }
+                    </div>
                 </Fragment>
             )
         }
@@ -150,7 +152,7 @@ const ScrollContainner = (Component, { isScrolledDownThreshold = 150 } = {}) => 
     const mapStateToProps = state => {
         return {
             replyMessageData: state.replyMessageData,
-            conversationState:state.conversationState,
+            conversationState: state.conversationState,
             scrollBottomChatHistory: state.scrollBottomChatHistory
         }
     }

@@ -1,4 +1,5 @@
 @import '../../../assets/scss/variables.scss';
+@import '../../../assets/scss/SassMixins.scss';
 @import '../../../assets/scss/mixins.scss';
 
 // common profile popup 
@@ -79,7 +80,7 @@
           padding: 0.563em 0;
           z-index: 1;
           li {
-            padding: 0.563em 1.063em;
+            padding: 0.463em 1em;
             cursor: pointer;
             &:hover {
               background-color:$bgc-profile-dropdown-li-hover;

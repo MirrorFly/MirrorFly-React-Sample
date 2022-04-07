@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+    <defs>
+        <style>
+            .profileEdita {
+                fill: #555;
+                stroke: #fff;
+                stroke-width: 2px;
+            }
+
+            .profileEditb {
+                fill: #fff;
+            }
+
+            .profileEditc {
+                stroke: none;
+            }
+
+            .profileEditd {
+                fill: none;
+            }
+        </style>
+    </defs>
+    <g transform="translate(-577.57 -204)">
+        <g class="profileEdita" transform="translate(577.57 204)">
+            <circle class="profileEditc" cx="16" cy="16" r="16" />
+            <circle class="profileEditd" cx="16" cy="16" r="15" />
+        </g>
+        <path class="profileEditb"
+            d="M231.575,204.82a1.852,1.852,0,1,0,1.828,1.852A1.84,1.84,0,0,0,231.575,204.82Zm4.874-1.852h-1.462a.543.543,0,0,1-.481-.351l-.378-1.149a.544.544,0,0,0-.481-.351H229.5a.543.543,0,0,0-.481.351l-.378,1.149a.544.544,0,0,1-.481.351H226.7a1.23,1.23,0,0,0-1.219,1.234v5.555a1.23,1.23,0,0,0,1.219,1.234h9.749a1.23,1.23,0,0,0,1.219-1.234V204.2A1.23,1.23,0,0,0,236.449,202.969Zm-4.874,6.789a3.086,3.086,0,1,1,3.047-3.086A3.067,3.067,0,0,1,231.575,209.758Zm4.448-4.692a.432.432,0,1,1,.427-.432A.429.429,0,0,1,236.022,205.066Z"
+            transform="translate(362.222 13.72)" />
+    </g>
+</svg>

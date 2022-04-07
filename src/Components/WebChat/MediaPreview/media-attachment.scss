@@ -1,3 +1,4 @@
+@import '../../../assets/scss/SassMixins.scss';
 @import "../../../assets/scss/mixins.scss";
    
 .mediaAttachmemtUpload{
@@ -5,13 +6,12 @@
     left: auto;
     top: 0;
     right: 0;
-    width: 73.70%;
-    margin-top: 4.063em;
+    width: 100%;
     bottom: 0;
     background: #DEE1E8 url(../../.././assets/images/chatbg.png) no-repeat center center;
-    z-index: 2;
+    z-index: 3;
     padding: 0;
-    height: calc(100% - 4.063em);
+    height: 100vh;
     background-size: cover;
     .uploadImageCaption {
         width: 100%;
@@ -207,7 +207,7 @@
         height: 80px;
         border: 0.0625em solid  #4879F9 !important;
         padding: 0 !important;
-        border-radius: 0.563em;
+        border-radius: 10px;
         overflow: hidden !important;
         position: relative;
         margin-right:0.625em !important;
@@ -217,7 +217,7 @@
           display: inline-block;
           width: 100%;
           height: 100%; 
-          border-radius: 0.563em;
+          border-radius: 10px;
           margin: 0;
           img{
             border: none !important;
@@ -235,7 +235,7 @@
             bottom: 0px !important;
             left: 0px !important;
             background-size:1.25em;
-            border-radius: 0.563em;
+            border-radius: 10px;
               @include transition(all linear 200ms);
           }
           &:hover:after{
@@ -270,7 +270,7 @@
             left: 0px !important;
             background:rgba(0, 0, 0, .5) url(../../../assets/images/drop-media-preview.svg) no-repeat center center !important;
             background-size:1.25em;
-            border-radius: 0.563em;
+            border-radius: 10px;
             border: none !important;
             @include transition(all linear 200ms);
             opacity: 1;
@@ -488,7 +488,7 @@
   margin: 1.25em auto;
 .drag-area {
   width: 80% !important;
-  height:calc(100vh - 14.875em);
+  height:calc(var(--maxParentheight) - 14.875em);
   margin:0 auto  1.25em;
   > div{
   width: 80% !important;

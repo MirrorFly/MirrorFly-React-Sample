@@ -271,6 +271,7 @@ class ForwardPopUp extends Component {
                               isChanged={isChanged}
                               selectedContact={contactsToForward.length}
                               removeContact={this.removeContact}
+                              roster={roster}
                               {...roster}
                             />
                           </li>
@@ -302,6 +303,7 @@ class ForwardPopUp extends Component {
                               selectedContact={contactsToForward.length}
                               chatType={"chat"}
                               removeContact={this.removeContact}
+                              roster={contact}
                               {...contact}
                             />
                           </li>

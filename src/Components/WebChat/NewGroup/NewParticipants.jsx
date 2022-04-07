@@ -173,10 +173,8 @@ class NewParticipants extends Component {
             participantToAdd.map(el => participantJid.push(el.userJid));
 
             const groupImgBlob = await this.getBlobfromUrl();
-            console.log('Group Name :>> ', typingMessage, groupImgBlob);
-            console.log('Group participants :>> ', participantJid);
             const result = await SDK.createGroup(typingMessage, participantJid, groupImgBlob || "");
-            console.log('result :>> ', result);
+            console.log('createGroup result :>> ', result);
 
             if (result.statusCode === 200) {
                 this.setState({
@@ -262,6 +260,7 @@ class NewParticipants extends Component {
                                     prepareContactToAdd={this.prepareContactToAdd}
                                     prepareContactToRemove={this.prepareContactToRemove}
                                     key={updateJid}
+                                    roster={contact}
                                     {...contact}
                                 />
                             })}

@@ -15,7 +15,7 @@ configure({ adapter: new Adapter() });
 const mockStore = configureMockStore();
 let wrapper;
 
-describe.skip("LocationComponent Test cover", () => {
+describe("LocationComponent Test cover", () => {
 
     it('Mock has be created props undefined', () => {
         const monckData = undefined

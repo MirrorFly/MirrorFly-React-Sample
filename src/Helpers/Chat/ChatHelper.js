@@ -3,7 +3,7 @@ import { DateTime } from 'luxon';
 import * as moment from 'moment';
 import { get as _get, groupBy as _groupBy } from "lodash";
 import { REACT_APP_XMPP_SOCKET_HOST } from '../../Components/processENV';
-import { blockOfflineAction, capitalizeFirstLetter, capitalizeTxt, fileToBlob, getArchiveSetting, getDbInstanceName, getFormatPhoneNumber, getMessageType, getUserIdFromJid, sendNotification } from '../Utility';
+import { blockOfflineAction, capitalizeFirstLetter, capitalizeTxt, fileToBlob, getArchiveSetting, getDbInstanceName, getFormatPhoneNumber, getLocalWebsettings, getMessageType, getUserIdFromJid, sendNotification, setLocalWebsettings } from '../Utility';
 import Store from '../../Store';
 import {
     CHAT_TYPE_SINGLE, MSG_SENT_ACKNOWLEDGE_STATUS_ID, MSG_SENT_ACKNOWLEDGE_STATUS, MSG_DELIVERED_STATUS_ID,
@@ -25,6 +25,7 @@ import { getExtension } from '../../Components/WebChat/Common/FileUploadValidati
 import { decryption } from '../../Components/WebChat/WebChatEncryptDecrypt';
 import { getGroupData } from './Group';
 import { getAvatarImage, groupAvatar } from '../../Components/WebChat/Common/Avatarbase64';
+import { webSettingLocalAction } from '../../Actions/BrowserAction';
 const indexedDb = new IndexedDb();
 
 const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -199,8 +200,10 @@ const getlabel = (current_datetime) => {
         return 'Yesterday'
     } else if (diffenceDay > 1 && diffenceDay <= 6) {
         return DateTime.fromJSDate(dateObject).toFormat('cccc')
+    } else if (dateObject.getFullYear() === new Date().getFullYear()) {
+        return `${dateObject.getDate()} ${months[dateObject.getMonth()]}`
     }
-    return dateObject.getDate() + " " + months[dateObject.getMonth()] + " " + dateObject.getFullYear()
+    return `${dateObject.getDate()} ${months[dateObject.getMonth()]} ${dateObject.getFullYear()}`
 }
 
 export const convertDateFormat = (dateString) => {
@@ -481,12 +484,13 @@ export const updateFavicon = (type) => {
 
 export const isMediaMessage = (msgBody = {}) => MEDIA_MESSAGE_TYPES.includes(msgBody.message_type);
 
-const arrayToObject = (arr, key) => {
+export const arrayToObject = (arr, key) => {
     return arr.reduce((obj, item) => {
         obj[item[key]] = item;
         return obj;
     }, {});
 };
+
 export const setTempMute = (name, stateData) => {
     const tempMuteUser = localStorage.getItem('tempMuteUser')
     let parserLocalStorage = tempMuteUser ? JSON.parse(tempMuteUser) : {}
@@ -854,7 +858,7 @@ export const downloadMediaFile = async (file_url, msgType, file_name, event) => 
                 headers: new Headers({
                     Origin: window.location.origin
                 }),
-                mode: "cors"
+                mode: "no-cors"
             }).then(async (response) => response.blob());
             fileUrl = window.URL.createObjectURL(blob);
         }
@@ -1029,7 +1033,7 @@ export const handleArchiveActions = async (listenerData = {}) => {
             const { publisherId = "" } = orgMsg.data || {};
             if (isLocalUser(publisherId)) {
               const { title, image, message } = await getPushNotificationData(listenerData);
-              sendNotification(title, image, message);
+              sendNotification(title, image, message, fromUserId);
             }
           }
         }
@@ -1045,4 +1049,30 @@ export const handleTempArchivedChats = (chatJid, chatType) => {
     if (chatId && archivedChats.includes(chatId) && !isPermanentArchvie) {
         handleUnarchiveChat(chatId, chatType);
     }
+};
+
+export const handleUserSettings = async () => {
+    const userSettings = await SDK.getUserSettings();
+    const webSettings = getLocalWebsettings() || {};
+    Store.dispatch(webSettingLocalAction({ 
+        "isEnableArchived" : userSettings?.data?.archive === 0 ? false : true,
+        "translate": webSettings.translate || false
+     }));
+    setLocalWebsettings("archive", userSettings?.data?.archive === 0 ? false : true);
+}
+
+export const handleArchivedChats = async () => {
+    const archivedChats = await SDK.getAllArchivedChats();
+    if (archivedChats.statusCode === 200 && archivedChats.data.length) {
+        for (let i = 0; i < archivedChats.data.length; i++) {
+            const element = archivedChats.data[i];
+            element.isArchived = true;
+            Store.dispatch(updateArchiveStatusRecentChat(element));
+        }
+    }
+};
+
+export const getRecentChatData = () => {
+    const { recentChatData: { data = [] } = {} } = Store.getState();
+    return data;
 };

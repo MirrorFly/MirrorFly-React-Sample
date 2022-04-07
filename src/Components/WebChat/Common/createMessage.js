@@ -7,7 +7,7 @@ import Store from "../../../Store";
 import SDK from "../../SDK";
 import {
   CHAT_TYPE_GROUP,
-  GROUP_USER_ADDED,
+  GROUP_UPDATE_ACTIONS,
   MSG_RECEIVE_STATUS,
   MSG_RECEIVE_STATUS_CARBON,
   MSG_SENT_SEEN_STATUS_CARBON
@@ -75,9 +75,9 @@ export const updateRecentChatMessage = (messgeObject, stateObject) => {
      */
     const getMute = localStorage.getItem("tempMuteUser");
     let parserLocalStorage = getMute ? JSON.parse(getMute) : {};
-    const isMuted =  parserLocalStorage[newChatTo] ? 1 : 0;
-    if(isMuted){
-      SDK.updateMuteNotification(formatUserIdToJid(newChatTo,chatType), true);
+    const isMuted = parserLocalStorage[newChatTo] ? 1 : 0;
+    if (isMuted) {
+      SDK.updateMuteNotification(formatUserIdToJid(newChatTo, chatType), true);
     }
     const newMessage = {
       archiveStatus: 0,
@@ -118,6 +118,9 @@ export const updateConversationMessage = (messgeObject, currentState) => {
         Store.dispatch(chatSeenPendingMsg(messgeObject));
       }
     }
+    if (GROUP_UPDATE_ACTIONS.indexOf(messgeObject?.profileUpdatedStatus) && !isLocalUser(messgeObject.publisherId)) {
+      SDK.updateRecentChatUnreadCount(messgeObject?.fromUserJid);
+    }
   } else {
     // If the Chat is Already Opened but if it is Not Currently Active, Store the Messages for Sending Seen Status
     if (!isLocalUser(messgeObject.publisherId)) {
@@ -150,7 +153,11 @@ export const updateMsgSeenStatus = () => {
       const fromUserId = isGroupChat(message.chatType) ? message.publisherId : message.fromUserId;
       const groupId = isGroupChat(message.chatType) ? message.fromUserId : "";
       if (isActiveConversationUserOrGroup(message.fromUserId)) {
-        SDK.sendSeenStatus(formatUserIdToJid(fromUserId), message.msgId, groupId);
+        if (GROUP_UPDATE_ACTIONS.indexOf(message?.profileUpdatedStatus) > -1) {
+          if (!isLocalUser(message.publisherId)) SDK.updateRecentChatUnreadCount(message?.fromUserJid);
+        } else {
+          SDK.sendSeenStatus(formatUserIdToJid(fromUserId), message.msgId, groupId);
+        }
       }
     });
   }
@@ -162,7 +169,7 @@ export const updateMsgSeenStatus = () => {
  * @param {*} stateObject
  */
 export const updateMessageUnreadCount = (messgeObject, stateObject) => {
-  const { msgType, fromUserId, publisherId, chatType, msgBody, profileUpdatedStatus } = messgeObject;
+  const { msgType, fromUserId, publisherId, chatType, msgBody, profileUpdatedStatus, toUserId, groupId } = messgeObject;
 
   if (
     [MSG_RECEIVE_STATUS, MSG_RECEIVE_STATUS_CARBON].indexOf(msgType) > -1 &&
@@ -175,13 +182,14 @@ export const updateMessageUnreadCount = (messgeObject, stateObject) => {
 
   if (
     !isActiveConversationUserOrGroup(fromUserId, chatType) &&
-    profileUpdatedStatus === GROUP_USER_ADDED &&
+    GROUP_UPDATE_ACTIONS.indexOf(profileUpdatedStatus) > -1 &&
     !isLocalUser(publisherId)
   ) {
     Store.dispatch(UnreadCountUpdate({ fromUserId }));
   }
 
   if ([MSG_SENT_SEEN_STATUS_CARBON].indexOf(msgType) > -1) {
-    Store.dispatch(UnreadCountDelete({ fromUserId }));
+    const updateId = groupId ? groupId : toUserId;
+    Store.dispatch(UnreadCountDelete({ fromUserId: updateId }));
   }
 };

@@ -1,0 +1,139 @@
+
+@import '../../assets/scss/SassMixins.scss';
+
+.newLoginScreen{
+    --clr-link:rgba(40, 165, 241, 1);
+    --clr-text : #333333;
+    --clr-register-heading: rgba(24, 24, 24, 1);
+    --clr-text-light:rgba(149, 149, 149, 1);
+    .login-content{
+        @include justify-content(space-between);
+    }
+    .left-col{
+    max-width: 15.625em;
+    @include flexbox();
+    @include justify-content(center);
+    @include align-items(center);
+    @include flex-direction(column);
+}
+.qr-image {
+    position: relative;
+    height: 10.75em;
+    width: 10.75em;
+    @include flexbox();
+    @include justify-content(center);
+    @include align-items(center);
+    canvas{
+      z-index: 1;
+    }
+    img#qr-logo {
+      display: none;
+    }
+
+    .scanLoader {
+      position: absolute;
+    }
+
+    .qr-load-container {
+      position: absolute;
+      height: 10.75em;
+      width: 10.75em;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1;
+    }
+  }
+
+  #divQRCode{
+    height: 100% !important;
+    width: 100% !important;
+  }
+
+  .getStarted{
+      margin-top: 0.8125em;
+    display: block;
+    width: 10.75em;
+    text-align: center;
+    color: var(--clr-link);
+    a{
+        font: 0.6875rem/120% var(--regular);
+        color: var(--clr-link);
+        text-decoration: none;
+    }
+  }
+  .login_desc{
+      margin-top: 1.125em;
+    h3{
+        color: var(--clr-text);
+        font: 1.75rem/120% var(--regular);
+    }
+    p{
+        font: 0.875rem/120% var(--light);
+        strong{
+            font:0.875rem/120% var(--semibold);
+        }
+    }
+    ul{
+        margin-top: 1.25em;
+        li{
+            margin-bottom: 1.25em;
+            font: unset;
+            color: unset;
+        }
+    }
+
+  }
+  .right-col{
+      height: 100%;
+      @include flexbox();
+      max-width: 20.125em;
+      @include align-items(start);
+      @include flex-direction(column);
+      .company_logo{
+        width: 100%;
+        text-align: left;
+        img{
+          width: auto;
+          height: 1.6em;
+          margin-bottom: 1.5em;
+        }
+      }
+      .heading{
+        width: 100%;
+        text-align: left;
+          margin-bottom:0.625em;
+      }
+    h4 {
+    color: var(--clr-register-heading);
+    letter-spacing: 0.0644rem;
+    font: 1.4375rem/120% var(--bold);
+    }
+    .register_help_text{
+        margin-bottom: 2.1875em;
+        span{
+            display: block;
+            font: 0.8125rem/24px var(--light);
+            color: var(--clr-text-light);
+            letter-spacing: 0.2px;
+        }
+    }
+    img{
+        width: 5.625rem;
+        height: auto;
+        margin-bottom: 1.5em;
+    }
+&.getotpPage , &.profilePage{
+  max-width: 100%;
+  width: 100%;
+}
+  }
+  .iconOption {
+    position: relative;
+    top: 0.125em;
+    margin: 0 0.125em;
+    cursor: default;
+    width: 0.875em;
+    height: 1.375em;
+  }
+}

@@ -21,6 +21,11 @@ import Store from '../../Store';
 import { CALL_CONVERSION_STATUS_ACCEPT, CALL_CONVERSION_STATUS_CANCEL, CALL_CONVERSION_STATUS_DECLINE, CALL_CONVERSION_STATUS_REQUEST, CALL_CONVERSION_STATUS_REQ_WAITING } from '../../Helpers/Call/Constant';
 import { Archived } from '../WebChat/Setting/images';
 import { UpdateArchiveChatDataAction } from "../../Actions/Common"
+import Modal from '../WebChat/Common/Modal';
+import ActionPopup from '../ActionPopup/index';
+import { showModal } from '../../Actions/PopUp';
+import { disconnectCallConnection } from '../../Helpers/Call/Call';
+import { callIntermediateScreen, resetConferencePopup } from '../../Actions/CallAction';
 
 class Sidebar extends React.Component {
 
@@ -33,14 +38,15 @@ class Sidebar extends React.Component {
             popupStatus: false,
             newChatStatus: true,
             newChatStatusLevel: "",
-            newGroupParticipants:false,
-            archivedChatList:false,
-            menuSetGroupImage:false,
-            chatLogs:false,
-            handleBackStatus:false,
+            newGroupParticipants: false,
+            archivedChatList: false,
+            menuSetGroupImage: false,
+            chatLogs: false,
+            handleBackStatus: false,
             callLogs: false,
-            settingStatus:false,
-            archivedSetting:false
+            settingStatus: false,
+            archivedSetting: false,
+            callLogCount: 1,
         };
     }
 
@@ -65,12 +71,12 @@ class Sidebar extends React.Component {
     }
 
     handleOnBack() {
-        this.setState({chatLogs: false});
+        this.setState({ chatLogs: false });
     }
 
     handleCallLogs = () => {
-        this.setState({newChatStatus: false});
-        this.setState({callLogs: true});
+        this.setState({ newChatStatus: false });
+        this.setState({ callLogs: true });
         Store.dispatch(fetchingCallLog(true));
         callLogsObj.getCallLogsFromServer(1);
     }
@@ -97,7 +103,7 @@ class Sidebar extends React.Component {
             this.setState({ menuDropDownStatus: false })
         });
     }
-    
+
     handleArchivedChatList = () => {
         this.setState({ archivedChatList: true, menuDropDownStatus: false }, () => {
             setTimeout(() => {
@@ -107,9 +113,9 @@ class Sidebar extends React.Component {
     }
 
     handleBackToRecentChat = () => {
-        this.setState({ 
+        this.setState({
             newGroupParticipants: false,
-            archivedChatList:false 
+            archivedChatList: false
         }, () => {
             Store.dispatch(UpdateArchiveChatDataAction({ isArchived: false }));
         });
@@ -117,9 +123,9 @@ class Sidebar extends React.Component {
     }
 
     handleBackToArchivedList = () => {
-        this.setState({ 
-            archivedSetting:false,
-            archivedChatList:true
+        this.setState({
+            archivedSetting: false,
+            archivedChatList: true
         });
     }
     handleBackToGroupParticipants = () => {
@@ -127,7 +133,7 @@ class Sidebar extends React.Component {
             newGroupParticipants: true
         });
     }
-   
+
     handleSetting = () => {
         this.setState({
             settingStatus: true,
@@ -138,12 +144,12 @@ class Sidebar extends React.Component {
             settingStatus: false,
         });
     }
-    handleBackFromCallLogs= (status) => {
-        this.setState({newChatStatus: status});
-        this.setState({callLogs: false});
+    handleBackFromCallLogs = (status) => {
+        this.setState({ newChatStatus: status });
+        this.setState({ callLogs: false });
     }
 
-   _sideMenuPop = () => {
+    _sideMenuPop = () => {
         return (
             <>
                 <OutsideClickHandler onOutsideClick={() => this.outsidePopupClick()} >
@@ -165,10 +171,10 @@ class Sidebar extends React.Component {
         // We check the browserNotify pageName is 'calllog', then swith the page to calllog
         const prevPropsBrowserNotifyData = prevProps.browserNotifyData;
         const browserNotifyData = this.props.browserNotifyData;
-        if(browserNotifyData.pageName &&
+        if (browserNotifyData.pageName &&
             prevPropsBrowserNotifyData.pageName !== browserNotifyData.pageName &&
             browserNotifyData.pageName === 'calllog'
-        ){
+        ) {
             this.handleCallLogs()
         }
     }
@@ -182,10 +188,10 @@ class Sidebar extends React.Component {
         this.remoteUserRequestingCallSwitch = false;
     }
 
-     renderRecentChat = (pageType) => {
-         return (
+    renderRecentChat = (pageType) => {
+        return (
             <RecentChatSection
-                pageType = {pageType}
+                pageType={pageType}
                 handleConversationSectionDisplay={this.props.handleConversationSectionDisplay}
                 handleBackStatus={this.handleBackStatus}
                 callUserJID={this.props.callUserJID}
@@ -194,29 +200,51 @@ class Sidebar extends React.Component {
                 handleShowCallScreen={this.props.handleShowCallScreen}
                 callType={this.props.callType}
                 callMode={this.props.callMode}
-                handlePopupState = { this.props.handlePopupState}
-                handleArchivedChatList = {this.handleArchivedChatList}
+                handlePopupState={this.props.handlePopupState}
+                handleArchivedChatList={this.handleArchivedChatList}
             />
         );
-     };
+    };
+
+    closeModel = (modelType) => {
+        Store.dispatch(
+            showModal({
+                open: false,
+                modelType
+            })
+        );
+    }
+
+    handleJoinCallAction = () => {
+        disconnectCallConnection();
+        Store.dispatch(resetConferencePopup());
+        this.closeModel("CallConfirm");
+        const newLink = this.props.popUpData?.modalProps?.newCallLink
+        localStorage.setItem("isNewCallExist", true);
+        Store.dispatch(callIntermediateScreen({ show: true, link: newLink }));
+    };
+
+    handleCancel = () => {
+        this.closeModel("CallConfirm");
+    };
 
     render() {
         let { menuDropDownStatus, popupStatus, newChatStatus, newGroupParticipants, settingStatus,
-            callLogs,archivedChatList } = this.state;
+            callLogs, archivedChatList, callLogCount } = this.state;
         const { vCardData, popUpData: { modalProps: { open, modelType } }, callConversionData } = this.props
-        if(callConversionData && callConversionData.status){
-            if(callConversionData.status === CALL_CONVERSION_STATUS_ACCEPT){
-                if(this.remoteUserRequestingCallSwitch === true && this.currentUserRequestingCallSwitch === true){
+        if (callConversionData && callConversionData.status) {
+            if (callConversionData.status === CALL_CONVERSION_STATUS_ACCEPT) {
+                if (this.remoteUserRequestingCallSwitch === true && this.currentUserRequestingCallSwitch === true) {
                     this.currentUserRequestingCallSwitch = false;
                 }
                 this.remoteUserRequestingCallSwitch = false;
-            } else if(callConversionData.status === CALL_CONVERSION_STATUS_REQ_WAITING){
+            } else if (callConversionData.status === CALL_CONVERSION_STATUS_REQ_WAITING) {
                 this.currentUserRequestingCallSwitch = true;
-            } else if(callConversionData.status === CALL_CONVERSION_STATUS_REQUEST){
+            } else if (callConversionData.status === CALL_CONVERSION_STATUS_REQUEST) {
                 this.remoteUserRequestingCallSwitch = true;
-            } else if(callConversionData.status === CALL_CONVERSION_STATUS_CANCEL){
+            } else if (callConversionData.status === CALL_CONVERSION_STATUS_CANCEL) {
                 this.resetCallConversionRequestData();
-            } else if(callConversionData.status === CALL_CONVERSION_STATUS_DECLINE){
+            } else if (callConversionData.status === CALL_CONVERSION_STATUS_DECLINE) {
                 this.resetCallConversionRequestData();
             }
         }
@@ -230,8 +258,14 @@ class Sidebar extends React.Component {
                                 <WebChatVCard />
                                 <div className="profile-options">
                                     <i className="callLogs" onClick={this.handleCallLogs} title="Call logs">
-                                        <span className="toggleAnimation"></span>
-                                        <CallLogs />
+                                        {callLogCount ?
+                                            <div className='callLogCount'>
+                                                <CallLogs />
+                                                <span style={{ display: "none" }}>{callLogCount}</span>
+                                            </div>
+                                            :
+                                            <CallLogs />
+                                        }
                                     </i>
                                     <i className="newchat-icon" onClick={this.handleNewChat} title="New chat">
                                         <span className="toggleAnimation"></span>
@@ -246,7 +280,7 @@ class Sidebar extends React.Component {
                                     <OutsideClickHandler onOutsideClick={() => this.outsidePopupClick()} >
                                         <ul className="menu-dropdown open">
                                             <li title="New Group" onClick={this.handleCreateNewGroup}><i><NewGroup /></i><span>New Group</span></li>
-                                            {!this.props.isEnableArchived && <li title="Archived Chats" onClick={this.handleArchivedChatList} ><i><Archived style={{color:"#6a92c5", fill:"#6a92c5"}}/></i><span>Archived</span></li> }
+                                            {!this.props.isEnableArchived && <li title="Archived Chats" onClick={this.handleArchivedChatList} ><i><Archived style={{ color: "#6a92c5", fill: "#6a92c5" }} /></i><span>Archived</span></li>}
                                             <li title="Settings" onClick={this.handleSetting}><i><Settings /></i><span>Settings</span></li>
                                             <WebChatLogout history={this.props.history} logoutStatus={this.handleLogutStatus} handleDropdownStatus={this.handleDropdownStatus} />
                                         </ul>
@@ -292,18 +326,29 @@ class Sidebar extends React.Component {
                         />
                     }
                 </div>
-                  { open && modelType ==='action' && <ActionPopUp {...this.props.popUpData } />}
-                  { open && modelType === 'participants' && <ParticipantPopUp /> }
-                  { open && ['callparticipants','inviteParticipants', 'calllogparticipants'].indexOf(modelType) > -1 && <CallParticipantsPopup /> }
-                  { open && ["mediaPermissionDenied","mediaAccessError"].indexOf(modelType) > -1 && <MediaErrorPopup /> }
-                  { callConversionData.status &&
+                {open && modelType === 'action' && <ActionPopUp {...this.props.popUpData} />}
+                {open && modelType === 'participants' && <ParticipantPopUp />}
+                {open && ['callparticipants', 'inviteParticipants', 'calllogparticipants'].indexOf(modelType) > -1 && <CallParticipantsPopup />}
+                {open && ["mediaPermissionDenied", "mediaAccessError"].indexOf(modelType) > -1 && <MediaErrorPopup />}
+                {callConversionData.status &&
                     <CallConversionPopup
                         callConversionData={callConversionData}
                         resetCallConversionRequestData={this.resetCallConversionRequestData}
                         currentUserRequestingCallSwitch={this.currentUserRequestingCallSwitch}
                         remoteUserRequestingCallSwitch={this.remoteUserRequestingCallSwitch}
                     />
-                    }
+                }
+                {open && modelType === "CallConfirm" && (
+                    <Modal containerId="container">
+                        <ActionPopup
+                            handleActionText={"Ok"}
+                            handleCancelText={"Cancel"}
+                            handleAction={() => this.handleJoinCallAction()}
+                            handleCancel={() => this.handleCancel()}
+                            text={"Do you want to leave your call to join this one?"}
+                        />
+                    </Modal>
+                )}
             </>
 
         )
@@ -317,7 +362,7 @@ const mapStateToProps = state => {
         vCardData: state.vCardData,
         callConversionData: state.callConversionData,
         browserNotifyData: state.browserNotifyData,
-        isEnableArchived : state?.webLocalStorageSetting?.isEnableArchived
+        isEnableArchived: state?.webLocalStorageSetting?.isEnableArchived
     }
 }
 

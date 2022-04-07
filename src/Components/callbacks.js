@@ -1,7 +1,7 @@
 import { updateContactWhoBlockedMeAction, updateBlockedContactAction } from '../Actions/BlockAction';
 import {
     CallConnectionState, showConfrence, callConversion, selectLargeVideoUser,
-    callDurationTimestamp, isMuteAudioAction, resetData
+    callDurationTimestamp, isMuteAudioAction, resetData, callIntermediateScreen, resetCallIntermediateScreen, resetConferencePopup
 } from '../Actions/CallAction';
 import { WebChatConnectionState } from '../Actions/ConnectionState';
 import {
@@ -24,26 +24,27 @@ import { REACT_APP_XMPP_SOCKET_HOST } from './processENV';
 import SDK from './SDK';
 import { reconnect } from './WebChat/Authentication/Reconnect'
 import Store from '../Store';
-import { decryption, encryption } from './WebChat/WebChatEncryptDecrypt';
+import { decryption } from './WebChat/WebChatEncryptDecrypt';
 import { setConnectionStatus } from './WebChat/Common/FileUploadValidation'
 import { showModal, hideModal } from '../Actions/PopUp';
 import {
     resetPinAndLargeVideoUser, dispatchDisconnected, updateCallTypeAfterCallSwitch,
     startCallingTimer,
     startMissedCallNotificationTimer,
-    clearMissedCallNotificationTimer
+    clearMissedCallNotificationTimer,
+    handleCallParticipantToast
 } from '../Helpers/Call/Call';
 import {
     CALL_CONVERSION_STATUS_CANCEL, CALL_CONVERSION_STATUS_REQ_WAITING, CALL_BUSY_STATUS_MESSAGE,
     CALL_ENGAGED_STATUS_MESSAGE, CALL_STATUS_CONNECTED, DISCONNECTED_SCREEN_DURATION,
-    CALL_TYPE_AUDIO, CALL_TYPE_VIDEO, CALL_STATUS_RECONNECT, CALL_STATUS_HOLD
+    CALL_TYPE_AUDIO, CALL_TYPE_VIDEO, CALL_STATUS_RECONNECT, CALL_STATUS_HOLD, CALL_STATUS_ENDED
 } from '../Helpers/Call/Constant';
 import uuidv4 from 'uuid/v4';
 import browserNotify from '../Helpers/Browser/BrowserNotify';
 import {
     CHAT_TYPE_GROUP, GROUP_USER_REMOVED, GROUP_USER_ADDED, GROUP_USER_MADE_ADMIN,
     GROUP_USER_LEFT, GROUP_PROFILE_INFO_UPDATED, LOGOUT, MSG_CLEAR_CHAT,
-    MSG_CLEAR_CHAT_CARBON, MSG_DELETE_CHAT, MSG_DELETE_CHAT_CARBON
+    MSG_CLEAR_CHAT_CARBON, MSG_DELETE_CHAT, MSG_DELETE_CHAT_CARBON, CONNECTION_STATE_CONNECTING
 } from '../Helpers/Chat/Constant';
 import {
     setGroupParticipants, getGroupData, isUserExistInGroup, setGroupParticipantsByGroupId
@@ -81,7 +82,13 @@ export const resetCallData = () => {
     remoteAudioMuted = [];
     localVideoMuted = false;
     localAudioMuted = false;
+    if (localStorage.getItem("isNewCallExist") === "true") {
+        localStorage.removeItem("isNewCallExist")
+    } else {
+        Store.dispatch(resetCallIntermediateScreen());
+    }
     Store.dispatch(callDurationTimestamp());
+    Store.dispatch(resetConferencePopup());
     resetData();
     setTimeout(() => {
         Store.dispatch(isMuteAudioAction(false));
@@ -90,10 +97,18 @@ export const resetCallData = () => {
 
 export const muteLocalVideo = (isMuted) => {
     localVideoMuted = isMuted;
+    let vcardData = getLocalUserDetails();
+    let currentUser = vcardData && vcardData.fromUser;
+    currentUser = currentUser + "@" + REACT_APP_XMPP_SOCKET_HOST
+    remoteAudioMuted[currentUser] = isMuted;
 };
 
 export const muteLocalAudio = (isMuted) => {
     localAudioMuted = isMuted;
+    let vcardData = getLocalUserDetails();
+    let currentUser = vcardData && vcardData.fromUser;
+    currentUser = currentUser + "@" + REACT_APP_XMPP_SOCKET_HOST
+    remoteAudioMuted[currentUser] = isMuted;
 };
 
 const updatingUserStatusInRemoteStream = (usersStatus) => {
@@ -110,7 +125,7 @@ const updatingUserStatusInRemoteStream = (usersStatus) => {
             let streamObject = {
                 id: uuidv4(),
                 fromJid: user.userJid,
-                status: user.status
+                status: user.status || CONNECTION_STATE_CONNECTING
             }
             remoteStream.push(streamObject);
             remoteVideoMuted[user.userJid] = user.videoMuted;
@@ -155,6 +170,12 @@ export const removeRemoteStream = (userJid) => {
 }
 
 export const getRemoteStream = () => remoteStream;
+
+const updateStoreRemoteStream = () => {
+    const { getState } = Store;
+    const { data = {} } = getState().showConfrenceData;
+    Store.dispatch(showConfrence({ ...data, remoteStream }));
+}
 
 const ringing = (res) => {
     if (!onCall) {
@@ -217,17 +238,26 @@ const connecting = (res) => {
     }
 }
 
+const updateCallConnectionStatus = (usersStatus) => {
+    const callConnectionData = JSON.parse(localStorage.getItem("call_connection_status"));
+    let usersLen;
+    if (usersStatus.length) {
+        let currentUsers = usersStatus.filter(el => el.status.toLowerCase() !== CALL_STATUS_ENDED);
+        usersLen = currentUsers.length;
+    }  
+    let callDetailsObj = {
+        ...callConnectionData,
+        callMode: ((callConnectionData && callConnectionData.groupId && callConnectionData.groupId !== null && callConnectionData.groupId !== "") || usersLen > 2) ? "onetomany" : "onetoone"
+    }
+    localStorage.setItem("call_connection_status", JSON.stringify(callDetailsObj));
+}
+
 const connected = (res) => {
     const userIndex = remoteStream.findIndex(item => item.fromJid === res.userJid);
     if (userIndex > -1) {
         let usersStatus = res.usersStatus;
         updatingUserStatusInRemoteStream(usersStatus);
-        const callConnectionData = JSON.parse(localStorage.getItem("call_connection_status"));
-        let callDetailsObj = {
-            ...callConnectionData,
-            callMode: ((callConnectionData && callConnectionData.groupId && callConnectionData.groupId !== null && callConnectionData.groupId !== "") || usersStatus.length > 2) ? "onetomany" : "onetoone"
-        }
-        localStorage.setItem("call_connection_status", JSON.stringify(callDetailsObj));
+        updateCallConnectionStatus(usersStatus);
         const { getState, dispatch } = Store;
         const showConfrenceData = getState().showConfrenceData;
         const { data } = showConfrenceData;
@@ -257,7 +287,6 @@ const disconnected = (res) => {
     updatingUserStatusInRemoteStream(res.usersStatus);
     let disconnectedUser = res.userJid;
     disconnectedUser = disconnectedUser.includes("@") ? disconnectedUser.split('@')[0] : disconnectedUser;
-    console.log("call data disconnected", disconnectedUser);
     if (remoteStream.length < 1 || disconnectedUser === currentUser) {
         localStorage.removeItem('roomName');
         localStorage.removeItem('callType');
@@ -417,6 +446,17 @@ const ended = (res) => {
         if (!onCall || (remoteStream && Array.isArray(remoteStream) && remoteStream.length < 1)) {
             return;
         }
+        updatingUserStatusInRemoteStream(res.usersStatus);
+        updateCallConnectionStatus(res.usersStatus);
+        const { getState } = Store;
+        const showConfrenceData = getState().showConfrenceData;
+        const { data } = showConfrenceData;
+        Store.dispatch(showConfrence({
+            ...(data || {}),
+            remoteStream: remoteStream,
+            remoteVideoMuted,
+            remoteAudioMuted
+        }));
         setTimeout(() => {
             removingRemoteStream(res);
         }, 2000);
@@ -445,9 +485,9 @@ const reconnecting = (res) => {
 }
 
 const speaking = (res) => {
-    if (!res.fromJid) return;
+    if (!res.userJid) return;
     if (!res.localUser) {
-        Store.dispatch(selectLargeVideoUser(res.fromJid, res.volumeLevel));
+        Store.dispatch(selectLargeVideoUser(res.userJid, res.volumeLevel));
     }
 }
 
@@ -475,6 +515,21 @@ const hold = (res) => {
     }))
 }
 
+const subscribed = (res) => {
+    // updatingUserStatusInRemoteStream(res.usersStatus);
+    const { getState, dispatch } = Store;
+    const showConfrenceData = getState().showConfrenceData;
+    const { data } = showConfrenceData;
+    dispatch(showConfrence({
+        localVideoMuted: localVideoMuted,
+        ...(data || {}),
+        localStream: localStream,
+        remoteStream,
+        localAudioMuted: localAudioMuted,
+        status: "SUBSCRIBED"
+    }));
+}
+
 const callStatus = (res) => {
     if (res.status === "ringing") {
         ringing(res);
@@ -492,8 +547,6 @@ const callStatus = (res) => {
         ended(res);
     } else if (res.status === "reconnecting") {
         reconnecting(res);
-    } else if (res.status === "speaking") {
-        speaking(res);
     } else if (res.status === "userstatus") {
         userStatus(res);
     } else if (res.status === "hold") {
@@ -527,7 +580,6 @@ export var callbacks = {
             logout();
         }
     },
-
     incomingCallListener: (res) => {
         strophe = true;
         remoteStream = [];
@@ -625,10 +677,10 @@ export var callbacks = {
                 }
             });
             dispatch(showConfrence({
+                localVideoMuted: localVideoMuted,
                 ...(data || {}),
                 localStream: localStream,
                 remoteStream,
-                localVideoMuted: localVideoMuted,
                 localAudioMuted: localAudioMuted,
                 status: "LOCALSTREAM"
             }));
@@ -678,12 +730,12 @@ export var callbacks = {
             const { data } = showConfrenceData;
             Store.dispatch(showConfrence({
                 showCallingComponent: false,
+                localVideoMuted: localVideoMuted,
                 ...(data || {}),
                 localStream: localStream,
                 remoteStream: remoteStream,
                 fromJid: res.userJid,
                 status: "REMOTESTREAM",
-                localVideoMuted: localVideoMuted,
                 localAudioMuted: localAudioMuted,
                 remoteVideoMuted: remoteVideoMuted,
                 remoteAudioMuted: remoteAudioMuted,
@@ -738,6 +790,7 @@ export var callbacks = {
         let showCalleComponent = data.showCalleComponent;
 
         Store.dispatch(showConfrence({
+            ...data,
             showComponent: showComponent,
             showStreamingComponent: showStreamingComponent,
             showCallingComponent: showCallingComponent,
@@ -772,6 +825,13 @@ export var callbacks = {
             fromUser: res.userJid
         }));
     },
+    callSpeakingListener: (res) => {
+        speaking(res);
+    },
+    callUsersUpdateListener: (res) => {
+        Store.dispatch(callIntermediateScreen({ usersList: res.usersList }));
+        subscribed(res);
+    },
     inviteUsersListener: (res) => {
         updatingUserStatusInRemoteStream(res.usersStatus);
         const showConfrenceData = Store.getState().showConfrenceData;
@@ -787,13 +847,20 @@ export var callbacks = {
         startCallingTimer();
     },
     mediaErrorListener: (res) => {
+        if (res.action === "subscribeCall" && res.statusCode === 100607) {
+            muteLocalVideo(true);
+            const { getState } = Store;
+            const showConfrenceData = getState().showConfrenceData;
+            const { data } = showConfrenceData;
+            Store.dispatch(showConfrence({
+                ...(data || {}),
+                localVideoMuted: true                
+            }));
+        } 
         Store.dispatch(showModal({
             open: true,
             modelType: res.callStatus === "MEDIA_PERMISSION_DENIED" ? 'mediaPermissionDenied' : 'mediaAccessError',
-            callProcess: res.callProcess,
-            callType: res.callType,
-            errorType: res.errorType,
-            device: res.device
+            ...res
         }));
     },
     messageListener: async function (res) {
@@ -812,7 +879,6 @@ export var callbacks = {
         if (res.msgType === "receiveMessage" && res.chatType === CHAT_TYPE_GROUP && res.msgBody === "2") {
             const groupListRes = await SDK.getGroupsList();
             if (groupListRes && groupListRes.statusCode === 200) {
-                encryption("groupslist_data", groupListRes.data);
                 Store.dispatch(GroupsDataAction(groupListRes.data));
             }
         }
@@ -871,7 +937,6 @@ export var callbacks = {
                 if (res.msgType === GROUP_USER_ADDED) {
                     const groupListRes = await SDK.getGroupsList();
                     if (groupListRes && groupListRes.statusCode === 200) {
-                        encryption("groupslist_data", groupListRes.data);
                         Store.dispatch(GroupsDataAction(groupListRes.data));
                     }
                     const recentChatsRes = await SDK.getRecentChats();
@@ -894,16 +959,12 @@ export var callbacks = {
         }
         Store.dispatch(currentCallGroupMembers(res));
     },
-
     presenceListener: function (res) {
-        encryption("presence_data", res);
         Store.dispatch(PresenceDataAction(res))
     },
-
     replyMessageListener: function (res) {
         Store.dispatch(ReplyMessageAction(res));
     },
-
     setUserToken: function (token) {
         if (!token) {
             localStorage.removeItem('token');
@@ -918,7 +979,6 @@ export var callbacks = {
     userProfileListener: async function (res) {
         let authUser = decryption('auth_user');
         if (authUser.username === res.userId) {
-            encryption('vcard_data', res);
             Store.dispatch(VCardDataAction(res));
         } else {
             Store.dispatch(VCardContactDataAction(res));
@@ -958,13 +1018,45 @@ export var callbacks = {
         Store.dispatch(updateMsgByLastMsgId(res));
     },
     muteChatListener: function (res) {
-        Store.dispatch(updateMuteStatusRecentChat(res));
+        if (res?.type === "carbon") {
+            Store.dispatch(updateMuteStatusRecentChat(res));
+        }
     },
     archiveChatListener: function (res) {
-        Store.dispatch(updateArchiveStatusRecentChat(res));
+        if (res?.type === "carbon") {
+            Store.dispatch(updateArchiveStatusRecentChat(res));
+        }
     },
     userSettingsListener: function (res) {
-        Store.dispatch(webSettingLocalAction({ "isEnableArchived" : res.archive === 0 ? false : true }));
         setLocalWebsettings("archive", res.archive === 0 ? false : true);
+        Store.dispatch(webSettingLocalAction({ "isEnableArchived" : res.archive === 0 ? false : true }));
     },
+    helper: {
+        getDisplayName: () => {
+            let vcardData = getLocalUserDetails();
+            if(vcardData && vcardData.nickName){
+                return vcardData.nickName;
+            }
+            return "Anonymous user " + Math.floor(Math.random() * 10);
+        },
+        getImageUrl: () => {
+            let vcardData = getLocalUserDetails();
+            if(vcardData){
+                return vcardData.image;
+            }
+            return "";            
+        }
+    },
+    callUserJoinedListener: function (res) {
+        if (res.userJid && !res.localUser) {
+            updateStoreRemoteStream();
+            handleCallParticipantToast(res.userJid, "join");
+        }
+    },
+    callUserLeftListener: function (res) {
+        if (res.userJid && !res.localUser) {
+            updateStoreRemoteStream();
+            handleCallParticipantToast(res.userJid, "left");
+        }
+    }
 }

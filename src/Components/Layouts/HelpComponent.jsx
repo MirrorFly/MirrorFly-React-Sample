@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { REACT_APP_DOMAIN_URL } from '../processENV';
+import { REACT_APP_SITE_DOMAIN } from '../processENV';
 import '../../assets/scss/common.scss';
 
 /**
@@ -14,7 +14,7 @@ class HelpComponent extends React.Component {
                     <h4>Pairing your phone with the MirrorFly on desktop</h4>
                     <div>
                         <ol>
-                            <li>1. Open MirrorFly on your computer or visit <Link to="/">{REACT_APP_DOMAIN_URL}</Link> on your computer. (Make sure it is the official client or website)
+                            <li>1. Open MirrorFly on your computer or visit <Link to="/">{REACT_APP_SITE_DOMAIN}</Link> on your computer. (Make sure it is the official client or website)
                             </li>
                             <li>2. When prompted with a QR code, use the QR scanner within MirrorFly to scan the QR code.
                                 <ul>

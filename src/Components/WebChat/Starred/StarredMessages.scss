@@ -1,4 +1,5 @@
 @import '../../../assets/scss/variables.scss';
+@import '../../../assets/scss/SassMixins.scss';
 @import '../../../assets/scss/mixins.scss';
 @import '../../../assets/scss/message-mixins.scss';
 
@@ -12,7 +13,7 @@
     background: #F6F6F6;
     display: flex;
     .staredContainer{
-        max-height: calc(100vh - 4.063em);
+        max-height: calc(var(--maxParentheight) - 4.063em);
         overflow: hidden auto;
         width: 100%;
         flex: 1 1 auto;
@@ -85,7 +86,7 @@
                     display: flex;
                     align-items: center;
                     flex: 1 1 auto;
-                    max-width: calc(100% - 8em);      
+                    max-width: calc(100% - 4em);      
                 .sender-image{
                     min-width: 1.813em;
                     width: 1.813em;
@@ -136,7 +137,7 @@
             }
                 .starred-time{
                     color: #959595;
-                    font-size: $font12;
+                    font-size: $font10;
                     font-family: $regular;
                     line-height: 0.563rem;
                     white-space: nowrap;

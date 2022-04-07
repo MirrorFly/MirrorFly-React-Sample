@@ -1,4 +1,5 @@
 @import "../../../assets/scss/variables.scss";
+@import '../../../assets/scss/SassMixins.scss';
 @import "../../../assets/scss/mixins.scss";
 
 .newgroup-details-container{
@@ -57,7 +58,7 @@
         right: 0%;
         li{
           &:first-child,&:last-child{
-            padding:0.563em 1.063em!important;
+            padding:0.463em 1em!important;
           
             .uploadphoto{
               margin-left: 0 !important;
@@ -348,15 +349,17 @@
       position: relative;
       margin-top: 0.313em;
     input {
+      color: #484848;
       width: 100%;
       border: none;
       border-bottom: $bdr-popup-profile-username-input;
       font-size: 0.875rem;
-      font-family: $medium;
+      font-family: $regular;
       padding: 0.625em 0em;
       padding-right: 3.750em;
       margin-right: 1.2em;
-      background:transparent
+      background:transparent;
+      letter-spacing: .2px;
   }
   .char-count {
     position: absolute;

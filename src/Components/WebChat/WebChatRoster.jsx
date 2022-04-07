@@ -107,7 +107,7 @@ class WebChatRoster extends React.Component {
                 <div className="recentchats">
                     <div className="recent-username-block">
                         <div className="recent-username">
-                            <span className="username">
+                            <div className="username">
                                 <h3 title={displayContactName}>
                                     <span>
                                     {this.state.searchWith !== "" ?
@@ -120,7 +120,7 @@ class WebChatRoster extends React.Component {
                                         </div>
                                     }
                                 </h3>
-                            </span>
+                            </div>
                         </div>
                     </div>
                     <div className="recent-message-block">
@@ -157,14 +157,14 @@ class WebChatRoster extends React.Component {
             <div className="recentchats">
                 <div className="recent-username-block">
                     <div className="recent-username">
-                        <span className="username">
+                        <div className="username">
                             <h3 title={displayContactName}>
                                 {this.state.searchWith !== "" ?
                                     getHighlightedText(displayContactName, this.state.searchWith) :
                                     displayContactName
                                 }
                             </h3>
-                        </span>
+                        </div>
                     </div>
                 </div>
                 <div className="recent-message-block">

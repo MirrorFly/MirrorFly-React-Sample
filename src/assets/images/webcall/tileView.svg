@@ -1,1 +1,14 @@
-<svg viewBox="0 0 14.17 14.335"><rect fill="#fff" width="6.073" height="6.073" rx="1"/><rect fill="#fff" width="6.073" height="6.073" rx="1" transform="translate(0 8.261)"/><rect fill="#fff" width="6.073" height="6.073" rx="1" transform="translate(8.097)"/><rect fill="#fff" width="6.073" height="6.073" rx="1" transform="translate(8.097 8.261)"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="29" height="29" viewBox="0 0 29 29">
+  <defs>
+    <clipPath id="clip-path">
+      <rect id="Rectangle_7805" data-name="Rectangle 7805" width="29" height="29" transform="translate(15104 -15740)" fill="#fff"/>
+    </clipPath>
+  </defs>
+  <g id="Grid_view" data-name="Grid view" transform="translate(-15104 15740)" clip-path="url(#clip-path)">
+    <g id="Group_30861" data-name="Group 30861" transform="translate(13911 -15765)">
+      <g id="Group_30859" data-name="Group 30859" transform="translate(1196 28)">
+        <path id="Path_22723" data-name="Path 22723" d="M330.225,184.279h-7.117a1.7,1.7,0,0,1-1.695-1.695V172.553a1.7,1.7,0,0,1,1.695-1.7h7.117a1.7,1.7,0,0,1,1.7,1.7v10.031A1.7,1.7,0,0,1,330.225,184.279Zm0-23.839h-7.117a1.7,1.7,0,0,0-1.695,1.695v5.174a1.7,1.7,0,0,0,1.695,1.7h7.117a1.7,1.7,0,0,0,1.7-1.7v-5.174A1.7,1.7,0,0,0,330.225,160.44Zm-19.61.265h7.117a1.7,1.7,0,0,1,1.7,1.7v19.919a1.7,1.7,0,0,1-1.7,1.695h-7.117a1.7,1.7,0,0,1-1.7-1.695V162.4A1.7,1.7,0,0,1,310.615,160.7Z" transform="translate(-308.92 -160.44)" fill="#fff" fill-rule="evenodd"/>
+      </g>
+    </g>
+  </g>
+</svg>

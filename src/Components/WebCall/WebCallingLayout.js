@@ -8,7 +8,7 @@ import { getFormatPhoneNumber, capitalizeFirstLetter } from '../../Helpers/Utili
 import callLogs from '../WebCall/CallLogs/callLog'
 import { ReactComponent as BackToChat } from '../../assets/images/webcall/backToChat.svg';
 import CallControlButtons from './CallControlButtons';
-import { CALL_SESSION_STATUS_CLOSED, DISCONNECTED_SCREEN_DURATION } from '../../Helpers/Call/Constant';
+import { CALL_ENGAGED_STATUS_MESSAGE, CALL_SESSION_STATUS_CLOSED, DISCONNECTED_SCREEN_DURATION } from '../../Helpers/Call/Constant';
 import { dispatchDisconnected, getCallDisplayDetailsForOnetoManyCall } from '../../Helpers/Call/Call';
 import { getUserDetails, initialNameHandle } from '../../Helpers/Chat/User';
 import Logo from '../../assets/images/new-images/logoNew.png';
@@ -49,13 +49,9 @@ class WebCallingLayout extends Component {
     }
 
     endCall = async () => {
-        console.log("call data ending call in the outgoing call screen start");
         this.stopAudio();
-        console.log("call data ending call in the outgoing call screen after stop audio");
         const { callConnectionDate } = this.props;
-        console.log("call data ending call in the outgoing call screen before sdk");
         SDK.endCall();
-        console.log("call data ending call in the outgoing call screen done");
         dispatchDisconnected();
         resetCallData();
         callLogs.update(callConnectionDate.data.roomId, {
@@ -227,6 +223,7 @@ class WebCallingLayout extends Component {
         let localVideoMuted = this.props.showConfrenceData.data.localVideoMuted;
         let localAudioMuted = this.props.showConfrenceData.data.localAudioMuted;
         let localStream = this.props.showConfrenceData.data.localStream;
+
         return (
             <div className="calling-Popup webcall-calling">
                 <div className="optionButton visible">
@@ -303,7 +300,7 @@ class WebCallingLayout extends Component {
                                 }
                                 </div>
                                 <span className="callingStatus">
-                                    <span>
+                                    <span className={`${callStatus === CALL_ENGAGED_STATUS_MESSAGE ? "call-state-busy": ""} call-status`}>
                                         {callStatus === "Calling" ? callingUiStatus : capitalizeFirstLetter(callStatus)} {(callStatus === 'Calling' || callStatus === 'Ringing') &&
                                             <div className="callingAnimation call">
                                                 <span className="dot"></span>
@@ -324,7 +321,7 @@ class WebCallingLayout extends Component {
                             <div className="RemoteVideo-wrapper">
                                 <div data-overlap-id="call-thumbnail-view-local" className="RemoteVideo-list">
                                     <SmallVideo
-                                        key={`local-user-video-${vcardData.fromUser}`}
+                                        elKey={`local-user-video-${vcardData.fromUser}`}
                                         videoMuted={localVideoMuted}
                                         audioMuted={localAudioMuted}
                                         stream={localStream}
@@ -345,7 +342,7 @@ class WebCallingLayout extends Component {
                         handleEndCall={this.endCall}
                         handleAudioMute={this.handleAudioMute}
                         handleVideoMute={this.handleVideoMute}
-                        videoMute={true}
+                        videoMute={!!localVideoMuted}
                         audioMute={true}
                         audioControl={audioControl}
                         videoControl={videoControl}

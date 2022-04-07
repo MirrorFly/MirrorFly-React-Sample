@@ -11,31 +11,39 @@ import { capitalizeFirstLetter } from '../../Helpers/Utility';
 import {
     CALL_BUSY_STATUS_MESSAGE, CALL_ENGAGED_STATUS_MESSAGE,
     CALL_STATUS_DISCONNECTED, CALL_STATUS_ENGAGED, CALL_STATUS_HOLD,
-    CALL_HOLD_STATUS_MESSAGE, CALL_STATUS_BUSY, CALL_STATUS_CONNECTED, CALL_STATUS_CALLING, CALL_STATUS_CONNECTING, CALL_STATUS_RINGING,
+    CALL_HOLD_STATUS_MESSAGE, CALL_STATUS_BUSY, CALL_STATUS_CONNECTED, CALL_STATUS_CALLING, CALL_STATUS_CONNECTING, CALL_STATUS_RINGING, CALL_STATUS_ENDED,
 } from '../../Helpers/Call/Constant';
 import { IconPin, IconPinActive } from '../../assets/images';
 
 class SmallVideo extends React.Component{
 
-    shouldComponentUpdate(nextProps, nextState) {
-        if(this.props.pinUserJid !== nextProps.pinUserJid ||
-            this.props.showConfrenceDataId !== nextProps.showConfrenceDataId ||
-            this.props.stream.id !==  nextProps.stream.id ||
-            this.props.stream.video !== nextProps.stream.video ||
-            this.props.rosterData.image !== nextProps.rosterData.image ||
-            nextProps.videoMuted !== this.props.videoMuted ||
-            nextProps.audioMuted !== this.props.audioMuted ||
-            this.props.userStatus !== nextProps.userStatus ||
-            nextProps.jid !== this.props.jid){
-            return true;
-        }
-        return false;
-    }
-
     setPinUser = (e, userJid) => {
         e.stopPropagation();
         if(!this.props.setPinUser) return;
         Store.dispatch(pinUser(userJid));
+    }
+
+    shouldComponentUpdate(nextProps, nextState) {
+        if( this.props.showConfrenceDataId !== nextProps.showConfrenceDataId ||
+            ((this.props.stream && nextProps.stream) && this.props.stream.id !== nextProps.stream.id) ||
+            ((this.props.stream && nextProps.stream) && this.props.stream.video !== nextProps.stream.video) ||
+            ((this.props.stream && nextProps.stream) && this.props.stream.audio !== nextProps.stream.audio) ||
+            this.props.rosterData.image !== nextProps.rosterData.image ||
+            nextProps.videoMuted !== this.props.videoMuted ||
+            nextProps.audioMuted !== this.props.audioMuted ||
+            nextProps.callStatus !== this.props.callStatus ||
+            nextProps.userStatus !== this.props.userStatus ||
+            nextProps.tileView !== this.props.tileView ||
+            nextProps.tileViewStyle?.width !== this.props.tileViewStyle?.width ||
+            nextProps.tileViewStyle?.height !== this.props.tileViewStyle?.height ||
+            nextProps.videoTrackId !== this.props.videoTrackId ||
+            nextProps.audioTrackId !== this.props.audioTrackId ||
+            nextProps.pinUserJid !== this.props.pinUserJid ||
+            nextProps.setPinUser !== this.props.setPinUser ||
+            nextProps.jid !== this.props.jid){
+                return true;
+        }
+        return false;
     }
 
     render(){
@@ -64,6 +72,8 @@ class SmallVideo extends React.Component{
                 userStatusDisplay = capitalizeFirstLetter(userStatus.toLowerCase())
             } else if(userStatus.toLowerCase() === CALL_STATUS_DISCONNECTED){
                 userStatusDisplay = capitalizeFirstLetter(userStatus.toLowerCase())
+            } else if(userStatus.toLowerCase() === CALL_STATUS_ENDED){
+                userStatusDisplay = capitalizeFirstLetter(CALL_STATUS_DISCONNECTED)
             }
         }
 
@@ -77,9 +87,12 @@ class SmallVideo extends React.Component{
             if (localUser) return vcardData.nickName;
             else return rosterDataVal.initialName;
         }
-       const initialName = initialNameHandle(rosterData, getInitalName(rosterData));
+        const initialName = initialNameHandle(rosterData, getInitalName(rosterData));
+
         return(
             <span 
+                key={this.props.elKey}
+                style={this.props.tileViewStyle}
                 className={`${pinClass}${userStatus && userStatus.toLowerCase() !== CALL_STATUS_CONNECTED ? " user-connecting" : ""}`} 
                 onClick={(e) => this.setPinUser(e, this.props.jid)}>
                 { (videoMuted || !stream.video || (this.props.callStatus && this.props.callStatus.toLowerCase() === CALL_STATUS_DISCONNECTED)) &&
@@ -107,16 +120,23 @@ class SmallVideo extends React.Component{
                         <i title="Participant has stopped the camera" className="videoOffRemote"><VideoOff/></i>
                     }
                 </div>
-                {   
-                        this.props.setPinUser && 
+                {!this.props.tileView && (
+                    <>
+                        {this.props.setPinUser && (
                         <>
-                        {pinUserJid === this.props.jid ?
-                        <i onClick={(e) => this.setPinUser(e, this.props.jid)} className="pinned active"><IconPinActive /></i>
-                        :
-                        <i onClick={(e) => this.setPinUser(e, this.props.jid)} className="pinned"><IconPin /></i>
-                        }
+                            {pinUserJid === this.props.jid ? (
+                            <i onClick={(e) => this.setPinUser(e, this.props.jid)} className="pinned active">
+                                <IconPinActive />
+                            </i>
+                            ) : (
+                            <i onClick={(e) => this.setPinUser(e, this.props.jid)} className="pinned">
+                                <IconPin />
+                            </i>
+                            )}
                         </>
-                    }
+                        )}
+                    </>
+                )}
                 {userStatus && userStatusDisplay !== "" && userStatus.toLowerCase() !== CALL_STATUS_CONNECTED &&
                     <div className="overlay-text">
                         {userStatusDisplay}

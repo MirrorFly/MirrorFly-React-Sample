@@ -16,7 +16,8 @@ import {
   getMediaClassName,
   getThumbBase64URL,
   blockOfflineAction,
-  isAppOnline
+  isAppOnline,
+  isCallLink
 } from "../../../../../Helpers/Utility";
 import DropDownAction from "../Common/DropDownAction";
 import ForwardMessage from "../Common/ForwardMessage";
@@ -41,10 +42,10 @@ import DocumentComponent from "./DocumentComponent";
 import LocationComponent from "./LocationComponent";
 import ContactComponent from "./ContactComponent";
 
-const ChatMessageTemplate = (props) => {
+const ChatMessageTemplate = (props = {}) => {
   const dispatch = useDispatch();
   const globalState = useSelector((state) => state.webLocalStorageSetting);
-  const { isEnableTranslate = false } = globalState;
+  const { isEnableTranslate = false } = globalState || {};
   const {
     jid,
     messageAction,
@@ -75,8 +76,10 @@ const ChatMessageTemplate = (props) => {
     timestamp,
     favouriteStatus,
     previousMessageUser,
-    msgBody: { contact: { name, phone_number } = {} } = {}
+    msgBody: { contact = {} } = {}
   } = messageObject;
+  const { name = "", phone_number = "" } = contact || {};
+
   const messageText = messageObject?.msgBody?.message;
   let messageFrom = singleChat ? fromUserId : publisherId;
   const { forward = false, forwardMessageId } = addionalnfo;
@@ -88,8 +91,8 @@ const ChatMessageTemplate = (props) => {
     ? {}
     : getDisplayNameFromGroup(messageFrom, groupMemberDetails);
   const style = { color: userColor };
-  const { replyTo, media: { file, caption, thumb_image, file_url, is_uploading, webWidth, fileName } = {} } =
-    messageContent;
+  const { replyTo, media = {} } = messageContent;
+  const { file, caption, thumb_image, file_url, is_uploading, webWidth, fileName } = media || {};
 
   const [isChecked, selectedToForward] = useState(false);
   const [dropDownStatus, setDropDown] = useState(false);
@@ -103,8 +106,8 @@ const ChatMessageTemplate = (props) => {
   const [dropRight, setDropRight] = useState(false);
 
   const isTranslatable = () => {
-    const { msgBody: { translatedMessage = "", message = "", media: { caption: captionText = "" } = {} } = {} } =
-      messageObject;
+    const { msgBody: { translatedMessage = "", message = "", media: mediMsg = {} } = {} } = messageObject;
+    const { caption: captionText = "" } = mediMsg || {};
     return !translatedMessage && (message || captionText);
   };
 
@@ -353,7 +356,9 @@ const ChatMessageTemplate = (props) => {
 
         <div
           style={{ width: isImageMessage() || isVideoMessage() ? webWidth : "" }}
-          className={getMessageElementRootClass()}
+          className={`${getMessageElementRootClass()} ${
+            isTextMessage(message_type) && isCallLink(messageText) ? "meetinglink" : ""
+          }`}
         >
           {isSameUser && isSender && nameToDisplay && (
             <span className="sender-name" style={style}>
@@ -370,7 +375,13 @@ const ChatMessageTemplate = (props) => {
             />
           )}
 
-          {isTextMessage(message_type) && <TextComponent messageObject={messageObject} pageType={pageType} />}
+          {isTextMessage(message_type) && (
+            <TextComponent
+              messageObject={messageObject}
+              pageType={pageType}
+              handleShowCallScreen={props.handleShowCallScreen}
+            />
+          )}
 
           {isImageMessage() && (
             <ImageComponent

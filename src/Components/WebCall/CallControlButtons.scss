@@ -1,4 +1,10 @@
 .button-group-center{
+    .not-allowed{
+        >*{
+            cursor: not-allowed;
+        }
+        cursor: not-allowed !important;
+    }
     .disabled-btn{
         color: #fff;
         cursor: default !important;

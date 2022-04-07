@@ -6,7 +6,7 @@ import { getCallDuration } from '../../Helpers/Call/Call';
 import {
     CALL_STATUS_RECONNECT, CALL_STATUS_CONNECTING, CALL_STATUS_CONNECTED,
     CALL_STATUS_DISCONNECTED, CALL_STATUS_CALLING, CALL_STATUS_ENGAGED, CALL_STATUS_BUSY,
-    CALL_STATUS_RINGING, CALL_STATUS_HOLD, CALL_HOLD_STATUS_MESSAGE
+    CALL_STATUS_RINGING, CALL_STATUS_HOLD, CALL_HOLD_STATUS_MESSAGE, CALL_STATUS_ATTENDED
 } from '../../Helpers/Call/Constant';
 class Timer extends Component {
 
@@ -27,7 +27,7 @@ class Timer extends Component {
 
     componentDidUpdate(prevProps){
         if(prevProps.callStatus && this.props.callStatus && prevProps.callStatus !== this.props.callStatus &&
-            (prevProps.callStatus.toLowerCase() === CALL_STATUS_CALLING || prevProps.callStatus.toLowerCase() === CALL_STATUS_RINGING || prevProps.callStatus.toLowerCase() === CALL_STATUS_CONNECTING) &&
+            (prevProps.callStatus.toLowerCase() === CALL_STATUS_CALLING || prevProps.callStatus.toLowerCase() === CALL_STATUS_ATTENDED || prevProps.callStatus.toLowerCase() === CALL_STATUS_RINGING || prevProps.callStatus.toLowerCase() === CALL_STATUS_CONNECTING) &&
             this.props.callStatus.toLowerCase() === CALL_STATUS_CONNECTED
         ){
             this.startTimer();

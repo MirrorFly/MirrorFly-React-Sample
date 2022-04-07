@@ -15,7 +15,7 @@ const ProfileRemoveAlertPopUp = (props = {}) => {
                         {REMOVE_YOUR_PROFILE_PHOTO}
                     </label>
                 </div>
-                <div className="removephoto-noteinfo">
+                <div className="removephoto-noteinfo remove">
                     <button
                         type="button"
                         name="btn-cancel"

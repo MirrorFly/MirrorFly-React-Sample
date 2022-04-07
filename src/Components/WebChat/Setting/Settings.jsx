@@ -45,6 +45,7 @@ export const SettingCheckBox = (props = {}) => {
             localStorage.setItem('websettings', JSON.stringify(constructObject));
         }
     }
+    
     useEffect(() => {
         if (!chat) {
             if (Notification.permission === 'denied' || Notification.permission === 'default') {

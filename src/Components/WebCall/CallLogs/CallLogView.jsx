@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { IconIncoming, IconOutgoing, IconIncomingMissed, IconAudiocall, IconVideocall } from '../../../assets/images';
+import { IconAudiocall, IconVideocall, IconVideoOutgoingCall, IconAudioOutgoingCall, IconVideoIncommingCall, IconAudioIncommingCall, IconAudioMissedCall, IconVideoMissedCall } from '../../../assets/images';
 import { formatCallLogDate, formatCallLogTime, durationCallLog, getHighlightedText } from '../../../Helpers/Utility';
 import ProfileImage from '../../../Components/WebChat/Common/ProfileImage'
 
@@ -27,11 +27,11 @@ const CallLogView = (props = {}) => {
     let callState = callLog.callState;
     let callStateView = "";
     if (callState === 0) {
-        callStateView = <IconIncomingMissed />;
+        callStateView = props.callLog.callType === "video" ? <IconVideoMissedCall /> : <IconAudioMissedCall/>;
     } else if (callState === 1) {
-        callStateView = <IconOutgoing />
+        callStateView = props.callLog.callType === "video" ? <IconVideoOutgoingCall /> : <IconAudioOutgoingCall/> ;
     } else {
-        callStateView = <IconIncoming />
+        callStateView = props.callLog.callType === "video" ? <IconVideoIncommingCall /> : <IconAudioIncommingCall/> ;
     }
 
     return <li className="chat-list-li" onClick={onClick}>
@@ -46,11 +46,11 @@ const CallLogView = (props = {}) => {
             <div className="callInfo">
                 <div className="recent-username-block">
                     <div className="recent-username">
-                        <span className="username">
+                        <div className="username">
                             <h3 title={displayName}>
                                 {searchterm ? getHighlightedText(displayName, searchterm) : displayName}
                             </h3>
-                        </span>
+                        </div>
                     </div>
                 </div>
                 <div className="CallStatus">

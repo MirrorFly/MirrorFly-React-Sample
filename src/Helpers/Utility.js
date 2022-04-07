@@ -30,13 +30,19 @@ import {
   INITIALS_COLOR_CODES
 } from "./Constants";
 import { getExtension } from "../Components/WebChat/Common/FileUploadValidation";
-import { REACT_APP_API_URL } from "../Components/processENV";
+import { REACT_APP_API_URL, REACT_APP_ENCRYPT_KEY, REACT_APP_JANUS_URL, REACT_APP_LICENSE_KEY, REACT_APP_SANDBOX_MODE, REACT_APP_SOCKETIO_SERVER_HOST, REACT_APP_SSL, REACT_APP_STUN_URL, REACT_APP_TURN_PASSWORD, REACT_APP_TURN_URL, REACT_APP_TURN_USERNAME, REACT_APP_XMPP_SOCKET_HOST, REACT_APP_XMPP_SOCKET_PORT, REACT_APP_SITE_DOMAIN, REACT_APP_AUTOMATION_CHROME_USER, REACT_APP_AUTOMATION_CHROME_PASS, REACT_APP_AUTOMATION_EDGE_USER, REACT_APP_AUTOMATION_FIREFOX_USER, REACT_APP_AUTOMATION_FIREFOX_PASS, REACT_APP_AUTOMATION_EDGE_PASS } from "../Components/processENV";
 import Store from "../Store";
 import { getContactNameFromRoster, formatUserIdToJid, isSingleChatJID, getLocalUserDetails } from "./Chat/User";
 import { MSG_PROCESSING_STATUS, GROUP_CHAT_PROFILE_UPDATED_NOTIFY, MSG_SENT_STATUS_CARBON, CHAT_TYPE_SINGLE, CHAT_TYPE_GROUP } from "./Chat/Constant";
 import toastr from "toastr";
 import { isGroupChat } from "./Chat/ChatHelper";
 import Push from "push.js";
+import { getMaxUsersInCall } from "./Call/Call";
+import { callbacks } from "../Components/callbacks";
+import config from "../config";
+import { ActiveChatAction } from "../Actions/RecentChatActions";
+import { UnreadCountDelete } from "../Actions/UnreadCount"
+import { callIntermediateScreen } from "../Actions/CallAction";
 
 const PNF = require("google-libphonenumber").PhoneNumberFormat;
 const phoneUtil = require("google-libphonenumber").PhoneNumberUtil.getInstance();
@@ -495,18 +501,8 @@ export const logout = () => {
   let items = [
     "auth_user",
     "blocklist_data",
-    "favouritemsglist_data",
-    "vcard_data",
     "connection_status",
-    "roster_data",
-    "presence_data",
-    "groupslist_data",
-    "token",
-    "recentchat_data",
-    "new_recent_chat_data",
-    "lastActivity_data",
-    "group_members_list_data",
-    "blockuserlist_data"
+    "token"
   ];
   for (let item of items) {
     ls.removeItem(item);
@@ -712,6 +708,13 @@ const getMediaDimension = (blobUrl, mediaType) => {
   });
 };
 
+export const stripTags = (dirtyString) => {
+  const container = document.createElement("div"),
+    text = document.createTextNode(dirtyString);
+  container.appendChild(text);
+  return container.innerHTML;
+};
+
 export const getMessageObjSender = async (dataObj, idx) => {
   const { jid, msgType, userProfile, msgId, chatType, message = "", file, fileOptions = {}, replyTo, fileDetails } = dataObj;
 
@@ -724,7 +727,7 @@ export const getMessageObjSender = async (dataObj, idx) => {
   };
 
   if (msgType === "text") {
-    msgBody.message = message;
+    msgBody.message = stripTags(message);
   } else {
     let webWidth = 0,
       webHeight = 0,
@@ -825,7 +828,7 @@ export const getRecentChatMsgObj = (dataObj) => {
   };
 
   if (msgType === "text") {
-    msgBody.message = message;
+    msgBody.message = stripTags(message);
   } else {
     msgBody.media = {
       caption: fileOptions.caption || "",
@@ -1080,12 +1083,18 @@ export const getColorCodeInitials = (name) => {
   return "#0376da";
 }
 
-export const getInitialsFromName = (string = "") => {
-  const [firstname, lastname] = string.toUpperCase().trim().replace(/[^\p{L}\p{N}\p{P}\p{Z}^$\n]/gu, '').replace(/ +/ig, ' ').split(" ");
-  const initials = firstname.substring(0, 1);
-  return lastname
-    ? initials.concat(lastname.substring(0, 1))
-    : initials.concat(firstname.substring(1, 2));
+export const getInitialsFromName = (name = "") => {
+  let acronym, matches = [];
+  if(!name) return null;
+  if(name.match(/\b(\w)/g).length === 1){
+    matches = name.split("");
+    acronym = [matches[0],matches[1]].join('');
+  }
+  else {
+    matches = name.match(/\b(\w)/g);
+    acronym = [matches[0],matches[1]].join('');
+  }
+  return acronym && acronym.toUpperCase();
 };
 
 export const isBlobUrl = (fileToken) => new RegExp("^(blob:http|blob:https)://", "i").test(fileToken);
@@ -1119,7 +1128,12 @@ export const getArchiveSetting = () => {
   return settings?.archive || false;
 }
 
-export const sendNotification = (displayName = "", imageUrl = "", messageBody = "") => {
+export const getRecentChatItem = (fromUserId) => {
+  const { recentChatData: { rosterData: { recentChatItems = [] } = {} } = {} } = Store.getState() || {};
+  return recentChatItems.find((ele) => ele.recent?.fromUserId === fromUserId);
+}
+
+export const sendNotification = (displayName = "", imageUrl = "", messageBody = "", fromUser = "") => {
   try {
     Push.clear();
     const updateDisplayName = displayName ? displayName.toString() : "";
@@ -1129,11 +1143,146 @@ export const sendNotification = (displayName = "", imageUrl = "", messageBody = 
       ...{ icon: imageUrl ? imageUrl : "" },
       timeout: 8000,
       silent: false,
-      onClick: () => {
+      tag: JSON.stringify({fromUserId: fromUser}),
+      onClick: (e) => {
         window.focus();
+        const recentChat = getRecentChatItem(fromUser);
+        const { recent: { chatType, fromUserId } = {} } = recentChat;
+        if (chatType && fromUserId) {
+          recentChat.chatType = chatType;
+          recentChat.chatId = fromUserId;
+          recentChat.chatJid = formatUserIdToJid(fromUserId, chatType);
+          Store.dispatch(callIntermediateScreen({ hideCallScreen: true }));
+          Store.dispatch(UnreadCountDelete({ fromUserId }));
+          Store.dispatch(ActiveChatAction(recentChat));
+        }
       }
     });
   } catch (error) {
     console.log("sendNotification Error :>> ", error);
   }
+};
+
+export const validEmail = (email = "") => {
+  const regex = /^\s*([\w+-]+\.)*[\w+]+@([\w+-]+\.)*([\w+-]+\.[a-zA-Z]{2,6})+\s*$/;
+  return regex.test(email);
+}
+
+export const isSandboxMode = () => {
+  return (
+    REACT_APP_SANDBOX_MODE === "true" ||
+    REACT_APP_XMPP_SOCKET_HOST === "xmpp-preprod-sandbox.mirrorfly.com" ||
+    REACT_APP_XMPP_SOCKET_HOST === "xmpp-sandbox-dev.mirrorfly.com"
+  );
+};
+
+export const getInitializeObj = () => ({
+  xmppSocketHost: REACT_APP_XMPP_SOCKET_HOST,
+  xmppSocketPort: Number(REACT_APP_XMPP_SOCKET_PORT),
+  ssl: REACT_APP_SSL === "true",
+  encryptKey: REACT_APP_ENCRYPT_KEY,
+  apiBaseUrl: REACT_APP_API_URL,
+  callbackListeners: callbacks,
+  signalServer: REACT_APP_SOCKETIO_SERVER_HOST,
+  janusUrl: REACT_APP_JANUS_URL,
+  licenseKey: REACT_APP_LICENSE_KEY,
+  isSandbox: isSandboxMode(),
+  stunTurnServers: [
+    {
+      urls: REACT_APP_TURN_URL,
+      username: REACT_APP_TURN_USERNAME,
+      credential: REACT_APP_TURN_PASSWORD
+    },
+    {
+      urls: REACT_APP_STUN_URL
+    }
+  ],
+  maxUsersIncall: getMaxUsersInCall(),
+  pingTime: 10 // In Seconds
+});
+
+export const getSiteDomain = () => REACT_APP_SITE_DOMAIN || window.location.hostname;
+
+export const getCallFullLink = (callLink) => `${getSiteDomain()}/${callLink}`;
+
+export const isCallLink = (link) => {
+  if (!validURL(link) && process.env.NODE_ENV !== "development") return false;
+  if (!link.includes(getSiteDomain())) return false;
+  const splittedLink = link.split(`${getSiteDomain()}`);
+  const callLinkRegex = /\/([0-9a-z]{3})-([0-9a-z]{4})-([0-9a-z]{3})$/gm;
+  return splittedLink.length > 1 && callLinkRegex.test(splittedLink[1]);
+};
+
+export const isBoxedLayoutEnabled = () => {
+  const settings = getLocalWebsettings();
+  let boxLayout;
+  if (settings && settings?.boxLayout === undefined) {
+    boxLayout = true;
+    setLocalWebsettings("boxLayout", true);
+  } else {
+    boxLayout = settings?.boxLayout
+  }
+  return boxLayout === true && config.boxLayout;
+};
+
+export const getGridDimensions = (height, usersCount) => {
+  let isMobile = window.innerWidth < 768 ?  true : false
+  let width = 0;
+  switch (true) {
+    case isMobile && usersCount <= 2:
+      width = 90 * .80;
+      height = 90 * .80 < ( height / 2 ) ? width : height / 2;
+      break;
+      case isMobile && usersCount <= 4:
+      width = 50;
+      height = 50 < ( height / 2 ) ? width : height / 2;
+      break;
+    case usersCount <= 2:
+      width = 50;
+      height = height * .80;
+      break;
+
+    case usersCount <= 4:
+      width = 50;
+      height = height / 2;
+      break;
+
+    case usersCount % 2 === 0:
+      width = 100 / (usersCount / 2)
+      height = height /2;
+      break;
+  
+    default:
+      width = 100 / (((usersCount - 1) / 2) + 1)
+      height = height /2;
+      break;
+  }
+
+  // width = width - 4;
+  height = height - 10;
+  return { width, height };
+};
+
+export const getAutomationLoginCredentials = () => {
+  let staticCredential = {};
+  if (typeof InstallTrigger !== "undefined") {
+    // For Firefox
+    staticCredential = {
+      username: REACT_APP_AUTOMATION_FIREFOX_USER,
+      password: REACT_APP_AUTOMATION_FIREFOX_PASS
+    };
+  } else {
+    if (/Edg/.test(navigator.userAgent)) {
+      staticCredential = {
+        username: REACT_APP_AUTOMATION_EDGE_USER,
+        password: REACT_APP_AUTOMATION_EDGE_PASS
+      };
+    } else {
+      staticCredential = {
+        username: REACT_APP_AUTOMATION_CHROME_USER,
+        password: REACT_APP_AUTOMATION_CHROME_PASS
+      };
+    }
+  }
+  return staticCredential;
 };

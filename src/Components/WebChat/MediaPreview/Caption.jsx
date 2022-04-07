@@ -6,12 +6,11 @@ import ContentEditable from "../Conversation/Templates/Common/ContentEditable";
 import { ALLOWED_KEY_CODES, CAPTION_CHARACTER_LIMIT } from "../../../Helpers/Constants";
 import { setCaretPosition, removeMoreNumberChar } from "../../../Helpers/Chat/ContentEditableEle";
 
-
 const Caption = (props = {}) => {
   const { onChangeCaption, media = {}, onClickSend } = props;
   const { caption = "" } = media;
   const [typingMessage, setTypingMessage] = useState({
-    value: "",
+    value: ""
   });
   const [selectedText, setSelectedTextState] = useState(null);
   const [position, setPosition] = useState(0);
@@ -49,7 +48,10 @@ const Caption = (props = {}) => {
 
   // Added to Restrict User to Enter More than Allowed Characters Length
   const handleOnKeyDownListner = (e) => {
-    if (_toArray(_get(typingMessage, "value", "")).length >= CAPTION_CHARACTER_LIMIT && ALLOWED_KEY_CODES.indexOf(e.which) === -1) {
+    if (
+      _toArray(_get(typingMessage, "value", "")).length >= CAPTION_CHARACTER_LIMIT &&
+      ALLOWED_KEY_CODES.indexOf(e.which) === -1
+    ) {
       e.preventDefault();
     }
   };
@@ -59,7 +61,8 @@ const Caption = (props = {}) => {
     setTypingMessage((prevState) => ({
       ...prevState,
       value:
-        (prevState.value.length === 0 && targetVal.trim().length === 0) || (targetVal.length === 1 && targetVal === "\n")
+        (prevState.value.length === 0 && targetVal.trim().length === 0) ||
+        (targetVal.length === 1 && targetVal === "\n")
           ? ""
           : targetVal
     }));
@@ -80,7 +83,7 @@ const Caption = (props = {}) => {
   const setSelectedText = (selectText) => setSelectedTextState(selectText);
 
   useEffect(() => {
-    handleMessage({ target: { value: caption } });//captionValue has been set
+    handleMessage({ target: { value: caption } }); //captionValue has been set
   }, [caption]);
 
   const { value = "" } = typingMessage;
