@@ -1,0 +1,167 @@
+.CallParticipantList{
+position: relative;
+}
+.participant-popup{
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    width: 15.625em;
+    min-width: 202px;
+    top:1.5em;
+    right: 0.2em;
+    max-height: 480px;
+    .header{
+        border-radius: 0.1875em 0.1875em 0 0;
+        background: #EFEFEF;
+        text-align: center;
+        padding: 0.4em;
+        color: #000000D4;
+        position: relative;
+        i{
+            position: absolute !important;
+            left: 0.5em;
+            top: 50% !important;
+            transform: translateY(-50%);
+            display: none !important;
+            width: 1.2em !important;
+            height : 1.2em !important;
+            svg{
+                width: 100% !important;
+                height: 100% !important;
+            }
+        }
+        h5{
+            font: normal normal 0.8125rem/100% var(--semibold);
+            letter-spacing: 0px;  
+        }
+    }
+    .body{
+        background: #fff;
+        border-radius: 0 0 0.1875em 0.1875em ;
+        padding: 0.625em 0;
+        max-height: 400px;
+        overflow: hidden auto;
+        ul{
+            display: flex;
+            flex-direction: column;
+           > li{
+                padding: 0.25em 0.625em;
+                > div{
+                    display: flex;
+                    align-items: center;
+                    img, .svgProfile{
+                        width: 1.625em;
+                        height: 1.625em;
+                        margin-right: 0.4375em;
+                        border-radius: 50%;
+                        cursor: default;
+                        object-position: center;
+                        object-fit: cover;
+                    }
+                   > span{
+                        text-align: left;
+                        font: normal normal 0.6875rem/1rem var(--medium);
+                        letter-spacing: 0px;
+                        color: #000000D4;
+                        margin-right: 1.25em;
+                        white-space: nowrap;
+                        text-overflow: ellipsis;
+                        overflow:hidden;
+                        min-width: 7.5em;
+                        flex: 1 1 auto;
+                        span{
+                            color: #818181D4;
+                        }
+                    }
+                    i{
+                        width: 1.375em!important;
+                        height:1.375em!important;
+                        object-fit: cover;
+                        object-position: center;
+                        color: #3276E2;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        border-radius: 50%;
+                        margin: 0 0.3125em;
+                        cursor: default;
+                        svg{
+                            height:auto;
+                        }
+                        &.mute{
+                            background: #EFEFEF;
+                            color:#969696;
+                            svg{
+                                width: 0.625em !important;
+                            }
+                        }
+                        &.audio{
+                            svg{
+                                width: 0.55em;
+                            }
+                        }
+                        &.video{
+                            svg{
+                                width: 0.75em;
+                            }
+                        }
+                    }
+                }
+                .callStatusIcon{
+                    min-width: 4.1em;
+                    max-width: 4.1em;
+                }
+                
+                .callStatusText{
+                    text-align: left;
+                    padding-left:.3125em;
+                    display: flex;
+                    font: normal normal 0.6875rem/100% var(--medium);
+                    color: #4879F9;
+                    padding-right: 0.875em;
+                    min-width: 90px;
+                    max-width: 90px;
+                    align-items: baseline;
+                    .callingAnimation{
+                        margin-left: 3px;
+                    }
+                    .dot{
+                        background-color: #4879F9;
+                    }
+                }
+            }
+        }
+    }
+    &::before{
+        position: absolute;
+        top:-0.625em;
+        right: 0.4em;
+        content: "";
+        width: 0;
+        height: 0; 
+        border-left: 0.5em solid transparent;
+        border-right: 0.5em solid transparent;
+        border-bottom: 0.75em solid #EFEFEF;
+    }
+}
+
+@media screen and (max-width:567px) {
+    .CallParticipantList{
+        position: static;
+        .participant-popup {
+        position: fixed !important;
+        left: 50%;
+        top:50%;
+        width: 95%;
+        max-width: 320px;
+        transform: translate(-50% , -50%);
+        .header i{
+                display: block !important;
+        }
+        &::before{
+            display:none;
+        }
+    }
+    
+}
+}

@@ -1,0 +1,436 @@
+@import "fonts.scss";
+@import "reset.scss";
+@import "mixins.scss";
+@import "variables.scss";
+
+body {
+  font-family: SFUIDisplayRegular,sans-serif;
+}
+
+// Login page style starts //
+// @media only screen and (max-width: 600px) and (min-width: 400px){
+
+// }
+
+@media only screen and (min-width: 1441px) {
+  html {
+    font-size: 17px;
+  }
+}
+@media only screen and (min-width: 1600px) {
+  html {
+    font-size: 18px;
+  }
+}
+@media only screen and (min-width: 1800px) {
+  html {
+    font-size: 20px;
+  }
+}
+@media only screen and (min-width: 2000px) {
+  html {
+    font-size: 22px;
+  }
+}
+
+@media only screen and (min-width: 1367px) and (max-width: 1440px) {
+  html {
+    font-size: 16px;
+  }
+}
+@media only screen and (min-width: 768px) {
+  .container {
+    .chat-conversion {
+      .emojiPicker-container {
+        .emoji-mart-category-list > li > button > span {
+          width: 32px !important;
+          height: 32px !important;
+        }
+      }
+    }
+  }
+}
+// @media only screen and (min-width: 1025px) {
+//     .container{
+//         .recent-chatlist{
+//     max-width:20em;
+//         }
+//     }
+// }// 1025px
+@media only screen and (max-width: 1366px) {
+  html {
+    font-size: 16px;
+  }
+  .container .chat-conversion .chatconversation-container .msg-content .reply-block .reply-container .reply-text-message {
+    .ReplyVideo:before{
+      width: 12px;
+      height: 8px;
+      background-size: 12px 8px!important;
+    }
+     .ReplyCamera:before{
+      width: 12px;
+      height: 8px;
+      background-size: 12px 9px!important;
+     }
+    }
+}
+
+@media only screen and (max-width: 1200px) {
+  html {
+    font-size: 14px;
+  }
+  .login-container {
+    background-image: none;
+    flex-direction: column;
+    //         /* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#00c2ff+0,5f4dff+100 */
+    // background: #00c2ff; /* Old browsers */
+    // background: -moz-linear-gradient(-45deg,  #00c2ff 0%, #5f4dff 100%); /* FF3.6-15 */
+    // background: -webkit-linear-gradient(-45deg,  #00c2ff 0%,#5f4dff 100%); /* Chrome10-25,Safari5.1-6 */
+    // background: linear-gradient(135deg,  #00c2ff 0%,#5f4dff 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+    // filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#00c2ff', endColorstr='#5f4dff',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
+    .left-side {
+      width: 100%;
+      height: auto;
+      order: 2;
+      margin: 1.667em 0 1.333em 0;
+      .banner {
+        display: none;
+      }
+      .login-instructions {
+        margin-left: 0em;
+        h2 {
+          color: $textblack;
+        }
+        ul {
+          li {
+            color: $textblack;
+          }
+        }
+      }
+    }
+    .right-side {
+      width: 100%;
+      height: auto;
+      order: 1;
+      margin-left: 0;
+      .logo-side-block {
+        flex-direction: column;
+        margin-top: 6.667em;
+        .logo {
+          position: static;
+        }
+      }
+    }
+  }
+}
+@media only screen and (max-width: 1024px) {
+  html {
+    font-size: 15px;
+  }
+  .container .recent-chatlist {
+    width: 100%;
+  }
+  .container .chat-banner {
+    display: none;
+  }
+  .container .chat-conversion .conversation-header{
+    padding: 0.500em 1em;
+  .user-profile-name i.arrow-icon {
+    display: block;
+    margin-right: 1.000em;
+  }
+}
+  .container .chat-conversion .contactinfo-popup .contactinfo {
+    width: 100%;
+  }
+  .container {
+    .chat-conversion {
+      width: 100%;
+      position: absolute;
+      top: 0;
+      &.popup-open {
+        z-index: 3;
+      }
+      .mediainfo-popup,
+      .contactinfo-popup {
+        .mediainfo,
+        .contactinfo {
+          width: 100%;
+          .mediainfo-media,
+          .contactinfo-media {
+            ul.mediadocs {
+              li {
+                width: 17%;
+                height: 6.875em;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // message info responsiv start
+  .messageInfo{
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 4;
+    background: #fff;
+    width: 100%;
+    flex:100% 1 1;
+  }
+
+}
+@media only screen and (max-width: 991px) {
+  .container {
+    .chat-conversion {
+      .mediainfo-popup,
+      .contactinfo-popup {
+        .mediainfo,
+        .contactinfo {
+          .mediainfo-media,
+          .contactinfo-media {
+            padding: 2.500em;
+            ul.mediadocs {
+              li {
+                width: 18%;
+                height: 6.875em;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+@media only screen and (max-width: 900px) {
+  .mirrorfly .login-wrapper .login-content {
+    margin: 0px 30px;
+  }
+}
+@media only screen and (max-width: 767px) {
+  html {
+    font-size: 1.000em;
+  }
+  .mediaAttachCamera{
+  .popup-controls{
+    left: 50% !important;
+    right: unset !important;
+    transform: translate(-50%,0);
+    bottom: 1em !important;
+  }
+}
+
+  .chatconversation-container .msg-content .reply-block .reply-container .reply-text-message .ReplyCamera:before{
+    width: 12px;
+    height: 11px;
+    background-size: 12px 10px !important;
+    position: relative;
+    top: 2px;
+  }
+  .recent-chatlist .chat-list .chat-list-ul .chat-list-li .recentchats .recent-message-block span {
+  
+  i.chat-camera{
+    height: .9em;
+  }
+  i.chat-video{
+    height: auto !important;
+  }
+  i.chat-contact{
+    position: relative;
+    top: 1px;
+  }
+}
+  .mirrorfly .login-wrapper .login-content {
+    margin: 0px 30px;
+    flex-direction: column;
+    width: 100%;
+    height: auto;
+
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .mirrorfly .login-wrapper .left-section {
+    width: 100%;
+    position: relative;
+    text-align: center;
+  }
+  .mirrorfly .login-wrapper .right-section {
+    width: 100%;
+    padding-left: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    margin-top: 30px;
+    margin-bottom: 20px;
+  }
+  .mirrorfly .login-wrapper .left-section:after {
+    display: none;
+  }
+
+  .container {
+    .chat-conversion {
+      .mediainfo-popup,
+      .contactinfo-popup {
+        .mediainfo,
+        .contactinfo {
+          .mediainfo-media,
+          .contactinfo-media {
+            padding: 30px;
+            ul.mediadocs {
+              li {
+                width: 20%;
+              }
+            }
+          }
+        }
+      }
+    }
+    .userprofile-popup,.userprofile{
+      min-width: 22em !important;
+      width: 100%;
+    }
+    .popup-controls{
+      display: flex;
+    }
+  }
+}
+@media only screen and (max-width: 650px) {
+  html {
+    font-size: 0.875em;
+  }
+  .mirrorfly .login-wrapper:after {
+    display: none;
+  }
+  //CODES FOR MEDIA POPUP
+  .container {
+    .chat-conversion {
+      .mediainfo-popup,
+      .contactinfo-popup {
+        .mediainfo,
+        .contactinfo {
+          .mediainfo-media,
+          .contactinfo-media {
+            padding: 1.250em;
+            ul.mediadocs {
+              li {
+                width: 25%;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  // .container .chat-conversion .chatconversation-container .msg-content .sender-row,
+  // .container .chat-conversion .chatconversation-container .msg-content .receiver-row,
+  // .footer {
+  //   padding: 0 15px !important;
+  // }
+  .choose-upload-files {
+    right:  0em !important;
+    width: 8em;
+    top: -170px;
+    padding: 0;
+  }
+  .selected-files-preview, .container .chat-conversion .chatconversation-container footer .emojiPicker-container  {
+    right: 15px !important;
+    left: 15px !important;
+  }
+  .container .chat-conversion .chatconversation-container footer .message-area-container .message-area .intraction.icon i.attachment.open:before{
+    bottom: 3.5em;
+  }
+
+
+
+}
+@media only screen and (max-width: 480px) {
+  .container {
+    .chat-conversion {
+      .mediainfo-popup,
+      .contactinfo-popup {
+        .mediainfo,
+        .contactinfo {
+          .mediainfo-media,
+          .contactinfo-media {
+            ul.mediadocs {
+              li {
+                width: 33%;
+              }
+            }
+          }
+        }
+      }
+      .conversation-header {
+        padding: 0.625em 0.625em;
+      }
+      .chatconversation-container {
+        .msg-content {
+        .image-block{
+          max-width: 90%!important;
+      }
+    }
+    footer {
+      padding: 0 0.625em;
+      .message-area {
+        padding: 0.625em 7.5em 0.625em 3.750em;
+        .intraction.icon i {
+          margin-right: 20px;
+          &.send {
+            margin-right: 10px;
+          }
+        }
+      }
+    }
+    }
+    .login-instructions h2 {
+      font-size: 1.5rem !important;
+    }
+    .login-container .right-side .logo-side-block {
+      margin-top: 3em !important;
+    }
+  }
+
+  }
+}//480px
+@media only screen and (max-width: 380px) {
+  //CODES FOR MEDIA POPUP
+  .container {
+    .chat-conversion {
+      .mediainfo-popup,
+      .contactinfo-popup {
+        .mediainfo,
+        .contactinfo {
+          .mediainfo-media,
+          .contactinfo-media {
+            ul.mediadocs {
+              li {
+                width: 50%;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+@media only screen and (max-height: 568px) {
+  .mirrorfly{
+.login-wrapper {
+  height: auto;
+  overflow: hidden auto;
+}}
+}
+
+@media only screen and (max-width: 320px) {
+  .container {
+    .chat-conversion {
+      .message-group {
+        width: 100%;
+      }
+    }
+  }
+}
+

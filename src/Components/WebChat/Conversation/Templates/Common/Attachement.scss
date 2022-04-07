@@ -1,0 +1,124 @@
+
+@import '../../../../../assets/scss/variables.scss';
+@import '../../../../../assets/scss/mixins.scss';
+
+.choose-upload-files {
+display: inline-block;
+text-align: center;
+position: absolute;
+z-index: 1;
+width: 10em;
+font-family: $regular;
+right: 0.4em;
+top: -12.5em;
+padding: 0.938em;
+opacity: 1;
+.closedropmedia {
+    position: absolute;
+    width: 1.063em;
+    height: 1.063em;
+    @include border-radius(50%);
+    background: $bgc-closedropmedia 0% 0% no-repeat padding-box;
+    text-align: center;
+    right: 3px;
+    top: 3px;
+    svg {
+    width: 0.438em;
+    }
+    &:hover {
+    svg path {
+        fill: $primary;
+    }
+    }
+}
+
+.fileicon
+{ 
+    
+    li{
+    cursor: pointer;
+    div{
+    @include flexbox();
+    @include align-items(center);
+    position: relative;
+    margin-bottom: 0.5em;
+        i {
+       
+        @include box-center();
+        width: 2.5rem;
+        height: 2.5rem;
+        background:#0F2A5F;
+        border-radius: 50%;
+        box-shadow:0px 3px 6px #00000029;
+        background-size: 6.25em;
+        svg,.a{
+            fill:$fill-choose-upload-files-svg;
+        }
+        svg{
+            position: relative;
+            width: 1.875em;
+            height: auto;
+            top: 0.15em;
+        }
+        
+    }
+    span{
+        background: $white;
+        border-radius:1.25em;
+        position: absolute;
+        left:4em;
+        font-size: $font11;
+        padding: 0.25em 0.625em;
+        margin-left: 0.625em;
+        white-space: nowrap;
+        line-height: 1.125em;
+        box-shadow: -1px 2px 10px rgba(0, 0, 0, 0.08);
+        user-select: none;
+    }
+    } 
+    &:first-child {
+        bottom: -197px;
+        }
+    &:nth-child(2) {
+    bottom: -150px;
+    }
+    &:nth-child(3) {
+        bottom: -102px;
+    }
+    &:nth-child(4) {
+        bottom: -52px;
+    }
+    &:hover span{
+        background: #0F2A5F;
+        background-size: 150%;
+        color: $white;
+        box-shadow: 1px 1px 7px -1px #0F2A5F;
+    }
+    }
+}
+
+.drop-text {
+    font-size: 0.7125rem;
+    display: block;
+    color: $clr-drop-text;
+    margin-bottom: 0.313em;
+}
+.drop-file-types {
+    font-size: 0.7125rem;
+    line-height: 1.5em;
+    color: $clr-drop-file-types;
+    span {
+    color: $bgc-drop-file-types-span;
+    }
+}
+&.open{
+    width: auto;
+    li{
+    bottom: 0;
+    }
+}
+&.close {
+    bottom: 12.500em;
+    }
+}
+

@@ -1,0 +1,39 @@
+@import "../../../assets/scss/variables.scss";
+@import "../../../assets/scss/mixins.scss";
+
+.logout-popup {
+    width: 20.625em;
+    padding: 1.563em 1.875em;
+    background-color: $white;
+    @include border-radius(5px);
+    @include box-shadow(0px 6px 16px #00000024);
+    
+    
+    .logout-label {
+      label {
+        font-size: $font15;
+        font-family: $semibold;
+        color: $popupHeadingLabel;
+      }
+    }
+    .logout-noteinfo {
+      margin-top: 1.875em;
+      text-align: right;
+      button {
+        height: 2.500em;
+        width: 6.667em;
+        border: none;
+        font-size: $font12;
+        font-family: $semibold;
+        margin-left: 0.833em;
+        background-color: $button;
+        color: $popuptext;
+        @include border-radius(2px);
+        cursor: pointer;
+      }
+      button.btn-logout {
+        background-color: $primary;
+        color: $white;
+      }
+    }
+  }

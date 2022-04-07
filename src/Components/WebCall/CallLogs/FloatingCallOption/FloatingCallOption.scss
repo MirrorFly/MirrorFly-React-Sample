@@ -1,0 +1,92 @@
+.FloatingCallAction{
+    position: absolute;
+    right: 1.125em;
+    bottom: 1.5625em;
+    width: 3.5em;
+    height: 3.5em;
+    background: #3276E2 0% 0% no-repeat padding-box;
+    box-shadow: 0rem 0.3125rem 0.75rem #0000002e;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    z-index: 6;
+ input {
+    position: absolute;
+    &:checked + span svg .plus{
+        transition: transform 0ms, rotate 300ms ease-in-out;
+        transform: rotate(45deg);
+        transform-origin: 17px 7px;
+    }
+}
+ > span {
+    height: 1.5625em;
+    display: inline-block;
+    color: #fff;
+    svg {
+        width: 1.5625em;
+        height: 1.5625em;
+        line-height: 0;
+        transition: transform 0ms, rotate 300ms ease-in-out;
+    }
+}
+
+
+ ul {
+    position: absolute;
+    width: 4.1875em;
+    text-align: center;
+    bottom: 100%;
+    z-index: -99;
+    height: 0;
+    overflow: hidden;
+}
+ ul li {
+    margin: 0.625rem 1em;
+    width: 2.5em;
+    height: 2.5em;
+    background: #8EA2C3;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    transition-delay: 0s !important;
+    cursor: pointer;
+    box-shadow: 0px 5px 12px #0000002E;
+}
+ ul li:hover {
+    background: #244881;
+    transition: 200ms linear;
+    transition-delay: 0s !important;
+}
+ ul li:nth-child(2) {
+    transform: translateY(4.375rem);
+    transition: 200ms linear;
+    transition-delay: 1.5s;
+}
+ ul li:nth-child(1) {
+    transform: translateY(8.125rem);
+    transition: 200ms linear;
+    transition-delay: 1s;
+}
+  input:checked + span + ul{
+    z-index: 0;
+    height: auto;
+}
+  input:checked + span + ul li:nth-child(2){
+    transform: translateY(0);
+    transition: 200ms linear;
+    transition-delay: 1.5s;
+}
+  input:checked + span + ul li:nth-child(1){
+    transform: translateY(0);
+    transition: 200ms linear;
+    transition-delay: 1s;
+}
+ ul li i, ul li i svg{
+    width: 1em;
+    height: auto;
+    line-height: 0;
+}
+}

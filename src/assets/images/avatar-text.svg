@@ -1,0 +1,3 @@
+<svg fill={ProfileColor} class="avatar-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"
+    xmlns:xlink="http://www.w3.org/1999/xlink"><text dominant-baseline="central" fill="rgba(255,255,255,1)"
+        font-size="40pt" text-anchor="middle" x="50" y="50">{UserShortName}</text></svg>

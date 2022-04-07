@@ -1,0 +1,62 @@
+@-webkit-keyframes spin {
+    0% {
+      -webkit-transform: rotate(0deg);
+              transform: rotate(0deg);
+    }
+    100% {
+      -webkit-transform: rotate(360deg);
+              transform: rotate(360deg);
+    }
+  }
+  @-o-keyframes spin {
+    0% {
+      -o-transform: rotate(0deg);
+         transform: rotate(0deg);
+    }
+    100% {
+      -o-transform: rotate(360deg);
+         transform: rotate(360deg);
+    }
+  }
+  @keyframes spin {
+    0% {
+      -webkit-transform: rotate(0deg);
+           -o-transform: rotate(0deg);
+              transform: rotate(0deg);
+    }
+    100% {
+      -webkit-transform: rotate(360deg);
+           -o-transform: rotate(360deg);
+              transform: rotate(360deg);
+    }
+  }
+.spiner{
+    position: absolute;
+    width: 25px;
+    height: 25px;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: -1;
+    .spin {
+      width: 25px;
+      height: 25px;
+      border: 2px solid #2c9899;
+      -webkit-border-radius: 50%;
+              border-radius: 50%;
+      border-right-color: transparent;
+      -webkit-animation-name: spin;
+           -o-animation-name: spin;
+              animation-name: spin;
+      -webkit-animation-duration: 1.5s;
+           -o-animation-duration: 1.5s;
+              animation-duration: 1.5s;
+      -webkit-animation-iteration-count: infinite;
+           -o-animation-iteration-count: infinite;
+              animation-iteration-count: infinite;
+      -webkit-animation-timing-function: linear;
+           -o-animation-timing-function: linear;
+              animation-timing-function: linear;
+    }
+  }
+  

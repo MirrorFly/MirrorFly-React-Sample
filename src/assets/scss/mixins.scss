@@ -1,0 +1,709 @@
+// --------------------------------------------------
+// Flexbox SASS mixins
+// The spec: http://www.w3.org/TR/css3-flexbox
+// --------------------------------------------------
+// Flexbox display
+@mixin flexbox() {
+  display: -webkit-box;
+  display: -moz-box;
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  display: flex;
+}
+@mixin flexboxinline() {
+display:-webkit-inline-box;
+display:-webkit-inline-flex;
+display:-ms-inline-flexbox;
+display:inline-flex;
+}
+// The 'flex' shorthand
+// - applies to: flex items
+// <positive-number>, initial, auto, or none
+@mixin flex($values) {
+  -webkit-box-flex: $values;
+  -moz-box-flex: $values;
+  -webkit-flex: $values;
+  -ms-flex: $values;
+  flex: $values;
+}
+
+// Flex Flow Direction
+// - applies to: flex containers
+// row | row-reverse | column | column-reverse
+@mixin flex-direction($direction) {
+  -webkit-flex-direction: $direction;
+  -moz-flex-direction: $direction;
+  -ms-flex-direction: $direction;
+  flex-direction: $direction;
+}
+
+// Flex Line Wrapping
+// - applies to: flex containers
+// nowrap | wrap | wrap-reverse
+@mixin flex-wrap($wrap) {
+  -webkit-flex-wrap: $wrap;
+  -moz-flex-wrap: $wrap;
+  -ms-flex-wrap: $wrap;
+  flex-wrap: $wrap;
+}
+
+// Flex Direction and Wrap
+// - applies to: flex containers
+// <flex-direction> || <flex-wrap>
+@mixin flex-flow($flow) {
+  -webkit-flex-flow: $flow;
+  -moz-flex-flow: $flow;
+  -ms-flex-flow: $flow;
+  flex-flow: $flow;
+}
+
+// Display Order
+// - applies to: flex items
+// <integer>
+@mixin order($val) {
+  -webkit-box-ordinal-group: $val;
+  -moz-box-ordinal-group: $val;
+  -ms-flex-order: $val;
+  -webkit-order: $val;
+  order: $val;
+}
+
+// Flex grow factor
+// - applies to: flex items
+// <number>
+@mixin flex-grow($grow) {
+  -webkit-flex-grow: $grow;
+  -moz-flex-grow: $grow;
+  -ms-flex-grow: $grow;
+  flex-grow: $grow;
+}
+
+// Flex shrink
+// - applies to: flex item shrink factor
+// <number> 
+@mixin flex-shrink($shrink) {
+  -webkit-flex-shrink: $shrink;
+  -moz-flex-shrink: $shrink;
+  -ms-flex-shrink: $shrink;
+  flex-shrink: $shrink;
+}
+
+// Flex basis
+// - the initial main size of the flex item
+// - applies to: flex itemsnitial main size of the flex item
+// <width> 
+@mixin flex-basis($width) {
+  -webkit-flex-basis: $width;
+  -moz-flex-basis: $width;
+  -ms-flex-basis: $width;
+  flex-basis: $width;
+}
+
+// Axis Alignment
+// - applies to: flex containers
+// flex-start | flex-end | center | space-between | space-around 
+@mixin justify-content($justify) {
+  -webkit-justify-content: $justify;
+  -moz-justify-content: $justify;
+  -ms-justify-content: $justify;
+  justify-content: $justify;
+  -ms-flex-pack: $justify;
+}
+
+// Packing Flex Lines
+// - applies to: multi-line flex containers
+// flex-start | flex-end | center | space-between | space-around | stretch 
+@mixin align-content($align) {
+  -webkit-align-content: $align;
+  -moz-align-content: $align;
+  -ms-align-content: $align;
+  align-content: $align;
+}
+
+// Cross-axis Alignment
+// - applies to: flex containers
+// flex-start | flex-end | center | baseline | stretch 
+@mixin align-items($align) {
+  -webkit-align-items: $align;
+  -moz-align-items: $align;
+  -ms-align-items: $align;
+  -ms-flex-align: $align;
+  align-items: $align;
+}
+
+// Cross-axis Alignment
+// - applies to: flex items
+// auto | flex-start | flex-end | center | baseline | stretch 
+@mixin align-self($align) {
+  -webkit-align-self: $align;
+  -moz-align-self: $align;
+  -ms-align-self: $align;
+  align-self: $align;
+}
+
+
+/**additional**/
+
+@import 'variables.scss';
+@mixin border-radius($radius) {
+-webkit-border-radius: $radius;
+-moz-border-radius: $radius;
+-ms-border-radius: $radius;
+border-radius: $radius;
+}
+
+@mixin box-shadow($value) {
+-webkit-box-shadow: $value;
+-moz-box-shadow: $value;
+box-shadow: $value;
+}
+
+@mixin transform($value) {
+transform: ($value);
+-webkit-transform: ($value);
+-moz-transform: ($value);
+-o-transform: ($value);
+-ms-transform: ($value);
+}
+
+@mixin transition($value) {
+transition: $value;
+-webkit-transition: $value;
+-moz-transition: $value;
+-o-transition: $value;
+-ms-transition: $value;
+}
+
+@mixin transitions($value, $value2) {
+transition: $value, $value2;
+-webkit-transition: $value, $value2;
+-moz-transition: $value, $value2;
+-o-transition: $value, $value2;
+-ms-transition: $value, $value2;
+}
+
+@mixin animation($value) {
+-webkit-animation: $value;
+-moz-animation: $value;
+-o-animation: $value;
+animation: $value;
+}
+
+@mixin placeholder-color($value) {
+&::-webkit-input-placeholder {
+    /* Chrome/Opera/Safari */
+    color: $value;
+}
+&::-moz-placeholder {
+    /* Firefox 19+ */
+    color: $value;
+}
+&:-ms-input-placeholder {
+    /* IE 10+ */
+    color: $value;
+}
+&:-moz-placeholder {
+    /* Firefox 18- */
+    color: $value;
+}
+}
+
+@mixin placeholder-family($value) {
+&::-webkit-input-placeholder {
+    /* Chrome/Opera/Safari */
+    font-family: $value;
+}
+&::-moz-placeholder {
+    /* Firefox 19+ */
+    font-family: $value;
+}
+&:-ms-input-placeholder {
+    /* IE 10+ */
+    font-family: $value;
+}
+&:-moz-placeholder {
+    /* Firefox 18- */
+    font-family: $value;
+}
+}
+
+@mixin placeholder-size($value) {
+&::-webkit-input-placeholder {
+    /* Chrome/Opera/Safari */
+    font-size: $value;
+}
+&::-moz-placeholder {
+    /* Firefox 19+ */
+    font-size: $value;
+}
+&:-ms-input-placeholder {
+    /* IE 10+ */
+    font-size: $value;
+}
+&:-moz-placeholder {
+    /* Firefox 18- */
+    font-size: $value;
+}
+}
+
+@mixin filter($value) {
+-webkit-filter: blur($value);
+-moz-filter: blur($value);
+-o-filter: blur($value);
+-ms-filter: blur($value);
+filter: blur($value);
+}
+
+@mixin gradiant-two-colors-top-bottom($color1, $color2) {
+background: $color1;
+background: -moz-linear-gradient(top, $color1 0%, $color2 100%);
+background: -webkit-gradient(left top, left bottom, color-stop(0%, $color1), color-stop(100%, $color2));
+background: -webkit-linear-gradient(top, $color1 0%, $color2 100%);
+background: -o-linear-gradient(top, $color1 0%, $color2 100%);
+background: -ms-linear-gradient(top, $color1 0%, $color2 100%);
+background: linear-gradient(to bottom, $color1 0%, $color2 100%);
+}
+
+@mixin gradiant-two-colors-left-right($color1, $color2) {
+background: $color1;
+background: -moz-linear-gradient(left, $color1 0%, $color2 100%);
+background: -webkit-gradient(left top, right top, color-stop(0%, $color1), color-stop(100%, $color2));
+background: -webkit-linear-gradient(left, $color1 0%, $color2 100%);
+background: -o-linear-gradient(left, $color1 0%, $color2 100%);
+background: -ms-linear-gradient(left, $color1 0%, $color2 100%);
+background: linear-gradient(to right, $color1 0%, $color2 100%);
+}
+
+@mixin gradiant-three-colors-left-right($color1, $color2, $color3) {
+background: $color1;
+background: -moz-linear-gradient(left, $color1 0%, $color2 51%, $color3 100%);
+background: -webkit-gradient(left top, right top, color-stop(0%, $color1), color-stop(51%, $color2), color-stop(100%, $color3));
+background: -webkit-linear-gradient(left, $color1 0%, $color2 51%, $color3 100%);
+background: -o-linear-gradient(left, $color1 0%, $color2 51%, $color3 100%);
+background: -ms-linear-gradient(left, $color1 0%, $color2 51%, $color3 100%);
+background: linear-gradient(to right, $color1 0%, $color2 51%, $color3 100%);
+}
+
+@mixin gradiant-two-colors-top-bottom($color1, $color2) {
+background: $color1;
+background: -moz-linear-gradient(top, $color1 0%, $color2 100%);
+background: -webkit-gradient(left top, left bottom, color-stop(0%, $color1), color-stop(100%, $color2));
+background: -webkit-linear-gradient(top, $color1 0%, $color2 100%);
+background: -o-linear-gradient(top, $color1 0%, $color2 100%);
+background: -ms-linear-gradient(top, $color1 0%, $color2 100%);
+background: linear-gradient(to bottom, $color1 0%, $color2 100%);
+}
+
+
+
+//common mixins
+
+@mixin box-center() {
+@include flexbox();
+@include align-items(center);
+@include justify-content(center);
+}
+@mixin box($var) {
+width: $var;
+height: $var;
+}
+
+
+/** for chat bubble**/
+
+.msg-row {
+@include flexbox();
+padding: 0 2.500em;
+font-family: $regular;
+margin-bottom: 0.313em;
+position: relative;
+}
+
+.msg-inner {
+padding: 0.250em 0.250em 0.250em 0.40em;
+@include box-shadow(-1px 2px 10px rgba(0, 0, 0, 0.08));
+@include transition(all ease 0.2s);
+min-width: 5.875em;
+box-sizing: border-box;
+max-width: 34.375em;
+position: relative;
+@include transition(all ease 0.2s);
+}
+
+.msg-inner-text {
+font-size: 0.7125rem;
+line-height: 1.5em;
+font-family: $regular;
+letter-spacing: 0.0.188em;
+}
+
+.msg-time-inner {
+position: absolute;
+right: 0.30em;
+bottom: 0.188em;
+@include flexbox(); 
+@include align-items(center);
+}
+
+.star-svg {
+width: 0.563em;
+height: 0.563em;
+margin-right: 0.313em;
+}
+
+.img-drop-arrow {
+position: absolute;
+right: 5px;
+z-index: 1;
+width: 0.750em;
+height: 0.750em;
+top: 8px;
+}
+
+.menu-dropdown {
+position: absolute;
+right: 0;
+top: 20px;
+background: #FFFFFF;
+cursor: pointer;
+box-shadow: 0px 3px 6px #0000001A;
+border-radius: 3px;
+z-index: 1;
+li {
+    padding: 0.563em 1.188em;
+    min-width: 6.500em;
+    @include flexbox();
+    @include align-items(center);
+    &:hover {
+        background-color: #F3F8FF;
+    }
+    span {
+        font-size: $font12;
+        color: #000;
+        font-family: $regular;
+        margin-left: 0.625em;
+    }
+}
+}
+
+.sender-name-style{
+  font-size: 0.63rem;
+  font-family: SFUIDisplaySemibold,sans-serif;
+  letter-spacing: 0.11px;
+  color: #313131;
+  display: inline-block;
+  white-space: pre;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+
+
+
+// commom style
+.container{
+  
+  .checkbox-common {
+    display: inline-block;
+    height: 18px;
+    label {
+      position: relative;
+      display: inline-block;
+      cursor: pointer;
+      width: 18px;
+      height: 18px;
+      overflow: hidden;
+      &:before {
+      content: '';
+      -webkit-appearance: none;
+      background-color: transparent;
+      border: 2px solid #BBC1C4;
+      box-shadow: none;
+      display: inline-block;
+      position: absolute;
+      vertical-align: middle;
+      cursor: pointer;
+      width: 18px;
+      height: 18px;
+      border-radius: 2px;
+      box-sizing: border-box;
+      top: 0px;
+      left: 0;
+    }
+  }
+  input {
+    padding: 0;
+    height: initial;
+    width: initial;
+    margin-bottom: 0;
+    display: none;
+    cursor: pointer;
+
+    &:checked + label{
+    background: #4879f9;
+    border-radius: 2px;
+    box-sizing: border-box;
+    width: 18px;
+    height: 18px;
+    &:after {
+      content: '';
+    display: block;
+    position: absolute;
+    top: 2px;
+    left: 6px;
+    width: 4px;
+    height: 9px;
+    border: solid #ffffff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+    }
+    &::before {
+      border-color: #4879f9;
+    }
+  }
+  }
+}
+
+.withcheckbox {
+  >label{
+  @include flexbox();
+  @include align-items(center);
+ 
+  cursor: pointer;
+  &:hover {
+    background-color: #edf4f9;
+    .recentchats .recent-message-block .recent-message-icon i.downarrow {
+      display: block;
+    }
+  }
+  .profile-image {
+    position: relative !important;
+    margin: 0 1em;
+    i {
+      position: absolute;
+      right: -0.188em;
+      bottom: -0.125em;
+      height: 1.188em;
+      width: 1.188em;
+    }
+    .image {
+      height: 2.688em;
+      width: 2.688em;
+      background: none;
+      @include border-radius(50%);
+      overflow: hidden;
+      img{
+        object-fit: cover;
+      }
+    }
+  }
+  .recentchats {
+    position: relative;
+    overflow: hidden;
+    @include flex(1);
+      padding: 0.625em 0;
+      border-bottom: 1px solid #E2E2E2;
+      margin-right: 1em;
+    .recent-username-block {
+      width: 85%;
+      @include flexbox();
+      @include align-items(center);
+      margin-bottom: 0.2em;
+      .recent-username {
+        @include flexbox();
+        @include align-items(center);
+        @include flex-grow(1);
+        overflow: hidden;
+        .username {
+          display: inherit;
+          overflow: inherit;
+          text-overflow: inherit;
+          white-space: inherit;
+          h3 {
+            font-size: 0.775rem;
+            font-family: $medium;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: pre;
+            color: $rechathead;
+            line-height: 120%;
+            letter-spacing: .3px;
+          }
+        }
+      }
+    }
+    .recent-message-block {
+      width: 85%;
+      @include flexbox();
+      @include align-items(center);
+      height: 1em;
+      & > span {
+        max-width: 90%;
+      }
+      span {
+        font-size: 0.69rem;
+        font-family: $regular;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: #4a5568;
+        line-height: 15px;
+        letter-spacing: .2px;
+        i.user-status,
+        i.user-status-sent,
+        i.user-status-receive {
+          height: 0.6em;
+          width: 0.6em;
+          min-width: 5px;
+          min-height: 5px;
+          @include border-radius(50%);
+          margin-right: 0.333em;
+          line-height: 14px;
+        }
+      }
+    }
+    .active {
+      span {
+        font-family: $medium;
+        color: $rechatmsgactive;
+      }
+    }
+
+    .checkbox{
+      @extend .checkbox-common;
+      position: absolute;
+      top: 50%;
+      right: 10px;
+      transform: translate(10px, -50%);
+    }
+  }
+}
+}
+.chat-list-li.active {
+  background-color: #edf4f9;
+}
+
+i.msg-processing {
+  line-height: 0;
+  width: 1.2em;
+  position: relative;
+  top: 2.5px;
+  svg {
+    line-height: 0;
+  }
+}
+
+}//common style end
+
+.file-details{
+  position: relative;
+  top: -0.35em;
+  @include flexboxinline();
+  @include align-items(center);
+  color:$bgc-rev-attach-file-details;
+  font-family: $light;
+  font-size: 0.525rem;
+  letter-spacing: 0px;
+  text-transform: capitalize;
+  padding: 0 0.250em 0.250em 0.40em;
+  margin-left: 0.625em;
+  .dot-sm{
+    @include box(0.188rem);
+    border-radius:50%;
+    background:$bgc-rev-attach-file-details;
+    margin:0 0.313rem;
+  }
+}
+.image-caption{
+  .file-details {
+    margin-left: 0;
+  }
+}
+
+
+@mixin chat-list-li-blocked {
+  &.Blocked{
+    --bg-blocked: rgb(249 239 239);
+    h3{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+    }
+    .checkbox{
+      display: none !important;
+    }
+    label{
+    background-color: var(--bg-blocked)!important;
+  }
+    .blocked-info{
+      @include flexboxinline();
+      @include justify-content(center);
+      @include align-items(center);
+      color: #E24848;
+      user-select: none;
+      i{
+        width: .85em;
+        height: .85em;
+        margin: 0 0.375em;
+        svg{
+        fill: #E24848;
+        width: .85em;
+        height: .85em;
+        path{
+          fill: #E24848;
+        }
+        }
+      }
+      span{
+        color: red;
+        font-size: 0.775rem;
+        font-family: SFUIDisplayMedium, sans-serif;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: pre;
+        line-height: 120%;
+        letter-spacing: .3px;
+      }
+      
+    }
+    .username{
+      display: flex !important;
+      width: 100% !important;
+      justify-content: space-between;
+    }
+    .recent-message-block,.recent-username-block{
+    width: 100% !important;
+    }
+    &.bc-none{
+      background-color: transparent !important;
+      label{
+        background-color: transparent !important;
+      }
+    }
+  }
+  .Unblock{
+    font-size: 0.688em;
+    font-family: $medium;
+    color:#fff;
+    background: $primary;
+    border-radius: 0.125em;
+    padding:0.5em 1em ;
+    transition:all linear 200ms;
+    cursor: pointer;
+    margin-right: .7em;
+    &:hover{
+        background: $primary-dark;
+        transition:all linear 200ms;
+    }
+}
+}
+//common style end
+
+
+@media screen and (max-width:767px) {
+  .msg-inner {
+    min-width: 6.875em;
+  }
+}

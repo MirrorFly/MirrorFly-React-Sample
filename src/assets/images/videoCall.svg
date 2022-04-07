@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <g id="Video_call_icon" data-name="Video call icon" transform="translate(11488 -4831)">
+    <path id="Forma_1" data-name="Forma 1" d="M327.093,183.444a1.722,1.722,0,0,1-1.76-1.681V171.681a1.722,1.722,0,0,1,1.76-1.681h14.079a1.722,1.722,0,0,1,1.76,1.681V173.5l2.956-2.352a.9.9,0,0,1,.559-.2.863.863,0,0,1,.885.843v9.856a.863.863,0,0,1-.885.843.894.894,0,0,1-.559-.2l-2.956-2.352v1.819a1.722,1.722,0,0,1-1.76,1.681Zm-.88-11.763v10.083a.862.862,0,0,0,.88.84h14.079a.862.862,0,0,0,.88-.84V171.681a.862.862,0,0,0-.88-.84H327.093A.862.862,0,0,0,326.214,171.681Zm16.719,2.915v4.254l3.519,2.8V171.8Z" transform="translate(-11811.833 4666.5)" fill="#828282" stroke="#828282" stroke-linejoin="round" stroke-width="0.5"/>
+    <rect id="Rectangle_215" data-name="Rectangle 215" width="24" height="24" transform="translate(-11488 4831)" fill="none"/>
+  </g>
+</svg>

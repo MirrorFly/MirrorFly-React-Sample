@@ -1,0 +1,67 @@
+ // common switch
+ .switch {
+    position: relative;
+    display: inline-block;
+    vertical-align: middle;
+    height: 0.75em;
+    width: 1.4em;
+    z-index: 0;
+     input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+  }
+  input.active + .slider {
+    background-color: #84A9F3;
+  }
+    input.active + .slider:before{
+    background-color: #4879F9;
+    left: 0;
+    -webkit-transform: translate(80%, -50%);
+    -ms-transform: translate(80%, -50%);
+    transform: translate(80%, -50%);
+    box-shadow: 0 0 0.688em -0.188em #84A9F3;
+  }
+  .slider.round {
+    border-radius: 2.125em;
+  }
+
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #B2B2B2;
+    -webkit-transition: .4s;
+    transition: .4s;
+  }
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 1.3em;
+    width: 1.3em;
+    left: -20%;
+    top:50%;
+    transform: translateY(-50%);
+    background-color: #ECECEC;
+    -webkit-transition: .4s;
+    transition: .4s;
+    box-shadow: 0 0 0.688em -0.188em #B2B2B2;
+  }
+  .slider.round:before {
+    border-radius: 50%;
+  }
+  .overlay-click{
+    position: absolute;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+  //
+  }//switch end
+  //

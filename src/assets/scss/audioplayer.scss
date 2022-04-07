@@ -1,0 +1,231 @@
+@import "mixins.scss";
+@import "variables.scss";
+
+//Sender audio design start
+.audio-message{
+    max-width:13.8em !important;
+    padding: 0 !important;
+    border-radius:  0.525em !important;
+     > .sender-name {
+        @extend .sender-name-style;
+        margin: 0.250em 0.250em -0.250em 0.40em;
+      }
+    .audio-message-container{
+        border-radius: 0.5625em;
+        background-color:#efefef;
+        padding: 0.525em .15em 0.525em 0.475em;
+        @include flexbox();
+        @include align-items(center);
+        margin: 0.1875rem;
+        i{
+            svg {
+                width:1.75em;
+                height:1.75em;
+            }
+        }
+    .rhap_container{
+        box-sizing: border-box;
+        @include flexbox();
+        @include flex-direction(row);
+        @include align-items(center);
+        line-height: normal;
+        font-family: inherit;
+        min-height: auto;
+        width: 100%;
+        min-width: 11em; 
+        padding: 0px;
+        box-shadow: none;
+        background-color: transparent;
+        &:focus{
+            outline: none;
+        }
+        .rhap_progress-section {
+            position: relative;
+            display: block;
+            flex: 1;
+            align-items: center;
+            order: 2;
+            &:focus{
+                outline: none;
+            }
+            .rhap_progress-container{
+                height: 1.875em;
+                margin: 0 calc(0.5em + -1%);
+                .rhap_progress-bar-show-download{
+                    background-color: #C9CACB;
+                }
+                .rhap_progress-indicator,.rhap_progress-filled{
+                    background-color: #4879F9;
+                }
+                .rhap_progress-indicator{
+                    width: 0.5em;
+                    height: 0.5em;
+                    top: -0.154em;
+                    margin-left: -0.313em;
+                }
+                &:focus{
+                    outline: none;
+                }
+            }
+            .rhap_time{
+                font-size:0.5625rem;
+            position: absolute;
+            bottom: -0.25em;
+            color: #959595;
+            }
+            .rhap_current-time{
+                display: none;
+                left: 0.64em;
+            }
+            .rhap_total-time{
+                left: 0.64em;
+            }
+        }
+        .rhap_controls-section {
+            display: block;
+            flex: 0;
+            justify-content: unset;
+            margin-top: 0;
+            order: 1;
+            min-width: 2.25em;
+            .rhap_main-controls{
+                button{
+                svg{
+                    opacity: 0;
+                    width: 30px;
+                    height: 30px;
+                }
+                &[aria-label="Play"]{
+                        background: url(../images/audio_play.svg) no-repeat center center;
+                        background-size: .32em !important;
+                        background-position-x: 0.3em !important;
+                }
+                &[aria-label="Pause"]{
+                    background: url(../images/audio_pause.svg) no-repeat center center;
+                    background-size: .3em !important;
+                    background-position-x: 0.3em !important;
+                }
+                &:focus{
+                    outline: none;
+                }
+              }
+            }
+        }
+   
+       
+    }
+    i.audio{
+        position: relative;
+        text-align: center;
+        background-color: #fff;
+         background-color: #959595;
+        border-radius:50%;
+       flex: 0 0 1.75em;
+        width: 1.75em;
+        height:1.75em;
+        @include flexbox();
+        @include justify-content(center);
+        @include align-items(center);
+        cursor: default;
+        svg{
+            width: 1em;
+            height: 1em;
+            color:#fff;
+            fill:currentColor;
+        }
+        path{
+            fill:currentColor;
+        }
+        &.recorded{
+            svg{
+                width: auto;
+                margin-left: 0;
+            }
+        }
+        &.recording{
+           svg{
+            width: 1em;
+            height: .9em;
+           }
+        }
+    }
+    .rhap_play-pause-button{
+        width: 30px;
+        height:30px;
+        font-size: 36px;
+    }
+}
+.rhap_progress-bar{
+    height: 0.188em;
+}
+.image-caption{
+padding-left:  0.313em;
+>span>span{
+margin-top: 0 !important;
+}
+}
+.rhap_download-progress {
+    background-color: #C9CACB;
+   }
+   .message-dropdown i{
+    height: 1.4em;
+   }
+}
+//receiver audio design start
+.receiver-row .audio-message{
+    border-radius: 0.5625em 0.5625em 0px 0.5625em;
+    .rhap_time{
+        color: #fff !important;
+    }
+    .audio-message-container{
+        background-color:#154AD4;
+        i.audio{
+            background-color: #fff;
+            svg{
+                color:#3464E3;
+            }
+        }
+    }
+    .rhap_container{
+        background-color:transparent;
+    }
+    .rhap_progress-bar-show-download , .rhap_download-progress{
+     background-color:#95aef0 !important;
+    } 
+    .rhap_progress-indicator,.rhap_progress-filled{
+        background-color: #fff !important;
+    }
+    .rhap_main-controls{
+        button{
+            fill: #fff;
+        &[aria-label="Play"]{
+                background: url(../images/audio_play_2.svg) no-repeat center center !important;
+                background-position-x: 0.3em !important;
+                
+        }
+        &[aria-label="Pause"]{
+            background: url(../images/audio_pause_2.svg) no-repeat center center !important;
+            background-position-x: 0.3em !important;
+        }
+      }
+    }
+}
+//sender audio design start
+.sender.reply-block.audio-message{
+    .audio-message-container {
+        background: transparent;
+    }
+}
+
+.receiver .reply-block.audio-message .reply-container{
+background: #3464e3 !important;
+}
+
+.isPlaying{
+    .rhap_total-time{
+        display: none;
+    }
+    .rhap_current-time{
+        display: block !important;
+    }
+}

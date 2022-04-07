@@ -1,0 +1,561 @@
+@import '../../../assets/scss/variables.scss';
+@import '../../../assets/scss/mixins.scss';
+
+// common profile popup 
+.userprofile-popup {
+    display: inline-block;
+    width: 30.000em;
+    background-color: $bgc-userprofile-popup;
+    @include border-radius( 7px);
+    margin: 1px;
+    .userprofile-header {
+      @include flexbox();
+      @include align-items(center);
+      padding: 1.000em 2.813em 1em 1.250em;
+      border-bottom: 1px solid $bdr-userprofile-header;
+      background-color: $bgc-userprofile-header;
+      @include border-radius(6px 6px 0px 0px);
+      i {
+        height: 1.625em;
+        width: 1.625em;
+        svg {
+          fill: $white;
+        }
+      }
+      h5 {
+        text-align: center;
+        @include flex(1);
+        font-size: $font20;
+        font-family: $medium;
+        color: $white;
+      }
+    }
+    
+    .userprofile-body {
+      .userprofile-image {
+        height: 9.375em;
+        width: 9.375em;
+        @include border-radius(50%);
+        margin: 1.000em auto 0em auto;
+        position: relative;
+        background: #fff
+        input{
+          position: absolute;
+          z-index: -999;
+          opacity: 0;
+        }
+        background-size: cover;
+        > div{
+          width: 100%;
+          height: 100%;
+          .profile-image {
+            width: 100%;
+            height: 100%;
+            > .image {
+              width: 100%;
+              height: 100%;
+              }
+            }
+        }
+        img {
+          @include border-radius(50%);
+          background-size: cover;
+          object-fit: cover;
+        }
+        i.camera-edit {
+          position: absolute;
+          right: 0;
+          bottom: 7px;
+          height: 2.188em;
+          width: 2.188em;
+        }
+        .profile-dropdown {
+          position: absolute;
+          right: 0;
+          top: 9.375em;
+          background-color: $bgc-profile-dropdown;
+          @include box-shadow(0px 3px 6px #0000001A);
+          @include border-radius(3px);
+          padding: 0.563em 0;
+          z-index: 1;
+          li {
+            padding: 0.563em 1.063em;
+            cursor: pointer;
+            &:hover {
+              background-color:$bgc-profile-dropdown-li-hover;
+            }
+            &.upload_photo{
+              position: relative;
+             
+          }
+          .UploadLabel{
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            top: 0;
+            cursor: pointer;
+            z-index: 1;
+        }
+            i.profileedit-options {
+              height: 0.875em;
+              width: 0.875em;
+              vertical-align: -2px;
+              svg{
+                width: 0.875em;
+                height: 0.875em;
+              }
+            }
+            span {
+              font-size: $font12;
+              color: $clr-profile-dropdown-li-span;
+              font-family: $regular;
+              margin-left: 0.625em;
+              cursor: pointer;
+              .uploadphoto {
+                margin-left: 0;
+                cursor: pointer;
+              }
+              
+            }
+            .uploadphoto {
+              margin-left: 0 !important;
+              position: relative;
+              
+                input {
+                position: absolute;
+                left: 0;
+                bottom: 0;
+                right: 0;
+                top: 0;
+                opacity: 0;
+                width: 100%;
+              }
+              .camera-container {
+                cursor: default;
+                .popup-controls {
+                  img {
+                    background: none;
+                  }
+                  .reset {
+                    position: relative;
+                    cursor: pointer;
+                    label{
+                      width: 100%;
+                      height: 100%;
+                      cursor: pointer;
+                    input {
+                      position: absolute;
+                      left: 0;
+                      width: 100%;
+                      height: 100%;
+                      opacity: 0;
+                      cursor: pointer;
+                      z-index: -1;
+                    }
+                  }
+                }
+                }
+              }
+            }
+          }
+        }
+        .Viewphoto-container,
+        .camera-container,
+        .removephoto-container {
+          position: fixed;
+          top: 0;
+          left: 0;
+          z-index: 1;
+          width: 100%;
+          height: 100vh;
+          @include flexbox();
+          @include justify-content(center);
+          @include align-items(center);
+          background-color: $bgc-removephoto-container;
+          .Viewphoto-preview {
+            max-width: 65%;
+            height: 80%;
+            img {
+              width: 100%;
+              height: 100%;
+              @include border-radius(inherit);
+              object-fit: contain;
+              object-position: center;
+            }
+            .preview-close {
+              position: absolute;
+              height: 1.500em;
+              width: 1.500em;
+              top: 1.250em;
+              right: 2.500em;
+            }
+          }
+  
+          // camera popup not found styles
+          .camera-popup {
+            width: 20.625em;
+            padding: 1.563em 1.875em;
+            background-color: $bgc-camera-popup-not-found;
+            @include border-radius(5px);
+            @include box-shadow(0px 6px 16px #00000024);
+            h4 {
+              text-align: center;
+              font-size: $font16;
+              color: $primary;
+              font-family: $bold;
+            }
+            i {
+              max-width: 4.875em;
+              margin: 0 auto;
+              display: block;
+              margin-top: 0.938em;
+            }
+            p {
+              text-align: left;
+              font-size: $font14;
+              color: $rechatmsg;
+              font-family: $semibold;
+              margin-top: 0.938em;
+            }
+            .popup-controls {
+              text-align: right;
+              img {
+                background: none;
+              }
+              button {
+                height: 1.875em;
+                width: 5.000em;
+                border: none;
+                font-size: $font12;
+                font-family: $semibold;
+                margin-left: 0.625em;
+                background-color: $primary;
+                color: $white;
+                @include border-radius(2px);
+                cursor: pointer;
+                margin-top: 0.938em;
+              }
+            }
+          }
+          // camera popup not found styles ends
+  
+          // camera popup visible starts
+  
+          .camera-popup-visible {
+            width: 28.125em;
+            background-color: $bgc-camera-popup-visible;
+            @include border-radius(5px);
+            @include box-shadow(0px 6px 16px #00000024);
+            .userprofile-header {
+              border-bottom: none;
+              padding: 0.813em 2.813em 0.813em 1.250em;
+              i {
+                height: 1.500em;
+                width: 1.500em;
+              }
+              h5 {
+                font-size: $font20;
+                font-family: $medium;
+              }
+            }
+            .react-html5-camera-photo > img,
+            .react-html5-camera-photo > video {
+              width: 100%;
+            }
+            .cameraview {
+              max-width: 100%;
+              @include flexbox();
+              @include justify-content(center);
+              @include align-items(center);
+              img.camera-pic {
+                @include border-radius(unset);
+              }
+              img {
+                @include border-radius(unset);
+              }
+              .croppie-container {
+                .cr-boundary {
+                  width: 100% !important;
+                  height: 18.813em !important;
+                  .cr-viewport.cr-vp-square {
+                    @include border-radius(50%);
+                    width: 13.75em;
+                    height: 13.75em;
+                  }
+                }
+                .cr-slider-wrap {
+                  margin: 1em 0px 0px 1em;
+                  width: 66%;
+                  .cr-slider {
+                    opacity: 1;
+                    position: static;
+                    width: 100%;
+                    padding-top: 0.5em;
+                    padding-bottom: 0.5em;
+                    cursor: pointer;
+                  }
+                }
+              }
+              .react-html5-camera-photo {
+                overflow: hidden;
+                video {
+                  width: 100%;
+                  margin-bottom: -0.375em;
+                }
+                #inner-circle {
+                  cursor: pointer;
+                }
+              }
+              .loader {
+                position: absolute;
+              }
+            }
+            .popup-controls {
+              img {
+                background: none;
+                height: 2.438em;
+                width: 2.438em;
+                position: absolute;
+                top: 50%;
+                left: 70%;
+                transform: translate(-30%, -50%);
+              }
+              text-align: right;
+              padding: 0em 1em 0 0;
+              width: 30%;
+              float: right;
+              position: relative;
+              top: -1.938em;
+              height: 2.5em;
+              margin-bottom: -1.75em;
+              i {
+                height: 2.438em;
+                width: 2.438em;
+                margin-left: 0.938em;
+              }
+            }
+          }
+  
+          // camera popup visible style ends
+  
+          // remove photo styles start
+          .removephoto-popup {
+            width: 20.625em;
+            padding: 1.563em 1.875em;
+            background-color: $bgc-removephoto-popup;
+            @include border-radius(5px);
+            @include box-shadow(0px 6px 16px #00000024);
+            .removephoto-label {
+              label {
+                font-size: $font15;
+                font-family: $semibold;
+                color: $popupHeadingLabel;
+              }
+            }        
+            .removephoto-noteinfo {
+              margin-top: 1.875em;
+              text-align: right;
+              button {
+                height: 2.500em;
+                width: 6.667em;
+                border: none;
+                font-size: $font12;
+                font-family: $semibold;
+                margin-left: 0.625em;
+                background-color: $button;
+                color: $popuptext;
+                @include border-radius(2px);
+                cursor: pointer;
+              }
+              button.btn-removephoto {
+                background-color: $primary;
+                color: $white;
+              }
+            }
+          }
+          // remove photo styles start ends
+        }
+      }
+      .profile {
+        padding: 0em 1.313em;
+        margin: 0.500em 0em .8em 0em;
+        .profile-details {
+          position: relative;
+          @include flexbox();
+          @include align-items(center);
+          width: 100%;
+          margin: 0em 0em 0 0;
+  
+          i.status {
+            display: none;
+            height: 1.250em;
+            width: 1.000em;
+            margin-right: 1.250em;
+          }
+          .form-control {
+            @include flex(1);
+            position: relative;
+            @include flexbox();
+            @include align-items(center);
+            white-space: pre-wrap;
+            padding-right: 1.2em;
+            input {
+              width: 100%;
+              border: none;
+              border-bottom: 1px solid #ccc;
+              font-size: $font16;
+              font-family: $medium;
+              padding: 0.625em 0em;
+              padding-right: 3.750em;
+              margin-right: 1.2em;
+            }
+            .char-count {
+              position: absolute;
+              right: 3.917em;
+              font-size: $font12;
+              font-family: $regular;
+            }
+            i.emoji {
+              position: absolute;
+              right: 1.625em;
+              height: 0.875em;
+              width: 0.875em;
+            }
+            .em-slightly_smiling_face {
+              background-image: url(./images/emoji.svg);
+              font-size: $font10;
+              margin-top: -0.600em;
+            }
+            aside.emoji-picker-react {
+              background: $bgc-emoji-picker-react;
+              @include flexbox();
+              @include flex-direction(column);
+              height: 19.375em;
+              width: 15.625em;
+              font-family: sans-serif;
+              border: 1px solid #efefef;
+              @include border-radius(5px);
+              box-sizing: border-box;
+              @include box-shadow(0 5px 10px #efefef);
+              overflow: hidden;
+              position: relative;
+              z-index: 1;
+              margin-top: -335px;
+            }
+            .emoji-search {
+              display: none;
+            }
+            .skin-tones-list {
+              display: none;
+            }
+            h4 {
+              font-size: $font26;
+              font-family: $medium;
+              text-align: center;
+              width: 100%;
+              word-break: break-all;
+              display: block;
+            }
+          }
+          .controls {
+            height: 0.875em;
+            position: absolute;
+            right: 0;
+            i.edit {
+              height: 0.875em;
+              width: 0.875em;
+              display: block;
+            }
+            i.done {
+              height: 0.875em;
+              width: 0.875em;
+            }
+          }
+        }
+        .username {
+          i.status {
+            visibility: hidden;
+            opacity: 0;
+          }
+        }
+        label {
+          color: $clr-profile-label;
+          font-size: $font-profile-label;
+          font-family: $semibold;
+          display: block;
+          margin: 0.625em 0;
+        }
+        .status {
+          .form-control {
+            input {
+              font-size: $font14;
+              padding: 0.714em 0em;
+              padding-right: 4em;
+            }
+            textarea{
+              font-size: $font14;
+              padding: 0.714em 0em;
+              padding-right: 4em;
+              width: 100%;
+              outline: 0;
+              border:none;
+              resize: none;
+              height: auto;
+              max-height: 250px;
+              overflow: hidden auto;
+              &::-webkit-scrollbar {
+                width: 0px;
+              }
+              
+            }
+            h4 {
+              font-size: $font16;
+              font-family: $medium;
+              text-align: left;
+              white-space: pre-wrap;
+            }
+          }
+        }
+        .info {
+          margin-top: 1.375em;
+          @include flexbox();
+          @include justify-content(center);
+          @include align-items(center);
+          i {
+            height: 1em;
+            width: 0.875em;
+            margin-right: .313em;
+            cursor: default;
+            svg{
+              width: 0.875em !important;
+              height: 0.875em !important;
+            }
+          }
+          span {
+            font-size: $font-profile-info-span;
+            font-family: $regular;
+            color: $clr-profile-info-span;
+            vertical-align: 0px;
+          }
+        }
+      }
+    }
+  }
+  
+
+  .userprofile {
+    position: fixed;
+    top: 0;
+    left: 0;
+    background-color: $bgc-userprofile-overlay;
+    width: 100%;
+    min-height: 100%;
+    @include flexbox();
+    @include justify-content(center);
+    @include align-items(center);
+    @include transition(0.4s);
+    @include transform(scale(1,1));
+    z-index: 11;
+    @extend .userprofile-popup;
+  }

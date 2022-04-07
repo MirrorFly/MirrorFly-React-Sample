@@ -1,0 +1,44 @@
+@import '../../../../assets/scss/variables.scss';
+@import '../../../../assets/scss/mixins.scss';
+@import '../../../../assets/scss/message-mixins.scss';
+
+
+.BlockedContact{
+        @include box-center();
+    .EmptyBlockedContact{
+        text-align: center;
+            i{cursor: default;
+            @include box(9.375em);
+            @include box-center();
+            margin: 0 auto 1em auto;
+            svg{
+                @include box(9.375em);
+            }
+        }
+    }
+    
+}
+    .chat-list-ul.BlockedList {
+        height: calc(100vh - 4.063em);
+        overflow: auto;
+        @include chat-list-li-mixin;
+        .chat-list-li:hover{
+            background: transparent;
+            cursor: default;
+        }
+    .Unblock{
+        font-size: 0.688em;
+        font-family: $medium;
+        color:#fff;
+        background: $primary;
+        border-radius: 0.125em;
+        padding:0.5em 1em ;
+        transition:all linear 200ms;
+        cursor: pointer;
+        &:hover{
+            background: $primary-dark;
+            transition:all linear 200ms;
+        }
+    }
+
+}

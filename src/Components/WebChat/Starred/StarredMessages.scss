@@ -1,0 +1,189 @@
+@import '../../../assets/scss/variables.scss';
+@import '../../../assets/scss/mixins.scss';
+@import '../../../assets/scss/message-mixins.scss';
+
+.staredMessages{
+    position: absolute;
+    z-index: 6;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: #F6F6F6;
+    display: flex;
+    .staredContainer{
+        max-height: calc(100vh - 4.063em);
+        overflow: hidden auto;
+        width: 100%;
+        flex: 1 1 auto;
+        @include chatMessageStyle;
+            .receiver-row,.sender-row{
+                padding: 0 2.7em;
+                .message-text span:after {
+                    width:calc(1.3em);
+                }
+                .image-message{
+                    padding: .1em !important;
+                    width: auto;
+                }
+                .image-block .image-caption{
+                    max-width: 26.2em !important;
+                }
+                .image-block,.location-message{
+                    padding: .2em !important;
+                    width: auto;
+                    max-width: 300px !important;
+                }
+                .video-message, .location-message, .image-message{
+                    height: auto;
+                .starredIcon svg path{
+                    fill: #fff !important;
+                }
+            }
+            }
+           > li{
+                padding: 0.625em 0;
+                border-bottom: 0.0625em solid #1413130d;
+                &:last-child{
+                    margin-top: 0em;
+                    border-bottom: none;
+                }
+               &:hover{
+                background: #0000000D;
+                transition: 200ms ease-in-out;
+                
+               }
+            }
+             .starred-own{
+                .senderDetails{
+                    flex-direction: row !important;
+                    .sender-image{
+                        margin-left: 0.375em;
+                        margin-right: 0 !important;
+                    }
+                    .sender-name{
+                        justify-content: end;
+                        margin-left: 0.938em;
+                        padding-right: 0em;
+                    }
+                    .sender-info{
+                        flex-direction: row-reverse;
+                        justify-content: end;
+                    }
+                }
+             }
+            .senderDetails{
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                flex-direction: row-reverse !important;
+                flex: 100% 1 1;
+                flex-wrap: nowrap;
+                padding: 0 1em;
+                margin-bottom: 0.625em;
+                .sender-info{
+                    display: flex;
+                    align-items: center;
+                    flex: 1 1 auto;
+                    max-width: calc(100% - 8em);      
+                .sender-image{
+                    min-width: 1.813em;
+                    width: 1.813em;
+                    height: 1.813em;
+                    border-radius: 50%;
+                    overflow: hidden;
+                    margin-right: 0.375em;
+                    > .profile-image  {
+                       width: 100%;
+                       height: 100%;
+                        .image{
+                            width: 100%;
+                            height: 100%;
+                        }
+                       }
+                    img{
+                        object-position: center;
+                        object-fit: cover;
+                    }
+                }
+                .sender-name{
+                    display: flex;
+                    align-items: center;
+                    color:#181818;
+                    font-size: $font11;
+                    font-family: $medium;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    padding-right: 0.625em;
+                    max-width: 100%;
+                    flex:  1 1 auto;
+                    svg{
+                        margin: 0 0.375em;
+                        width: 0.625em;
+                        min-width: 0.625em;
+                        height: auto;
+                    }
+                    > span{
+                        display: inline-block;
+                        max-width: 80%;
+                        min-width: 1.7em;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        white-space: nowrap;
+                    }
+                }
+            }
+                .starred-time{
+                    color: #959595;
+                    font-size: $font12;
+                    font-family: $regular;
+                    line-height: 0.563rem;
+                    white-space: nowrap;
+                }
+                
+            }
+            .starredIcon{
+                margin-right: 0.313em;
+            }
+           .video-message{
+               padding: .1em !important;
+           }
+        }
+        .singleFile{ 
+            .image-message:after{
+            right: 0.1875em;
+            bottom: 0.125em;
+            background: linear-gradient(
+                150deg, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0) 45%, rgba(0, 0, 0, 0.13) 63%, rgba(0, 0, 0, 0.4));
+        }
+    }
+        
+        .noStarredMessage{
+            flex-direction: column;
+            i{
+                width: 9.25em;
+                height: auto;
+                position: relative;
+                margin: 1.0625em 0;
+            }
+            .star{
+                position: absolute;
+                left: 50%;
+                top:50%;
+                transform: translate(-50%, -50%);
+            }
+            p{
+                margin-top: 1.0625em;
+                font: normal normal  0.8125rem/1.0625rem $regular;
+                letter-spacing: 0.0081em;
+                color: #949494;
+                opacity: 1;
+            }
+        }
+        .sender-row.has-caption .video-message , .sender-row.has-caption .image-message{
+        .starredIcon svg path{
+            fill : #949494 !important;
+        }
+    }
+}

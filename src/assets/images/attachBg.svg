@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+    viewBox="0 0 58 58">
+    <defs>
+        <style>
+            .dattachBg {
+                filter: url(#aattachBg);
+            }
+        </style>
+        <filter id="aattachBg" x="0" y="0"  filterUnits="userSpaceOnUse">
+            <feOffset dy="3" input="SourceAlpha" />
+            <feGaussianBlur stdDeviation="3" result="b" />
+            <feFlood flood-opacity="0.161" />
+            <feComposite operator="in" in2="b" />
+            <feComposite in="SourceGraphic" />
+        </filter>
+    </defs>
+    <g transform="translate(9 6)">
+        <g class="d" transform="matrix(1, 0, 0, 1, -9, -6)">
+            <path fill="#576ceb" d="M40,20A20,20,0,1,1,20,0,20,20,0,0,1,40,20Zm0,0" transform="translate(9 6)" />
+        </g>
+        <path fill="#6c3beb" d="M40,138.922a19.912,19.912,0,0,1-2.412,9.53c-.645,1.188-11.515,2.767-17.588,2.767s-16.943-1.58-17.587-2.767Q2.028,147.745,1.7,147a20.036,20.036,0,0,1,.93-18,20.006,20.006,0,0,0,34.737,0A19.905,19.905,0,0,1,40,138.922Zm0,0"
+            transform="translate(0 -118.922)" />
+        <path fill="#4d34b0" d="M65.935,377.7a20.01,20.01,0,0,1-35.2,0Zm0,0" transform="translate(-28.337 -348.191)" />
+    </g>
+</svg>

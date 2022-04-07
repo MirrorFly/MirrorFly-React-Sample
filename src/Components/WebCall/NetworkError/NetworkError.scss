@@ -1,0 +1,154 @@
+
+  .NetworkError {
+      position: fixed;
+      z-index: 100;
+    display: flex;
+    align-items: center;
+    background: #fff;
+    min-width: 17.188em;
+    height: 100vh;
+    width: 100%;
+    overflow: hidden;
+    color: #4879F9;
+    padding: 1.875em;
+    font-family: SFUIDisplayRegular,sans-serif;
+    flex-wrap: wrap-reverse;
+   
+  .wrapper {
+    flex-grow: 2;
+    width: 50vw;
+    max-width: 37.5em;
+    margin: 0 auto;
+
+  }
+  
+  h1 {
+    margin: 0;
+    font-size: 6rem;
+    
+    font-family:SFUIDisplayMedium, sans-serif;
+  }
+  
+  p {
+    width: 95%;
+    font-size: 1.5rem;
+    line-height: 1.4;
+    margin: 1.563rem 0;
+    font-family:SFUIDisplayLight,sans-serif;
+  }
+  
+  .buttons {
+    white-space: nowrap;
+    display: inline-block;
+  }
+  
+  span {
+    display: block;
+    text-transform: uppercase;
+    color: #B9DDFB;
+    letter-spacing: 1.0.313em;
+    text-align: center;
+  }
+  a {
+      cursor: pointer;
+    display: inline-block;
+    padding: .8em 1em;
+    margin-right: 1em;
+    margin-bottom: 1em;
+    border: 0.188em solid #B9DDFB;
+    color: #4879F9;
+    text-transform: uppercase;
+    text-decoration: none;
+    letter-spacing: .2em;
+    position: relative;
+    overflow: hidden;
+    transition: .3s;
+    &:hover {
+      color: #fff;
+      border-color:#4879F9;
+      &:before {
+        top: 0;
+      }
+    }
+    &:before {
+      content: '';
+      background: #4879F9;
+      height: 100%;
+      width: 100%;
+      position: absolute;
+      top: -101%;
+      left: 0;
+      transition: .3s;
+      z-index: -1;
+    }
+  }
+  
+  // BLACKHOLE
+  
+  $size: 4.688rem;
+  $border: $size/15;
+  
+  .space {
+    // width: $size;
+    // height: calc(50vh + #{$size/2});
+    // border-top-left-radius: $size/2;
+    // border-top-right-radius: $size/2;
+    // overflow: hidden;
+    // margin: calc(50vh - #{$size/2}) auto 0 auto;
+    // position: relative;
+    // pointer-events: none;
+    // -webkit-transform: translateZ(0);
+    min-width: 220px;
+    align-self: center;
+    margin: 0 auto;
+    width: 220px;
+  }
+  
+  .blackhole {
+    // border: $border solid #4879F9;
+    // height: $size;
+    // width: $size;
+    // border-radius: 50%;
+    // position: absolute;
+    // top: 0;
+    // left: 0;
+    img{
+        width: 220px;
+    }
+    &:after {
+        display: none;
+      content: '';
+      height: calc(100% + #{$border*2});
+      width: calc(100% + #{$border*2});
+      border: $border solid #4879F9;
+      border-right-color: transparent;
+      border-bottom-color: transparent;
+      border-radius: 50%;
+      position: absolute;
+      top: -$border;
+      left: -$border;
+      z-index: 5;
+    background: url("./error.svg") center/contain no-repeat;
+
+    }
+  }
+  
+//   .ship {
+//     height: $size*2;
+//     width: $size - $border*4;
+//     margin-left: $border*2;
+//     background: url("https://cbwconline.com/IMG/Codepen/Space%20Ship.svg") center/contain no-repeat;
+//     animation: blackhole 4s infinite linear;
+//     position: absolute;
+//     bottom: -$size*2;
+//   }
+}
+  @keyframes blackhole {
+    to {
+      transform: translateY(-100vh);
+    }
+  }
+  
+  @media (max-width: 37.5em) {
+    body {margin: 0 5vw}
+  }

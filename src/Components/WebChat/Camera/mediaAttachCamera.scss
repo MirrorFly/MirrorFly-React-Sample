@@ -1,0 +1,316 @@
+@import '../../../assets/scss/mixins.scss';
+
+
+.mediaAttachCamera{
+    position: fixed;
+    top: 0;
+    right: 0;
+    left:auto;
+    width: 73.70%;
+    margin-top: 4.063em;
+    bottom: 0;
+    background: $bgc-mediaAttachCamera url(../../../assets/images/chatbg.png);
+    z-index: 103;
+    @include flexbox();
+    @include justify-content(center);
+    @include align-items(center);
+    @include flex-direction(column);
+    &::before{
+      content: '';
+      position: absolute;
+      top: -4.063em;
+      height: 4.063em;
+      left: 0;
+      width: 100%;
+      background: rgba(61, 106, 222, 0.13);
+  }
+    
+     // camera popup not found styles
+     .camera-popup {
+        width: 20.625em;
+        padding: 1.563em 1.875em;
+        background-color: $bgc-mediaAttachCamera-popup;
+        @include border-radius(5px);
+        @include box-shadow(0px 6px 16px #00000024);
+        h4 {
+          text-align: center;
+          font-size: $font16;
+          color: $primary;
+          font-family: $bold;
+        }
+        i {
+          max-width: 4.875em;
+          margin: 0 auto;
+          display: block;
+          margin-top: 0.938em;
+        }
+        p {
+          text-align: left;
+          font-size: $font14;
+          color: $rechatmsg;
+          font-family: $semibold;
+          margin-top: 0.938em;
+        }
+        .popup-controls {
+          text-align: right;
+          img {
+            background: none;
+          }
+          button {
+            height: 1.875em;
+            width: 5.000em;
+            border: none;
+            font-size: $font12;
+            font-family: $semibold;
+            margin-left: 0.625em;
+            background-color: $primary;
+            color: $white;
+            @include border-radius(2px);
+            cursor: pointer;
+            margin-top: 0.938em;
+          }
+        }
+      }
+      // camera popup not found styles ends
+
+      // camera popup visible starts
+
+      .camera-popup-visible {
+          width: 100%;
+          height: 100%;
+          background-color: #E9E9E9;
+        .userprofile-header {
+            padding: 0.313em 1.25em;
+            width: 100%;
+            background: $bgc-mediaAttachCamera-popup-header;
+            @include flexbox();
+          @include justify-content(space-between);
+          @include align-items(center);
+            fill:$fill-mediaAttachCamera-popup-header-svg;
+            color:$clr-mediaAttachCamera-popup-header;
+            h5{
+                font-size: $font14;
+            }
+            i,svg{
+                width: 1.5em;
+                height: 1.5em;
+            }
+            span{
+              @include flexbox();
+              @include justify-content(center);
+              @include align-items(center);
+            cursor: pointer;
+            i{
+              height: 1em;
+              margin-right: 0.225em;
+              svg{
+                height: 1em;
+              }
+            }
+            }
+        }
+        .react-html5-camera-photo > img,
+        .react-html5-camera-photo > video {
+          width: 100%;
+        }
+        .cameraview {
+          max-width: 100%;
+          // @include flexbox();
+          // @include justify-content(center);
+          // @include align-items(center);
+          // @include flex-direction(column);
+          background: $bgc-mediaAttachCamera url(../../../assets/images/chatbg.png);
+          height: calc(80vh - 2.125em - 4.063em);
+          img.camera-pic {
+            @include border-radius(unset);
+          }
+          img {
+            @include border-radius(unset);
+          }
+          .croppie-container {
+            position: relative;
+            width: 75%;
+            margin: 0 auto;
+            // @include flexbox();
+            height:100% !important;
+          }
+          .react-html5-camera-photo {
+            @include flexbox();
+            padding: 1.875em 0;
+            overflow: visible;
+            video {
+              width: 100%;
+              object-fit: contain;
+              object-position: center;
+            }
+          }
+          .loader {
+            position: absolute;
+          }
+        }
+        .popup-controls {
+          position: absolute;
+          left: auto;
+          bottom: -1.5em;
+          right: -3.75em;
+          height: auto;
+          top: auto !important;
+          padding: 0;
+          margin-bottom: 0;
+          margin-left: 0;
+          width: auto;
+          float: none;
+          i{
+            background: $clr-mediaAttachCamera-button url(../../../assets/images/sendCaptured.svg) 0.875em center no-repeat;
+            background-size: 1em 1em;
+            height: 2.7em;
+            width: 2.7em;
+           border-radius: 50%;
+           margin-left: 0;
+            svg{
+              visibility: hidden;
+            }
+          }
+        }
+        .form-attachcaption{
+            width: 100%;
+            padding: 10px 0;
+            background-color: #E9E9E9;
+            height: 20vh;
+            @include flexbox();
+          @include justify-content(center);
+          @include align-items(center);
+          @include flex-direction(column);
+            .form-control {
+              display: flex;
+            justify-content: center;
+            align-items: center;
+            background: $clr-mediaAttachCamera-caption-input;
+                padding:  0.313em 0.625em;
+                position: relative;
+                    border-radius: 30px;
+                    width: 75%;
+                    margin: 0 auto;
+                    
+                .typing-area {
+                  width: calc(100% - 20px);
+                    border: none;
+                    font-size: 0.875rem;
+                    font-family: SFUIDisplayMedium, sans-serif;
+                    padding: 0 1em;
+                    outline: 0;
+                    max-height: 5em;
+                    overflow-y: auto;
+                    overflow-x: hidden;
+                    white-space: pre-wrap; 
+                }
+                .emoji {
+                  position: static !important;
+                  line-height: 20px;
+                  .emojiPicker-container{
+                    position: absolute !important;
+                  }
+                  i{
+                    margin: 0;
+                  }
+                }
+                .emojiPicker-container{
+                  bottom:100% !important;
+                  right: 0px !important;
+                  margin-left: 0px !important;
+                  left: auto !important;
+                  margin-bottom: 6px !important;
+                }
+              .em-slightly_smiling_face {
+                    background-image: url(../../../assets/images/emoji.svg);
+                    font-size: 0.625rem;
+                    margin-top: -0.600em;
+                }
+            }
+        }
+        .captured-picture{
+          img{
+            object-fit: contain;
+            object-position: center;
+            padding: 1.875em 0;
+          }
+          .cr-boundary{
+            display: none;
+          }
+          .react-html5-camera-photo {
+            width: 75%;
+            height: 100%;
+            margin: 0 auto;
+            background: url(../../../assets/images/loader.svg) no-repeat center center;
+            background-size: 2.5em;
+          }
+          }
+        
+      }
+      #inner-circle{
+        background:$clr-mediaAttachCamera-button url(../../../assets/images/attachCamera.svg) center center no-repeat;
+        background-size:1em 1em;
+        left: 0;
+        top: 0;
+        height:2.5em;
+        width:2.5em;
+        margin: 0;
+        box-shadow: 0px 0px 8px -1px $primary;
+    }
+    #outer-circle {
+        left: 0;
+        height:2.5em;
+        width:2.5em;
+        background-color:transparent;
+        z-index: 1;
+    }
+    
+    #container-circles {
+      bottom: -1.25em;
+      cursor: pointer;
+      height: 2.5em;
+      width: 2.5em;
+      transform: translateX(-50%);
+    }
+}
+// .mediaAttachCamera .react-html5-camera-photo > img, .mediaAttachCamera .react-html5-camera-photo > video {
+//     width: 75% !important;
+// }
+
+
+
+
+@media (max-width:1024px){
+  .mediaAttachCamera{
+  width:100%;
+  }
+
+  // .mediaAttachCamera .camera-popup-visible .captured-picture img{
+  //   width: 70%;
+  // }
+}//1024
+
+
+
+@media (max-width:767px){
+  .mediaAttachCamera .camera-popup-visible .cameraview{
+    height: calc(100vh - 2.125em - 4.063em);
+  }
+  .mediaAttachCamera .camera-popup-visible .captured-picture .react-html5-camera-photo,.mediaAttachCamera .camera-popup-visible .cameraview .croppie-container
+  {
+    width:100%;
+  }
+  .mediaAttachCamera .camera-popup-visible .form-attachcaption .form-control{
+    width:calc(100% - 2.5em);
+  }
+  .mediaAttachCamera #container-circles {
+    bottom: 1.2em;
+    width: 2.5em;
+  }
+  .mediaAttachCamera .camera-popup-visible .cameraview.captured-picture{
+    height: calc(80vh - 2.125em - 4.063em);
+  }
+
+}//767
+
+

@@ -1,0 +1,17 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="98.681" height="98.68" viewBox="0 0 98.681 98.68">
+  <defs>
+    <filter id="Path_9763" x="0" y="0" width="98.681" height="98.68" filterUnits="userSpaceOnUse">
+      <feOffset dy="3" input="SourceAlpha"/>
+      <feGaussianBlur stdDeviation="9" result="blur"/>
+      <feFlood flood-color="#c9cfd7"/>
+      <feComposite operator="in" in2="blur"/>
+      <feComposite in="SourceGraphic"/>
+    </filter>
+  </defs>
+  <g id="favourites-filled-star-symbol" transform="translate(27 21.838)">
+    <g transform="matrix(1, 0, 0, 1, -27, -21.84)" filter="url(#Path_9763)">
+      <path id="Path_9763-2" data-name="Path 9763" d="M42.737,18.4l-12.3-1.225A2.142,2.142,0,0,1,28.67,15.8L24.263,4.554a2.072,2.072,0,0,0-3.914,0L15.977,15.8a2.1,2.1,0,0,1-1.763,1.373L1.909,18.4a2.268,2.268,0,0,0-1.2,3.9l9.273,8.572a2.29,2.29,0,0,1,.67,2.189L7.868,45.076a2.155,2.155,0,0,0,3.138,2.45l10.26-6.346a2.042,2.042,0,0,1,2.151,0l10.26,6.346a2.148,2.148,0,0,0,3.138-2.45l-2.75-12.023a2.29,2.29,0,0,1,.67-2.189l9.273-8.572A2.3,2.3,0,0,0,42.737,18.4Z" transform="translate(27 20.84)" fill="#fff"/>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,84 @@
+@import '../../../assets/scss/variables.scss';
+@import '../../../assets/scss/mixins.scss';
+
+
+        .recordAudio{
+            user-select: none;
+            flex: 15.5em 0 1;
+            .recordAudioInner {
+              @include box-center();
+              i,svg{
+                @include box(1.875em)
+              }
+              .liveRecord{
+                border: 0.0313em solid #707070;
+                border-radius: 50%;
+                @include box(0.875em);
+                position: relative;
+                // Animation for live record 
+              &:before, &:after { 
+                position: absolute; 
+                content: ""; 
+                left: 10%; 
+                top: 10%; 
+                @include box(0.625em);
+                background: $bgc-liveRecord;
+                -webkit-animation:pulsecolor 1s infinite;
+                        animation:pulsecolor 1s infinite;
+                        @include border-radius(50%);
+              } 
+                  &:after {
+                -webkit-animation:pulsecolor 1s infinite;
+                        animation:pulsecolor 1s infinite;
+                        @include border-radius(50%);
+              }
+                  @-webkit-keyframes pulsecolor {
+                10% {background: $bgc-liveRecord}
+              }
+                  @keyframes pulsecolor {
+                10% {background: transparent}
+              }
+              }
+              }
+              .stopRecord{
+                margin:0 0.813em;
+                border-radius: 50%;
+                transition: all linear 200ms;
+                transform: scale(1);
+                &:hover{
+                  background: #d93134;
+                  transform: scale(1.07);
+                  transition: all linear 200ms;
+                  path#Path_13632 {
+                    stroke: #fff !important;
+                }
+                }
+              }
+              .sendRecord{
+                border-radius: 50%;
+                transition: all linear 200ms;
+                transform: scale(1);
+                &:hover{
+                  background: #0fd358;
+                  transform: scale(1.07);
+                  transition: all linear 200ms;
+                  path:nth-child(2) {
+                    fill: #fff !important;
+                }
+                }
+              }
+              .liveRecord{
+                margin-right: 0.438em;
+            }
+              .recordDuration{
+                margin-right: 0.813em;
+                width: 3.75em;
+                text-align: center;
+                span{
+                  width: 1.25em;
+                  display: inline-block;
+                  text-align: left;
+                }
+              }
+            }
+            

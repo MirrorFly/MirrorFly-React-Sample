@@ -1,0 +1,395 @@
+:root{
+--regular: SFUIDisplayRegular,sans-serif;
+--light: SFUIDisplayLight,sans-serif;
+--medium: SFUIDisplayMedium,sans-serif;
+--bold: SFUIDisplayBold,sans-serif;
+--black: SFUIDisplayBlack,sans-serif;
+--semibold:SFUIDisplaySemibold,sans-serif;
+--thin: SFUIDisplayThin,sans-serif;
+--heavy:SFUIDisplayHeavy,sans-serif;
+--ultralight:SFUIDisplayUltralight,sans-serif;
+--regularNova: ProximaNova-Regular,sans-serif;
+--lightNova: ProximaNova-Light,sans-serif;
+--SemiboldNova: ProximaNova-Semibold,sans-serif;
+}
+
+// Fonts family 
+$regular: SFUIDisplayRegular,sans-serif;
+$light: SFUIDisplayLight,sans-serif;
+$medium: SFUIDisplayMedium,sans-serif;
+$bold: SFUIDisplayBold,sans-serif;
+$black: SFUIDisplayBlack,sans-serif;
+$semibold:SFUIDisplaySemibold,sans-serif;
+$thin: SFUIDisplayThin,sans-serif;
+$heavy:SFUIDisplayHeavy,sans-serif;
+$ultralight:SFUIDisplayUltralight,sans-serif;
+$regularNova: ProximaNova-Regular,sans-serif;
+$lightNova: ProximaNova-Light,sans-serif;
+$SemiboldNova: ProximaNova-Semibold,sans-serif;
+
+
+// Utility fonts sizes 
+$font0:0rem;
+$font8: 0.5rem;
+$font9: 0.5625rem;
+$font10: 0.625rem;
+$font11: 0.6875rem;
+$font12: 0.75rem;
+$font13: 0.8125rem;
+$font14: 0.875rem;
+$font15: 0.9375rem;
+$font16: 1rem;
+$font17: 1.0625rem;
+$font18: 1.125rem;
+$font19: 1.1875rem;
+$font20: 1.25rem;
+$font21: 1.3125rem;
+$font22: 1.375rem;
+$font23: 1.4375rem;
+$font24: 1.5rem;
+$font25: 1.5625rem;
+$font26: 1.625rem;
+$font27: 1.6875rem;
+$font28: 1.75rem;
+$font29: 1.8125rem;
+$font30: 1.8125rem;
+$font31: 1.8125rem;
+$font32: 2rem;
+$font33: 2.0625rem;
+$font34: 2.125rem;
+$font35: 2.1875rem;
+$font36: 2.25rem;
+$font37: 2.3125rem;
+$font38: 2.375rem;
+$font39: 2.4375rem;
+$font40: 2.5rem;
+$font41: 2.5625rem;
+$font42: 2.625rem;
+$font43: 2.6875rem;
+$font44: 2.75rem;
+$font45: 2.8125rem;
+
+// font sizes 
+$fontPrimary: 0rem;
+$fontProfileName: 0.775rem;
+$fontProfilePopupLabel: 1.063em;
+$fontProfileDetailsLabel: 0.675rem;
+$fontProfileDetailsInfo: 0.65rem;
+$fontImageGalleryIndex: 0.875rem;
+$fontQrLink: 0.875rem;
+$fontStartChat: 0.6875rem;
+$StartChartH3: 1.875rem;
+$StartChartP: 1.125rem;
+$fontNorecentChatH4: 1.125rem;
+$fontNetworkoffline: 1rem;
+$fontchatStatusBar: 0.62rem;
+$fontPopupLabel: 0.9375rem;
+$fontPopupNoteinfoButton: 0.75rem;
+$font-profile-label:0.675rem;
+$font-profile-info-span:0.65rem;
+$font-popup-username-count:0.75rem;
+
+// primary color codes
+$primary: #4879F9;
+$primary-dark: #356dff;
+$white:#fff;
+$textblack:#313131;
+$textDark:#181818;
+$lightGray:#959595;
+$darkGray:#474747;
+$mediahead:#4DADF2;
+$rechathead:#181818;
+$popupHeadingLabel:#181818;
+$rechatmsg:#767676;
+$rechathead:$textDark;
+$delete:#E24848;
+$darkblack:#000;
+$popuptext:#818181;
+$button:#e5e5e5;
+$lightdark: #333333;
+$mediainnerbg: #E3E3E3;
+$mediainnerborder: #BEBEBE;
+$mediacontactinfoborder:#E7E7E7;
+$msgtime:$textDark;
+$rechatmsgactive:$darkGray;
+$mediainnertext:$lightdark;
+$profiledropdownbg:#F3F8FF;
+$lightblack:#333;
+$popupoverlay:rgba(0, 0, 0, 0.80);
+$overlay:rgba(0, 0, 0, 0.5);
+$profileimgfill:$primary;
+$profiletextcolor:$textDark;
+$darkgraytext:#878787;
+$placeholdertextcolor:#B3B3B3;
+$attachments-header:$primary;
+$bgc-scrollbar-track: #e8e8e8;
+$bgc-scrollbar-track-hover: $white;
+$bdr-scrollbar-track: $white;
+$bgc-scrollbar-thumb:#b7b7b7;
+$bgc-scrollbar-thumb-hover:#b7b7b7;
+$bdr-scrollbar-thumb-hover:#b7b7b7;
+$bgc-chatMessage-status-sent:#66e69a;
+$bgc-chatMessage-status-notsent:#ffc400;
+$bgc-chatMessage-status-offline:#dfdfdf;
+$bgc-chatMessage-date: #97b2ce;
+$bgc-tomoto:#fba843;
+$bgc-light-blue:#f3f7ff;
+// secondary color codes
+$clr-send-message-text:$textblack;
+$clr-send-message-time:#949494;
+$clr-rev-message-time:#fff;
+$fill-send-message-star:#545454;
+$clr-send-message-text-link:$primary;
+$clr-rev-message-text-link:#92DFFF;
+$bgc-message-image:$white;
+$bgc-message-image-overlay: rgba(0, 0, 0, 0.0);
+$fill-message-image-overlay-svg:$white;
+$clr-send-attach-file-details:$textDark;
+$bgc-send-attach-file-details:$textDark;
+$clr-rev-attach-file-details:$white;
+$bgc-rev-attach-file-details:$white;
+$bgc-send-contact-message: $white;
+$fill-send-contact-message: $textblack;
+$clr-send-contact-message: $textblack;
+$bgc-send-contact-option: $white;
+$bgc-rev-contact-option: $primary;
+$bdr-contact-option: #d8d6d6;
+$bdr-rev-contact-option: rgba(255, 255, 255, 0.3);
+$bgc-contact-option-hover:$white;
+$clr-contact-option-hover: $textDark;
+$clr-send-document-message: $textblack;
+$bgc-send-document-message-block: #EFEFEF;
+$fill-send-document-message-download-svg: #747474;
+$clr-rev-document-message: $white;
+$bgc-rev-document-message-block: #154AD4;
+$fill-rev-document-message-download-svg: $white;
+$bgQrLoadContainer: rgba(255, 255, 255, 0.71);
+$colorlogoBlockLink: #3ec3fa;
+$bgc-userprofile-popup:$white;
+$bdr-userprofile-header: #cfcfcf;
+$bgc-userprofile-header:$primary;
+$bgc-profile-dropdown:$white;
+$bgc-profile-dropdown-li-hover: #f3f8ff;
+$clr-profile-dropdown-li-span: #333;
+$bgc-removephoto-container: rgba(255, 255, 255, 1);
+$bgc-camera-popup-not-found:$white;
+$bgc-camera-popup-visible:$white;
+$bgc-removephoto-popup:$white;
+$bgc-emoji-picker-react:$white;
+$clr-profile-label:#95aac5;
+
+$clr-profile-info-span:rgba(138, 141, 145, 0.65);
+
+// recent
+$bgc-recent-chatlist: $white;
+$bgc-recent-chatlist-loader-container: $white;
+$bgc-recent-chatlist-header-profile-options-svg-path:#828282;
+$bgc-recent-chatlist-menu-dropdown: $white;
+$bgc-recent-chatlist-menu-dropdown-li-hover:#f3f8ff;
+$clr-recent-chatlist-menu-dropdown-li-span:#333;
+$bgc-search-input: #f1f3f4;
+$bgc-activeCall:#1BB261;
+$bgc-activeIncommingCall:#daffd1;
+$bgc-activeIncommingCall-hover:#c9f5be;
+$clr-recevingCall:$darkGray;
+$clr-recent-message-block-span:#4a5568;
+$bgc-user-status:rgb(0, 226, 75);
+$bgc-user-status-sent: gray;
+$bgc-user-status-receive:orange;
+$bgc-chat-list-li-active:#edf4f9;
+
+// No recent chat 
+$crl-norecent-chat-h6:#333333;
+$crl-norecent-chat-h4:#333333;
+$crl-errorMesage:#F44336;
+$font-errorMesage: 0.75rem;
+$bgc-recent-chatlist-header:$primary;
+$bgc-newGroup:$white;
+$bgc-selectedBadge:#C5C5C5;
+$bgc-selectedBadge-Title:$textDark;
+$bgc-selectedBadge-hover:#8a8585;
+$bgc-onGoingcallDuration: #1BB261;
+$clr-onGoingcallDuration: $white;
+$clr-onGoingcallDuration-callerName: #50ffad;
+$bgg-message-dropdown-i:21deg, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0) 45%, rgba(0, 0, 0, 0.2) 60%, rgba(0, 0, 0, 0.4);
+$fill-message-dropdown-svg:#6a92c5;
+$fill-message-dropdown-menu:$white;
+
+// conversation style start 
+$clr-conversation-header-profile-name-h4:$textDark;
+$clr-conversation-header-profile-name-h6:#4a5568;
+$fill-profile-options-svg-path:#828282;
+
+// chatconversation-container 
+$fill-chatconversation-profile-option-svg-path:#828282;
+$bgc-closedropmedia:#f3f3f3;
+$fill-choose-upload-files-svg:$white;
+$clr-drop-text:#d4d4d4;
+$clr-drop-file-types: #4b4b4b;
+$bgc-drop-file-types-span:#d4d4d4;
+$bgc-selected-files-preview: $white;
+$bgc-selected-files-preview:rgba(0, 0, 0, 0.6);
+$bgc-selected-files-Close-icon: #414141;
+$bgc-selected-files-name: $white;
+$bgc-selected-add-files-span: #dadcde;
+$bgc-selected-files-preview-closedropmedia:#B6B6B6;
+$fill-selected-files-preview-closedropmedia-svg:$white;
+$clr-typing-area:#363636;
+$bgc-typing-area:$white;
+$clr-typing-area-focus:#363636;
+$bgc-attachment:rgba(226, 233, 240 , 0.7);
+$fill-attachment-svg:#363636;
+$bgc-message-areaformbtns:$white;
+
+// recordAudio style start
+$bgc-liveRecord: #D93134;
+$clr-chatDate:#3c4452;
+$fill-recallstatus-path:$textblack;
+$bgc-SingleForward:#c8cacb;
+$fill-recallstatus:#fefefe;
+$bgc-Viewphoto-container:$white;
+$bgc-group-details-container-li:#f3f8ff;
+$clr-group-details-container-li-text:#333;
+$clr-profile-status-admin-text:$darkblack;
+$bgc-contactinfo-dropdown:$white;
+$bgc-contactinfo-dropdown-text:$lightblack;
+$bgc-contactinfo-media-profile-image: $primary;
+$bgc-userprofile-overlay:$overlay;
+$bgc-toggleAnimation:#f1f3f4;
+$bgc-imagePreviewContainer: rgba(0, 0, 0, .95);
+$clr-image-gallery-icon-hover:$white;
+$fill-imagePreviewContainer-close-svg:#f1ebeb;
+$fill-imagePreviewContainer-options-svg:rgba(139, 68, 68, 0);
+$clr-image-gallery-nav:$darkblack;
+$bgc-image-gallery-nav:$white;
+$bgc-image-gallery-nav:$white;
+$bdr-image-gallery-thumbnail-focus:$white; 
+$bgc-image-gallery-play-button:rgba(0, 0, 0, .7);
+$bgc-image-gallery-slide-before:#0d0d0d6b;
+$clr-emoji-mart-category-label:#858585;
+$clr-emoji-mart-anchor-hover:#464646;
+$clr-memberTyping:#3464e3;
+$clr-memberTyping-status:#3464e3;
+$clr-typing-area-empty-before:#b3b3b3;
+$bgc-callingAnimation-dot:$white;
+$bgc-networkoffline:#f2a12b;
+$clr-networkoffline:$textDark;
+
+// mirrorfly login 
+$bxs-login-content: #7878781A;
+$bgc-login-content: $white;
+$clr-login-wrapper-h2: #333333;
+$clr-login-wrapper-guidelines: #333333;
+$clr-login-wrapper-link:#21a5f1;
+
+// start chat banner 
+$clr-start-chat-banner-link:$white;
+$bgc-start-chat-banner-link: #498be2;
+$clr-start-chat-banner-heading:#333333;
+$clr-start-chat-banner-sub-heading:#333333;
+$bgc-chatStatusBar:#dde2ef;
+$bgg-image-message-before:linear-gradient(180deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0) 100%);
+$bgg-image-message-after:linear-gradient(0deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0) 100%);
+$bgg-image-message-before-hover:linear-gradient(180deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0) 100%);
+$bgg-image-message-after-hover:linear-gradient(0deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0) 100%);
+$bgc-popup-container-header:$primary;
+$clr-popup-container-header:$white;
+$fill-popup-container-header-svg:$white;
+
+// add-participant, .contactPopup
+$bgc-popup-search-input:#f1f3f4;
+$clr-popup-search-input:$rechathead;
+$bdr-popup-search-input:1px solid #e8e8e8;
+$bgc-popup-footer:#E7E7E7;
+$bgc-popup-footer-button:$primary;
+$bgc-popup-footer-button-svg:$white;
+$clr-popup-badge:#383636;
+$clr-contactPopup-name:#000000;
+$clr-contactPopup-no:#000000;
+
+// .newgroup-details-container
+$bgc-newgroup: #F6F6F6;
+$bgc-newgroup-image: $white;
+$clr-newgroup-image-before: $white;
+$bgc-newgroup-image-before: rgba(0, 0, 0, 0.236);
+$fill-userprofile-header-svg:$white;
+$clr-userprofile-header-h5:$white;
+
+// .Viewphoto-container,.camera-container,.removephoto-container {
+$bgc-newgroup-photo-container:$white;
+
+// camera popup not found styles
+$bgc-popup:$white;
+$bxs-popup:#00000024;
+$clr-popup-header-h4:$primary;
+$bgc-popup-button-primary:$primary;
+$bgc-popup-button-default:$button;
+$clr-popup-button:$white;
+$clr-popup-header-label: $rechatmsg;
+$bdr-popup-profile-username-input:1px solid #ccc;
+
+
+// .reply-block-bottom
+$bgc-reply-block-bottom:$white;
+$bgc-reply-container:#efefef;
+$fill-reply-bottom-sender-sends-i:#767676;
+$fill-reply-webchat-conver-image-svg:$textDark;
+
+// loader
+$bgc-popup-body-loader:$white;
+
+// forwardSelect
+$bgc-forwardSelect:rgba(72, 121, 249,0.15);
+$bdr-forward-checkbox:#ADADAD;
+$bgc-forward-checkbox-checked:$primary;
+
+// selectedMessagecontainer
+$bgc-selectedMessage:$white;
+$bgc-selectedMessageOption:$white;
+$bgc-selectedMessage-close:#383636;
+$clr-rev-sender-name:$white;
+$fill-rev-sender-sends:$white;
+$fill-sen-webchat-conver-image-svg:$lightGray;
+$clr-sen-sender-sends:$textblack;
+$clr-sen-sender-sends-send:$textblack;
+$fill-sen-sender-sends-svg:$textDark;
+$bgc-animatefinded:#4879f95e;
+$conversation-overlay:rgba(0, 0, 0, 0.2);
+$bxs-infoContainer:#00000014;
+$clr-infoContainer-label:#383636;
+$bxs-infoContainer-by-read-delivery:#0000001A;
+$clr-infoContainer-read-delivery-heading:#383636;
+$clr-infoContainer-read-delivery-status:#383636;
+$bgc-blockedContainer:$primary;
+$bgc-blockedContainer-span:$white;
+$bgc-send-reply-block-tagged:$white;
+$bgc-send-reply-block-tagged-attach:$primary;
+$bgc-rev-reply-block-container:#154AD4;
+$bgc-reply-block-container:#EFEFEF;
+$fill-rep-message-sender-sends-svg:$white;
+$clr-rev-rep-reply-message-type:#fff;
+$clr-send-rep-reply-message-type:$textDark;
+$bgc-send-rep-reply-message-type:#D8D8D8;
+$bgc-rep-reply-message-type-icon:$lightGray;
+$fill-rep-reply-message-type-icon:#efefef;
+$bgc-rep-reply-message-type-videoOverlay:rgba(0, 0, 0, 0.49);
+
+// contact popup
+$clr-contact-detail-popup-text:$white;
+$bgc-chat-list-li-active:#edf4f9;
+$bgc-chat-list-li-hover:#edf4f9;
+$bgc-chat-list-li-recent-msg:#4a5568;
+
+// .mediaAttachCamera
+$bgc-mediaAttachCamera:#DEE1E8;
+$bgc-mediaAttachCamera-popup :$white;
+$bgc-mediaAttachCamera-popup-header:$primary;
+$fill-mediaAttachCamera-popup-header-svg:$white;
+$clr-mediaAttachCamera-popup-header:$white;
+$clr-mediaAttachCamera-button:$primary;
+$clr-mediaAttachCamera-caption-input:$white;
+
+
+
+
+

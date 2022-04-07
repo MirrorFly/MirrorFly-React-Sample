@@ -1,0 +1,128 @@
+@import '../../assets/scss/variables.scss';
+@import '../../assets/scss/mixins.scss';
+
+// Login page style starts //
+
+.login-container {
+    min-height: 100vh;
+    margin: auto;
+    width: 100%;
+    @include flexbox();
+    .left-side {
+      height: 100vh;
+      width: 60%;
+      @include flexbox();
+      @include justify-content(center);
+      @include align-items(center);
+      position: relative;
+      img.banner {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: -1;
+      }
+      .login-instructions {
+        margin-left: -6.250em;
+        h2 {
+          font-size: $font33;
+          color: $white;
+          font-family: $regular;
+        }
+        ul {
+          margin-top: 0.813em;
+          li {
+            margin: 1.111em 0 0 0;
+            color: $white;
+            font-size: $font18;
+            font-family: $light;
+            span {
+              font-family: $semibold;
+              font-size: $font18;
+            }
+            span.ios-icon {
+              font-size: $font25;
+              font-family: $light;
+            }
+            i {
+              width: 0.875em;
+              height: 1.375em;
+              vertical-align: middle;
+              margin: 0 0.313em;
+            }
+          }
+        }
+      }
+    }
+    .right-side {
+      width: 40%;
+      height: 100vh;
+      @include flexbox();
+      @include justify-content(center);
+      @include align-items(center);
+      margin-left: -3.500em;
+      .logo-side-block {
+        position: relative;
+        @include flexbox();
+        @include justify-content(center);
+        @include align-items(center);
+        .logo {
+          max-width: 8.125em;
+          margin: 0px auto 1.250em auto;
+          position: absolute;
+          top: -5.000em;
+          img {
+            height: 100%;
+            width: 100%;
+          }
+        }
+        .qr-code {
+          height: 15.875em;
+          width: 15.875em;
+          canvas {
+            height: 100%;
+            width: 100%;
+          }
+        }
+        #qr-logo {
+          display: none;
+        }
+        .qr-load-container {
+          position: absolute;
+          height: 100%;
+          width: 100%;
+          background-color: $bgQrLoadContainer;
+          @include flexbox();
+          @include justify-content(center);
+          @include align-items(center);
+          .qr-load {
+            height: 9.375em;
+            width: 9.375em;
+          }
+        }
+        a {
+          margin-top: 1.133em;
+          text-align: center;
+          font-size: $font15;
+          color: $colorlogoBlockLink;
+          display: block;
+        }
+        .network-disconnect {
+          @include flexbox();
+          @include justify-content(center);
+          @include flex-direction(column);
+          img {
+            height: 9.375em;
+            width: 9.375em;
+            margin: auto;
+          }
+        }
+      }
+    }
+  }
+  
+  // Login page style ends //
+  
+  
+  

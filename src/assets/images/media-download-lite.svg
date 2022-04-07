@@ -1,0 +1,9 @@
+<svg  xmlns="http://www.w3.org/2000/svg" width="20" height="22" viewBox="0 0 20 22">
+  <g transform="translate(-1627 -1567)">
+    <g  transform="translate(1628 1568)">
+      <path id="Shape" d="M0,15v3a2,2,0,0,0,2,2H16a2,2,0,0,0,2-2V15" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" fill-rule="evenodd"/>
+      <path id="Shape-2" data-name="Shape" d="M5,10l4,4,4-4" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" fill-rule="evenodd"/>
+      <path id="Shape-3" data-name="Shape" d="M9,0V14" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" fill-rule="evenodd"/>
+    </g>
+  </g>
+</svg>

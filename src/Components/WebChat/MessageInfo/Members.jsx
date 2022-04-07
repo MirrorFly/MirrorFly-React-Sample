@@ -1,0 +1,53 @@
+import React, { useEffect, useState } from 'react';
+import { getNameAndStatus } from '../../../Helpers/Chat/ChatHelper';
+import { timeFormat } from '../../../Helpers/Chat/RecentChat';
+import { ls } from '../../../Helpers/LocalStorage';
+import ProfileImage from '../Common/ProfileImage';
+import { arrayRoasterinitialNameHandle, getContactNameFromRoster } from '../../../Helpers/Chat/User';
+import { getUserFromGroup } from '../../../Helpers/Chat/Group';
+
+const Members = (props = {}) => {
+    const { jid = "", rosterData: { data: rosterArray = [] } = {}, time = "" } = props;
+    const [getDetails, setDetails] = useState({})
+
+    useEffect(() => {
+        let details = getNameAndStatus(jid, rosterArray)
+        if (!details || Object.keys(details).length === 0) {
+            details = getUserFromGroup(jid) || { userId: jid };
+        }
+        setDetails({
+            ...details
+        })
+    }, [])
+
+    const { image, emailId } = getDetails
+    const token = ls.getItem('token');
+    let username = getContactNameFromRoster(getDetails)
+    const updateTime = timeFormat(time);
+    const iniTail = arrayRoasterinitialNameHandle(rosterArray, username);
+
+    return (
+        <li className="chat-list-li">
+            <ProfileImage
+                chatType={'chat'}
+                userToken={token}
+                imageToken={image}
+                emailId={emailId}
+                temporary={true}
+                name={iniTail}
+            />
+            <div className="recentchats">
+                <div className="recent-username-block">
+                    <div className="recent-username">
+                        <span className="username">
+                            <h3 title={username}>{username}</h3>
+                        </span>
+                    </div>
+                </div>
+                <div className="recent-message-block"><span>{updateTime}</span></div>
+            </div>
+        </li>
+    );
+}
+
+export default Members;

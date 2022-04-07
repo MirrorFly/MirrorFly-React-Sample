@@ -1,0 +1,22 @@
+
+.BlockedPopUp{
+    .blockedInfo p{
+        margin-top: 1.5em;
+        display:inline-flex;
+        align-items: center;
+       span{
+        line-height: 120%;
+        font-size: 0.688rem;
+        letter-spacing: 0px;
+        color: #A9A9A9;
+       }
+    i{  min-width: 18px;
+        min-height: 18px;   
+        width: 1.125em;
+        height: 1.125em;
+        line-height: 100%;
+        margin-right: 0.5em;
+    }
+    }
+}
+

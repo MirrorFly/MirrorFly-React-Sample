@@ -1,0 +1,47 @@
+@import '../../../../assets/scss/variables.scss';
+@import '../../../../assets/scss/mixins.scss';
+
+.notifications{
+    .checkbox{
+        @extend .checkbox-common;
+        margin-left: 0.625em;
+
+    label:before{
+    border-color: #707070 !important;
+        }
+    input:checked + label::before{
+            border-color: $primary !important;
+        }
+    }
+
+    
+    .setting-list{
+    border:none !important;
+    &:hover{
+        box-shadow:none !important
+    }
+    }
+    
+    .setting-option{
+        width: 100%;
+        padding:0.625em 1.25em !important;
+
+    }
+    .errorMesage {
+        display: flex;
+        align-items: center;
+        line-height: 1.2em;
+        color: #F44336;
+        padding: 0 1.2em;
+        margin-bottom: 0.625em;
+        width: 96%;
+    }
+    .label{
+        user-select: none;
+        margin-left: 0.625em;
+        font-size: 1rem;
+        color:#181818;
+        line-height: 1.125em;
+    }
+    
+}

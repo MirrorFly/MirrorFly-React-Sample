@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg"  width="148" height="100.937" viewBox="0 0 148 100.937">
+  <g data-name="Group 15575" transform="translate(-108 -232)">
+    <circle data-name="Ellipse 25" cx="3.563" cy="3.563" r="3.563" transform="translate(108 279.5)" fill="#b3c3cd" />
+    <circle data-name="Ellipse 28" cx="3.563" cy="3.563" r="3.563" transform="translate(226.313 325.812)"
+      fill="#b3c3cd" />
+    <g data-name="Ellipse 26" transform="translate(129.375 241.5)" fill="none" stroke="#bdc1c3">
+      <circle cx="3.563" cy="3.563" r="3.563" stroke="none" />
+      <circle cx="3.563" cy="3.563" r="3.063" />
+    </g>
+    <g data-name="Ellipse 27" transform="translate(213.25 232)" fill="none" stroke="#bdc1c3">
+      <circle cx="3.563" cy="3.563" r="3.563" stroke="none" />
+      <circle cx="3.563" cy="3.563" r="3.063" />
+    </g>
+    <path data-name="Path 9648" d="M129.375 323.081h-2.731v2.731h-.91v-2.731h-2.731v-.91h2.731v-2.731h.91v2.731h2.731z"
+      fill="#d2d7d9" />
+    <g data-name="add-plus-button">
+      <g data-name="add">
+        <path data-name="Path 9648"
+          d="M174.062 249.456h-2.731v2.731h-.91v-2.731h-2.731v-.91h2.731v-2.731h.91v2.731h2.731z" fill="#d2d7d9" />
+      </g>
+    </g>
+    <g data-name="add-plus-button">
+      <g data-name="add">
+        <path data-name="Path 9648" d="M256 289.831h-2.731v2.731h-.91v-2.731h-2.731v-.91h2.731v-2.731h.91v2.731H256z"
+          fill="#d2d7d9" />
+      </g>
+    </g>
+  </g>
+</svg>

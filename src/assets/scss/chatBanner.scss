@@ -1,0 +1,42 @@
+@import './variables.scss';
+@import './mixins.scss';
+
+// chat conversion style starts
+ .chat-banner {
+    
+    width: 73.70%;
+    .banner-block {
+      max-width: 29.813em;
+      h4 {
+        font-size: $font28;
+        font-family: $medium;
+        color: $textblack;
+        text-align: center;
+        margin-top: 1.679em;
+      }
+    }
+    &.showCallDuration {
+      .onGoingcallDuration {
+        height: 2.5em;
+        width: 100%;
+        background: $bgc-onGoingcallDuration;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.500em 3.5em 0.500em 2.5em;
+        color:  $clr-onGoingcallDuration;
+        font-family: SFUIDisplaySemibold,sans-serif;
+        font-size: 0.9375rem;
+        cursor: pointer;
+        user-select: none;
+        .tapToCall {
+          .callerName {
+            color: $clr-onGoingcallDuration-callerName;
+          }
+        }
+      }
+      .banner-blocks{
+        height: calc(100% - 2.5em) !important;
+      }
+    }
+  }

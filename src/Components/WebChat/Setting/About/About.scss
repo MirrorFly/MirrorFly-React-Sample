@@ -1,0 +1,42 @@
+@import '../../../../assets/scss/variables.scss';
+@import '../../../../assets/scss/mixins.scss';
+
+.setting-list-ul.Details {
+    padding: 1.25em 2.188em !important;
+    .content-block{
+        .subheading{
+            color:#000000;
+            font-family: $medium;
+            font-size: 1rem;
+            margin-top:0.625em;
+            display: inline-block;
+            width: 100%;
+        }
+        .content{
+            display: inline-block;
+            width: 100%;
+            color:#767676;
+            font-family: $light;
+            font-size: $font14;
+            line-height: 1.313rem;
+            margin-bottom:0.625em;
+            margin-top: 1em;
+            &:first-child(){
+                margin-top: 0;
+            }
+            
+        }
+        .content-link{
+            color:gray;
+            transition: all linear 200ms;
+            &:hover{
+                color:$primary;
+                transition: all linear 200ms;
+            }
+        }
+    }
+    .divider{
+        border-top: 1px solid #00000012;
+        margin: 5px 0;
+    }
+}

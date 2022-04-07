@@ -1,0 +1,104 @@
+@import '../../../assets/scss/variables.scss';
+@import '../../../assets/scss/mixins.scss';
+.setting-container{
+    position: absolute;
+    z-index: 6;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+.settinglist {
+    min-height: 100vh;
+    width: 100%;
+    background-color: $white;
+    @include box-shadow(0px 0px 8px rgba(0, 0, 0, 0.15));
+    .setting-header{
+        @include flexbox();
+        @include justify-content(space-between);
+        @include align-items(center);
+        @include box-shadow(-0.25em 0px 0.5em rgba(0, 0, 0, 0.15));
+        position: relative;
+        padding: 0.500em 0.500em 0.500em 1.125em;
+        background-color: $bgc-recent-chatlist-header;
+        height: 4.063em;
+        .setting-header-text {
+          @include flexbox();
+          @include align-items(center);
+          @include flex(1);
+          overflow: hidden;
+          i {
+            height: 1.500em;
+            width: 1.500em;
+            svg {
+              fill: $white;
+            }
+          }
+          div{
+            color: $white;
+            font-size: 1rem;
+            font-family: $semibold;
+            cursor: pointer;
+            user-select: none;
+          }
+        }
+            span {
+            color: $white;
+            font-size: $font16;
+            font-family: $semibold;
+            margin-left: 0.625em;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            cursor: pointer;
+            @include flex(1 1 0);
+            white-space: pre;
+            .em {
+                margin-left: 0;
+            }
+        }
+        }   
+        .setting-list-ul {
+            height: calc(100vh - 4.063em);
+            overflow: auto;
+            padding: 0.625em 0;
+            .setting-list{
+                border-bottom: 1px solid #f5f5f5;
+                .setting-option{
+                    padding: 1.25em;
+                    display: flex;
+                    align-items: center;
+                    cursor: pointer;
+                    .iconLeft{
+                        width: 1.25em;
+                        height: 1.25em;
+                        min-width: 20px;
+                        margin-right: 1.875em;
+                        margin-left: 0.688em;
+                    }
+                    .Option-text{
+                        flex: calc(100% - 2.5em) 1 1;
+                        font-family: $regular;
+                        font-size:$font16;
+                        color: #181818;
+                    }
+                    .iconNext{
+                        width: 0.375em;
+                        min-width: 6px;
+                        svg{
+                        width: 0.375em;
+                        min-width: 6px;
+                        }
+                    }
+                }
+                &:hover {
+                    box-shadow: 0px 1px 4px -4px #000000;
+                    .iconNext svg path{
+                        fill:$primary;
+                    }
+                }
+            }
+        }
+}
+
+
+
+}
