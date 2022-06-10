@@ -5,7 +5,7 @@ import Store from "../../../Store";
 import { formatToArrayofJid, setContactWhoBleckedMe } from "../../../Helpers/Chat/BlockContact";
 import { blockedContactAction } from "../../../Actions/BlockAction";
 import { GroupsDataAction } from "../../../Actions/GroupsAction";
-import { isAppOnline } from "../../../Helpers/Utility";
+import { isAppOnline, logout } from "../../../Helpers/Utility";
 import { setConnectionStatus } from "../Common/FileUploadValidation";
 import { CONNECTION_STATE_CONNECTING } from "../../../Helpers/Chat/Constant";
 import { WebChatConnectionState } from "../../../Actions/ConnectionState";
@@ -24,6 +24,10 @@ import { RECONNECT_GET_CHAT_LIMIT } from "../../../Helpers/Constants";
 import { ChatMessageHistoryDataAction, UpdateFavouriteStatus } from "../../../Actions/ChatHistory";
 import { StarredMessagesList } from "../../../Actions/StarredAction";
 import { chatSeenPendingMsg } from "../../../Actions/SingleChatMessageActions";
+import { adminBlockStatusUpdate } from "../../../Actions/AdminBlockAction";
+import { toast } from 'react-toastify';
+import { ActiveChatResetAction } from "../../../Actions/RecentChatActions"
+import { hideModal } from '../../../Actions/PopUp';
 
 const handleBlockMethods = async () => {
   const userIBlockedRes = await SDK.getUsersIBlocked();
@@ -152,12 +156,20 @@ export async function login() {
       if (loginResult.statusCode === 200) {
         await SDK.getUserProfile(formatUserIdToJid(decryptResponse.username));
         await SDK.getFriendsList();
-
         const groupListRes = await SDK.getGroupsList();
         if (groupListRes && groupListRes.statusCode === 200) {
           Store.dispatch(GroupsDataAction(groupListRes.data));
         }
-
+      const { data = [] } = groupListRes 
+        data.map(item=>{
+          if( isActiveConversationUserOrGroup(item?.groupId) && item?.isAdminBlocked){
+            Store.dispatch(ActiveChatResetAction());
+            toast.info("This group is no longer available")
+            Store.dispatch(hideModal())
+          }  
+        }
+        )
+        
         const oldRecentChatData = getRecentChatData();
         const recentChatsRes = await SDK.getRecentChats();
         let recentChatArr = [];
@@ -171,6 +183,13 @@ export async function login() {
         handleArchivedChats();
         handleBlockMethods();
         handleFavouriteMessages();
+      } else if (loginResult.statusCode === 403) {
+        Store.dispatch(adminBlockStatusUpdate({
+          toUserId: decryptResponse.username,
+          isAdminBlocked: true
+        }));
+        logout("block");
+        return
       }
     }
   } catch (error) {

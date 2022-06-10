@@ -9,6 +9,7 @@ const updateGroupDetails = (currentData, groupData = []) => {
   let index = groupData.findIndex((obj) => currentData.groupJid.indexOf(obj.groupId) > -1);
   if (index > -1) {
     groupData[index].groupName = currentData.groupName || currentData.groupProfile?.nickName || groupData[index].groupName;
+    groupData[index].isAdminBlocked = currentData.isAdminBlocked;
     if (currentData.msgType === GROUP_PROFILE_INFO_UPDATED) {
       // Should not update the image from 'groupData[index].groupImage', because If user removed
       // the image of group, then the existing image will set from 'groupData'.

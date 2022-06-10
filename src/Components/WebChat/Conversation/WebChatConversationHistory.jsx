@@ -31,7 +31,9 @@ import {
   getActiveChatMessages,
   downloadMediaFile,
   isTextMessage,
-  handleTempArchivedChats
+  handleTempArchivedChats,
+  isGroupChat,
+  getMessagesForReport
 } from "../../../Helpers/Chat/ChatHelper";
 import {
   getFormatPhoneNumber,
@@ -49,7 +51,8 @@ import {
   formatUserIdToJid,
   formatGroupIdToJid,
   getIdFromJid,
-  getContactNameFromRoster
+  getContactNameFromRoster,
+  getDataFromRoster
 } from "../../../Helpers/Chat/User";
 import { scrollBottomChatHistoryAction } from "../../../Actions/ScrollAction";
 import { updateMsgSeenStatus } from "../Common/createMessage";
@@ -61,6 +64,7 @@ import { updateBlockedContactAction } from "../../../Actions/BlockAction";
 import { toast } from "react-toastify";
 import { handleMessageParseHtml } from "../../../Helpers/Chat/RecentChat";
 import { REACT_APP_GOOGLE_TRANSLATE_API_KEY } from "../../processENV";
+import ActionInfoPopup from "../../ActionInfoPopup";
 
 class WebChatConversationHistory extends Component {
   constructor(props) {
@@ -82,13 +86,40 @@ class WebChatConversationHistory extends Component {
       showBlockModal: false,
       blockId: null,
       nameToDisplay: "",
+      showReportPopup: false,
+      reportData: {},
       userReplayDetails: [],
-      msgActionType: ""
+      msgActionType: "",
+      isAdminBlocked: false,
+      isDeletedAccount:false
     };
     this.activeTimer = 0;
     this.rosterConst = "roster.userId";
     this.rosterGrpIdConst = "roster.groupId";
     this.loadMore = React.createRef();
+  }
+
+  reportChatAction = (show = false) => {
+    this.setState({
+      showReportPopup: show
+    });
+  }
+
+  reportConfirmAction = async(event) => {
+    if(event.detail <= 1){
+      if (blockOfflineAction()) return;
+      const { activeChatId = "", activeChatData:{ data : { chatJid = "",chatType="" } } } = this.props;
+      const { msgId = "" } = this.state.reportData || {};
+      const reportData = getMessagesForReport(activeChatId, msgId)
+      if(reportData.length === 0){
+        toast.error(`No Messages To Report`)
+        this.reportChatAction(false);
+      }else{
+        await SDK.reportUserOrGroup(chatJid,chatType,reportData)
+        toast.success(`Report sent`);
+        this.reportChatAction(false);
+    }
+    }
   }
 
   componentDidMount() {
@@ -99,6 +130,27 @@ class WebChatConversationHistory extends Component {
 
   componentDidUpdate(prevProps, prevState) {
     const { activeChatId } = this.props;
+
+    if(prevProps.rosterData.id !== this.props.rosterData.id){
+        const { data = [] } = this.props.rosterData
+        let selectedUser = data.find(ele=> ele.userId === activeChatId)
+        
+        if( selectedUser?.isDeletedUser || selectedUser?.isAdminBlocked ){
+            if(this.state.showReportPopup){
+              toast.error(selectedUser?.isDeletedUser ? `Cannot report deleted user's message` : `This user no longer available`)
+            }
+            this.setState({
+              showReportPopup: false,
+              isAdminBlocked: selectedUser?.isAdminBlocked,
+              isDeletedAccount: selectedUser?.isDeletedUser
+            })
+        }
+        this.setState({
+          isAdminBlocked: selectedUser?.isAdminBlocked,
+          isDeletedAccount: selectedUser?.isDeletedUser
+        })
+
+    }
 
     if (prevProps.activeChatId !== activeChatId) {
       this.handleBlockUserData();
@@ -330,7 +382,7 @@ class WebChatConversationHistory extends Component {
       });
     }
   };
-  onScrolledBottom = () => {};
+  onScrolledBottom = () => { };
 
   handleChatMessageJID = (data = {}) => {
     const { userId = "", username = "", fromUserId = "" } = data;
@@ -474,10 +526,10 @@ class WebChatConversationHistory extends Component {
     this.props.forwardReset();
   };
 
-  messageAction = async (event, replyMessage, nameToDisplay) => {
+  messageAction = async (event, selectedMessage, nameToDisplay) => {
     const targetElement = event.target || event.srcElement;
-    const { deleteStatus, msgId } = replyMessage;
-    const senderId = getSenderIdFromMsgObj(replyMessage);
+    const { deleteStatus, msgId } = selectedMessage;
+    const senderId = getSenderIdFromMsgObj(selectedMessage);
 
     if (targetElement.tagName === "UL") return;
     const optionType = targetElement.closest("li").getAttribute("title");
@@ -497,7 +549,7 @@ class WebChatConversationHistory extends Component {
       );
       const newObjData = {
         replyMessages: {
-          ...replyMessage
+          ...selectedMessage
         }
       };
       const newObj = { ...newObjData, ...data };
@@ -519,7 +571,7 @@ class WebChatConversationHistory extends Component {
           deleteAction: true
         },
         replyMessage: {
-          ...replyMessage,
+          ...selectedMessage,
           isSender: isSender,
           messageInfo: {},
           recallstatus: deleteStatus
@@ -535,7 +587,7 @@ class WebChatConversationHistory extends Component {
         {
           forwardOption: false,
           messageInfo: {
-            ...replyMessage,
+            ...selectedMessage,
             isSender: isSender,
             forward: false
           }
@@ -566,6 +618,20 @@ class WebChatConversationHistory extends Component {
       return;
     }
 
+    if (optionType === "Report") {
+      if(this.state.isDeletedUser || this.state.isAdminBlocked){
+        toast.error(this.state.isDeletedUser ? `Cannot report deleted user's message` : `This user no longer available`)
+        return
+      }    
+      if(getDataFromRoster(this.props?.activeChatId)?.isDeletedUser || getDataFromRoster(this.props?.activeChatId)?.isAdminBlocked){
+        toast.error(getDataFromRoster(this.props?.activeChatId)?.isDeletedUser ? `Cannot report deleted user's message` : `This user no longer available`)
+        return
+      }
+      this.setState({ reportData: selectedMessage });
+      this.reportChatAction(true)
+      return;
+    }
+
     if (optionType === "Starred" || optionType === "UnStarred") {
       if (blockOfflineAction()) return;
       const { addionalnfo } = this.state;
@@ -580,7 +646,7 @@ class WebChatConversationHistory extends Component {
           deleteAction: false
         },
         replyMessage: {
-          ...replyMessage,
+          ...selectedMessage,
           isSender: isSender,
           messageInfo: {},
           recallstatus: deleteStatus
@@ -590,7 +656,7 @@ class WebChatConversationHistory extends Component {
     }
 
     if (optionType === "Download") {
-      const { msgBody: { media: { file_url, fileName: file_name } = {}, message_type = "" } = {} } = replyMessage;
+      const { msgBody: { media: { file_url, fileName: file_name } = {}, message_type = "" } = {} } = selectedMessage;
       const fileName = message_type === "file" ? file_name : "";
       downloadMediaFile(file_url, message_type, fileName);
       return;
@@ -598,13 +664,13 @@ class WebChatConversationHistory extends Component {
     this.setState({
       sendMessgeType: optionType,
       replyMessage: {
-        ...replyMessage,
+        ...selectedMessage,
         nameToDisplay: nameToDisplay || ""
       }
     });
   };
 
- handleTranslateLanguage = async (msgId,replyMessage) => {
+  handleTranslateLanguage = async (msgId, replyMessage) => {
     if (blockOfflineAction()) return;
     const { msgBody: { message = "", message_type = "", media: { caption = "" } = {} } = {} } = replyMessage;
     const text = isTextMessage(message_type) ? message : caption;
@@ -621,7 +687,7 @@ class WebChatConversationHistory extends Component {
       }
     }
     return;
- }
+  }
 
   closeReplyAction = (userId = "") => {
     const { userReplayDetails = [] } = this.state;
@@ -816,7 +882,7 @@ class WebChatConversationHistory extends Component {
     const fromUser = this.props?.vCardData?.data?.fromUser;
     const { groupsMemberListData: { data: { participants = [] } = {} } = {} } = this.props;
     return participants.find((profile) => {
-      return fromUser === profile.userId;
+      return fromUser === profile.userId && profile.userType;
     });
   };
 
@@ -909,7 +975,10 @@ class WebChatConversationHistory extends Component {
       addionalnfo,
       forwardOption,
       showBlockModal,
-      nameToDisplay
+      nameToDisplay,
+      showReportPopup = false,
+      selectedMsgUserName = "",
+  
     } = this.state;
 
     const { groupMemberDetails, selectedMessageData, showMessageinfo = false } = this.props;
@@ -918,7 +987,7 @@ class WebChatConversationHistory extends Component {
     const groupNickName = this.props?.activeChatData?.data?.roster?.nickName;
     const { deleteStatus, deleteEveryOne = null, isSender = null } = replyMessage || {};
     const chatMessages = jid && !loaderStatus ? getChatMessageHistoryById(jid) : [];
-
+    const { isAdminBlocked = false } = getDataFromRoster(jid) || {};
     return (
       <Fragment>
         {showBlockModal && (
@@ -962,7 +1031,7 @@ class WebChatConversationHistory extends Component {
                 chatType={chatType}
                 onScrolled={this.onScrolled}
                 scrollToBottom={this.scrollToBottom}
-                handleTranslateLanguage = {this.handleTranslateLanguage}
+                handleTranslateLanguage={this.handleTranslateLanguage}
                 handleShowCallScreen={this.props.handleShowCallScreen}
               />
             )}
@@ -986,26 +1055,32 @@ class WebChatConversationHistory extends Component {
             )}
           </div>
 
-          {this.state.isBlocked && isSingleChat(chatType) && (
-            <div className="blockedContainer">
-              <p>
-                <i>
-                  <BlockedIcon />
-                </i>{" "}
-                <span>
-                  {`You can't send message to this blocked contact.`}
-                  <span
-                    className="link"
-                    onClick={() => {
-                      this.popUpToggleAction(jid, nameToDisplay);
-                    }}
-                  >
-                    Unblock
+          {this.state.isBlocked && isSingleChat(chatType) && !isAdminBlocked
+            && (
+              <div className="blockedContainer">
+                <p>
+                  <i>
+                    <BlockedIcon />
+                  </i>{" "}
+                  <span>
+                    {`You can't send message to this blocked contact.`}
+                    <span
+                      className="link"
+                      onClick={() => {
+                        this.popUpToggleAction(jid, nameToDisplay);
+                      }}
+                    >
+                      Unblock
+                    </span>
                   </span>
-                </span>
-              </p>
+                </p>
+              </div>
+            )}
+          {(isSingleChat(chatType) && isAdminBlocked) &&
+            <div className="blockedUserContainer">
+              <p>This user is no longer available</p>
             </div>
-          )}
+          }
           {forwardOption && (
             <ForwardOptions
               msgActionType={this.state.msgActionType}
@@ -1097,8 +1172,9 @@ class WebChatConversationHistory extends Component {
               />
             </Modal>
           )}
-          {this.canSendMessage() && (
+          {this.canSendMessage() && !isAdminBlocked && (
             <WebChatMessagesComposing
+              forwardOption = {forwardOption}
               loaderStatus={loaderStatus}
               dragOnContainer={dragOnContainer}
               handleSendMsg={this.handleSendMsg}
@@ -1118,6 +1194,18 @@ class WebChatConversationHistory extends Component {
             {mediaLoder && <img src={loaderSVG} alt="message-history" style={style} />}
           </div>
         </div>
+        { showReportPopup &&
+          <ActionInfoPopup
+            textActionBtn={"Report"}
+            btnActionClass={"red"}
+            textCancelBtn={"Cancel"}
+            textHeading={`Report  ${isSingleChat(chatType) ? groupNickName : ""}
+            ${isGroupChat(chatType) ? selectedMsgUserName : ""}?`}
+            handleAction={(e) => this.reportConfirmAction(e)}
+            handleCancel={() => this.setState({ showReportPopup: false })}
+            textInfo={<><span>This message will be forwarded to admin.<br></br>This contact will not be notified.</span></>}
+          />
+        }
       </Fragment>
     );
   }

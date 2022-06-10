@@ -4,7 +4,7 @@ import { chatResetMessage } from '../../Actions/GroupChatMessageActions';
 import { ActiveChatAction } from '../../Actions/RecentChatActions';
 import { ArrowBack, loaderSVG, MailIcon, EmptySearch, EmptyContact, BlockedIcon } from '../../assets/images';
 import "../../assets/scss/minEmoji.scss";
-import { getHighlightedText } from '../../Helpers/Utility';
+import { getHighlightedText, handleFilterBlockedContact } from '../../Helpers/Utility';
 import Store from '../../Store';
 import ImageComponent from '../WebChat/Common/ImageComponent';
 import WebChatSearch from "./WebChatSearch";
@@ -110,14 +110,14 @@ class WebChatRoster extends React.Component {
                             <div className="username">
                                 <h3 title={displayContactName}>
                                     <span>
-                                    {this.state.searchWith !== "" ?
+                                        {this.state.searchWith !== "" ?
                                             getHighlightedText(displayContactName, this.state.searchWith) :
                                             displayContactName
                                         }
                                     </span>
-                                    { isBlockedUser && <div className="blocked-info">
-                                            <i><BlockedIcon /></i><span>Blocked</span>
-                                        </div>
+                                    {isBlockedUser && <div className="blocked-info">
+                                        <i><BlockedIcon /></i><span>Blocked</span>
+                                    </div>
                                     }
                                 </h3>
                             </div>
@@ -139,7 +139,7 @@ class WebChatRoster extends React.Component {
         let isBlocked = isUserWhoBlockedMe(roster.userId);
         let displayContactName = getContactNameFromRoster(roster);
 
-        return <li className={`chat-list-li ${isBlocked ? "Blocked": "" }`} key={roster.userId} onClick={(e) => this.handleRoster(e, roster)}>
+        return <li className={`chat-list-li ${isBlocked ? "Blocked" : ""}`} key={roster.userId} onClick={(e) => this.handleRoster(e, roster)}>
             <div className="profile-image">
                 <div className="image">
                     <ImageComponent
@@ -179,11 +179,11 @@ class WebChatRoster extends React.Component {
      */
     handleUpdateRoster = (rosterData) => {
         let searchWith = this.state.searchWith;
-        let data = rosterData.filter(function (item) {
+        let data = handleFilterBlockedContact(rosterData).filter(function (item) {
             let filterVariable = getContactNameFromRoster(item) || item.userId;
-            return item.isFriend && filterVariable.toLowerCase().search(searchWith.toLowerCase()) !== -1;
+            return (item.isFriend) && filterVariable.toLowerCase().search(searchWith.toLowerCase()) !== -1;
         });
-        this.setState({ filterItem: data })
+        this.setState({ filterItem: data });
     }
 
     /**

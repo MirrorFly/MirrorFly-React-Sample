@@ -41,3 +41,32 @@
         margin: 5px 0;
     }
 }
+.setting_privacy_content{
+    margin-top: -0.1875em;
+    padding-left: 3.875em;
+    padding-bottom: 0.875em;
+    p{
+        display: block;
+    font: normal normal 0.6875rem/1.1875rem var(--light);
+    letter-spacing: 0.09px;
+    color: #959595;
+        margin-bottom: 0.1875em;
+    }
+    .setting_privacy_link{
+        display: flex;
+        flex-wrap: wrap;
+        a{  cursor: pointer;
+            border: none;
+            box-shadow: none;
+            margin-right: 0.25em;
+            text-decoration: underline;
+            font: normal normal  0.6875rem/1.1875rem var(--regular);
+            letter-spacing: 0.0056em;
+            color: #4879F9;
+            &:hover{
+                color: rgb(43, 89, 205);
+                transition: 200ms linear;
+            }
+        }
+    }
+}

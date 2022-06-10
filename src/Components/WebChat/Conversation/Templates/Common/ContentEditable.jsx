@@ -43,10 +43,12 @@ class ContentEditable extends Component {
     onKeyDownListner = (e = {}) => {
         this.props.onKeyDownListner && this.props.onKeyDownListner(e)
         if (e.which === 13 && e.shiftKey === false) {
-            e.preventDefault()
-            document.execCommand('insertHTML', false, '<br><br>');
-            this.props.handleSendTextMsg()
-            return false;
+                e.preventDefault()
+                // document.execCommand('insertHTML', false, '<br><br>');
+                this.props.handleSendTextMsg()
+                // this.props.handleEmptyContent()
+                return false;
+                
         }
         return true;
     }

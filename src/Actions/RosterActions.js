@@ -4,7 +4,7 @@ import SDK from '../Components/SDK';
 import { decryption } from '../Components/WebChat/WebChatEncryptDecrypt';
 import { formatUserIdToJid } from '../Helpers/Chat/User';
 import { compare, parsedContacts } from '../Helpers/Utility';
-import { ROSTER_DATA, ROSTER_DATA_ADD } from './Constants';
+import { ROSTER_DATA, ROSTER_DATA_ADD, ROSTER_PERMISSION } from './Constants';
 
 window.decryption = decryption;
 const mapColorForTouser =  () => '#'+Math.floor(Math.random()*16777215).toString(16);
@@ -138,5 +138,15 @@ export const addNewRosterAction = (userObj) => {
             id: uuidv4(),
             data:userObj
         }
+    }
+}
+
+export const RosterPermissionAction = (data) => {
+    return {
+      type: ROSTER_PERMISSION,
+      payload: {
+        id: uuidv4(),
+        data
+      }
     }
 }

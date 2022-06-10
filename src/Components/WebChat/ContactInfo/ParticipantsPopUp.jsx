@@ -6,7 +6,7 @@ import Badge from '../NewGroup/Badge';
 import { connect } from 'react-redux';
 import { hideModal } from '../../../Actions/PopUp';
 import RecentSearch from '../RecentChat/RecentSearch';
-import { getValidSearchVal } from '../../../Helpers/Utility';
+import { getValidSearchVal, handleFilterBlockedContact } from '../../../Helpers/Utility';
 import { Close2, Info, Tick2 } from '../../../assets/images';
 import { NO_SEARCH_CHAT_CONTACT_FOUND, REACT_APP_XMPP_SOCKET_HOST } from '../../processENV';
 import { getContactNameFromRoster, getUserInfoForSearch, getFriendsFromRosters, formatUserIdToJid } from '../../../Helpers/Chat/User';
@@ -53,6 +53,19 @@ class ParticipantPopUp extends Component {
     componentDidUpdate(prevProps) {
         if (prevProps.rosterData && prevProps.rosterData.id !== this.props.rosterData.id) {
             this.searchFilterList(this.state.searchValue);
+
+            let selectedContactId = this.state.participantToAdd.map(ele => {
+                let foundRoster = this.props.rosterData?.data?.find(el => el.userId === ele?.roster?.userId);
+                if (!foundRoster.isAdminBlocked && !foundRoster.isDeletedUser) return ele;
+            });
+
+            selectedContactId = selectedContactId.filter(function( element ) {
+                return element !== undefined;
+             });
+
+            this.setState({
+                participantToAdd: selectedContactId
+            });
         }
     }
 
@@ -87,7 +100,7 @@ class ParticipantPopUp extends Component {
         if (!data) {
             return [];
         }
-        return data.filter((item) => {
+        return handleFilterBlockedContact(data).filter((item) => {
             const rosterJid = (item.username) ? item.username : item.userId;
             if (groupMembers.indexOf(rosterJid) > -1) {
                 return false
@@ -108,7 +121,7 @@ class ParticipantPopUp extends Component {
                 this.setState({
                     searchValue: '',
                     errorMesage: '',
-                    filteredContacts: getFriendsFromRosters(data)
+                    filteredContacts: getFriendsFromRosters(handleFilterBlockedContact(data))
                 })
                 return;
             }

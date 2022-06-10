@@ -4,10 +4,11 @@ import { formatCallLogDate, formatCallLogTime, durationCallLog, getHighlightedTe
 import ProfileImage from '../../../Components/WebChat/Common/ProfileImage'
 
 const CallLogView = (props = {}) => {
-    let { displayName, image, searchterm, callLog, emailId,initialName="" } = props;
+    let { displayName, image, searchterm, callLog, emailId,initialName="", isAdminBlocked, isDeletedUser } = props;
 
     const onClick = useCallback(() => {
-        props.makeCall(callLog)
+        if(isAdminBlocked || isDeletedUser) return;
+        props.makeCall(callLog);
     })
 
     if (displayName && searchterm !== "" && !displayName.toLowerCase().includes(searchterm)) {
@@ -34,7 +35,7 @@ const CallLogView = (props = {}) => {
         callStateView = props.callLog.callType === "video" ? <IconVideoIncommingCall /> : <IconAudioIncommingCall/> ;
     }
 
-    return <li className="chat-list-li" onClick={onClick}>
+    return <li className={`chat-list-li ${(isAdminBlocked || isDeletedUser) ? "pointer-default-all" : ""}`} onClick={onClick}>
         <ProfileImage
             chatType={callLog.callMode === "onetoone" ? 'chat' : 'groupchat'}
             userToken={token}

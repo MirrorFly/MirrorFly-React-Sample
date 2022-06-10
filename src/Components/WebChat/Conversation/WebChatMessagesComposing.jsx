@@ -205,6 +205,12 @@ class WebChatMessagesComposing extends Component {
     this.selectedText = selectedText;
   };
 
+  // handleEmptyContent = () =>{
+  //   this.setState({
+  //     typingMessage:""
+  //   })
+  // }
+  
   handleSendMsg = (messageType, messageContent) => {
     let message;
     const { loaderStatus, handleSendMsg } = this.props;
@@ -223,7 +229,7 @@ class WebChatMessagesComposing extends Component {
     const showEmoji = this.state.showEmoji;
     this.setState(
       {
-        typingMessage: "",
+        // typingMessage: "",
         showEmoji: false,
         showPreview: false,
         showAttachement: false
@@ -233,6 +239,9 @@ class WebChatMessagesComposing extends Component {
         showEmoji && this.updateEmojiPopUpState();
       }
     );
+    setTimeout(() => {
+      this.setState({ typingMessage: "" })
+    }, 250);
   };
 
   handleSendTextMsg = () => {
@@ -436,39 +445,39 @@ class WebChatMessagesComposing extends Component {
   };
 
   renderCameraPopup = () => {
-    return(
-        <div className="camera-container mediaAttachCamera">
-          <div className="camera-popup">
-            <h4>{PERMISSION_DENIED}</h4>
-            <i>
-              <CameraIcon />
-            </i>
-            <p>{CAMERA_PERMISSION_DENIED}</p>
-            <div className="popup-controls">
-              <button
-                type="button"
-                className="btn-okay"
-                onClick={(e) => this.handleCameraPopupClose(e)}
-                name="btn-cancel"
-              >
-                {"Okay"}
-              </button>
-            </div>
+    return (
+      <div className="camera-container mediaAttachCamera">
+        <div className="camera-popup">
+          <h4>{PERMISSION_DENIED}</h4>
+          <i>
+            <CameraIcon />
+          </i>
+          <p>{CAMERA_PERMISSION_DENIED}</p>
+          <div className="popup-controls">
+            <button
+              type="button"
+              className="btn-okay"
+              onClick={(e) => this.handleCameraPopupClose(e)}
+              name="btn-cancel"
+            >
+              {"Okay"}
+            </button>
           </div>
         </div>
-      );
-   };
+      </div>
+    );
+  };
 
-   renderCameraCapture = () => {
-     return(
+  renderCameraCapture = () => {
+    return (
       <Camera
-      stopCameraPermissionTracks={this.stopCameraPermissionTracks}
-      onClickClose={this.closeCamera}
-      cropEnabled={false}
-      onSuccess={this.handleCameraTakenFile}
-    />
-     );
-   };
+        stopCameraPermissionTracks={this.stopCameraPermissionTracks}
+        onClickClose={this.closeCamera}
+        cropEnabled={false}
+        onSuccess={this.handleCameraTakenFile}
+      />
+    );
+  };
 
   render() {
     const {
@@ -514,33 +523,33 @@ class WebChatMessagesComposing extends Component {
 
         {showCamera && (
           <>
-          {isBoxedLayoutEnabled() ?
-          <>
-            <Modal containerId="container">
-              {this.renderCameraCapture()}
-          </Modal>
+            {isBoxedLayoutEnabled() ?
+              <>
+                <Modal containerId="container">
+                  {this.renderCameraCapture()}
+                </Modal>
+              </>
+              :
+              <>
+                {this.renderCameraCapture()}
+              </>
+            }
           </>
-          :
-          <>
-          {this.renderCameraCapture()}
-          </>
-        }
-        </>
         )}
 
         {cameraPermission === 2 && (
           <>
-           {isBoxedLayoutEnabled() ?
-            <Modal containerId="container">
-              {this.renderCameraPopup()}
-            </Modal>
-          :
-          <>
-            {this.renderCameraPopup()}
+            {isBoxedLayoutEnabled() ?
+              <Modal containerId="container">
+                {this.renderCameraPopup()}
+              </Modal>
+              :
+              <>
+                {this.renderCameraPopup()}
+              </>
+            }
           </>
-        }
-      </>
-    )}
+        )}
 
         {showPreview && (
           <Modal containerId="container">
@@ -553,7 +562,7 @@ class WebChatMessagesComposing extends Component {
             />
           </Modal>
         )}
-        <form className="message-area-container">
+        <form style={{visibility:this.props.forwardOption ? "hidden" : " "}} className="message-area-container">
           <div className="message-area">
             <i
               className="em em-slightly_smiling_face"
@@ -572,6 +581,7 @@ class WebChatMessagesComposing extends Component {
               handleOnFocus={this.handleOnFocus}
               setCursorPosition={this.setCursorPosition}
               setSelectedText={this.setSelectedText}
+              // handleEmptyContent={this.handleEmptyContent}
             />
             <div className="intraction icon">
               {recordingStatus && Config.attachement && (

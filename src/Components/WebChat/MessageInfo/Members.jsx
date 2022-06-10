@@ -11,18 +11,18 @@ const Members = (props = {}) => {
     const [getDetails, setDetails] = useState({})
 
     useEffect(() => {
-        let details = getNameAndStatus(jid, rosterArray)
+        let details = getNameAndStatus(jid, rosterArray);
         if (!details || Object.keys(details).length === 0) {
             details = getUserFromGroup(jid) || { userId: jid };
         }
         setDetails({
             ...details
         })
-    }, [])
+    }, [props.rosterData])
 
     const { image, emailId } = getDetails
     const token = ls.getItem('token');
-    let username = getContactNameFromRoster(getDetails)
+    let username = getContactNameFromRoster(getDetails);
     const updateTime = timeFormat(time);
     const iniTail = initialNameHandle(getDetails, username);
 

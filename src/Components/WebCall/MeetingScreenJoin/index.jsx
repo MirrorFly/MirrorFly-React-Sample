@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
+import { toast } from "react-toastify";
 import {
   AudioOff,
   AudioOn,
@@ -11,6 +12,7 @@ import {
 } from "../../../assets/images";
 import ReadyToJoin from "./ReadyToJoin";
 import CallLinkStatus from "./CallLinkStatus";
+import MaxParticipants from "./MaxParticipants";
 import SDK from "../../SDK";
 import { getLocalUserDetails } from "../../../Helpers/Chat/User";
 import { CALL_STATUS_CONNECTED } from "../../../Helpers/Call/Constant";
@@ -20,7 +22,6 @@ import { callIntermediateScreen, isMuteAudioAction, showConfrence } from "../../
 import Store from "../../../Store";
 import { getCallDisplayDetailsForOnetoManyCall } from "../../../Helpers/Call/Call";
 import { showModal } from "../../../Actions/PopUp";
-import { toast } from "react-toastify";
 
 const MeetingScreenJoin = (props = {}) => {
   const [audioMute, setAudioMute] = useState(false);
@@ -29,7 +30,8 @@ const MeetingScreenJoin = (props = {}) => {
     loading: true,
     readyToJoin: false,
     callEnd: false,
-    invalidLink: false
+    invalidLink: false,
+    maxParticipants: false
   });
   const [userCallDetails, setUserCallDetails] = useState({});
   const { data: conferenceData = {} } = useSelector((state) => state.showConfrenceData);
@@ -68,7 +70,8 @@ const MeetingScreenJoin = (props = {}) => {
           } else if (error.statusCode === 100602) {
             updateObj.callEnd = true;
           } else if (error.statusCode === 100603) {
-            updateObj.readyToJoin = true;
+            updateObj.readyToJoin = false;
+            updateObj.maxParticipants = true;
           }
         } else {
           if (response.statusCode === 100500) {
@@ -170,26 +173,26 @@ const MeetingScreenJoin = (props = {}) => {
       SDK.joinCall((response, error) => {
         console.log("joinCall result :>> ", response, error);
         if (error) {
+          const updateObj = {
+            ...activeScreen,
+            loading: false
+          };
           if (error.statusCode === 100602) {
-            setActiveScreen({
-              ...activeScreen,
-              loading: false,
-              readyToJoin: false,
-              callEnd: true
-            });
-          } else {
+            updateObj.callEnd = true;
+            updateObj.readyToJoin = false;
+          } else if (error.statusCode === 100603) {
+            updateObj.readyToJoin = false;
+            updateObj.maxParticipants = true;
+          } else if (error.statusCode === 100605) {
             toast.error("The server is not responding. Please try again later");
-            setActiveScreen({
-              ...activeScreen,
-              loading: false
-            });
           }
+          setActiveScreen(updateObj);
         }
       });
     }
   };
 
-  const { loading, readyToJoin, callEnd, invalidLink } = activeScreen;
+  const { loading, readyToJoin, callEnd, invalidLink, maxParticipants } = activeScreen;
 
   return (
     <div className="join_meeting_wrapper">
@@ -216,15 +219,17 @@ const MeetingScreenJoin = (props = {}) => {
             <div className="m_video_container_wrapper">
               <div className="m_video_container">
                 <div className="video_container">
-                    <div className="alert-badge">
-                      {conferenceData?.localAudioMuted && (
-                        <div className={`badge-list ${conferenceData?.localVideoMuted ? "" : "videoOn"}`}>
-                          <AudioOff /> <span>Microphone off</span>
-                        </div>
-                      )}
-                    </div>
+                  <div className="alert-badge">
+                    {conferenceData?.localAudioMuted && (
+                      <div className={`badge-list ${conferenceData?.localVideoMuted ? "" : "videoOn"}`}>
+                        <AudioOff /> <span>Microphone off</span>
+                      </div>
+                    )}
+                  </div>
                   {conferenceData?.localVideoMuted ? (
-                    <div className="CameraOffAlert"><span>Camera off</span></div>
+                    <div className="CameraOffAlert">
+                      <span>Camera off</span>
+                    </div>
                   ) : (
                     <Video
                       stream={conferenceData?.localStream?.video}
@@ -232,7 +237,6 @@ const MeetingScreenJoin = (props = {}) => {
                       id={conferenceData?.localStream?.video?.id}
                       inverse={true}
                     />
-                   
                   )}
                   <div className="m_call_action">
                     <button
@@ -244,7 +248,11 @@ const MeetingScreenJoin = (props = {}) => {
                         {audioMute ? <AudioOff /> : <AudioOn />}
                       </i>
                     </button>
-                    <button onClick={handleVideoMute} className={videoMute ? "videoBtnAction mute" : "videoBtnAction "} type="button">
+                    <button
+                      onClick={handleVideoMute}
+                      className={videoMute ? "videoBtnAction mute" : "videoBtnAction "}
+                      type="button"
+                    >
                       <i className={videoMute ? "videoBtn mute" : "videoBtn "}>
                         {videoMute ? <VideoOff /> : <VideoOn />}
                       </i>
@@ -263,6 +271,7 @@ const MeetingScreenJoin = (props = {}) => {
             />
           </>
         )}
+        {maxParticipants && <MaxParticipants />}
         {(callEnd || invalidLink) && <CallLinkStatus handleBack={handleBackButton} callEndScreen={callEnd} />}
       </div>
     </div>

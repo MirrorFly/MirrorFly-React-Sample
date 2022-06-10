@@ -8,7 +8,6 @@
     "start:qa": "env-cmd -f .env.qa react-scripts start",
     "start:uat": "env-cmd -f .env.uat react-scripts start",
     "start:prod": "env-cmd -f .env.prod react-scripts start",
-    "start:sandbox": "env-cmd -f .env.prod react-scripts start",
     "build": "react-scripts build",
     "eject": "react-scripts eject",
     "test": "npm run test:codeCoverage  -- --coverage --watchAll=false",

@@ -48,6 +48,13 @@ class WebCallingLayout extends Component {
         }, 30000);
     }
 
+    componentDidUpdate(prevProps){
+        if (this.props.adminBlockData?.data && Object.keys(this.props.adminBlockData.data).length) {
+            this.stopAudio();
+        }
+    }
+
+
     endCall = async () => {
         this.stopAudio();
         const { callConnectionDate } = this.props;
@@ -357,7 +364,9 @@ const mapStateToProps = state => {
         callConnectionDate: state.callConnectionDate,
         vCardData: state.vCardData,
         activeChatData: state.activeChatData,
-        showConfrenceData: state.showConfrenceData
+        showConfrenceData: state.showConfrenceData,
+        rosterData: state.rosterData,
+        adminBlockData: state.adminBlockData
     }
 }
 export default connect(mapStateToProps, null)(WebCallingLayout);

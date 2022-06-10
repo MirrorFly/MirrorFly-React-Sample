@@ -129,7 +129,7 @@ li {
     cursor: pointer;
 
     &:checked + label{
-    background: #4879f9;
+    background: #30C076;
     border-radius: 2px;
     box-sizing: border-box;
     width: 18px;
@@ -147,7 +147,7 @@ li {
     transform: rotate(45deg);
     }
     &::before {
-      border-color: #4879f9;
+      border-color: #30C076;
     }
   }
   }

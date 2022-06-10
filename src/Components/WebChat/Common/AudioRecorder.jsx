@@ -85,9 +85,12 @@ const AudioRecorder = (props = {}) => {
       seconds = diff % 60 | 0;
       minutes = minutes < 10 ? "0" + minutes : minutes;
       seconds = seconds < 10 ? "0" + seconds : seconds;
+      if(seconds>=0)
+      {
       display.innerHTML =
         '<span class="recordMinutes">' + minutes + '</span>:<span class="recordSeconds">' + seconds + "</span>";
-      if (diff <= 0) {
+      }
+      if (diff < 0) {
         autoStop();
         return;
       }

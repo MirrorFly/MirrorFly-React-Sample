@@ -83,7 +83,7 @@ class InviteParticipants extends React.Component {
                 let rosterData = {};
                 let user = member.userJid || member.GroupUser || member.username;
                 const userId = user.includes("@") ? user.split('@')[0] : user;
-                if(userId !== this.props?.vCardData?.data?.fromUser  && this.currentCallUsersArray.indexOf(userId) === -1 && (member.isFriend || callMode === 'onetomany')){
+                if(userId !== this.props?.vCardData?.data?.fromUser  && this.currentCallUsersArray.indexOf(userId) === -1 && (member.isFriend || this.groupId)){
                     rosterData = {
                         userJid: user
                     }

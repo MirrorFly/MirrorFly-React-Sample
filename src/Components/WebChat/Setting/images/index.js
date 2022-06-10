@@ -11,3 +11,6 @@ export { ReactComponent as Archived } from './archive.svg';
 export { ReactComponent as IconPinChat } from './pinChat.svg';
 export { ReactComponent as IconSetting } from './setting.svg';
 export { ReactComponent as IconUnarchive } from './unarchive.svg';
+export { ReactComponent as IconcontactUs } from './contact_us.svg';
+export { ReactComponent as IconDelete } from './delete.svg';
+export { ReactComponent as IconTriangle } from './triangle.svg';

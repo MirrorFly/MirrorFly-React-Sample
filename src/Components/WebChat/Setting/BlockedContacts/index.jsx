@@ -5,7 +5,7 @@ import ProfileImage from '../../Common/ProfileImage';
 import Modal from '../../Common/Modal';
 import { BlockPopUp } from '../../PopUp/BlockPopUp';
 import {Noblocked } from '../images';
-import { SettingsHeder } from '../Settings';
+import { SettingsHeader } from '../Settings';
 import './BlockedContacts.scss';
 import { getContactNameFromRoster, formatUserIdToJid } from '../../../../Helpers/Chat/User';
 import UserStatus from '../../Common/UserStatus';
@@ -129,7 +129,7 @@ class BlockedContacts extends Component {
             </Modal>}
             <div>
                <div className="settinglist ">
-                  <SettingsHeder
+                  <SettingsHeader
                      handleBackFromSetting={handleBackToSetting}
                      label={'Blocked Contacts'}
                   />

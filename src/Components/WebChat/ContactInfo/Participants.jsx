@@ -2,17 +2,18 @@ import React, { useState, useEffect } from 'react';
 import OutsideClickHandler from 'react-outside-click-handler';
 import { showModal } from '../../../Actions/PopUp';
 import {  DropdownArrow } from '../../../assets/images';
-import { getNameFromGroup } from '../../../Helpers/Chat/ChatHelper';
 import { ls } from '../../../Helpers/LocalStorage';
 import Store from '../../../Store';
 import ProfileImage from '../Common/ProfileImage';
-import { formatUserIdToJid, isLocalUser, isDisplayNickName, getUserNickName } from '../../../Helpers/Chat/User';
+import { formatUserIdToJid, isLocalUser, isDisplayNickName, getUserNickName, getContactNameFromRoster, getDataFromRoster } from '../../../Helpers/Chat/User';
 import UserStatus from '../Common/UserStatus';
+import { getFormatPhoneNumber } from '../../../Helpers/Utility';
 
 const Participants = (props) => {
 
     const { isAdmin, groupuniqueId, members: { GroupUser, userId: fromuser, username, image, userId, emailId, status, statusMsg, userType } = {} } = props
-    const displayName = getNameFromGroup(props.members)
+    const displayName = getContactNameFromRoster(getDataFromRoster(userId)) || getFormatPhoneNumber(userId);
+
     const [menuDropDownStatus, setmenuDropDownStatus] = useState(false)
     useEffect(() => {
         if(!isAdmin){

@@ -449,18 +449,24 @@ class WebChatVCard extends React.Component {
                                                         {profileImg !== SampleProfile && <li title={REMOVE_PHOTO} onClick={(e) => this.handleProfilePhotoRemoveShow(e)}>
                                                             <i className="profileedit-options"><Remove /></i>
                                                             <span>{REMOVE_PHOTO}</span></li>}
-                                                        <li className="upload_photo" title={UPLOAD_PHOTO}> <label className="UploadLabel" htmlFor="ProfileUpload"></label><i className="profileedit-options"><Upload /></i>
-                                                            <span className="uploadphoto"><span>{UPLOAD_PHOTO}</span>
+                                                        <li className="upload_photo" title={UPLOAD_PHOTO}> 
+                                                            <label className="UploadLabel" htmlFor="ProfileUpload"></label>
+                                                            <i className="profileedit-options"><Upload /></i>
+                                                            <span className="uploadphoto">
+                                                                <span>{UPLOAD_PHOTO}</span>
                                                             </span>
                                                         </li>
                                                     </>}
 
                                                     {!profileImg && <>
-                                                        <li title={UPLOAD_PHOTO}><i className="profileedit-options"><Upload /></i>
-                                                            <span className="uploadphoto"><span>{UPLOAD_PHOTO}</span>
+                                                        <li title={TAKE_PHOTO} onClick={(e) => this.handleProfileCameraShow(e)}><i className="profileedit-options"><Takephoto /></i><span>{TAKE_PHOTO}</span></li>
+                                                        <li title={UPLOAD_PHOTO}>
+                                                            <label className="UploadLabel" htmlFor="ProfileUpload"></label>
+                                                            <i className="profileedit-options"><Upload /></i>
+                                                            <span className="uploadphoto">
+                                                                <span>{UPLOAD_PHOTO}</span>
                                                             </span>
                                                         </li>
-                                                        <li title={TAKE_PHOTO} onClick={(e) => this.handleProfileCameraShow(e)}><i className="profileedit-options"><Takephoto /></i><span>{TAKE_PHOTO}</span></li>
                                                     </>}
                                                 </ul>
                                             </React.Fragment>}
@@ -469,11 +475,6 @@ class WebChatVCard extends React.Component {
                                                 <>
                                                     {this.WebChatCroppieLoad(loaderIcon, cameraPopup)}
                                                 </>
-                                            }
-                                            {!profileImg && openCropy ?
-                                                <>
-                                                    {this.WebChatCroppieLoad(loaderIcon, cameraPopup)}
-                                                </> : null
                                             }
                                         </React.Fragment>
                                         {showProfileImg && <div className="Viewphoto-container">

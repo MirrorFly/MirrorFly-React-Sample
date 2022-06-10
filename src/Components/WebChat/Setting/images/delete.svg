@@ -1,0 +1,14 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 19 19">
+  <g id="Group_30886" data-name="Group 30886" transform="translate(-156 -457)">
+    <rect id="Rectangle_7810" data-name="Rectangle 7810" width="19" height="19" transform="translate(156 457)" fill="none"/>
+    <g id="delete" transform="translate(154.952 455.615)">
+      <path id="Path_40317" data-name="Path 40317" d="M13.788,19.317H7.468A2.523,2.523,0,0,1,5,16.936L4.25,5.416a.636.636,0,0,1,.617-.666H16.389a.614.614,0,0,1,.452.2.629.629,0,0,1,.166.469l-.716,11.52a2.522,2.522,0,0,1-2.5,2.381ZM5.558,6l.634,10.863a1.282,1.282,0,0,0,1.276,1.207h6.321a1.29,1.29,0,0,0,1.276-1.207L15.731,6.04Z" transform="translate(-0.08 -0.12)" fill="#181818" stroke="#fff" stroke-width="0.2"/>
+      <path id="Path_40318" data-name="Path 40318" d="M18.207,6.19H2.888a.683.683,0,0,1-.638-.72.683.683,0,0,1,.638-.72H18.207a.683.683,0,0,1,.638.72.683.683,0,0,1-.638.72Z" transform="translate(0 -0.12)" fill="currentColor" stroke="#fff" stroke-width="0.2"/>
+      <path id="Path_40319" data-name="Path 40319" d="M14.729,6.069H8.97a.729.729,0,0,1-.72-.72V3.622A1.92,1.92,0,0,1,10.122,1.75h3.455a1.92,1.92,0,0,1,1.872,1.92v1.68a.729.729,0,0,1-.72.72ZM9.69,4.63h4.319V3.67a.432.432,0,0,0-.432-.432H10.122a.432.432,0,0,0-.432.432Z" transform="translate(-1.302)" fill="currentColor"/>
+      <path id="Path_40320" data-name="Path 40320" d="M14.97,17.868a.729.729,0,0,1-.72-.72V9.47a.72.72,0,0,1,1.44,0v7.679A.729.729,0,0,1,14.97,17.868Z" transform="translate(-1.896 -1.7)" fill="currentColor" stroke="#fff" stroke-width="0.2"/>
+      <path id="Path_40321" data-name="Path 40321" d="M8.97,17.868a.729.729,0,0,1-.72-.72V9.47a.72.72,0,0,1,1.44,0v7.679A.729.729,0,0,1,8.97,17.868Z" transform="translate(-0.948 -1.7)" fill="currentColor" stroke="#fff" stroke-width="0.2"/>
+      <path id="Path_40322" data-name="Path 40322" d="M11.97,17.868a.729.729,0,0,1-.72-.72V9.47a.72.72,0,0,1,1.44,0v7.679A.729.729,0,0,1,11.97,17.868Z" transform="translate(-1.422 -1.7)" fill="currentColor" stroke="#fff" stroke-width="0.2"/>
+    </g>
+  </g>
+</svg>

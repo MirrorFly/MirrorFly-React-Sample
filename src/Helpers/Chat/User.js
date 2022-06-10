@@ -5,6 +5,8 @@ import { getFormatPhoneNumber } from '../Utility';
 import Store from '../../Store';
 import { addNewRosterAction } from '../../Actions/RosterActions';
 import { get as _get } from "lodash";
+import SDK from '../../Components/SDK';
+const requestUserids = [];
 
 
 export const formatUserIdToJid = (userId, chatType = CHAT_TYPE_SINGLE) => {
@@ -53,9 +55,9 @@ export const getContactNameFromRoster = (roster) => {
     if (roster.groupId) {
         return getGroupNameFromRoster(roster);
     }
-    if (!roster.isFriend) {
-        return getFormatPhoneNumber(roster.userId);
-    }
+    // if (!roster.isFriend) {
+    //     return getFormatPhoneNumber(roster.userId);
+    // }
     return roster.nickName || getFormatPhoneNumber(roster.mobileNumber) || roster.name;
 }
 
@@ -105,9 +107,58 @@ export const getLocalUserDetails = () => {
 
 export const getDataFromRoster = (userId) => {
     const currentState = Store.getState()
-    const { rosterData: { rosterNames } } = currentState
-    if (!rosterNames || !rosterNames.has(userId)) return {};
-    return rosterNames.get(userId);
+    const {
+        rosterData: {
+            rosterNames
+        }
+    } = currentState
+    if (!rosterNames || !rosterNames.has(userId)) {
+        if (userId) {
+            getDataFromSDK(userId);
+        }
+        let data = { userId: userId, userJid: formatUserIdToJid(userId) };
+        return data;        
+    } else {
+        return rosterNames.get(userId);
+    }
+}
+
+export const getDataFromSDK = async(userId) => {
+    let data = { userId: userId, userJid: formatUserIdToJid(userId) };
+    if(!requestUserids.includes(userId)){
+        requestUserids.push(userId);
+        const profileDetailsResponse = await SDK.getUserProfile(formatUserIdToJid(userId));
+        var index = requestUserids.indexOf(userId);
+        if (index !== -1) {
+            requestUserids.splice(index, 1);
+        }
+        if(profileDetailsResponse.statusCode === 200){
+            let userProfileDetails = profileDetailsResponse.data;
+            userProfileDetails.name = userProfileDetails.nickName;
+            data = {
+            ...data,
+            ...userProfileDetails,
+            };
+            addVcardDataToRoster(data);
+        } else {
+            data = {
+                ...data,
+                isDeletedUser: true,
+                email: "",
+                image: "",
+                isAdminBlocked: false,
+                isFriend: false,
+                mobileNumber: "",
+                name: "Deleted User",
+                nickName: "Deleted User",
+                displayName: "Deleted User",
+                status: ""
+            }
+            addVcardDataToRoster(data);
+        }
+        return data;
+    }
+    return data;
 }
 
 export const isUserExistInRoster = (userId) => {
@@ -173,6 +224,7 @@ export const getUserDetails = (userJid = "") => {
             rosterData.image = userDetails.image;
             rosterData.chatType = "chat";
             rosterData.initialName = rosterData.displayName;
+            rosterData.isAdminBlocked = userDetails.isAdminBlocked
         } else {
             rosterData.displayName = getFormatPhoneNumber(user);
             rosterData.initialName = "";
@@ -182,6 +234,7 @@ export const getUserDetails = (userJid = "") => {
             rosterData.userColor = "";
             rosterData.userId = user;
             rosterData.userJid = formatUserIdToJid(user);
+            rosterData.isAdminBlocked = userDetails.isAdminBlocked
         }
     }
     return rosterData;

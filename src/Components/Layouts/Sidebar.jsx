@@ -26,6 +26,7 @@ import ActionPopup from '../ActionPopup/index';
 import { showModal } from '../../Actions/PopUp';
 import { disconnectCallConnection } from '../../Helpers/Call/Call';
 import { callIntermediateScreen, resetConferencePopup } from '../../Actions/CallAction';
+import { NEW_CHAT_CONTACT_PERMISSION_DENIED, NEW_GROUP_CONTACT_PERMISSION_DENIED } from '../../Helpers/Chat/Constant';
 
 class Sidebar extends React.Component {
 
@@ -67,6 +68,10 @@ class Sidebar extends React.Component {
     }
 
     handleNewChat = () => {
+        if(this.props.contactPermission === 0){
+            this.props.handleContactPermissionPopup(true, NEW_CHAT_CONTACT_PERMISSION_DENIED);
+            return;
+        }
         this.setState({ newChatStatus: false });
     }
 
@@ -99,6 +104,10 @@ class Sidebar extends React.Component {
 
     //New group participant list
     handleCreateNewGroup = () => {
+        if(this.props.contactPermission === 0){
+            this.props.handleContactPermissionPopup(true, NEW_GROUP_CONTACT_PERMISSION_DENIED);
+            return;
+        }
         this.setState({ newGroupParticipants: true }, () => {
             this.setState({ menuDropDownStatus: false })
         });
@@ -216,12 +225,14 @@ class Sidebar extends React.Component {
     }
 
     handleJoinCallAction = () => {
+        localStorage.setItem("isNewCallExist", true);
         disconnectCallConnection();
         Store.dispatch(resetConferencePopup());
         this.closeModel("CallConfirm");
         const newLink = this.props.popUpData?.modalProps?.newCallLink
-        localStorage.setItem("isNewCallExist", true);
-        Store.dispatch(callIntermediateScreen({ show: true, link: newLink }));
+        setTimeout(() => {
+            Store.dispatch(callIntermediateScreen({ show: true, link: newLink }));
+        }, 10);
     };
 
     handleCancel = () => {
@@ -316,7 +327,7 @@ class Sidebar extends React.Component {
                         </div>
                     }
                     {
-                        callLogs && <WebChatCallLogs handleBackStatus={this.handleBackFromCallLogs} />
+                        callLogs && <WebChatCallLogs handleBackStatus={this.handleBackFromCallLogs} handleContactPermissionPopup={this.props.handleContactPermissionPopup}/>
                     }
 
                     {settingStatus &&
@@ -362,7 +373,8 @@ const mapStateToProps = state => {
         vCardData: state.vCardData,
         callConversionData: state.callConversionData,
         browserNotifyData: state.browserNotifyData,
-        isEnableArchived: state?.webLocalStorageSetting?.isEnableArchived
+        isEnableArchived: state?.webLocalStorageSetting?.isEnableArchived,
+        contactPermission: state?.contactPermission?.data
     }
 }
 

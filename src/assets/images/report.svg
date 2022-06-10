@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14">
+    <g id="Group_34247" data-name="Group 34247" transform="translate(2086 -9902)">
+        <g id="deleteMessage" transform="translate(-2312.777 9805.459)">
+            <g id="Group_15680" data-name="Group 15680" transform="translate(226.781 96.541)">
+                <path id="Path_13789" data-name="Path 13789"
+                    d="M87,94a.4.4,0,0,1-.326-.164l-1.362-1.878H81.993A1.959,1.959,0,0,1,80,90.035V81.923A1.959,1.959,0,0,1,81.993,80H83.04c.22,0,.22.769,0,.769H81.993A1.175,1.175,0,0,0,80.8,81.923v8.112a1.175,1.175,0,0,0,1.193,1.154h3.53a.4.4,0,0,1,.326.164L87,92.946l1.156-1.593a.4.4,0,0,1,.326-.164h3.53A1.175,1.175,0,0,0,93.2,90.035V81.923a1.175,1.175,0,0,0-1.193-1.154H82.659c-.22,0-.22-.769,0-.769h9.356A1.959,1.959,0,0,1,94,81.923v8.112a1.959,1.959,0,0,1-1.989,1.923H88.692l-1.363,1.878A.4.4,0,0,1,87,94Zm0,0"
+                    transform="translate(-80.004 -80)" fill="#6a92c5" />
+            </g>
+        </g>
+        <g id="Group_30951" data-name="Group 30951" transform="translate(-2079.674 9904.992)">
+            <g id="Group_34171" data-name="Group 34171" transform="translate(0.027 0)">
+                <g id="Group_34167" data-name="Group 34167" transform="translate(0 0)">
+                    <path id="Path_40314" data-name="Path 40314"
+                        d="M234.221,173c-.361,0-.643.194-.643.537,0,1.048.123,2.553.123,3.6,0,.273.238.387.52.387.211,0,.511-.114.511-.387,0-1.048.123-2.553.123-3.6A.566.566,0,0,0,234.221,173Z"
+                        transform="translate(-233.578 -173.005)" fill="#6a92c5" />
+                </g>
+            </g>
+            <g id="Group_34172" data-name="Group 34172" transform="translate(0 5.133)">
+                <g id="Group_34169" data-name="Group 34169" transform="translate(0 0)">
+                    <path id="Path_40315" data-name="Path 40315"
+                        d="M233.329,353.306a.678.678,0,0,0,0,1.356.678.678,0,0,0,0-1.356Z"
+                        transform="translate(-232.651 -353.306)" fill="#6a92c5" />
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

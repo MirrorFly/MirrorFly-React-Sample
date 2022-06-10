@@ -45,6 +45,9 @@ class CalleScreen extends Component {
     }
 
     componentDidUpdate(prevProps){
+        if (this.props.adminBlockData?.data && Object.keys(this.props.adminBlockData.data).length) {
+            this.stopAudio();
+        }
         this.checkMediaPermission(prevProps);
     }
 
@@ -340,7 +343,9 @@ class CalleScreen extends Component {
 const mapStateToProps = state => {
     return {
         callConnectionDate: state.callConnectionDate,
-        popUpData: state.popUpData
+        popUpData: state.popUpData,
+        rosterData: state.rosterData,
+        adminBlockData: state.adminBlockData
     }
 }
 

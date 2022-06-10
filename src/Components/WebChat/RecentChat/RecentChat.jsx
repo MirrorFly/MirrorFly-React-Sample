@@ -20,7 +20,7 @@ export default class RecentChat extends Component {
       callType,
       callMode,
       messageData,
-      recentChatExist
+      recentChatExist,
     } = this.props;
 
     if (recentChatItems.length === 0) return null;
@@ -30,16 +30,15 @@ export default class RecentChat extends Component {
     const filteredItems = !searchLen
       ? recentChatItems.filter((item) => item?.recent?.archiveStatus === isArchivePage)
       : recentChatItems;
-
     return (
       <Fragment>
         {searchLen > 0 && recentChatExist && <div className="search-head">Chats</div>}
         <ul className="chat-list-ul"
-          style={{display : `${this.props.archiveLength === 0 &&  this.props.pageType === "archive" ? "none" : ""}`}}>
+          style={{ display: `${this.props.archiveLength === 0 && this.props.pageType === "archive" ? "none" : ""}` }}>
           {filteredItems.map((recentChatItem, key) => {
             const { msgId, fromUserId } = this.getMessageInfo(recentChatItem);
             const { hidden = false } = recentChatItem;
-
+            const {roster:{ isAdminBlocked = ""}} = recentChatItem
             return (
               <RecentChatItem
                 pageType={this.props.pageType}
@@ -59,6 +58,7 @@ export default class RecentChat extends Component {
                 callMode={callMode}
                 refreshUnreadCount={this.props.refreshUnreadCount}
                 handlePopupState={this.props.handlePopupState}
+                isAdminBlocked = {isAdminBlocked}
               />
             );
           })}

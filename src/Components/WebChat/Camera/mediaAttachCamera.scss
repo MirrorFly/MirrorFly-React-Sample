@@ -58,17 +58,18 @@
             background: none;
           }
           button {
-            height: 1.875em;
-            width: 5.000em;
-            border: none;
-            font-size: $font12;
-            font-family: $semibold;
-            margin-left: 0.625em;
             background-color: $primary;
+            margin-left: 0.625em;
             color: $white;
-            @include border-radius(2px);
-            cursor: pointer;
             margin-top: 0.938em;
+            text-align: center;
+            min-width: 60px;
+            padding: 0.375em 0.9375em;
+            border: none;
+            font: normal normal  0.875rem/1.0625rem var(--regular);
+            border-radius: 0.3125em;
+            cursor: pointer;
+            transition: 200ms linear;
           }
         }
       }

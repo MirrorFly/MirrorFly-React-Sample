@@ -54,6 +54,18 @@ class ParticipantPopUp extends Component {
     componentDidUpdate(prevProps) {
         if (prevProps.rosterData.id !== this.props.rosterData.id) {
             this.renderParticpantPopup();
+            let selectedContactId = this.state.participantToAdd.map(ele => {
+                let foundRoster = this.props.rosterData?.data?.find(el => el.userId === ele.split("@")[0]);
+                if (!foundRoster.isAdminBlocked && !foundRoster.isDeletedUser) return ele;
+            });
+
+            selectedContactId = selectedContactId.filter(function( element ) {
+                return element !== undefined;
+             });
+
+            this.setState({
+                participantToAdd: selectedContactId
+            });
         }
     }
 
@@ -124,7 +136,8 @@ class ParticipantPopUp extends Component {
                 return false;
             });
         });
-        this.setState({ participantToAdd: participantToAdd, filteredContacts: filteredContacts, groupMembers: rosterDatas });
+        const adminFilteredContact = filteredContacts.filter(item=>item?.isAdminBlocked !== true && item?.isDeletedUser !== true)
+        this.setState({ participantToAdd: participantToAdd, filteredContacts: adminFilteredContact, groupMembers: rosterDatas });
     }
 
     addParticipant = (userName, userInfo) => {
@@ -184,7 +197,7 @@ class ParticipantPopUp extends Component {
                 })
                 return;
             }
-            const filteredContacts = this.contactsSearch(searchWith)
+            const filteredContacts = this.contactsSearch(searchWith).filter(item=>item?.isAdminBlocked !== true && item?.isDeletedUser !== true)
             this.setState({
                 searchValue: searchValue,
                 filteredContacts: filteredContacts

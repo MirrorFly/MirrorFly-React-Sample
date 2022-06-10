@@ -1,0 +1,95 @@
+.action_poppup_wraper {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-color: #00000055;
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100% !important;
+
+    >div {
+        margin: auto;
+        display: inline-flex;
+    }
+}
+
+.action_poppup_inner {
+    min-width: 27.375em;
+    min-height: 9.6875em;
+    margin: auto;
+    display: inline-flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 20.625em;
+    padding: 1.5625em 1.875em;
+    background-color: white;
+    border-radius: 0.3125em;
+    box-shadow: 0px 0.375em 1em #00000024;
+
+    .action_poppup_label {
+        h4 {
+            margin-bottom: 0.875em;
+            font: normal normal normal 1.25rem/100% var(--regular);
+            letter-spacing: 0px;
+            color: #000000;
+        }
+
+        label {
+            font: normal normal 0.875rem/1.125rem var(--regular);
+            letter-spacing: 0px;
+            color: #767676;
+        }
+    }
+
+    .action_poppup_noteinfo {
+        margin-top: 1.5em;
+        text-align: right;
+
+        button {
+            min-width: 60px;
+            background-color: #e5e5e5;
+            padding: 0.375em 0.9375em;
+            border: none;
+            font: normal normal 0.875rem/1.0625rem var(--regular);
+            color: #383636;
+            margin-left: 0.833em;
+            border-radius: 0.3125em;
+            cursor: pointer;
+            letter-spacing: 0px;
+            transition: 200ms linear;
+
+            &:hover {
+                transition: 200ms linear;
+            }
+        }
+
+        button.btn-action:not(.red) {
+            background-color: #4879F9;
+            color: white;
+            transition: 200ms linear;
+
+            &:hover {
+                background-color: #356dff;
+                transition: 200ms linear;
+            }
+        }
+        button.btn-action.red{
+            background-color: #D93134;
+            color: white;
+            transition: 200ms linear;
+
+            &:hover {
+                background-color: #c2181b;
+                transition: 200ms linear;
+            }
+        }
+    }
+
+    &.lg {
+        max-width: 24em;
+    }
+}

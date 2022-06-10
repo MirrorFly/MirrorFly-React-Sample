@@ -116,7 +116,7 @@
         letter-spacing: 0.035em;
         color: #ffffff;
         outline: 0;
-        margin-top: 2.5em;
+        margin-top: 1.5625em;
         cursor: pointer;
         border-color: transparent;
         transition: all linear 200ms;
@@ -441,6 +441,37 @@
 }
 #profile-status-error{
   position: initial;
+}
+.privary_policy_wrapper{
+  margin-top: 20px;
+  text-align: center;
+  line-height: 0;
+  p{
+    font: normal normal 0.6875rem/1.1875rem var(--Light);
+    letter-spacing: 0.09px;
+    color: #959595;
+    display: block;
+    margin-bottom: 0.1875em;
+
+  }
+  .privary_policy_Link{
+    display: flex;
+    flex-wrap: wrap;
+  }
+  a{
+text-decoration: underline;
+font: normal normal 0.6875rem/1.1875rem var(--Regular);
+letter-spacing: 0.09px;
+color: #4879F9;
+transition: cubic-bezier(0.39, 0.575, 0.565, 1);
+&:hover{
+  color: #2a5bd7;
+  transition: cubic-bezier(0.39, 0.575, 0.565, 1);
+
+}
+margin-right: 4px;
+  }
+  
 }
 /* responsive */
 @media (max-width: 1024px) {

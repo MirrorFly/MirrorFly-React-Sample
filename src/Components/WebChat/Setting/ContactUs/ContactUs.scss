@@ -1,0 +1,168 @@
+.contact_us_wrapper_fixed {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-color: #00000055;
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    >div {
+        margin: auto;
+        display: inline-flex;
+    }
+}
+
+.contact_us_wrapper {
+    min-width: 300px;
+    max-width: 27.375em;
+    margin: auto;
+    display: inline-flex;
+    flex-direction: column;
+    padding: 1.8125em 2.1875em;
+    background: #FFFFFF;
+    box-shadow: 10px 10px 16px #00000047;
+    border-radius: 0.1875em;
+    min-height: 100px;
+
+    .contact_us_header {
+        margin-bottom: 1.625em;
+
+        h4 {
+            font: normal normal 1.25rem/1.25rem var(--regular);
+            letter-spacing: 0px;
+            color: #000000;
+        }
+    }
+
+    .contact_us_body {
+        .contact_us_form {
+            display: flex;
+            flex-direction: column;
+
+            .input_wrapper {
+                position: relative;
+                margin-bottom: 26px;
+                display: flex;
+                flex-direction: column;
+                &.mb-0{
+                    margin-bottom: 0 !important;
+                }
+            }
+
+            .errorMesage {
+                display: flex;
+                align-items: center;
+                margin-top: 0.25em;
+                font-family: var(--regular);
+
+                svg {
+                    min-width: 0.625em;
+                    width: 0.625em;
+                    height: auto;
+                }
+
+                span {
+                    display: inline-block;
+                    margin-left: 0.25em;
+                    color: #F44336;
+                    font-size: 0.75rem;
+                }
+            }
+
+            label {
+                font: normal normal 0.8125rem/0.875rem var(--semibold);
+                letter-spacing: 0px;
+                color: #181818;
+            }
+
+            input {
+                padding: 0.5em 0;
+                border: none;
+                outline: none;
+                border-bottom: 0.0125em solid #D5D5D5;
+                font: normal normal 0.75rem/0.8125rem var(--regular);
+                letter-spacing: 0px;
+                color: #767676;
+            }
+            .textarea {
+                padding: 0.5em 0;
+                border: none;
+                outline: none;
+                border-bottom: 0.0125em solid #D5D5D5;
+                font: normal normal 0.75rem/0.8125rem var(--regular);
+                letter-spacing: 0px;
+                color: #767676;
+                overflow: hidden auto;
+                max-height: 100px;
+                white-space: normal;
+                word-break: break-all;
+            }
+        }
+
+    }
+
+    .contact_us_footer {
+        .action_list {
+            margin-top: 1.5em;
+            display: flex;
+            justify-content: flex-end;
+
+            button {
+                min-width: 60px;
+                padding: 0.375em 0.9375em;
+                border: none;
+                font: normal normal  0.875rem/1.0625rem var(--regular);
+                color: #383636;
+                margin-left: 0.833em;
+                border-radius: 0.3125em;
+                cursor: pointer;
+                letter-spacing: 0px;
+                transition: 200ms linear;
+
+                &:hover {
+                    transition: all linear 200ms;
+                    box-shadow: 1px 1px 0 rgba(0, 0, 0, .06), 0 2px 5px 0 rgba(0, 0, 0, .2);
+                }
+
+                &:not(.danger) {
+                    background-color: #EAE7E7;
+                }
+
+                &.default {
+                    color: #383636;
+                    transition: 200ms linear;
+                }
+
+                &.danger {
+                    background-color: #D93134;
+                    color: #fff;
+
+                    &:hover {
+                        background-color: #c62629;
+                        transition: 200ms linear;
+                    }
+                }
+                &.primary {
+                    background-color: #4879F9;
+                    color: #fff;
+
+                    &:hover {
+                        background-color: #356dff;
+                        transition: 200ms linear;
+                    }
+                }
+            }
+        }
+    }
+}
+
+@media screen and (min-width:568px) {
+    .contact_us_wrapper {
+        width: auto;
+        min-width: 27.375em;
+    }
+}

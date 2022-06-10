@@ -1,14 +1,40 @@
-import { getFormatPhoneNumber, getInitialsFromName, getUserIdFromJid } from '../Utility';
+import {
+    getFormatPhoneNumber,
+    getInitialsFromName,
+    getUserIdFromJid
+} from '../Utility';
 import Store from '../../Store';
-import { selectLargeVideoUser, pinUser, showConfrence } from '../../Actions/CallAction';
-import { CALL_RINGING_DURATION, CALL_SESSION_STATUS_CLOSED, CALL_STATUS_CALLING, CALL_STATUS_DISCONNECTED, CALL_STATUS_RINGING, DISCONNECTED_SCREEN_DURATION } from '../../Helpers/Call/Constant';
+import {
+    selectLargeVideoUser,
+    pinUser,
+    showConfrence
+} from '../../Actions/CallAction';
+import {
+    CALL_RINGING_DURATION,
+    CALL_SESSION_STATUS_CLOSED,
+    CALL_STATUS_CALLING,
+    CALL_STATUS_DISCONNECTED,
+    CALL_STATUS_RINGING,
+    DISCONNECTED_SCREEN_DURATION
+} from '../../Helpers/Call/Constant';
 import callLogs from '../../Components/WebCall/CallLogs/callLog';
-import { getLocalUserDetails, getUserDetails, initialNameHandle } from '../Chat/User';
-import { REACT_APP_MAX_USERS_CALL } from '../../Components/processENV';
+import {
+    getLocalUserDetails,
+    getUserDetails,
+    initialNameHandle
+} from '../Chat/User';
+import {
+    REACT_APP_MAX_USERS_CALL
+} from '../../Components/processENV';
 import SDK from '../../Components/SDK';
-import { removeRemoteStream, resetCallData } from '../../Components/callbacks';
+import {
+    removeRemoteStream,
+    resetCallData
+} from '../../Components/callbacks';
 import browserNotify from '../Browser/BrowserNotify';
-import { callLinkToast } from '../../Components/ToastServices/CustomToast';
+import {
+    callLinkToast
+} from '../../Components/ToastServices/CustomToast';
 
 let callingRemoteStreamRemovalTimer = null;
 let missedCallNotificationTimer = null;
@@ -45,23 +71,28 @@ export function isCallModeValid(callMode) {
  * @param {(object)} object - contains the local user contact list & group list details
  * @return {object}
  */
-export function getCallUsersDetails(callData, localUserData, {localRoster: localRoster, groupList: groupList}){
+export function getCallUsersDetails(callData, localUserData, {
+    localRoster: localRoster,
+    groupList: groupList
+}) {
     let userDetailObj = {};
-    if(!callData || !localUserData){
+    if (!callData || !localUserData) {
         return userDetailObj;
     }
-    let currentUser  = localUserData?.fromuser;
+    let currentUser = localUserData?.fromuser;
     let userListArr = callData.userList ? callData.userList.split(',') : [];
     let userListLength = userListArr.length;
-    if(callData.callMode === 'onetoone' && userListLength && localRoster && Array.isArray(localRoster) && localRoster.length > 0){
+    if (callData.callMode === 'onetoone' && userListLength && localRoster && Array.isArray(localRoster) && localRoster.length > 0) {
         userListArr.push(callData.from);
         const userListNumberArr = userListArr.map((user) => user.split('@')[0]);
         let displayName = null;
         localRoster.map((roster) => {
             let rosterJid = roster.username || roster.jid;
             let currentUserIndex = userListNumberArr.indexOf(rosterJid);
-            if(currentUser && currentUserIndex > -1 && currentUser !== rosterJid){
-                userDetailObj = {...roster};
+            if (currentUser && currentUserIndex > -1 && currentUser !== rosterJid) {
+                userDetailObj = {
+                    ...roster
+                };
                 const name = userDetailObj.displayName || userDetailObj.name || getFormatPhoneNumber(userListNumberArr[currentUserIndex]);
                 displayName = displayName ? `${displayName}, ${name}` : name;
                 userDetailObj['image'] = userListLength > 1 ? null : userDetailObj.image;
@@ -69,9 +100,9 @@ export function getCallUsersDetails(callData, localUserData, {localRoster: local
         });
         userDetailObj['displayName'] = displayName;
 
-        if(!userDetailObj.displayName){
+        if (!userDetailObj.displayName) {
             userListNumberArr.map((userNumber) => {
-                if(currentUser && currentUser !== userNumber){
+                if (currentUser && currentUser !== userNumber) {
                     const formatNumber = getFormatPhoneNumber(userNumber);
                     userDetailObj['displayName'] = userDetailObj.displayName ? `${userDetailObj.displayName}, ${formatNumber}` : formatNumber;
                 }
@@ -79,34 +110,36 @@ export function getCallUsersDetails(callData, localUserData, {localRoster: local
         }
     }
 
-    if(callData.callMode === 'onetomany' && groupList && groupList.length){
+    if (callData.callMode === 'onetomany' && groupList && groupList.length) {
         groupList.map((group) => {
             let groupJid = group.groupId;
             let user = callData.groupId || callData.to;
             user = user && user.includes("@") ? user.split('@')[0] : user;
-            if(groupJid === user){
+            if (groupJid === user) {
                 userDetailObj['displayName'] = group.groupName;
                 userDetailObj['image'] = group.groupImage;
                 userDetailObj['jid'] = groupJid;
-            }     
+            }
         })
     }
     userDetailObj['totalMembers'] = userListLength;
     userDetailObj['chatType'] = callData.callMode === 'onetomany' ? 'groupchat' : 'chat';
-    return {...userDetailObj};
+    return {
+        ...userDetailObj
+    };
 }
 
-function getFromJidFromRemoteStream (remoteStream) {
+function getFromJidFromRemoteStream(remoteStream) {
     const vcardData = getLocalUserDetails();
     let fromJid = "";
     if (remoteStream.length > 0) {
         remoteStream.map((rs) => {
             let id = rs.fromJid;
             id = id.includes("@") ? id.split("@")[0] : id;
-            if(id !== vcardData.fromUser){
+            if (id !== vcardData.fromUser) {
                 fromJid = rs.fromJid
             }
-        });                
+        });
     }
     return fromJid;
 }
@@ -116,42 +149,51 @@ function getFromJidFromRemoteStream (remoteStream) {
  * 
  * @param {*} showConfrenceData 
  */
-export function requestCallConversion(showConfrenceData = {}, callMode = ''){
+export function requestCallConversion(showConfrenceData = {}, callMode = '') {
     const data = showConfrenceData.data || {};
-    const {remoteStream, localVideoMuted, remoteVideoMuted} = data;
-    if(remoteStream && Array.isArray(remoteStream) && remoteStream.length === 2 && callMode === 'onetoone'){
+    const {
+        remoteStream,
+        localVideoMuted,
+        remoteVideoMuted
+    } = data;
+    if (remoteStream && Array.isArray(remoteStream) && remoteStream.length === 2 && callMode === 'onetoone') {
         let fromJid = getFromJidFromRemoteStream(remoteStream);
         return localVideoMuted && fromJid && remoteVideoMuted[fromJid];
     }
     return false;
 }
 
-export function resetPinAndLargeVideoUser(fromJid){
-    if(!fromJid){
+export function resetPinAndLargeVideoUser(fromJid) {
+    if (!fromJid) {
         Store.dispatch(selectLargeVideoUser());
         Store.dispatch(pinUser());
     }
     const state = Store.getState();
     const largeVideoUserData = state.largeVideoUserData;
-    if(largeVideoUserData.userJid === fromJid){
+    if (largeVideoUserData.userJid === fromJid) {
         Store.dispatch(selectLargeVideoUser());
     }
     // If pinned user disconnected from the call, Need to remove the user.
     const pinUserData = state.pinUserData;
-    if(pinUserData.userJid === fromJid){
+    if (pinUserData.userJid === fromJid) {
         Store.dispatch(pinUser(fromJid));
     }
 }
 
-export function dispatchDisconnected(statusMessage, remoteStreams = []){
-    const { getState, dispatch } = Store;
+export function dispatchDisconnected(statusMessage, remoteStreams = []) {
+    const {
+        getState,
+        dispatch
+    } = Store;
     const showConfrenceData = getState().showConfrenceData;
-    const { data } = showConfrenceData;
+    const {
+        data
+    } = showConfrenceData;
     statusMessage = statusMessage || CALL_STATUS_DISCONNECTED;
     dispatch(showConfrence({
         ...(data || {}),
         callStatusText: statusMessage,
-        remoteStream: remoteStreams.length > 1 ? remoteStreams : data.remoteStream, 
+        remoteStream: remoteStreams.length > 1 ? remoteStreams : data.remoteStream,
         stopSound: true
     }))
 }
@@ -164,6 +206,7 @@ export const disconnectCallConnection = (remoteStreams = []) => {
         "endTime": callLogs.initTime(),
         "sessionStatus": CALL_SESSION_STATUS_CLOSED
     });
+    let timeOut = localStorage.getItem("isNewCallExist") === "true" ? 0 : DISCONNECTED_SCREEN_DURATION;
     setTimeout(() => {
         localStorage.setItem('callingComponent', false)
         localStorage.removeItem('roomName')
@@ -176,16 +219,16 @@ export const disconnectCallConnection = (remoteStreams = []) => {
             showCalleComponent: false,
             callStatusText: null
         }))
-    }, DISCONNECTED_SCREEN_DURATION);
+    }, timeOut);
 }
 
-export function getCallDuration(timerTime){
-    if(!timerTime) return "";
+export function getCallDuration(timerTime) {
+    if (!timerTime) return "";
     let seconds = ("0" + (Math.floor(timerTime / 1000) % 60)).slice(-2);
     let minutes = ("0" + (Math.floor(timerTime / 60000) % 60)).slice(-2);
     let hours = ("0" + Math.floor(timerTime / 3600000)).slice(-2);
     const minAndSecs = `${minutes}:${seconds}`;
-    return hours > 0 ? `${hours}:${minAndSecs}`:minAndSecs;
+    return hours > 0 ? `${hours}:${minAndSecs}` : minAndSecs;
 }
 
 /**
@@ -196,27 +239,34 @@ export function getCallDuration(timerTime){
  * @param {*} param0 
  * @param {*} localVideoMuted 
  */
-export function updateCallTypeAfterCallSwitch(videoMuted){
-    const { getState } = Store;
+export function updateCallTypeAfterCallSwitch(videoMuted) {
+    const {
+        getState
+    } = Store;
     const showConfrenceData = getState().showConfrenceData;
-    const { data } = showConfrenceData;
-    let {remoteStream, localVideoMuted, remoteVideoMuted} = data || {};
-    localVideoMuted = typeof videoMuted != "undefined" ? videoMuted : localVideoMuted; 
+    const {
+        data
+    } = showConfrenceData;
+    let {
+        remoteStream,
+        localVideoMuted,
+        remoteVideoMuted
+    } = data || {};
+    localVideoMuted = typeof videoMuted != "undefined" ? videoMuted : localVideoMuted;
     const callConnectionStatus = JSON.parse(localStorage.getItem('call_connection_status'));
-    if(!callConnectionStatus) return;
-    
-    let callType = null;
-    if(remoteStream && Array.isArray(remoteStream) && remoteStream.length === 2 && callConnectionStatus.callMode === 'onetoone'){
-        let fromJid = getFromJidFromRemoteStream(remoteStream);        
+    if (!callConnectionStatus) return;
 
-        if(localVideoMuted && fromJid && remoteVideoMuted[fromJid]){
+    let callType = null;
+    if (remoteStream && Array.isArray(remoteStream) && remoteStream.length === 2 && callConnectionStatus.callMode === 'onetoone') {
+        let fromJid = getFromJidFromRemoteStream(remoteStream);
+
+        if (localVideoMuted && fromJid && remoteVideoMuted[fromJid]) {
             callType = "audio";
+        } else {
+            callType = "video";
         }
-        else{
-            callType = "video"; 
-        }
-        
-        if(callType && callType !== callConnectionStatus.callType){
+
+        if (callType && callType !== callConnectionStatus.callType) {
             callConnectionStatus.callType = callType;
             localStorage.setItem("call_connection_status", JSON.stringify(callConnectionStatus));
             callLogs.update(callConnectionStatus.roomId, {
@@ -227,7 +277,7 @@ export function updateCallTypeAfterCallSwitch(videoMuted){
 }
 
 export const clearOldCallingTimer = () => {
-    if(callingRemoteStreamRemovalTimer !== null){
+    if (callingRemoteStreamRemovalTimer !== null) {
         clearTimeout(callingRemoteStreamRemovalTimer);
         callingRemoteStreamRemovalTimer = null;
     }
@@ -236,18 +286,23 @@ export const clearOldCallingTimer = () => {
 export const startCallingTimer = () => {
     clearOldCallingTimer();
     callingRemoteStreamRemovalTimer = setTimeout(() => {
-        const { getState, dispatch } = Store;
+        const {
+            getState,
+            dispatch
+        } = Store;
         const showConfrenceData = getState().showConfrenceData;
-        const { data } = showConfrenceData;
-        if(data.remoteStream){
+        const {
+            data
+        } = showConfrenceData;
+        if (data.remoteStream) {
             let remoteStreams = [...data.remoteStream];
             let remoteStreamsUpdated = [...data.remoteStream];
-            if(remoteStreams){
+            if (remoteStreams) {
                 remoteStreams.map((stream) => {
-                    if(stream.status && (stream.status.toLowerCase() === CALL_STATUS_CALLING || stream.status.toLowerCase() === CALL_STATUS_RINGING)){
+                    if (stream.status && (stream.status.toLowerCase() === CALL_STATUS_CALLING || stream.status.toLowerCase() === CALL_STATUS_RINGING)) {
                         removeRemoteStream(stream.fromJid);
-                        remoteStreamsUpdated = remoteStreamsUpdated.map( (ele) => {
-                            if(ele.fromJid !== stream.fromJid){
+                        remoteStreamsUpdated = remoteStreamsUpdated.map((ele) => {
+                            if (ele.fromJid !== stream.fromJid) {
                                 return ele;
                             } else {
                                 return undefined;
@@ -257,7 +312,7 @@ export const startCallingTimer = () => {
                         return undefined;
                     }
                 });
-                if(remoteStreamsUpdated.length > 1){
+                if (remoteStreamsUpdated.length > 1) {
                     dispatch(showConfrence({
                         ...(data || {}),
                         remoteStream: remoteStreamsUpdated
@@ -282,17 +337,19 @@ export const getCallDisplayDetailsForOnetoManyCall = (userList, type) => {
     if (type !== "subscribe") {
         displayNames.push("You");
         participantsData.push({
-            image: vcardData.image, 
-            userId: vcardData.fromUser, 
+            image: vcardData.image,
+            userId: vcardData.fromUser,
             name: vcardData.nickName,
             initialName: getInitialsFromName(vcardData.nickName)
-        }); 
+        });
     }
-    let currentUserPresentInCall = false;   
+    let currentUserPresentInCall = false;
     userList.map((us) => {
         const phoneNumber = us.includes("@") ? us.split("@")[0] : us;
-        if(phoneNumber !== vcardData.fromUser){
-            const roster = { ...getUserDetails(phoneNumber) };
+        if (phoneNumber !== vcardData.fromUser) {
+            const roster = {
+                ...getUserDetails(phoneNumber)
+            };
             if (roster) {
                 displayNames.push(roster.displayName);
                 participantsData.push({
@@ -311,18 +368,18 @@ export const getCallDisplayDetailsForOnetoManyCall = (userList, type) => {
                 });
             }
         } else {
-            currentUserPresentInCall = true;                        
+            currentUserPresentInCall = true;
         }
     });
     let anotherUserslength = userList.length;
-    if(currentUserPresentInCall){
+    if (currentUserPresentInCall) {
         anotherUserslength = anotherUserslength - 1;
     }
-    for (let i = 0; i < displayNames.length; i++) {  
-        let name =  displayNames[i];
-        if(displayName){
-            if(i <= 2){
-                if(i < anotherUserslength){
+    for (let i = 0; i < displayNames.length; i++) {
+        let name = displayNames[i];
+        if (displayName) {
+            if (i <= 2) {
+                if (i < anotherUserslength) {
                     displayName = `${displayName}, ${name}`;
                 } else {
                     displayName = `${displayName} and ${name}`;
@@ -355,7 +412,7 @@ export const startMissedCallNotificationTimer = (res) => {
 }
 
 export const clearMissedCallNotificationTimer = () => {
-    if(missedCallNotificationTimer !== null){
+    if (missedCallNotificationTimer !== null) {
         clearTimeout(missedCallNotificationTimer);
         missedCallNotificationTimer = null;
     }
@@ -363,7 +420,28 @@ export const clearMissedCallNotificationTimer = () => {
 
 export const handleCallParticipantToast = (userJid, type) => {
     const userDetails = getUserDetails(userJid);
-    const { displayName = getUserIdFromJid(userJid), image = "", initialName = "" } = userDetails;
+    const {
+        displayName = getUserIdFromJid(userJid), image = "", initialName = ""
+    } = userDetails;
     const initial = initialNameHandle(userDetails, initialName);
     callLinkToast(type, displayName, image, initial, "callParticipantList");
 };
+
+export const handleAudioClasses = (volumeVdo = 0) => {
+    let volume = volumeVdo === 'NaN' ? 0 : volumeVdo;
+    if (volume > 5.5) {
+        return "audio_vhigh";
+    } else if (volume > 4.5) {
+        return "audio_high";
+    } else if (volume > 3.5) {
+        return "audio_medium";
+    } else if (volume > 1.5) {
+        return "audio_normal";
+    } else if (volume > .5) {
+        return "audio_low";
+    } else if (volume > 0) {
+        return "audio_slient";
+    } else {
+        return "audio_hidden";
+    }
+}

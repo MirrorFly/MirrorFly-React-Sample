@@ -1462,13 +1462,22 @@ i{
           padding-right: 10px;
 
           h4 {
-            color: $clr-conversation-header-profile-name-h4;
-            font-size: 0.7975rem;
-            font-family: $semibold;
-            overflow: hidden;
-            white-space: pre;
-            text-overflow: ellipsis;
+            display: inline-flex;
+            align-items: center;
+            padding-right: 1.25em;
+            font-family: var(--medium);
+            font-size: 0.795rem;
             letter-spacing: .3px;
+            span{
+              display: inline-block;
+              color: $clr-conversation-header-profile-name-h4;
+              font-size: 0.7975rem;
+              font-family: $semibold;
+              overflow: hidden;
+              white-space: pre;
+              text-overflow: ellipsis;
+              letter-spacing: .3px;
+            }
           }
 
           h6 {
@@ -1799,7 +1808,7 @@ i{
               max-height: 6.500em;
               min-height: 1.1em;
               margin: 6px 0;
-              line-height: 122%;
+              line-height:20px;
               font-size: 0.7425rem;
               font-family: $regular;
               color: $clr-typing-area;
@@ -1822,7 +1831,7 @@ i{
             [contentEditable=true]:empty:not(:focus):before {
               content: attr(data-text);
               color: $placeholdertextcolor;
-              line-height: 18px;
+              line-height: 20px;
               font-size: 0.7425rem;
               font-family: $regular;
             }
@@ -2280,7 +2289,7 @@ i{
                 user-select: none;
               }
 
-              .delete {
+              .delete, .report {
                 font-size: $font15;
                 cursor: pointer;
                 user-select: none;
@@ -2339,7 +2348,7 @@ i{
             }
             span {
               cursor: pointer;
-              font-size: 0.675rem;
+              font-size: 0.775rem;
               font-family: $medium;
               color: $textblack;
 
@@ -2352,7 +2361,7 @@ i{
                 color: #36BB0E;
               }
 
-              &.delete {
+              &.delete , .report {
                 cursor: pointer;
                 user-select: none;
               }
@@ -2362,7 +2371,7 @@ i{
               margin-left: 0;
             }
 
-            .delete {
+            .delete, .report, .reportIcon {
               color: $delete;
             }
 
@@ -3141,18 +3150,16 @@ i{
             text-align: right;
     
               button {
-                height: 2.500em;
+                min-width: 60px;
+                padding: 0.375em 0.9375em;
                 border: none;
-                font-size: 0.75rem;
-                font-family: SFUIDisplaySemibold,sans-serif;
-                margin-left: 1em;
-                background-color: $medium;
-                color: #818181;
-                border-radius: 2px;
+                font: normal normal  0.875rem/1.0625rem var(--regular);
+                color: #383636;
+                margin-left: 0.833em;
+                border-radius: 0.3125em;
                 cursor: pointer;
-                outline: 0;
-                min-width: 71px;
-                padding: 0.063em 1em;
+                letter-spacing: 0px;
+                transition: 200ms linear;
     
                 &.btn-active,&.btn-action {
                   background-color: #4879F9 !important;
@@ -3210,7 +3217,7 @@ i{
 
 .receiver {
   a.link {
-    color: #92DFFF;
+    color: #FFFFFF;
   }
   .SingleForward {
     left: -3em;
@@ -4892,7 +4899,7 @@ width: calc(100% - 3.875em);
   left: 0;
   right: 0;
   display: block;
-  height: 4.25em;
+  height: 3.25em;
   z-index: 8;
   padding: 0 2.35em;
 
@@ -5465,6 +5472,21 @@ width: calc(100% - 3.875em);
           cursor: pointer;
         }
       }
+    }
+  }
+  // blocked design start
+  .blockedUserContainer{
+    user-select: none;
+    width: 100%;
+    padding: 0.938em 1.25em;
+    background: #fff;
+    text-align: center;
+    display: inline-block;
+    order:2;
+    p {
+      font: normal normal 0.875rem/1.125rem var(--regular);
+      letter-spacing: 0px;
+      color: #565656;
     }
   }
 /* Drop Down fix**/
@@ -6281,19 +6303,18 @@ footer {
     margin-top: 1.875em;
     text-align: right;
     button {
-      height: 2.500em;
-      width: 6.667em;
-      border: none;
-      font-size: $font12;
-      font-family: $semibold;
       margin-left: 0.625em;
       background-color: $button;
       color: $popuptext;
-      @include border-radius(5px);
       cursor: pointer;
       text-align: center;
-      padding: 0;
-      min-height: auto;
+      min-width: 60px;
+      padding: 0.375em 0.9375em;
+      border: none;
+      font: normal normal  0.875rem/1.0625rem var(--regular);
+      border-radius: 0.3125em;
+      letter-spacing: 0px;
+      transition: 200ms linear;
     }
     button.btn-removephoto {
       background-color: $primary;
@@ -6367,19 +6388,18 @@ footer {
         background: none;
       }
       button {
-        height: 1.875em;
-        width: 5.000em;
-        border: none;
-        font-size: $font12;
-        font-family: $semibold;
         margin-left: 0.625em;
         background-color: $primary;
         color: $white;
-        @include border-radius(5px);
-        cursor: pointer;
         margin-top: 0.938em;
-        padding: 0;
         text-align: center;
+        min-width: 60px;
+        padding: 0.375em 0.9375em;
+        border: none;
+        font: normal normal 0.875rem/1.0625rem var(--regular);
+        border-radius: 0.3125em;
+        cursor: pointer;
+        transition: 200ms linear;
       }
     }
   }
@@ -6823,6 +6843,54 @@ width: 100%;
     height: 100px;
   }
 }
+.toast_container{
+  position: fixed;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  z-index: 10;
+  span{
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 13.625rem;
+    height: 2.5625rem;
+    background: #E3E3E3;
+    border-radius: 1.0625rem;
+    text-align: center;
+    font: normal normal 0.8125rem/0.9375rem var(--medium);
+    letter-spacing: 0px;
+    color: #333333;
+  }
+}
+.user_verified{
+  margin-left: 0.25em;
+  width: 0.75em;
+  height: 0.75em;
+  line-height: 0;
+  svg{
+  width: 0.75em;
+  height: 0.75em;
+  }
+}
+.pointer-default-all {
+  cursor: default !important;
+  > *{
+    cursor: default !important;
+  }
+  .callType{
+    cursor: default !important;
+    opacity: .5;
+  }
+  &:hover{
+    background: transparent !important;
+  }
+}
+
 @import 'media-in-details.scss';
 @import 'single-group-chat.scss';
 @import 'meeting.scss';

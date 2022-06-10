@@ -1,19 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import { ArrowBack } from '../../../assets/images';
-import { BlockedIcon, chat as ChatIcon, InfoIcon, InformationIcon, LogoutIcon, NextArrow, NotificationIcon, StarredMessage, Archived} from './images';
+import { BlockedIcon, chat as ChatIcon, InfoIcon, InformationIcon, LogoutIcon, NextArrow, NotificationIcon, StarredMessage, Archived, IconcontactUs, IconDelete } from './images';
 import { ENABLE_NOTIFICATIONS } from '../../processENV';
 import { blockOfflineAction, getLocalWebsettings, setLocalWebsettings } from '../../../Helpers/Utility';
 
 const imageComponent = {
     chat: ChatIcon,
-    Archived : Archived,
+    Archived: Archived,
     notification: NotificationIcon,
     blocked: BlockedIcon,
     about: InfoIcon,
     policy: InformationIcon,
     logout: LogoutIcon,
-    star:StarredMessage
+    star: StarredMessage,
+    delete: IconDelete,
+    contactUs :IconcontactUs,
 };
 
 export const SettingCheckBox = (props = {}) => {
@@ -45,7 +47,7 @@ export const SettingCheckBox = (props = {}) => {
             localStorage.setItem('websettings', JSON.stringify(constructObject));
         }
     }
-    
+
     useEffect(() => {
         if (!chat) {
             if (Notification.permission === 'denied' || Notification.permission === 'default') {
@@ -74,7 +76,7 @@ export const SettingCheckBox = (props = {}) => {
                     <input
                         name={id}
                         type="checkbox"
-                        checked={ chat ? dafaultSetting : activeSettings}
+                        checked={chat ? dafaultSetting : activeSettings}
                         id={id}
                         onChange={chat ? chatSetting : settingListener}
                         className={!activeSettings ? "disabled" : ""}
@@ -91,21 +93,22 @@ export const SettingCheckBox = (props = {}) => {
 };
 
 
-export const SettingOptions = (props) => {
-    const { handleOptions, label, image } = props
+export const SettingOptions = (props = {}) => {
+    const { handleOptions, label, image, enableRightArrow = true,children } = props
     const { [image]: Icon } = imageComponent
     return (
         <li className="setting-list" onClick={() => handleOptions(image)}>
             <div className="setting-option">
                 {Icon && <i className="iconLeft"><Icon /></i>}
                 <span className="Option-text">{label}</span>
-                <i className="iconNext"><NextArrow /></i>
+                {enableRightArrow && <i className="iconNext"><NextArrow /></i>}
             </div>
+            {children}
         </li>
     )
 };
 
-export const SettingsHeder = (props) => {
+export const SettingsHeader = (props) => {
     const { handleBackFromSetting, label } = props
     return (
         <div className="setting-header">

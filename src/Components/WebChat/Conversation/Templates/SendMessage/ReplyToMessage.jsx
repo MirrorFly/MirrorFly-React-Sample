@@ -92,7 +92,7 @@ const ReplyMessage = React.memo((props) => {
             <div className="reply-container">
                 <div className={`reply-text-message ${isTextMessage(message_type) ? "text-message" : "" }`}>
                     <span className="sender-name" >{getDisplayName() ? getDisplayName() : "You" }</span>
-                    {isTextMessage(message_type) && <span  ref={element => callRefSpan = element }  className="sender-sends"><span >{getReplyCaption(message)}</span></span> }{overflowActive ? "..." : ""}
+                    {isTextMessage(message_type) && <span  ref={element => callRefSpan = element }  className="sender-sends"><span  dangerouslySetInnerHTML={{__html: getReplyCaption(message) }} ></span></span> }{overflowActive ? "..." : ""}
                     {message_type === 'image' && <span className="sender-sends"><span><i className="chat-camera"><Camera /></i><span>{caption === '' ?  "Photo" : getReplyCaption(caption)}</span></span></span>}
                     {message_type === 'video' && <span className="sender-sends">
                             <span>
