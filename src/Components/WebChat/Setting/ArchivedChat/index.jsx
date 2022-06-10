@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { SettingCheckBox, SettingsHeder } from "../Settings";
+import { SettingCheckBox, SettingsHeader } from "../Settings";
 import "./../Setting.scss";
 import "./Archive.scss";
 import { setLocalWebsettings } from "../../../../Helpers/Utility";
@@ -27,7 +27,7 @@ const ArchivedChat = (props = {}) => {
     <div className="setting-container">
       <div>
         <div className="settinglist">
-          <SettingsHeder handleBackFromSetting={handleBackToSetting} label={"Archived Settings"} />
+          <SettingsHeader handleBackFromSetting={handleBackToSetting} label={"Archived Settings"} />
           <ul className="setting-list-ul chat-setting">
             <SettingCheckBox
               getaAtion={handleTranslationState}

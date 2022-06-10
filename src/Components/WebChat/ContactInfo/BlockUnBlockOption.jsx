@@ -1,15 +1,19 @@
 import React from "react";
 import { useSelector } from "react-redux";
-import { ClearChat, Delete, UnBlock, Blocked, BlockedInfo } from "../../../assets/images";
+
+import {
+  ClearChat, Delete, UnBlock, Blocked, BlockedInfo,
+  IconSingleReport
+} from "../../../assets/images";
 import { getArchiveSetting } from "../../../Helpers/Utility";
 import ChatMuteOption from "./ChatMuteOption";
 
 const BlockUnBlockOption = (props = {}) => {
-  const { isBlocked, ClearPopupAction, popUpToggleAction, deletePopupAction, handleChatMuteAction } = props;
+  const { isBlocked, ClearPopupAction, popUpToggleAction, deletePopupAction, handleChatMuteAction,
+    reportSingleChatAction = () => { } } = props;
   const isPermanentArchvie = getArchiveSetting();
   const { data: { chatId = "", recent: { muteStatus = 0, archiveStatus = 0 } = {} } = {} } =
     useSelector((store) => store.activeChatData) || {};
-
   return (
     <div className="contactinfo-about-no">
       {(archiveStatus !== 1 || !isPermanentArchvie) ? (
@@ -50,8 +54,15 @@ const BlockUnBlockOption = (props = {}) => {
         </i>
         <span className="delete">{"Delete Chat"}</span>
       </div>
+      <div data-jest-id={"jestSingleReportAction"} className="about-no" onClick={reportSingleChatAction}>
+        <i className="reportIcon">
+          <IconSingleReport />
+        </i>
+        <span className="report">{"Report"}</span>
+      </div>
     </div>
   );
 };
+
 
 export default BlockUnBlockOption;

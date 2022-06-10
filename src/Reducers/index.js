@@ -52,6 +52,8 @@ import { StarredMessagesReducer } from "./StarredReducer";
 import { TranslateLanguage } from "./TranslateLanguage";
 import { CommonDataReducer } from "./CommonReducer";
 import { callIntermediateScreenReducer } from "./CallIntermediateScreen";
+import { RosterPermissionReducer } from "./RosterPermissionReducer";
+import { AdminBlockReducer } from "./AdminBlockReducer";
 
 export default combineReducers({
   TranslateLanguage:TranslateLanguage,
@@ -105,5 +107,7 @@ export default combineReducers({
   starredMessages: StarredMessagesReducer,
   webLocalStorageSetting : webLocalStorageSettingReducer,
   commonData: CommonDataReducer,
-  callIntermediateScreen: callIntermediateScreenReducer
+  callIntermediateScreen: callIntermediateScreenReducer,
+  contactPermission: RosterPermissionReducer,
+  adminBlockData: AdminBlockReducer
 });

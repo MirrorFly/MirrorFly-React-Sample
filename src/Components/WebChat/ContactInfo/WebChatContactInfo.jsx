@@ -2,7 +2,7 @@ import React, { Fragment } from 'react';
 import { connect } from 'react-redux';
 import _toArray from "lodash/toArray";
 import renderHTML from 'react-render-html';
-import { showModal as showModalPopupAction,  hideModal } from '../../../Actions/PopUp';
+import { showModal as showModalPopupAction, hideModal } from '../../../Actions/PopUp';
 import OutsideClickHandler from 'react-outside-click-handler';
 import {
     UnsavedContact, ClosePopup, Done, Edit, MailiconSolid,
@@ -25,20 +25,21 @@ import WebChatEmoji from '../WebChatEmoji';
 import { initialNameHandle, isLocalUser } from '../../../Helpers/Chat/User';
 import { isSingleChat, isGroupChat, getChatMessageHistoryById, getActiveConversationChatId, getActiveConversationChatJid, handleTempArchivedChats } from '../../../Helpers/Chat/ChatHelper';
 import { updateBlockedContactAction } from '../../../Actions/BlockAction';
-import { CHAT_TYPE_SINGLE, UNBLOCK_CONTACT_TYPE } from '../../../Helpers/Chat/Constant';
+import { CHAT_TYPE_SINGLE, REPORT_FROM_CONTACT_INFO, UNBLOCK_CONTACT_TYPE } from '../../../Helpers/Chat/Constant';
 import Store from '../../../Store';
 import UserStatus from '../Common/UserStatus';
 import { isUserWhoBlockedMe } from '../../../Helpers/Chat/BlockContact';
 import ProfileImage from '../Common/ProfileImage';
 import { getSelectedText, removeMoreNumberChar, setInputCaretPosition } from '../../../Helpers/Chat/ContentEditableEle';
-import { blockOfflineAction, getUserIdFromJid, isAppOnline } from '../../../Helpers/Utility';
+import { blockOfflineAction, getFormatPhoneNumber, getUserIdFromJid, isAppOnline } from '../../../Helpers/Utility';
 import ContactInfoProfileUpdate from '../WebChatVCard/ContactInfoProfileUpdate';
 import ClearDeleteOption from './ClearDeleteOption';
 import BlockUnBlockOption from './BlockUnBlockOption';
 import ContactInfoMediaGrid from './ContactInfoMediaGrid';
 import ShowMediaInDetailPopup from './ShowMediaInDetailPopup';
 import { updateMuteStatusRecentChat } from '../../../Actions/RecentChatActions';
-
+import ActionInfoPopup from '../../ActionInfoPopup';
+import { getMessagesForReport } from "../../../Helpers/Chat/ChatHelper"
 class WebChatContactInfo extends React.Component {
 
     /**
@@ -63,11 +64,16 @@ class WebChatContactInfo extends React.Component {
             groupName: props.rosterName,
             viewEdit: true,
             showDeletePopup: false,
+            showReportPopup: false,
+            reportPopup: '',
             showClearPopup: false,
             showMediaInDetailPopup: false,
             isLocalUserInGroup: true,
             groupNameCount: "0",
-            exitGroup: false
+            exitGroup: false,
+            confirmExitGroup: false,
+            isAdminBlocked:this.props?.roster?.isAdminBlocked,
+            isDeletedAccount:this.props?.roster?.isDeletedUser
             // userNameChars : REACT_APP_GROUP_NAME_CHAR
 
         }
@@ -76,7 +82,7 @@ class WebChatContactInfo extends React.Component {
         this.userStatusCursorPostion = 0;
         this.userStatusSelectedText = '';
     }
-
+    
     updateLocalUserGroupState = () => {
         const { groupsMemberListData: { data: { groupJid } = {} } = {}, participants = [] } = this.props;
         const localUser = participants.find(users => isLocalUser(users.userId));
@@ -87,7 +93,8 @@ class WebChatContactInfo extends React.Component {
             isAdmin: !!isAdmin,
             groupuniqueId: groupJid,
             isLocalUserInGroup: !!localUser,
-            viewEdit: localUser ? viewEdit : true
+            viewEdit: localUser ? viewEdit : true,
+            exitGroup: !localUser ? true : false,
         }, () => {
             if (preStateUserInGroup && !this.state.isLocalUserInGroup) {
                 // If local user is in the process of Add/Remove users, Make user as admin
@@ -107,11 +114,11 @@ class WebChatContactInfo extends React.Component {
                 }
             }
         });
-        if (!localUser) {
-            this.setState({
-                exitGroup: true
-            })
-        }
+        // if (!localUser) {
+        //     this.setState({
+        //         exitGroup: true
+        //     })
+        // }
     }
 
     /**
@@ -157,6 +164,56 @@ class WebChatContactInfo extends React.Component {
         const previousGroupMemberListId = prevProps?.groupsMemberListData?.id
         if (groupMemberListId !== previousGroupMemberListId) {
             this.updateLocalUserGroupState();
+        }
+
+        if(prevProps.rosterData.id !== this.props.rosterData.id){
+            const userId = this.props.roster?.userId
+            const { data = [] } = this.props.rosterData
+            let selectedUser = data.find(ele=> ele.userId === userId)
+            this.setState({
+                isAdminBlocked : selectedUser?.isAdminBlocked,
+                isDeletedAccount:selectedUser?.isDeletedUser
+            })
+            if(selectedUser?.isDeletedUser || selectedUser?.isAdminBlocked){
+                if(this.state.showReportPopup){
+                    toast.error( selectedUser?.isDeletedUser ? `Cannot report deleted user` :  `This user no longer available`)
+                }
+                this.setState({
+                    showReportPopup: false,
+                });
+            }
+        }
+
+        if(prevProps.groupsData.id !== this.props.groupsData.id){
+            const {activeChatData:{ data : {chatId = "" } }} = this.props
+            const { data = [] } = this.props.groupsData
+            let selectedUser = data.find(ele=> ele.userId === chatId)
+            
+            this.setState({
+                isAdminBlocked : selectedUser?.isAdminBlocked
+            })
+
+            if(selectedUser?.isAdminBlocked){
+                this.setState({
+                    showReportPopup: false,
+                });
+            }
+        }
+
+        if(prevProps.groupsMemberListData.id !== this.props.groupsMemberListData.id){
+            const { data:{ participants = [] } } = this.props.groupsMemberListData
+            const { data:{fromUser = ""}} = this.props.vCardData 
+            let checkUser = participants.find(ele => ele.userId === fromUser)
+            if(!checkUser){
+                this.setState({
+                    isAdmin:false
+                })   
+            }
+            else if(checkUser?.userType === "o"){
+                this.setState({
+                    isAdmin:true
+                })   
+            }
         }
     }
 
@@ -349,8 +406,37 @@ class WebChatContactInfo extends React.Component {
             showDeletePopup: !showDeletePopup
         })
     }
+    reportChatAction = (state = "", show = false) => {
+        if(this.state.isDeletedAccount || this.state.isAdminBlocked){
+            toast.error( this.state.isDeletedAccount ? `Cannot report deleted user` :  `This user no longer available`)
+            return
+        }
+        this.setState({
+            showReportPopup: show,
+            reportPopup: state
+        });
+    }
 
-
+    reportConfirmAction = async(event) => {
+        if(event.detail <=1){
+            if (blockOfflineAction()) return;
+            if(this.state.isDeletedAccount || this.state.isAdminBlocked)return;
+            const { activeChatId = "", activeChatData:{ data : { chatJid = "",chatType = "" } }  } = this.props;
+            const reportData = getMessagesForReport(activeChatId, REPORT_FROM_CONTACT_INFO)
+            if(reportData.length === 0){
+                toast.error(`No Messages To Report`)
+                this.setState({
+                    showReportPopup: false,
+                });
+            }else{
+                await SDK.reportUserOrGroup(chatJid,chatType,reportData)
+                toast.success(`Report sent`);
+                this.setState({
+                    showReportPopup: false,
+                });
+                }
+        }
+    }
     ClearPopupAction = () => {
         if (!this.checkMessageExist()) return;
         const { showClearPopup } = this.state
@@ -422,7 +508,7 @@ class WebChatContactInfo extends React.Component {
     confirmationPopUpDelete = (showDeletePopup = false) => {//labelDialoge
         if (showDeletePopup) {
             return `Are you sure you want to Delete the ${this.isChat() ? "chat" : "Group"} ?`
-        } 
+        }
         return `Are you sure you want to Clear the chat ?`
     };
 
@@ -451,10 +537,10 @@ class WebChatContactInfo extends React.Component {
         }
         Store.dispatch(updateMuteStatusRecentChat(dispatchData));
     };
-    
+
     render() {
-        const iniTail=initialNameHandle(this.props.roster,this.props.rosterName);
-        const { showModal, contactInfoMediaGrid, viewEdit,
+        const iniTail = initialNameHandle(this.props.roster, this.props.rosterName);
+        const { showModal, contactInfoMediaGrid, viewEdit, showReportPopup, isAdminBlocked,
             isAdmin, groupuniqueId, isBlocked, showDeletePopup, showClearPopup, showMediaInDetailPopup, exitGroup, groupName } = this.state;
         const chatJid = getActiveConversationChatJid()
         return (
@@ -475,6 +561,9 @@ class WebChatContactInfo extends React.Component {
                                 if (this.state.showModal) {
                                     this.popUpToggleAction();
                                     return;
+                                }
+                                if (this.state.showReportPopup) {
+                                    return '';
                                 }
                                 this.props.onInfoClose()
                             }}>
@@ -525,6 +614,7 @@ class WebChatContactInfo extends React.Component {
                                             </div>
                                         </Modal>
                                     }
+                                    { (this.props.roster.emailId || this.props.mobileNumber || this.props.userstatus) &&
                                     <div className="contactinfo-about-no">
                                         <h5>{this.props.roster.emailId ? ABOUT_AND_EMAIL_ID : ABOUT_AND_PHONE_NO}</h5>
                                         {this.props.userstatus &&
@@ -538,24 +628,29 @@ class WebChatContactInfo extends React.Component {
                                                 />
                                             </div>
                                         }
+                                        { (this.props.roster.emailId || this.props.mobileNumber) &&
                                         <div className="about-no">
                                             <i >
                                                 {this.props.roster.emailId ? <MailiconSolid /> : <UnsavedContact />}
                                             </i>
-                                            <span>{this.props.roster.emailId ? this.props.roster.emailId : this.props.mobileNumber}</span>
+                                            <span>{this.props.roster.emailId ? this.props.roster.emailId : getFormatPhoneNumber(this.props.mobileNumber)}</span>
                                         </div>
+                                        }
                                     </div>
+                                    }
 
                                     <WebChatcontactInfoMedia
                                         jid={this.props.jid}
                                         chatType={this.props?.activeChatData?.data?.recent?.chatType}
                                     />
                                     <BlockUnBlockOption
-                                        handleChatMuteAction = {this.handleChatMuteAction}
+                                        handleChatMuteAction={this.handleChatMuteAction}
                                         isBlocked={isBlocked}
                                         ClearPopupAction={this.ClearPopupAction}
                                         popUpToggleAction={this.popUpToggleAction}
                                         deletePopupAction={this.deletePopupAction}
+                                        reportSingleChatAction={() => this.reportChatAction('single', true)}
+                                        isAdminBlocked={isAdminBlocked}
                                     />
                                 </div>
                                 }
@@ -630,6 +725,8 @@ class WebChatContactInfo extends React.Component {
                                             deletePopupAction={this.deletePopupAction}
                                             dispatchExitAction={this.dispatchExitAction}
                                             handleNewParticipants={this.handleNewParticipants}
+                                            reportGroupChatAction={() => this.reportChatAction('group', true)}
+                                            contactPermission={this.props.contactPermission}
                                         />
                                     </div>
                                 }
@@ -645,6 +742,47 @@ class WebChatContactInfo extends React.Component {
                         />
                     }
                 </div>
+                {showReportPopup &&
+
+                    <ActionInfoPopup
+                        textActionBtn={"Report"}
+                        btnActionClass={"red"}
+                        textCancelBtn={"Cancel"}
+                        textHeading={`Report ${this.props.rosterName}?`}
+                        handleAction={(e) => this.reportConfirmAction(e)}
+                        handleCancel={() => this.setState({ showReportPopup: false })}
+                        textInfo={
+                            `The last 5 messages from this contact will be forwarded to admin. 
+                            ${this.state.reportPopup === 'single' ?
+                                "This contact will not be notified." : ""
+                            }
+                            ${this.state.reportPopup === 'group' ?
+                                "No one in this group will be notified." : ""}
+                            `}
+                    >
+                        {/* {this.state.reportPopup === 'group' &&
+                            <React.Fragment>
+                                <div className='check_option'>
+                                    <div className="checkbox-common">
+                                        <input
+                                            name="participants"
+                                            type="checkbox"
+                                            checked={confirmExitGroup}
+                                            onChange={() => this.setState({
+                                                confirmExitGroup: !confirmExitGroup
+                                            })}
+                                            value={"confirmExitGroup"}
+                                            id={"confirmExitGroup"}
+                                        />
+                                        <label htmlFor={"confirmExitGroup"}></label>
+                                    </div>
+                                    <label htmlFor={"confirmExitGroup"}>Exit group</label>
+                                </div>
+                            </React.Fragment>
+
+                        } */}
+                    </ActionInfoPopup>
+                }
             </Fragment>
         )
     }
@@ -662,7 +800,8 @@ const mapStateToProps = state => {
         groupsData: state.groupsData,
         groupsMemberListData: state.groupsMemberListData,
         contactsWhoBlockedMe: state.contactsWhoBlockedMe,
-        popUpData: state.popUpData
+        popUpData: state.popUpData,
+        contactPermission: state?.contactPermission?.data
     }
 }
 

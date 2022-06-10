@@ -221,13 +221,10 @@ class WebRtcCall extends React.Component {
         } else {
             fromJid = remoteStreamDatas[keyFound].fromJid;
             let anotherUser = fromJid.includes("@") ? fromJid.split('@')[0] : fromJid;
-            let largeVideoUserJid = this.props.largeVideoUserJid;
+            let largeVideoUserJid = this.props.largeVideoUserJid || "";
             largeVideoUserJid = largeVideoUserJid.includes("@") ? largeVideoUserJid.split('@')[0] : largeVideoUserJid
             if(largeVideoUserJid === vcardData.fromUser){
-                rosterData.displayName = "You";
-                rosterData.image = vcardData.image;
-                rosterData.jid = vcardData.fromUser;
-                rosterData.chatType = "chat";
+                rosterData = getUserDetails(largeVideoUserJid);
                 stream = this.props.localStream;
                 inverse = true;
                 remoteVideoMuted[fromJid] = this.state.localVideoMuted;
@@ -730,7 +727,7 @@ class WebRtcCall extends React.Component {
     }
 }
 
-const mapStateToProps = state => {
+const mapStateToProps = state => {    
     const largeVideoUserData = state.largeVideoUserData;
     const pinUserData = state.pinUserData;
     const pinUserJid = pinUserData && pinUserData.userJid;
@@ -748,7 +745,8 @@ const mapStateToProps = state => {
         volumeLevelVideo,
         popUpData: state.popUpData,
         vCardData: state.vCardData,
-        callLogData: state.callLogData
+        callLogData: state.callLogData,
+        rosterData: state.rosterData
     }
 }
 

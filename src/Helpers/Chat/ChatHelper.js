@@ -8,7 +8,7 @@ import Store from '../../Store';
 import {
     CHAT_TYPE_SINGLE, MSG_SENT_ACKNOWLEDGE_STATUS_ID, MSG_SENT_ACKNOWLEDGE_STATUS, MSG_DELIVERED_STATUS_ID,
     MSG_DELIVERED_STATUS, MSG_DELIVERED_STATUS_CARBON, MSG_SEEN_STATUS_ID, MSG_SEEN_STATUS,
-    MSG_SEEN_STATUS_CARBON, MSG_PROCESSING_STATUS_ID, MSG_PROCESSING_STATUS, CHAT_TYPE_GROUP, GROUP_CHAT_PROFILE_UPDATED_NOTIFY, CHAT_TYPE_BROADCAST, BRAND_NAME
+    MSG_SEEN_STATUS_CARBON, MSG_PROCESSING_STATUS_ID, MSG_PROCESSING_STATUS, CHAT_TYPE_GROUP, GROUP_CHAT_PROFILE_UPDATED_NOTIFY, CHAT_TYPE_BROADCAST, BRAND_NAME,REPORT_FROM_CONTACT_INFO
 } from './Constant';
 import { formatGroupIdToJid, formatUserIdToJid, getContactNameFromRoster, getSenderIdFromMsgObj, isLocalUser, getDataFromRoster, getUserDetails } from './User';
 import { changeTimeFormat, msgStatusOrder } from './RecentChat';
@@ -26,9 +26,13 @@ import { decryption } from '../../Components/WebChat/WebChatEncryptDecrypt';
 import { getGroupData } from './Group';
 import { getAvatarImage, groupAvatar } from '../../Components/WebChat/Common/Avatarbase64';
 import { webSettingLocalAction } from '../../Actions/BrowserAction';
+import Config from "../../config";
+ 
 const indexedDb = new IndexedDb();
 
 const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+const {reportMembers} = Config
 
 export const notificationMessageType = ["1", "2", "3", "4", "5"];
 export function formatBytes(a, b = 2) { 
@@ -76,13 +80,10 @@ export const getNameFromGroup = (group) => {
 
 export const getDisplayNameFromGroup = (messageFrom = '', groupMemberDetails = []) => {
 
-    const userPhoneNumber = messageFrom.split('@')[0]
-    const rosterObject = groupMemberDetails.find(profile => {
-        const rosterJid = (profile.username) ? profile.username : profile.userId;
-        return rosterJid === userPhoneNumber
-    })
+    const userId = messageFrom.split('@')[0]
+    const rosterObject = getDataFromRoster(userId);
     if (!rosterObject) {
-        const userDetails = getUserDetails(userPhoneNumber);
+        const userDetails = getUserDetails(userId);
         if (userDetails && userDetails.nickName) {
             return {
                 nameToDisplay: userDetails.nickName,
@@ -90,12 +91,13 @@ export const getDisplayNameFromGroup = (messageFrom = '', groupMemberDetails = [
             };
         }
         return {
-            nameToDisplay: getFormatPhoneNumber(userPhoneNumber),
+            nameToDisplay: getFormatPhoneNumber(userId),
             userColor: 'black'
         };
     }
     const { displayName, name, nickName, jid, userColor } = rosterObject || {}
-    const nameToDisplay = displayName || name || nickName || jid || getFormatPhoneNumber(messageFrom.split('@')[0]);
+    let nameToDisplay = displayName || name || nickName || jid || getFormatPhoneNumber(messageFrom.split('@')[0]);
+    
     return {
         nameToDisplay,
         userColor
@@ -853,12 +855,11 @@ export const downloadMediaFile = async (file_url, msgType, file_name, event) => 
                 event.preventDefault();
                 event.stopPropagation();
             }
-            const { data: { mediaUrl = "" } } = await SDK.getMediaURL(file_url);
+            const { data: { mediaUrl = "" } } = await SDK.getMediaURL(file_url, msgType);
             const blob = await fetch(mediaUrl, {
                 headers: new Headers({
                     Origin: window.location.origin
-                }),
-                mode: "no-cors"
+                })
             }).then(async (response) => response.blob());
             fileUrl = window.URL.createObjectURL(blob);
         }
@@ -1075,4 +1076,33 @@ export const handleArchivedChats = async () => {
 export const getRecentChatData = () => {
     const { recentChatData: { data = [] } = {} } = Store.getState();
     return data;
+};
+
+export const getMessagesForReport = (chatId, selectedMsgIdType) => {
+    const chatMessages = getChatMessageHistoryById(chatId);
+    let msgDataArray = [];
+    const sortedData = chatMessages.filter((item)=>(Object.keys(item.msgBody).length !==0)).sort((a, b) => (b.timestamp < a.timestamp ? -1 : 1));
+    if (sortedData.length) {
+        let selectedMsgId = selectedMsgIdType !== REPORT_FROM_CONTACT_INFO ? selectedMsgIdType : sortedData[0]?.msgId
+        let count = 0;
+        const filteredData = sortedData.filter(msg => {
+            if (msg.msgId === selectedMsgId || (count > 0 && count < reportMembers) ) {
+                count++;
+                return msg;
+            }
+        });
+        filteredData.map((item,key)=>{
+            let msgObject = {}
+            msgObject["msgId"] = item?.msgId || ""
+            msgObject["message"] = item?.msgBody?.message || item?.msgBody?.media?.caption || ""
+            msgObject["msgType"] = item?.msgBody?.message_type || ""
+            msgObject["filename"] = item?.msgBody?.media?.fileName || ""
+            msgObject["timestamp"] = item?.timestamp
+            msgObject["publisherId"] = item?.publisherId || item?.fromUserId
+            msgDataArray.push(msgObject)
+        })
+    }else if(sortedData.length === 0){
+        return msgDataArray
+    }
+    return msgDataArray
 };

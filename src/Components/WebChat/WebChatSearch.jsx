@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { connect } from 'react-redux';
 import { Search, Close } from '../../assets/images';
-import { getValidSearchVal } from '../../Helpers/Utility';
+import { getValidSearchVal, handleFilterBlockedContact } from '../../Helpers/Utility';
 import { getUserInfoForSearch } from '../../Helpers/Chat/User';
 class WebChatSearch extends React.Component {
 
@@ -20,7 +20,9 @@ class WebChatSearch extends React.Component {
     let search = ReactDOM.findDOMNode(this).getElementsByClassName('search-contacts');
     const value = search.length ? search[0].value : '';
     const { searchIn, rosterDataResponse, rosterData: { data }, handleSearchFilterList } = this.props
-    let updatedList = (searchIn === 'recent-chat') ? rosterDataResponse : data;
+
+    console.log(rosterDataResponse, "rosterDataResponserosterDataResponse");
+    let updatedList = (searchIn === 'recent-chat') ? rosterDataResponse : handleFilterBlockedContact(data);
     const searchWith = getValidSearchVal(value);
     this.setState({
       isTyping: value ? true : false

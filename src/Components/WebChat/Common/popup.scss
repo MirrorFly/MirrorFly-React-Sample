@@ -225,17 +225,18 @@
                 background: none;
               }
               button {
-                height: 1.875em;
-                width: 5.000em;
-                border: none;
-                font-size: $font12;
-                font-family: $semibold;
+                min-width: 60px;
                 margin-left: 0.625em;
                 background-color: $primary;
                 color: $white;
-                @include border-radius(2px);
-                cursor: pointer;
                 margin-top: 0.938em;
+                text-align: center;
+                padding: 0.375em 0.9375em;
+                border: none;
+                font: normal normal 0.875rem/1.0625rem var(--regular);
+                border-radius: 0.3125em;
+                cursor: pointer;
+                transition: 200ms linear;
               }
             }
           }
@@ -358,16 +359,18 @@
               margin-top: 1.875em;
               text-align: right;
               button {
-                height: 2.500em;
-                width: 6.667em;
-                border: none;
-                font-size: $font12;
-                font-family: $semibold;
                 margin-left: 0.625em;
                 background-color: $button;
                 color: $popuptext;
-                @include border-radius(2px);
                 cursor: pointer;
+                text-align: center;
+                min-width: 60px;
+                padding: 0.375em 0.9375em;
+                border: none;
+                font: normal normal  0.875rem/1.0625rem var(--regular);
+                border-radius: 0.3125em;
+                letter-spacing: 0px;
+                transition: 200ms linear;
               }
               button.btn-removephoto {
                 background-color: $primary;

@@ -14,6 +14,7 @@ import {
 } from "../../../../../Helpers/Utility";
 import Store from "../../../../../Store";
 import Translate from "./Translate";
+import SDK from '../../../../SDK';
 
 const TextComponent = (props = {}) => {
   const { messageObject = {}, isSender = false, pageType } = props;
@@ -30,12 +31,13 @@ const TextComponent = (props = {}) => {
 
   const renderMessageBody = () => (msgBody ? renderHTML(getFormattedText(messageLink)) : null);
 
-  const subscribeToCall = () => {
+  const subscribeToCall = async () => {
     if (blockOfflineAction()) return "";
 
     const callLink = msgBody.message?.split(`${getSiteDomain()}/`)[1];
     if (callData && conferenceData.callStatusText === CALL_STATUS_CONNECTED) {
-      if (msgBody.message.includes(callData.link)) {
+      const roomLink = await SDK.getCallLink();
+      if (msgBody.message.includes(roomLink.data)) {
         props.handleShowCallScreen();
       } else {
         Store.dispatch(
@@ -68,7 +70,6 @@ const TextComponent = (props = {}) => {
             </div>
             {isTranslated() && <Translate tMessage={msgBody?.translatedMessage} />}
             <div className="company_detais">
-              {/* <img src={ImgFavicon} alt="Mirrorfly Video Call" /> <span>Join video call</span> */}
             </div>
           </button>
         </div>

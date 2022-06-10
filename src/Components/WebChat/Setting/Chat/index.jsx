@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { SettingCheckBox, SettingsHeder } from "../Settings";
+import { SettingCheckBox, SettingsHeader } from "../Settings";
 import "./../Setting.scss";
 import "./Chat.scss";
 import { DropdownArrow } from "../../../../assets/images";
@@ -89,7 +89,7 @@ const Chat = (props = {}) => {
     <div className="setting-container">
       <div>
         <div className="settinglist">
-          <SettingsHeder handleBackFromSetting={handleBackToSetting} label={"Chat"} />
+          <SettingsHeader handleBackFromSetting={handleBackToSetting} label={"Chat"} />
           <ul className="setting-list-ul chat-setting">
             {config.boxLayout && <BoxedLayout
               dafaultValue={boxedLayout}

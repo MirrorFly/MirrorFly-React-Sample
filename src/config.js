@@ -13,6 +13,7 @@ const config = {
   internetErrorMessage: "Please check your Internet connection",
   helpUrl: "https://app.mirrorfly.com/webchat-log-in/index.html",
   demoUrl: "localhost",
-  boxLayout: true
+  boxLayout: true,
+  reportMembers:5
 };
 export default config;

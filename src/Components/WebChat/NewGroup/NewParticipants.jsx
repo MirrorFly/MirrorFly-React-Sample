@@ -1,12 +1,12 @@
 import React, { Component, Fragment } from 'react';
 import { connect } from 'react-redux';
-import {ArrowBack,CreateGroup, Info,EventWaiting, FloatingCallVideo, FloatingCallAudio } from '../../../assets/images';
+import { ArrowBack, CreateGroup, Info, EventWaiting, FloatingCallVideo, FloatingCallAudio } from '../../../assets/images';
 import { NO_SEARCH_CHAT_CONTACT_FOUND, REACT_APP_XMPP_SOCKET_HOST } from '../../processENV';
 import SDK from '../../SDK';
 import Contact from '../ContactInfo/Contact';
 import RecentSearch from '../RecentChat/RecentSearch';
 import Badge from './Badge';
-import { getValidSearchVal, isAppOnline } from '../../../Helpers/Utility';
+import { getValidSearchVal, handleFilterBlockedContact, isAppOnline } from '../../../Helpers/Utility';
 import { getContactNameFromRoster, getUserInfoForSearch, getFriendsFromRosters, formatUserIdToJid } from '../../../Helpers/Chat/User';
 import { toast } from 'react-toastify';
 import { NO_INTERNET } from '../../../Helpers/Constants';
@@ -28,9 +28,9 @@ class NewParticipants extends Component {
     }
 
     componentDidMount() {
-        const { rosterData: { data = [] } = {}} = this.props
+        const { rosterData: { data = [] } = {} } = this.props
         this.setState({
-            filteredContacts: getFriendsFromRosters(data)
+            filteredContacts: getFriendsFromRosters(handleFilterBlockedContact(data))
         })
     }
 
@@ -63,7 +63,7 @@ class NewParticipants extends Component {
     prepareContactToAdd = (userName, userInfo) => {
         const exists = this.state.participantToAdd.find(user => user.userId === userName)
         if (!exists) {
-            return this.addParticipant(userName, userInfo);           
+            return this.addParticipant(userName, userInfo);
         }
         return false;
     }
@@ -71,7 +71,7 @@ class NewParticipants extends Component {
     prepareContactToRemove = (userName, userInfo) => {
         const exists = this.state.participantToAdd.find(user => user.userId === userName)
         if (exists) {
-            return this.removeParticipant(userName);           
+            return this.removeParticipant(userName);
         }
         return false;
     }
@@ -80,7 +80,7 @@ class NewParticipants extends Component {
         const { groupMembers } = this.state
         const { rosterData: { data } } = this.props
         if (!data) return [];
-        return data.filter((item) => {
+        return handleFilterBlockedContact(data).filter((item) => {
             const rosterJid = (item.username) ? item.username : item.jid;
             if (groupMembers.indexOf(rosterJid) > -1) {
                 return false
@@ -113,7 +113,7 @@ class NewParticipants extends Component {
     }
 
     componentDidUpdate(prevProps) {
-
+        
         if (prevProps.messageData?.id !== this.props.messageData?.id &&
             (!this.props?.messageData?.data?.MessageType &&
                 this.props?.messageData?.data?.messageType === "receiveMessage")) {
@@ -145,6 +145,16 @@ class NewParticipants extends Component {
 
         if (prevProps.rosterData && prevProps.rosterData.id !== this.props.rosterData.id) {
             this.searchFilterList(this.state.searchValue);
+            let newSelectedParticipant = this.state.participantToAdd.map(ele => {
+                let foundRoster = this.props.rosterData?.data?.find(el =>  el.userId === ele.userId);
+                if (!foundRoster.isAdminBlocked && !foundRoster.isDeletedUser) return ele;
+            });
+            newSelectedParticipant = newSelectedParticipant.filter(function( element ) {
+                return element !== undefined;
+            });
+            this.setState({
+                participantToAdd: newSelectedParticipant
+            });
         }
     }
 
@@ -160,7 +170,7 @@ class NewParticipants extends Component {
             })
             return
         }
-        if(!isAppOnline()){
+        if (!isAppOnline()) {
             toast.error(NO_INTERNET);
             return
         }
@@ -169,7 +179,7 @@ class NewParticipants extends Component {
             inProgress: true
         }, async () => {
             const { typingMessage } = this.props
-            const participantJid = []; 
+            const participantJid = [];
             participantToAdd.map(el => participantJid.push(el.userJid));
 
             const groupImgBlob = await this.getBlobfromUrl();
@@ -187,16 +197,21 @@ class NewParticipants extends Component {
             }
         })
     }
-    
+
     handleMakeNewCall = () => {
+        const roomName = localStorage.getItem('roomName');
+        if (roomName) {
+            toast.info("Can't place a new call while you're already in a call.");
+            return;
+        }
+
         this.props.handleMakeNewCall(this.props.newCallType, this.state.participantToAdd);
     }
 
     render() {
         const { filteredContacts, searchValue, participantToAdd, errorMesage, inProgress } = this.state
-        const { handleBackToGroup,newCall = false, handleBackToCallLog } = this.props
-        const maxMemberReached = Boolean(participantToAdd.length  >= (getMaxUsersInCall() - 1));
-
+        const { handleBackToGroup, newCall = false, handleBackToCallLog } = this.props
+        const maxMemberReached = Boolean(participantToAdd.length >= (getMaxUsersInCall() - 1));
         return (
             <Fragment>
                 <div>
@@ -209,10 +224,10 @@ class NewParticipants extends Component {
                                     </i>
                                 }
                                 <span>{newCall ? "Contacts" : "Add Group Participants"}</span>
-                               {!newCall &&
-                                <i onClick={this.addUsersInGroup} className={inProgress? 'createGroup-loader' : 'createGroup-icon'} title="Create group">
-                                   {inProgress ? <EventWaiting/> : <CreateGroup />} 
-                                </i>}
+                                {!newCall &&
+                                    <i onClick={this.addUsersInGroup} className={inProgress ? 'createGroup-loader' : 'createGroup-icon'} title="Create group">
+                                        {inProgress ? <EventWaiting /> : <CreateGroup />}
+                                    </i>}
                             </div>
                         </div>
 
@@ -234,7 +249,7 @@ class NewParticipants extends Component {
                                             return <Badge
                                                 key={userId}
                                                 {...participant}
-                                                isBlocked = {isBlocked}
+                                                isBlocked={isBlocked}
                                                 removeParticipant={this.removeParticipant}
                                             />
                                         })}
@@ -265,10 +280,10 @@ class NewParticipants extends Component {
                                 />
                             })}
                         </ul>
-                        {newCall &&  participantToAdd.length > 0 &&
-                        <div onClick={this.handleMakeNewCall} className="callButton">
-                           <i> {this.props.newCallType === "video" ? <FloatingCallVideo/> :  <FloatingCallAudio/>}</i> Call now ({participantToAdd.length})
-                        </div>
+                        {newCall && participantToAdd.length > 0 &&
+                            <div onClick={this.handleMakeNewCall} className="callButton">
+                                <i> {this.props.newCallType === "video" ? <FloatingCallVideo /> : <FloatingCallAudio />}</i> Call now ({participantToAdd.length})
+                            </div>
                         }
                     </div>
                 </div>

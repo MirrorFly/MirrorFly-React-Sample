@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { SettingCheckBox, SettingsHeder } from '../Settings';
+import { SettingCheckBox, SettingsHeader } from '../Settings';
 import './../Setting.scss';
 import './Notifications.scss';
 export default class Notifications extends Component {
@@ -10,9 +10,9 @@ export default class Notifications extends Component {
             <div className="setting-container">
                 <div>
                     <div className="settinglist">
-                        <SettingsHeder
-                            handleBackFromSetting={handleBackToSetting}
+                        <SettingsHeader
                             label={'Notifications'}
+                            handleBackFromSetting={handleBackToSetting}
                         />
                         <ul className="setting-list-ul notifications">
                             {

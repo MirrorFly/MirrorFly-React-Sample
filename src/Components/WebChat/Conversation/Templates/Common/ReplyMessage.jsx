@@ -73,7 +73,6 @@ export default React.memo(({ msgId, viewOriginalMessage, groupMemberDetails, cha
     const { fileName, duration, caption, audioType,thumb_image } = media;
     const getDisplayName = () => {
         if (isLocalUser(messageFrom)) return 'You';
-
         if (isSingleChat(chatType)) {
             const { rosterData } = replyMessageDetail || {}
             return filterProfileFromRoster(rosterData, messageFrom)
@@ -96,7 +95,7 @@ export default React.memo(({ msgId, viewOriginalMessage, groupMemberDetails, cha
                 {isTextMessage(message_type) && <span id={`reply-${msgId}`}
                 ref={element => callRefSpan = element }
                 className="sender-sends">
-                <span>{getReplyCaption(message)}</span> </span> }
+                <span dangerouslySetInnerHTML={{__html: getReplyCaption(message) }} ></span> </span> }
                 {overflowActive ? <span className="sender-sends">...</span> : ""}
                 {message_type === 'image' && <span className="sender-sends ReplyCamera">{caption === '' ?  "Photo" : getReplyCaption(caption)}</span>}
                 {message_type === 'video' && <span className="sender-sends ReplyVideo">{caption === '' ? "Video" :  getReplyCaption(caption)}</span>}

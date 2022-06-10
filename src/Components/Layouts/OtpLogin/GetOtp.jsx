@@ -10,14 +10,15 @@ const OTP_NO_OF_CHAR = 6;
 function GetOtp(props = {}) {
   const [otpError, setOtpError] = useState("");
   const {
+    toast,
+    sendOtp,
+    otp = {},
+    regMobileNo,
+    handleChanges,
+    fullPageLoader,
     handleOtpverify,
     handleReEnterNo,
-    handleChanges,
-    otp = {},
-    toast,
-    regMobileNo,
-    fullPageLoader,
-    sendOtp
+    handleBlockedInfo = () => {}
   } = props;
 
   // Resend OTP
@@ -55,30 +56,37 @@ function GetOtp(props = {}) {
               const userIdentifier = `${regMobileNo.countryCode.replace("+", "")}${regMobileNo.mobileNumber}`;
               const registerResult = await SDK.register(userIdentifier);
 
-              const {
-                data: { username = "", password = "", token = "", isProfileUpdated = false } = {}
-              } = registerResult;
+              if (registerResult.statusCode === 200) {
+                const { data: { username = "", password = "", token = "", isProfileUpdated = false } = {} } =
+                  registerResult;
 
-              if (username && password) {
-                const loginResult = await SDK.login(username, password);
+                if (username && password) {
+                  const loginResult = await SDK.login(username, password);
 
-                if (loginResult.statusCode === 200) {
-                  const loginData = {
-                    username,
-                    password,
-                    type: "web"
-                  };
-                  isProfileUpdated && encryption("auth_user", loginData);
-                  localStorage.setItem("token", token);
-                  SDK.setUserToken(token);
+                  if (loginResult.statusCode === 200) {
+                    const loginData = {
+                      username,
+                      password,
+                      type: "web"
+                    };
+                    isProfileUpdated && encryption("auth_user", loginData);
+                    localStorage.setItem("token", token);
+                    SDK.setUserToken(token);
 
-                  if (isSandboxMode() && registerResult.data?.isProfileUpdated) {
-                    await SDK.syncContacts(username);
+                    if (isSandboxMode() && registerResult.data?.isProfileUpdated) {
+                      await SDK.syncContacts(username);
+                    }
+                    handleOtpverify(userIdentifier, registerResult.data, loginData);
                   }
-                  handleOtpverify(userIdentifier, registerResult.data, loginData);
+                } else {
+                  toast.error("Login Failed!");
                 }
+              } else if (registerResult.statusCode === 403) {
+                fullPageLoader(false);
+                handleBlockedInfo();
               } else {
-                toast.error("Login Failed!");
+                fullPageLoader(false);
+                toast.error(registerResult.message);
               }
             } else {
               toast.error("The server is not responding. Please try again later");
@@ -117,58 +125,62 @@ function GetOtp(props = {}) {
     } else if (unicode >= 48 && unicode <= 57) {
       const next = elmnt.target.tabIndex;
       if (next < 6) {
-        elmnt.target.form.elements[next].focus();
-      }
+        if(elmnt.target.value){
+          elmnt.target.form.elements[next].focus();
+        }
+    }
     }
   };
 
   return (
-    <form className="otpForm" id="otpForm">
-      <div className="heading">
-        <h4>Verify OTP</h4>
-      </div>
-      <div className="register_help_text">
-        <span className="">
-          We have sent you a SMS. To complete the Registration, enter the 6 digit activation code below
-        </span>
-      </div>
-      <div className="otp-input">
-        {Array(OTP_NO_OF_CHAR)
-          .fill(null)
-          .map((_, i) => (
-            <CommonInputTag
-              key={i + 1}
-              type={"text"}
-              name={`otp${i + 1}`}
-              id={`otp${i + 1}`}
-              maxLength={"1"}
-              value={otp[`otp${i + 1}`]}
-              onChange={(e) => handleChanges(`otp${i + 1}`, e)}
-              onKeyUp={inputfocus}
-              onKeyPress={handleOnlyNumber}
-              tabIndex={i + 1}
-              autoComplete={false}
-            />
-          ))}
-
-        {otpError && (
-          <span id="otp-error" className="error">
-            {otpError}
+    <React.Fragment>
+      <form className="otpForm" id="otpForm">
+        <div className="heading">
+          <h4>Verify OTP</h4>
+        </div>
+        <div className="register_help_text">
+          <span className="">
+            We have sent you a SMS. To complete the Registration, enter the 6 digit activation code below
           </span>
-        )}
-      </div>
-      <button onClick={submitOtp} id="VerifyOtp" type="button">
-        Verify OTP
-      </button>
-      <div className="Links">
-        <span onClick={handleReEnterNo} className="changeNum" id="changeNum">
-          Change Number
-        </span>
-        <span onClick={handleOtpResend} className="resendOtp" id="resendOtp">
-          Resend OTP
-        </span>
-      </div>
-    </form>
+        </div>
+        <div className="otp-input">
+          {Array(OTP_NO_OF_CHAR)
+            .fill(null)
+            .map((_, i) => (
+              <CommonInputTag
+                key={i + 1}
+                type={"text"}
+                name={`otp${i + 1}`}
+                id={`otp${i + 1}`}
+                maxLength={"1"}
+                value={otp[`otp${i + 1}`]}
+                onChange={(e) => handleChanges(`otp${i + 1}`, e)}
+                onKeyUp={inputfocus}
+                onKeyPress={handleOnlyNumber}
+                tabIndex={i + 1}
+                autoComplete={false}
+              />
+            ))}
+
+          {otpError && (
+            <span id="otp-error" className="error">
+              {otpError}
+            </span>
+          )}
+        </div>
+        <button onClick={submitOtp} id="VerifyOtp" type="button">
+          Verify OTP
+        </button>
+        <div className="Links">
+          <span onClick={handleReEnterNo} className="changeNum" id="changeNum">
+            Change Number
+          </span>
+          <span onClick={handleOtpResend} className="resendOtp" id="resendOtp">
+            Resend OTP
+          </span>
+        </div>
+      </form>
+    </React.Fragment>
   );
 }
 

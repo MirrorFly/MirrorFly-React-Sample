@@ -4,7 +4,7 @@ import About from './About';
 import Blocked from './BlockedContacts';
 import Notification from './Notifications';
 import './Setting.scss';
-import { SettingOptions, SettingsHeder } from './Settings';
+import { SettingOptions, SettingsHeader } from './Settings';
 import Chat from './Chat';
 import Archive from './ArchivedChat/index';
 import { getTranslateTargetLanguage, setLocalWebsettings } from '../../../Helpers/Utility';
@@ -12,14 +12,16 @@ import SDK from '../../SDK';
 import { REACT_APP_GOOGLE_TRANSLATE_API_KEY } from '../../processENV';
 import Store from '../../../Store';
 import { transLateLanguageAction } from '../../../Actions/TranslateAction';
+import DeleteMyAccount from './DeleteMyAccount';
 
 const optionsArray = [
     { label: 'Chat', image: 'chat' },
-    { label: 'Archived Settings', image:'Archived' },
+    { label: 'Archived Settings', image: 'Archived' },
     { label: 'Notifications', image: 'notification' },
     { label: 'Starred', image: 'star' },
     { label: 'Blocked', image: 'blocked' },
-    { label: 'About and Help', image: 'about' }
+    { label: 'About and Help', image: 'about' },
+    { label: 'Delete My Account', image: 'delete' }
 ];
 export default class Setting extends Component {
     constructor(props) {
@@ -79,11 +81,11 @@ export default class Setting extends Component {
         const { parrentView, activeTab } = this.state
         return (
             <Fragment>
-                { parrentView &&
+                {parrentView &&
                     <div className="setting-container">
                         <div>
                             <div className="settinglist">
-                                <SettingsHeder
+                                <SettingsHeader
                                     handleBackFromSetting={handleBackFromSetting}
                                     label={'Settings'}
                                 />
@@ -116,6 +118,7 @@ export default class Setting extends Component {
                         {activeTab === 'star' && <StarredMessages handleBackToSetting={this.handleBackToSetting} />}
                         {activeTab === 'blocked' && <Blocked handleBackToSetting={this.handleBackToSetting} />}
                         {activeTab === 'about' && <About handleBackToSetting={this.handleBackToSetting} />}
+                        {activeTab === 'delete' && <DeleteMyAccount handleBackToSetting={this.handleBackToSetting} />}
                     </Fragment>
                 }
             </Fragment>

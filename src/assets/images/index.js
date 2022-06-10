@@ -266,3 +266,7 @@ export {default as profile2} from './profile2.png';
 export {default as profile3} from './profile3.png';
 export {ReactComponent as CallEndicon} from './callEndicon.svg';
 export {ReactComponent as Callendiconplain} from './call-ended.svg';
+export {ReactComponent as IconVerifiyedAccount} from './verifiyed_account.svg';
+export {ReactComponent as IconReport} from './report.svg';
+export {ReactComponent as IconGroupReport} from './group_report.svg';
+export {ReactComponent as IconSingleReport} from './single_report.svg'; 

@@ -4,6 +4,7 @@ import ProfileImage from '../../Components/WebChat/Common/ProfileImage'
 import { CALL_STATUS_CONNECTED, CALL_STATUS_HOLD } from '../../Helpers/Call/Constant';
 import { AudioOff, DropdownArrow, IconPinActive, VideoOff } from '../../assets/images';
 import { initialNameHandle } from '../../Helpers/Chat/User';
+import { handleAudioClasses } from '../../Helpers/Call/Call';
 
 class BigVideo extends React.Component {
 
@@ -25,38 +26,11 @@ class BigVideo extends React.Component {
         }
         return false;
     }
-    
-    handleAudioClasses = (volumeVdo = 0) => {
-        let volume = volumeVdo === 'NaN' ? 0 : volumeVdo;
-        if(volume > 5.5){    
-            return "audio_vhigh";
-        }
-        else if(volume > 4.5){    
-            return "audio_high";
-        }
-        else if(volume > 3.5){    
-            return "audio_medium";
-        }
-        else if(volume > 1.5){    
-            return "audio_normal";
-        }
-       else if(volume > .5){    
-            return "audio_low";
-        }
-      else if(volume > 0){    
-                return "audio_slient";
-            }
-     else {
-        return "audio_hidden";
-     }       
-            
-            
-    }
 
     render() {
         let { audioMuted, videoMuted, rosterData, stream, remoteStreamLength, volumeLevel,volumeVideo, showVoiceDetect, inverse } = this.props;
         const token = localStorage.getItem('token');
-        const iniTail = initialNameHandle(rosterData, rosterData.initialName);
+        const initial = initialNameHandle(rosterData, rosterData.initialName);
         return (
             <>
                 {!videoMuted && this.props.callStatus && (this.props.callStatus.toLowerCase() === CALL_STATUS_CONNECTED || this.props.callStatus.toLowerCase() === CALL_STATUS_HOLD) && stream && stream.video &&
@@ -68,7 +42,7 @@ class BigVideo extends React.Component {
                             }
                         {!audioMuted && !remoteStreamLength <= 2 ?
                         <>
-                            <div className={`audio_indication left height_adjust transistion_adjust ${this.handleAudioClasses(volumeVideo)}`}>
+                            <div className={`audio_indication left height_adjust transistion_adjust ${handleAudioClasses(volumeVideo)}`}>
                                 <div className="audio_indicator audio_indicator_1"></div>
                                 <div className="audio_indicator audio_indicator_2"></div>
                                 <div className="audio_indicator audio_indicator_3"></div>
@@ -102,7 +76,7 @@ class BigVideo extends React.Component {
                          <div className={"avatar-info " + (showVoiceDetect ? " v-detect" : "")}>
                              <span style={{ "transform": "scale(" + volumeLevel + ")"}} className="voice"></span>
                             <ProfileImage
-                                name = {iniTail}
+                                name = {initial}
                                 chatType='chat'
                                 userToken={token}
                                 temporary={false}

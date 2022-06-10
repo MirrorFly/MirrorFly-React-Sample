@@ -77,7 +77,7 @@ class WebChatMediaPreview extends React.Component {
   };
 
   handleDisplayMedia = async () => {
-    return Promise.all(
+    return Promise.allSettled(
       this.state.mediaList.map(async (media, index) => {
         let audioType = media?.msgBody?.media?.audioType;
         let msgObj = media.msgBody ? media.msgBody : media;
@@ -215,8 +215,7 @@ class WebChatMediaPreview extends React.Component {
           default:
             mediaData = {};
             break;
-        }
-
+          }
         return (
           <div key={msgId} className={mediaData.class} id={msgId + index}>
             <img src={mediaData.imageURL} alt={mediaData.fileName} />
@@ -276,9 +275,15 @@ class WebChatMediaPreview extends React.Component {
   };
 
   diplayMedia = (type = "") => {
-    this.handleDisplayMedia().then((response) => {
+    let media = [];
+    this.handleDisplayMedia().then((results) => results.forEach((result) => {
+      if(result.status === "fulfilled"){
+        media.push(result.value);
+      }
+    }))
+    .then(() => {
       this.setState({
-        previewData: response,
+        previewData: media,
         ...(type === "delete" && {
           selectedItem: this.tempSelectedItem !== 0 ? this.tempSelectedItem - 1 : this.tempSelectedItem
         }),
@@ -286,19 +291,17 @@ class WebChatMediaPreview extends React.Component {
           selectedItem: this.tempSelectedItem + 1
         })
       });
-    });
+    })
   };
-
+  
   handleGetMedia = async (messageId = "") => {
     const { jid: msgFrom, chatType } = this.props;
-
     if (chatType === "broadcast") {
       let jid = formatUserIdToJid(msgFrom);
       SDK.getBroadcastChatMedia(jid, messageId);
     } else {
       let jid = formatUserIdToJid(msgFrom, chatType);
       const mediaMsgRes = await SDK.getMediaMessages(jid, messageId);
-
       if (mediaMsgRes && mediaMsgRes.statusCode === 200 && mediaMsgRes.data.length) {
         // Filtering Media Duplicates with Message Id
         const msgIds = new Set(this.state.mediaList.map((d) => d.msgId));
@@ -399,7 +402,6 @@ class WebChatMediaPreview extends React.Component {
   componentDidMount() {
     this.initializeMutation();
     const chatMediaList = getActiveChatMessages();
-
     let mediaList = chatMediaList.filter(
       (el) => el && el.msgBody && PREVIEW_MEDIA_TYPES.includes(el.msgBody.message_type) && el.deleteStatus === 0
     );
@@ -407,13 +409,17 @@ class WebChatMediaPreview extends React.Component {
       mediaList.sort((a, b) => (b.timestamp > a.timestamp ? 1 : -1));
       let selectedItem = mediaList.findIndex((el) => el.msgId === this.props.selectedMessageData.msgId);
       this.tempSelectedItem = selectedItem;
-
+      
       this.setState({ mediaList, selectedItem }, () => {
         this.diplayMedia();
         // Load More Data if the Inital Fetched Media Count is Less than the Config Value
         selectedItem <= INITIAL_LOAD_MEDIA_LIMIT && this.loadMoreMedia();
       });
-    } else this.handleGetMedia();
+      if(this.state.previewData.length === 0){this.failedComponentDidMount()}
+    } else{
+      this.handleGetMedia();
+      if(this.state.previewData.length === 0){this.failedComponentDidMount()} 
+    }
   }
 
   initialCall = () => {
@@ -425,7 +431,7 @@ class WebChatMediaPreview extends React.Component {
         {
           allowInitialCall: true,
           starStatusCheck: checkInitalStar,
-          seletedMsgId: mediaList[0].msgId,
+          seletedMsgId: mediaList[selectedItem].msgId,
         })
     }
   };
@@ -454,6 +460,13 @@ class WebChatMediaPreview extends React.Component {
           }
         }
       }
+    }
+    if (prevProps.groupsData && prevProps.groupsData.id !== this.props.groupsData.id) {
+          const groupId = this.props.jid.split("@")[0]
+          let currentGroupData = this.props.groupsData?.data.find((item)=> item?.groupId === groupId )
+            if(currentGroupData?.isAdminBlocked){
+              return this.props.handleMediaClose()
+            }
     }
   }
 
@@ -581,10 +594,30 @@ class WebChatMediaPreview extends React.Component {
     SDK.updateFavouriteStatus(formatUserIdToJid(this.props.jid), [seletedMsgId], !starStatusCheck);
     this.setState({ starStatusCheck: !starStatusCheck })
   };
+  
+  failedComponentDidMount(){
+    this.initializeMutation();
+    const chatMediaList = getActiveChatMessages();
+    let mediaList = chatMediaList.filter(
+      (el) => el && el.msgBody && PREVIEW_MEDIA_TYPES.includes(el.msgBody.message_type) && el.deleteStatus === 0
+    );
+    if (mediaList.length) {
+      mediaList.sort((a, b) => (b.timestamp > a.timestamp ? 1 : -1));
+      let selectedItem = mediaList.findIndex((el) => el.msgId === this.props.selectedMessageData.msgId);
+      this.tempSelectedItem = selectedItem;
+      
+      this.setState({ mediaList, selectedItem }, () => {
+        this.diplayMedia();
+        // Load More Data if the Inital Fetched Media Count is Less than the Config Value
+        selectedItem <= INITIAL_LOAD_MEDIA_LIMIT && this.loadMoreMedia();
+      });
+    } else{
+      this.handleGetMedia();
+    } 
+  }
 
   render() {
     const { previewData, selectedItem, starStatusCheck = false } = this.state;
-
     return (
       <Suspense
         fallback={<div>Loading...</div>}>
@@ -669,6 +702,7 @@ const mapStateToProps = (state) => {
   return {
     messageData: state.messageData,
     starredMessages: state.starredMessages,
+    groupsData:state.groupsData
   };
 };
 

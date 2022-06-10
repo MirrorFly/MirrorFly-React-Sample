@@ -9,6 +9,7 @@ import {
   Starred,
   UnStar,
   DropDownload,
+  IconReport
 } from "../../../../../assets/images";
 import { MEDIA_MESSAGE_TYPES } from "../../../../../Helpers/Constants";
 
@@ -57,8 +58,8 @@ const DropDownComponent = (props = {}) => {
   } = props;
 
   const issingleChat = isSingleChat(chatType);
-  const container = document&&document.getElementById("message-containner");
-  const ClientHeight = container&&container.clientHeight;
+  const container = document && document.getElementById("message-containner");
+  const ClientHeight = container && container.clientHeight;
   const [dropposition, setDropPosition] = useState(false);
 
   React.useLayoutEffect(() => {
@@ -152,6 +153,14 @@ const DropDownComponent = (props = {}) => {
             <span>Download</span>
           </li>
         )}
+        {isSender &&
+          <li className="Report" title="Report">
+            <i>
+              <IconReport />
+            </i>
+            <span>Report</span>
+          </li>
+        }
       </ul>
     </OutsideClickHandler>
   );
@@ -167,7 +176,7 @@ export default React.memo((props) => {
     msgid,
     msgType,
     favouriteStatus,
-    messageAction = () => {},
+    messageAction = () => { },
     closeDropDown,
     messageObject
   } = props;

@@ -9,10 +9,12 @@
             margin: 0 auto;
             border-radius: 16px;
             overflow: hidden;
+            z-index: 1;
         }
 
         &::before {
             width: 100%;
+            z-index: 0;
             height: var(--maxParentheight);
             max-width: 1440px;
             content: '';

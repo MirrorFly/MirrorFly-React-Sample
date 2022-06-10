@@ -203,7 +203,10 @@ const ChatMessageTemplate = (props = {}) => {
     if (uploadStatus !== 2) {
       return true;
     }
-    document && document.querySelectorAll("video, audio").forEach((element) => element.pause());
+    
+    if (document && document.getElementById("imagePreviewContainer")) {
+      document.getElementById("imagePreviewContainer").querySelectorAll("video, audio").forEach((element) => element.pause());
+    }
     const data = { jid: props.jid, chatType: props.chatType, selectedMessageData: messageObject };
     Store.dispatch(SingleChatSelectedMediaAction(data));
     return false;

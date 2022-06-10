@@ -12,7 +12,7 @@ window.addEventListener("DOMContentLoaded", function() {
  });
 window.onbeforeunload = function() {
     sessionStorage.removeItem("isLogout");
-    if (localStorage.getItem("sessionId") !== sessionStorage.getItem("sessionId")) {
+    if (localStorage.getItem("sessionId") === sessionStorage.getItem("sessionId")) {
       const  callConnectionData = JSON.parse(localStorage.getItem('call_connection_status'))
       if(callConnectionData && callConnectionData.from){
         let vcardData = getLocalUserDetails();

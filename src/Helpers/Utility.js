@@ -360,14 +360,8 @@ export const validURL = (str) => {
     return false;
   }
   var pattern = new RegExp(
-    "^(https?:\\/\\/)?" + // protocol
-      "((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|" + // domain name
-      "((\\d{1,3}\\.){3}\\d{1,3}))" + // OR ip (v4) address
-      "(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*" + // port and path
-      "(\\?[;&a-z\\d%_.~+=-]*)?" + // query string
-      "(\\#[-a-z\\d_]*)?$",
-    "i"
-  ); // fragment locator
+    /^(?:(?:https?|ftp):\/\/)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:\/\S*)?$/
+    ); // fragment locator
   return pattern.test(str);
 };
 
@@ -497,18 +491,25 @@ export const captionLink = (text) => {
  * logout() Method to call the SDK.logout() and removed the localstorage values. <br />
  * Window.location.reload() function performed.
  */
-export const logout = () => {
-  let items = [
-    "auth_user",
-    "blocklist_data",
-    "connection_status",
-    "token"
-  ];
-  for (let item of items) {
-    ls.removeItem(item);
-  }
+export const logout = async(type = "") => {
+  // let items = [
+  //   "auth_user",
+  //   "blocklist_data",
+  //   "connection_status",
+  //   "token"
+  // ];
+  // for (let item of items) {
+  //   ls.removeItem(item);
+  // }
+  localStorage.clear();
+  await deleteAllIndexedDb();
   SDK && SDK.logout();
-  window.location.reload();
+  if (type === "accountDeleted") {
+    ls.setItem("deleteAccount", true);
+  }
+  if (type !== "block") {
+    window.location.reload();
+  }
 };
 
 export const formatCallLogDate = (date) => {
@@ -1181,6 +1182,7 @@ export const getInitializeObj = () => ({
   xmppSocketPort: Number(REACT_APP_XMPP_SOCKET_PORT),
   ssl: REACT_APP_SSL === "true",
   encryptKey: REACT_APP_ENCRYPT_KEY,
+  encryptKeyProfile: REACT_APP_LICENSE_KEY,
   apiBaseUrl: REACT_APP_API_URL,
   callbackListeners: callbacks,
   signalServer: REACT_APP_SOCKETIO_SERVER_HOST,
@@ -1286,3 +1288,14 @@ export const getAutomationLoginCredentials = () => {
   }
   return staticCredential;
 };
+
+export const handleFilterBlockedContact = (rosterData) => {
+  let data = rosterData.filter(function (item) {
+    return item.isAdminBlocked !== true;
+  });
+  return data;
+}
+
+const deleteAllIndexedDb = async() => {
+  window.indexedDB.deleteDatabase("mirrorflydb");
+}

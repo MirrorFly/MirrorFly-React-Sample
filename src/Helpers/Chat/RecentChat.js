@@ -5,7 +5,7 @@ import { MSG_PROCESSING_STATUS_ID, MSG_SENT_ACKNOWLEDGE_STATUS_ID,
   MSG_DELIVERED_STATUS_ID, MSG_SEEN_STATUS_ID, CHAT_TYPE_GROUP, GROUP_CREATED,
   GROUP_USER_ADDED, GROUP_USER_REMOVED, GROUP_USER_LEFT,
   GROUP_PROFILE_INFO_UPDATED, GROUP_USER_MADE_ADMIN } from './Constant';
-import { isLocalUser, getContactNameFromRoster } from "./User";
+import { isLocalUser, getContactNameFromRoster, getDataFromRoster } from "./User";
 window.moment = moment;
 
 export const sortBydate = (chatMessages) => {
@@ -62,18 +62,9 @@ export const messageDeliveryStatus = {
  */
 export const msgStatusOrder = [MSG_PROCESSING_STATUS_ID,MSG_SENT_ACKNOWLEDGE_STATUS_ID,MSG_DELIVERED_STATUS_ID,MSG_SEEN_STATUS_ID];
 
-export const getDetailsFromRoster = (jid, rosterArray = []) => {
-  if (rosterArray.length === 0) return jid;
-  const userProfile = rosterArray.find((profile) => {
-    const rosterJid = profile.username ? profile.username : profile.userId;
-    return jid === rosterJid;
-  });
-  return getContactNameFromRoster(userProfile) || getFormatPhoneNumber(jid);
-};
-
 export const groupstatus = (publisherId, toUserId, status, roster, chatType = CHAT_TYPE_GROUP) => {
-  var publisherName = getDetailsFromRoster(publisherId, roster);
-  var toUserName = getDetailsFromRoster(toUserId, roster);
+  var publisherName = getContactNameFromRoster(getDataFromRoster(publisherId)) || getFormatPhoneNumber(publisherId);
+  var toUserName = getContactNameFromRoster(getDataFromRoster(toUserId)) || getFormatPhoneNumber(toUserId);
   const groupName = isGroupChat(chatType) ? "this group" : "broadcast";
   const isPublisherLocalUser = isLocalUser(publisherId);
   const isToUserLocalUser = isLocalUser(toUserId);

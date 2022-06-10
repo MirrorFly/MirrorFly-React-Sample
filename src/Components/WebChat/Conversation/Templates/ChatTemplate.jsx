@@ -38,7 +38,7 @@ class ChatTemplate extends Component {
         const { publisherId, userId, profileUpdatedStatus } = msg;
         const notification = groupstatus(publisherId, userId, profileUpdatedStatus, rosterArray) || "";
         return (
-          <div key={msgId} className="chatStatusBar">
+          <div key={msgId} id={msgId} className="chatStatusBar">
             <span>{notification}</span>
           </div>
         );

@@ -37,7 +37,7 @@ import {
   updateSessionId,
   updateSessionIdInLocalStorage
 } from "../../Helpers/Chat/ChatHelper";
-import { CHAT_TYPE_GROUP, DEFAULT_TITLE_NAME } from "../../Helpers/Chat/Constant";
+import { CHAT_TYPE_GROUP, DEFAULT_TITLE_NAME, NEW_CHAT_CONTACT_PERMISSION_DENIED } from "../../Helpers/Chat/Constant";
 import { NO_INTERNET_TOAST } from "../../Helpers/Constants";
 import { formatUserIdToJid } from "../../Helpers/Chat/User";
 import { setGroupParticipantsByGroupId } from "../../Helpers/Chat/Group";
@@ -45,11 +45,14 @@ import { StarredMessagesList } from "../../Actions/StarredAction";
 import OtpLogin from "./OtpLogin/index";
 import MeetingScreenJoin from "../WebCall/MeetingScreenJoin/";
 import { resetCallData } from "../callbacks";
+import ActionInfoPopup from '../ActionInfoPopup';
+import BlockedFromApplication from "../BlockedFromApplication";
+import { adminBlockStatusUpdate } from "../../Actions/AdminBlockAction";
+import { ls } from "../../Helpers/LocalStorage";
 
 const createHistory = require("history").createBrowserHistory;
 export const history = createHistory();
 let callStatus = "";
-
 class Login extends React.Component {
   /**
    * WebChatQRCode Constructor <br />
@@ -73,12 +76,22 @@ class Login extends React.Component {
       newSession: false,
       openStatus: true,
       showMessageinfo: false,
-      joinCallPopup: false
+      joinCallPopup: false,
+      contactPermissionPopup: false,
+      contactPermissionPopupText: "",
+      accountDeletedToast: ls.getItem("deleteAccount")
     };
     this.handleQRCode = this.handleQRCode.bind(this);
     this.handleLogin = this.handleLogin.bind(this);
     localStorage.setItem("hideCallScreen", false);
     registerWindowEvent();
+  }
+
+  handleContactPermissionPopup = (state, value = "") => {
+    this.setState({
+      contactPermissionPopup: state,
+      contactPermissionPopupText: value ? value : NEW_CHAT_CONTACT_PERMISSION_DENIED
+    });
   }
 
   handleIframeTask = (e) => {
@@ -216,7 +229,7 @@ class Login extends React.Component {
         });
         return;
       }
-    
+
       if (localStorage.getItem("auth_user") !== null) {
         let decryptResponse = decryption("auth_user");
 
@@ -267,6 +280,15 @@ class Login extends React.Component {
   }
 
   handleLoginSuccess = async (data) => {
+    
+    let resource = SDK.getCurrentUserJid();
+    if (resource.statusCode === 200) encryption("loggedInUserJidWithResource", resource.userJid);
+    
+    const tokenResult = await SDK.getUserToken(data.username, data.password);
+    if (tokenResult.statusCode === 200) {
+      localStorage.setItem("token", tokenResult.userToken);
+    }
+
     sessionStorage.removeItem("isLogout");
     localStorage.setItem("recordingStatus", true);
     encryption("auth_user", data);
@@ -313,7 +335,7 @@ class Login extends React.Component {
         const urlPath = this.props.location?.pathname ? this.props.location?.pathname.split("/") : [];
         if (urlPath.length > 1 && urlPath[1]) {
           Store.dispatch(callIntermediateScreen({ show: true, link: urlPath[1] }));
-          this.props.history.replace({ pathname: `/`});
+          this.props.history.replace({ pathname: `/` });
         }
 
         const favResult = await SDK.getAllFavouriteMessages();
@@ -323,9 +345,6 @@ class Login extends React.Component {
   };
 
   async handleLoginToken(data) {
-    let resource = SDK.getCurrentUserJid();
-    if (resource.statusCode === 200) encryption("loggedInUserJidWithResource", resource.userJid);
-    await SDK.getUserToken(data.username, data.password);
     this.handleLoginSuccess(data);
   }
 
@@ -346,15 +365,22 @@ class Login extends React.Component {
       type: "web"
     };
     let tabId = Date.now();
-
     SDK.login(response.username, response.password)
       .then(async (res) => {
         if (res.statusCode === 200) {
-          if (isSandboxMode() && response.isProfileUpdated === false) 
-            this.handleSandboxProfileUpdate(response);
+          // if (isSandboxMode() && response.isProfileUpdated === false) {
+          //   this.handleSandboxProfileUpdate(response);
+          // }
           updateSessionId(tabId);
           this.handleLoginToken(loginResponse);
           return;
+        } else if (res.statusCode === 403) {
+          Store.dispatch(adminBlockStatusUpdate({
+            toUserId: response.username,
+            isAdminBlocked: true
+          }));
+          logout("block");
+          return
         }
         throw new Error("login Failed");
       })
@@ -547,10 +573,25 @@ class Login extends React.Component {
       }
     }
 
+    let accountDeletedToast = this.state.accountDeletedToast;
+    if (accountDeletedToast) {
+      setTimeout( () => {
+        ls.removeItem("deleteAccount");
+        this.setState({
+          accountDeletedToast: false
+        });
+      }, 3000)
+    }
+
     return !webChatStatus ? (
       <div className="container">
         <div className="login-container" id="login-container">
           {this.renderLoginTemplate()}
+          { accountDeletedToast && 
+            <div className='toast_container'>
+                <span>Your MirrorFly account has been deleted.</span>
+            </div>
+          }
         </div>
       </div>
     ) : (
@@ -591,6 +632,7 @@ class Login extends React.Component {
           callType={(callConnectionDate && callConnectionDate.callType) || ""}
           handlePopupState={this.handlePopupState}
           callMode={(callConnectionDate && callConnectionDate.callMode) || ""}
+          handleContactPermissionPopup={this.handleContactPermissionPopup}
         />
         <ConversationSection
           showMessageinfo={this.state.showMessageinfo}
@@ -644,6 +686,17 @@ class Login extends React.Component {
             </div>
           )}
         <ToastContainer />
+        {(this.props.adminBlockData?.data?.toUserId && (this.props.adminBlockData?.data?.toUserId === this.props.vCardData?.data?.fromUser)) &&
+          <BlockedFromApplication />
+        }
+        {this.state.contactPermissionPopup && !this.props.contactPermission &&
+          <ActionInfoPopup
+            textActionBtn={"Ok"}
+            handleAction={() => this.handleContactPermissionPopup(false)}
+            textHeading={"Contact permission"}
+            textInfo={this.state.contactPermissionPopupText}
+          />
+        }
       </div>
     );
   };
@@ -733,7 +786,9 @@ const mapStateToProps = (state, props) => {
     SingleChatSelectedMediaData: state.SingleChatSelectedMediaData,
     GroupChatSelectedMediaData: state.GroupChatSelectedMediaData,
     isAppOnline: state?.appOnlineStatus?.isOnline,
-    callIntermediateScreen: state?.callIntermediateScreen
+    callIntermediateScreen: state?.callIntermediateScreen,
+    contactPermission: state?.contactPermission?.data,
+    adminBlockData: state.adminBlockData
   };
 };
 

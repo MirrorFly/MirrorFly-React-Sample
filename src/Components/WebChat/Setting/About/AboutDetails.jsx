@@ -1,5 +1,5 @@
 import React from "react";
-import { SettingsHeder } from "../Settings";
+import { SettingsHeader } from "../Settings";
 import "./About.scss";
 
 const AboutDetails = (props) => {
@@ -8,7 +8,7 @@ const AboutDetails = (props) => {
     <div className="setting-container">
       <div>
         <div className="settinglist">
-          <SettingsHeder handleBackFromSetting={backToAbout} label={"About Us"} />
+          <SettingsHeader handleBackFromSetting={backToAbout} label={"About Us"} />
           <div className="setting-list-ul Details">
             <div className="content-block">
               <p className="content">
