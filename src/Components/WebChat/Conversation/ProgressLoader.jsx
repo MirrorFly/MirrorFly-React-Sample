@@ -86,7 +86,17 @@ function ProgressLoader(props = {}) {
   };
 
   const getSyncClass = () => (isSender ? "sync left" : "sync right");
-
+  const progressView = () => {
+    return (
+  <div className={`loadingProgress ${getSyncClass()}`}>
+  <Upload3 />
+  <span className="progressBar progress-animate" style={{ width: "50%" }}></span>
+</div>
+    );
+  };
+  const progressViewdiffer=()=> setTimeout(() => {
+    progressView();
+  }, 200);
   return (
     <React.Fragment>
       <div className="progressOverlay">
@@ -105,14 +115,9 @@ function ProgressLoader(props = {}) {
             </div>
           </>
         ) : null}
-
         {uploadStatus === 3 && commonRetryAction()}
-        {uploadStatus === 4 && isOnline ? (
-          <div className={`loadingProgress ${getSyncClass()}`}>
-            <Upload3 />
-            <span className="progressBar progress-animate" style={{ width: "50%" }}></span>
-          </div>
-        ) : null}
+        {uploadStatus === 4 && isOnline ? progressViewdiffer()
+         : null}
 
         {uploadStatus === 5 && (
           <div className="reLoadFile failed">

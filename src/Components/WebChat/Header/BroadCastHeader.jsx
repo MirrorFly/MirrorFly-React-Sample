@@ -4,9 +4,9 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { ArrowBack } from '../../../assets/images';
 import { displayNameFromRencentChat } from '../../../Helpers/Chat/ChatHelper';
-import { ls } from '../../../Helpers/LocalStorage';
 import { getFormatPhoneNumber } from '../../../Helpers/Utility';
 import ProfileImage from '../Common/ProfileImage';
+import { getFromLocalStorageAndDecrypt } from '../WebChatEncryptDecrypt';
 class BroadCastHeader extends React.Component {
 
     constructor(props = {}) {
@@ -32,7 +32,7 @@ class BroadCastHeader extends React.Component {
         const { userData: { data: { recent: { msgfrom = "" } = {}, roster = {} } = {} } = {} } = this.props
         const { emailId, image } = roster
         const displayName = displayNameFromRencentChat(roster) || getFormatPhoneNumber(msgfrom)
-        const token = ls.getItem('token');
+        const token = getFromLocalStorageAndDecrypt('token');
         return (
             <Fragment>
                 <div className="conversation-header">

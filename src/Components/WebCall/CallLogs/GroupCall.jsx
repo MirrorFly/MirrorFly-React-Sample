@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 import { IconIncoming, IconOutgoing,IconIncomingMissed,IconAudiocall,IconVideocall} from '../../../assets/images';
 import ProfileImage from '../../../Components/WebChat/Common/ProfileImage'
 import { formatCallLogDate, formatCallLogTime, durationCallLog, getHighlightedText } from '../../../Helpers/Utility';
+import {getFromLocalStorageAndDecrypt} from '../../WebChat/WebChatEncryptDecrypt';
 
 const GroupCall = (props) => {
     let { displayName, jid, image, searchterm, callLog } = props;
@@ -14,7 +15,7 @@ const GroupCall = (props) => {
         return callStateIcon === 1 ? <IconIncoming /> : <IconOutgoing />
     }
 
-    const token = localStorage.getItem('token');
+    const token = getFromLocalStorageAndDecrypt('token');
     let date = formatCallLogDate(callLog.callTime / 1000);
     let time = formatCallLogTime(callLog.callTime);
     let durationText = "";

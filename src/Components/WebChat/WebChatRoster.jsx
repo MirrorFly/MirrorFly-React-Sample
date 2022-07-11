@@ -12,6 +12,7 @@ import { isUserWhoBlockedMe } from '../../Helpers/Chat/BlockContact';
 import UserStatus from '../WebChat/Common/UserStatus';
 import { formatUserIdToJid, getContactNameFromRoster } from '../../Helpers/Chat/User';
 import { NO_SEARCH_CONTACT_FOUND } from '../processENV';
+import {getFromLocalStorageAndDecrypt} from './WebChatEncryptDecrypt';
 
 
 class WebChatRoster extends React.Component {
@@ -63,7 +64,7 @@ class WebChatRoster extends React.Component {
     }
 
     handleRoster = (event, response) => {
-        const recordingStatus = localStorage.getItem('recordingStatus')
+        const recordingStatus = getFromLocalStorageAndDecrypt('recordingStatus')
         if (recordingStatus === 'false') return;
         let data = {
             roster: response,

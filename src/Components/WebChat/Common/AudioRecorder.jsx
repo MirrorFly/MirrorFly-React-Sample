@@ -6,6 +6,7 @@ import { AUDIO_PERMISSION_DENIED, PERMISSION_DENIED } from "../../processENV";
 import Modal from "./Modal";
 import { blockOfflineMsgAction } from "../../../Helpers/Utility";
 import { toast } from "react-toastify";
+import {getFromLocalStorageAndDecrypt} from "../WebChatEncryptDecrypt";
 
 function getBlobDuration(blob) {
   const tempVideoEl = document.createElement("video");
@@ -105,7 +106,7 @@ const AudioRecorder = (props = {}) => {
       toast("Unable to record audio while on call.");
       return;
     }
-    let settings = JSON.parse(localStorage.getItem("settings"));
+    let settings = JSON.parse(getFromLocalStorageAndDecrypt("settings"));
     const { audioLimit = 300 } = settings || {};
     navigator.mediaDevices
       .getUserMedia({ audio: true, video: false })

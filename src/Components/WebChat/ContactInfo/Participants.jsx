@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import OutsideClickHandler from 'react-outside-click-handler';
 import { showModal } from '../../../Actions/PopUp';
 import {  DropdownArrow } from '../../../assets/images';
-import { ls } from '../../../Helpers/LocalStorage';
 import Store from '../../../Store';
 import ProfileImage from '../Common/ProfileImage';
 import { formatUserIdToJid, isLocalUser, isDisplayNickName, getUserNickName, getContactNameFromRoster, getDataFromRoster } from '../../../Helpers/Chat/User';
 import UserStatus from '../Common/UserStatus';
 import { getFormatPhoneNumber } from '../../../Helpers/Utility';
+import { getFromLocalStorageAndDecrypt } from '../WebChatEncryptDecrypt';
 
 const Participants = (props) => {
 
@@ -59,7 +59,7 @@ const Participants = (props) => {
     const updateStatus = status || statusMsg || ''
     const localUser = isLocalUser(fromuser)
     const nickName = getUserNickName(props.members);
-    const token = ls.getItem('token');
+    const token = getFromLocalStorageAndDecrypt('token');
     const displayNickname = isDisplayNickName(props.members);
 
     const getInitalName = () => {

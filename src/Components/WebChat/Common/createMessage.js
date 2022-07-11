@@ -2,7 +2,7 @@ import { RecentChatUpdateAction } from "../../../Actions/RecentChatActions";
 import { chatSeenPendingMsg } from "../../../Actions/SingleChatMessageActions";
 import { changeTimeFormat } from "../../../Helpers/Chat/RecentChat";
 import { formatUserIdToJid, isLocalUser } from "../../../Helpers/Chat/User";
-import { getMessageObjReceiver } from "../../../Helpers/Utility";
+import { getMessageObjReceiver, shouldHideNotification } from "../../../Helpers/Utility";
 import Store from "../../../Store";
 import SDK from "../../SDK";
 import {
@@ -21,6 +21,8 @@ import {
 } from "../../../Helpers/Chat/ChatHelper";
 import { UnreadCountUpdate, UnreadCountDelete } from "../../../Actions/UnreadCount";
 import { ChatMessageHistoryDataAction } from "../../../Actions/ChatHistory";
+import browserNotify from "../../../Helpers/Browser/BrowserNotify";
+import {getFromLocalStorageAndDecrypt} from "../WebChatEncryptDecrypt";
 
 const getMessageSenderDetails = (newChatFrom, rosterDataArray) => {
   const rosterDetail = rosterDataArray.find((profile) => {
@@ -73,7 +75,7 @@ export const updateRecentChatMessage = (messgeObject, stateObject) => {
     /**
      * New chat that is not alreay exist in recent chat
      */
-    const getMute = localStorage.getItem("tempMuteUser");
+    const getMute = getFromLocalStorageAndDecrypt("tempMuteUser");
     let parserLocalStorage = getMute ? JSON.parse(getMute) : {};
     const isMuted = parserLocalStorage[newChatTo] ? 1 : 0;
     if (isMuted) {
@@ -174,15 +176,14 @@ export const updateMessageUnreadCount = (messgeObject, stateObject) => {
   if (
     [MSG_RECEIVE_STATUS, MSG_RECEIVE_STATUS_CARBON].indexOf(msgType) > -1 &&
     !isLocalUser(publisherId) &&
-    !isActiveConversationUserOrGroup(fromUserId, chatType) &&
+    ((shouldHideNotification() && browserNotify.isPageHidden ) || !isActiveConversationUserOrGroup(fromUserId, chatType)) &&
     notificationMessageType.indexOf(msgBody) === -1
   ) {
     Store.dispatch(UnreadCountUpdate({ fromUserId }));
   }
 
   if (
-    !isActiveConversationUserOrGroup(fromUserId, chatType) &&
-    GROUP_UPDATE_ACTIONS.indexOf(profileUpdatedStatus) > -1 &&
+    ((shouldHideNotification()&& browserNotify.isPageHidden ) || !isActiveConversationUserOrGroup(fromUserId, chatType)) &&    GROUP_UPDATE_ACTIONS.indexOf(profileUpdatedStatus) > -1 &&
     !isLocalUser(publisherId)
   ) {
     Store.dispatch(UnreadCountUpdate({ fromUserId }));

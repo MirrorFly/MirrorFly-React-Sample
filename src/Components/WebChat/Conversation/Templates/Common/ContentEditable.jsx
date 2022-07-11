@@ -46,7 +46,7 @@ class ContentEditable extends Component {
                 e.preventDefault()
                 // document.execCommand('insertHTML', false, '<br><br>');
                 this.props.handleSendTextMsg()
-                // this.props.handleEmptyContent()
+                this.props.handleEmptyContent()
                 return false;
                 
         }

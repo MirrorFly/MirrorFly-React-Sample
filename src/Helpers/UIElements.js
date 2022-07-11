@@ -7,12 +7,13 @@ export const getMessageTimeElement = (
   createdAt,
   favouriteStatus = 0,
   isSender = false,
-  message_type = ""
+  message_type = "",
+  isfromUser=true
 ) => {
   return (
     <span className="message-time">
       <span className="msg-sent-time">
-        {favouriteStatus === 1 && <i className="starredIcon">{isSender ? <StarGray /> : <StarBlue />}</i>}
+        {isfromUser && favouriteStatus === 1 && <i className="starredIcon">{isSender ? <StarGray /> : <StarBlue />}</i>}
         {message_type !== "image" || message_type !== "video" ? (
           <>
             <span>{messageStatus}</span>

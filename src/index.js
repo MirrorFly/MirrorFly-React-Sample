@@ -1,19 +1,19 @@
 import React, { Suspense } from 'react';
 import ReactDOM from 'react-dom';
 import * as serviceWorker from './serviceWorker';
-import { ls } from './Helpers/LocalStorage';
 import Loader from './Components/Layouts/Loader';
 import SDK from './Components/SDK'
 import "./assets/scss/common.scss";
 import { getLocalUserDetails } from './Helpers/Chat/User';
+import { deleteItemFromLocalStorage, deleteItemFromSessionStorage, encryptAndStoreInLocalStorage, getFromLocalStorageAndDecrypt, getFromSessionStorageAndDecrypt } from './Components/WebChat/WebChatEncryptDecrypt';
 
 window.addEventListener("DOMContentLoaded", function() {
-    ls.removeItem("new_recent_chat_data");
+  deleteItemFromLocalStorage("new_recent_chat_data");
  });
 window.onbeforeunload = function() {
-    sessionStorage.removeItem("isLogout");
-    if (localStorage.getItem("sessionId") === sessionStorage.getItem("sessionId")) {
-      const  callConnectionData = JSON.parse(localStorage.getItem('call_connection_status'))
+  deleteItemFromSessionStorage("isLogout");
+    if (getFromLocalStorageAndDecrypt("sessionId") === getFromSessionStorageAndDecrypt("sessionId")) {
+      const  callConnectionData = JSON.parse(getFromLocalStorageAndDecrypt('call_connection_status'))
       if(callConnectionData && callConnectionData.from){
         let vcardData = getLocalUserDetails();
         let userJid = callConnectionData.userJid ? callConnectionData.userJid : callConnectionData.from;
@@ -23,11 +23,11 @@ window.onbeforeunload = function() {
           SDK.endCall();
         }
       }
-      localStorage.removeItem('roomName');
-      localStorage.removeItem('callType');
-      localStorage.removeItem('call_connection_status');
-      localStorage.removeItem('connecting');
-      localStorage.setItem('callingComponent',false);
+      deleteItemFromLocalStorage('roomName');
+      deleteItemFromLocalStorage('callType');
+      deleteItemFromLocalStorage('call_connection_status');
+      deleteItemFromLocalStorage('connecting');
+      encryptAndStoreInLocalStorage('callingComponent',false);
     }
 
   };

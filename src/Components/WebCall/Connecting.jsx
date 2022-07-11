@@ -13,6 +13,7 @@ import  { resetCallData } from '../../Components/callbacks';
 import { getGroupData } from '../../Helpers/Chat/Group';
 import { getUserDetails,initialNameHandle } from '../../Helpers/Chat/User';
 import ProfileImage from '../WebChat/Common/ProfileImage';
+import { getFromLocalStorageAndDecrypt, encryptAndStoreInLocalStorage, deleteItemFromLocalStorage} from '../WebChat/WebChatEncryptDecrypt';
 
 let timer;
 
@@ -56,10 +57,10 @@ class Connecting extends Component{
             "sessionStatus": CALL_SESSION_STATUS_CLOSED
         });
 
-        localStorage.setItem('callingComponent',false)
-        localStorage.removeItem('roomName')
-        localStorage.removeItem('callType')
-        localStorage.removeItem('call_connection_status')
+        encryptAndStoreInLocalStorage('callingComponent',false)
+        deleteItemFromLocalStorage('roomName')
+        deleteItemFromLocalStorage('callType')
+        deleteItemFromLocalStorage('call_connection_status')
         Store.dispatch(showConfrence({
             showComponent: false,
             showCalleComponent:false
@@ -81,7 +82,7 @@ class Connecting extends Component{
         return rosterData;
     }
     render(){
-        const  callConnectionData = JSON.parse(localStorage.getItem('call_connection_status'))
+        const  callConnectionData = JSON.parse(getFromLocalStorageAndDecrypt('call_connection_status'))
         const containerStyle = {
             width: '100%',
             height: '100%',
@@ -147,7 +148,7 @@ class Connecting extends Component{
                             audioControl={false}
                             videoControl={false}
                         />
-                    {this.state.connectingIssue  && localStorage.getItem("connecting") === 'true'  && 
+                    {this.state.connectingIssue  && getFromLocalStorageAndDecrypt("connecting") === 'true'  && 
                         <NetworkError />
                     }                
                 </div>

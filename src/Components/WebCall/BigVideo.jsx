@@ -5,6 +5,7 @@ import { CALL_STATUS_CONNECTED, CALL_STATUS_HOLD } from '../../Helpers/Call/Cons
 import { AudioOff, DropdownArrow, IconPinActive, VideoOff } from '../../assets/images';
 import { initialNameHandle } from '../../Helpers/Chat/User';
 import { handleAudioClasses } from '../../Helpers/Call/Call';
+import {getFromLocalStorageAndDecrypt} from '../WebChat/WebChatEncryptDecrypt';
 
 class BigVideo extends React.Component {
 
@@ -29,7 +30,7 @@ class BigVideo extends React.Component {
 
     render() {
         let { audioMuted, videoMuted, rosterData, stream, remoteStreamLength, volumeLevel,volumeVideo, showVoiceDetect, inverse } = this.props;
-        const token = localStorage.getItem('token');
+        const token = getFromLocalStorageAndDecrypt('token');
         const initial = initialNameHandle(rosterData, rosterData.initialName);
         return (
             <>

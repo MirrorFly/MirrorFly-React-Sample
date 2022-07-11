@@ -1,7 +1,6 @@
 import React, { Fragment, useEffect, useState } from "react";
 import { toast } from 'react-toastify';
 import Config from "../../../config";
-import { ls } from '../../../Helpers/LocalStorage';
 import { getHighlightedText } from '../../../Helpers/Utility';
 import { REACT_APP_XMPP_SOCKET_HOST } from '../../processENV';
 import ProfileImage from '../Common/ProfileImage';
@@ -9,6 +8,7 @@ import UserStatus from '../Common/UserStatus';
 import { getIdFromJid, initialNameHandle } from "../../../Helpers/Chat/User";
 import { isSingleChat } from "../../../Helpers/Chat/ChatHelper";
 import { BlockedIcon } from "../Setting/images";
+import { getFromLocalStorageAndDecrypt } from "../WebChatEncryptDecrypt";
 
 const { maximumAllowedUsersToForward } = Config
 
@@ -52,7 +52,7 @@ export default function Users(props) {
         selectState === false ? addContact(jidWithHost, contactName, updateJid) : removeContact(jidWithHost, contactName, updateJid)
     }
 
-    const token = ls.getItem('token');
+    const token = getFromLocalStorageAndDecrypt('token');
     const hightlightText = getHighlightedText(contactName, searchValue)
     const updatedStatus = statusMsg || status;
     return (

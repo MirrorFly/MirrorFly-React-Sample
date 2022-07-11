@@ -22,7 +22,7 @@ import { UpdateMediaUploadStatus } from '../../Actions/ChatHistory';
 import { ReplyMessageAction } from '../../Actions/MessageActions';
 import SDK from "../../Components/SDK"
 import { getExtension } from '../../Components/WebChat/Common/FileUploadValidation';
-import { decryption } from '../../Components/WebChat/WebChatEncryptDecrypt';
+import { getFromLocalStorageAndDecrypt, encryptAndStoreInLocalStorage, getFromSessionStorageAndDecrypt, encryptAndStoreInSessionStorage} from '../../Components/WebChat/WebChatEncryptDecrypt';
 import { getGroupData } from './Group';
 import { getAvatarImage, groupAvatar } from '../../Components/WebChat/Common/Avatarbase64';
 import { webSettingLocalAction } from '../../Actions/BrowserAction';
@@ -433,19 +433,19 @@ export const resetStoreData = () => {
 }
 
 export const updateSessionIdInLocalStorage = () => {
-    let currentTabId = sessionStorage.getItem("sessionId");
-    currentTabId != null && localStorage.setItem("sessionId", currentTabId);
+    let currentTabId = getFromSessionStorageAndDecrypt("sessionId");
+    currentTabId != null && encryptAndStoreInLocalStorage("sessionId", currentTabId);
 }
 
 export const isCurrentSessionActive = () =>
-    sessionStorage.getItem("sessionId") === null ||
-    localStorage.getItem("sessionId") == null ||
-    localStorage.getItem("sessionId") === sessionStorage.getItem("sessionId")
+    getFromSessionStorageAndDecrypt("sessionId") === null ||
+    getFromLocalStorageAndDecrypt("sessionId") == null ||
+    getFromLocalStorageAndDecrypt("sessionId") === getFromSessionStorageAndDecrypt("sessionId")
 
 export const updateSessionId = (tabId) => {
-    if (sessionStorage.getItem("sessionId") === null) {
-        sessionStorage.setItem("sessionId", tabId);
-        localStorage.setItem("sessionId", tabId);
+    if (getFromSessionStorageAndDecrypt("sessionId") === null) {
+        encryptAndStoreInSessionStorage("sessionId", tabId);
+        encryptAndStoreInLocalStorage("sessionId", tabId);
     }
 }
 
@@ -472,7 +472,9 @@ export const getReplyMessageFormat = (message) => {
     }
 }
 
-export const isSameSession = () => localStorage.getItem("sessionId") === sessionStorage.getItem("sessionId")
+export const isSameSession = () => {
+    return getFromLocalStorageAndDecrypt("sessionId") === getFromSessionStorageAndDecrypt("sessionId")
+}
 
 export const updateFavicon = (type) => {
     let link = document.querySelector("link[rel~='icon']");
@@ -494,20 +496,20 @@ export const arrayToObject = (arr, key) => {
 };
 
 export const setTempMute = (name, stateData) => {
-    const tempMuteUser = localStorage.getItem('tempMuteUser')
+    const tempMuteUser = getFromLocalStorageAndDecrypt('tempMuteUser')
     let parserLocalStorage = tempMuteUser ? JSON.parse(tempMuteUser) : {}
     const constructObject = {
         ...parserLocalStorage,
         [name]: stateData
     }
-    localStorage.setItem('tempMuteUser', JSON.stringify(constructObject));
+    encryptAndStoreInLocalStorage('tempMuteUser', JSON.stringify(constructObject));
 }
     export const removeTempMute = (name) => {
-        const tempMuteUser = localStorage.getItem('tempMuteUser');
+        const tempMuteUser = getFromLocalStorageAndDecrypt('tempMuteUser');
         if(tempMuteUser){
             let parserLocalStorage = JSON.parse(tempMuteUser);
             delete parserLocalStorage[name];
-            localStorage.setItem('tempMuteUser', JSON.stringify(parserLocalStorage));
+            encryptAndStoreInLocalStorage('tempMuteUser', JSON.stringify(parserLocalStorage));
         }
     }
 
@@ -521,7 +523,7 @@ export const getChatHistoryData = (data, stateData) => {
     const sortedData = concatMessageArray(data.data, Object.values(state), "msgId", "timestamp");
     const lastMessage = sortedData[sortedData.length - 1];
     let newSortedData;
-    const localUserJid = decryption('loggedInUserJidWithResource');
+    const localUserJid = getFromLocalStorageAndDecrypt('loggedInUserJidWithResource');
     const userId = localUserJid ? getUserIdFromJid(localUserJid) : "";
     if (userId === lastMessage?.publisherId) {
         newSortedData = sortedData.map((msg => {
@@ -605,6 +607,7 @@ export const getUpdatedHistoryDataUpload = (data, stateData) => {
             if (data.statusCode === 200) {
                 currentMessage.msgBody.media.file_url = data.fileToken || "";
                 currentMessage.msgBody.media.thumb_image = data.thumbImage || "";
+                currentMessage.msgBody.media.file_key = data.fileKey || "";
             }
 
             let msgIds = Object.keys(currentChatData?.messages);
@@ -734,7 +737,6 @@ export const uploadFileToSDK = async (file, jid, msgId, media) => {
     } else if (msgType === "audio") {
         response = await SDK.sendAudioMessage(jid, file, fileOptions, replyTo);
     }
-    console.log("response :>> ", msgType, response.statusCode);
     let updateObj = {
         msgId,
         statusCode: response.statusCode,
@@ -747,6 +749,7 @@ export const uploadFileToSDK = async (file, jid, msgId, media) => {
         }
         updateObj.fileToken = response.fileToken;
         updateObj.thumbImage = response.thumbImage;
+        updateObj.fileKey = response.fileKey;
     } else if (response.statusCode === 500) {
         updateObj.uploadStatus = 3;
     }
@@ -843,7 +846,7 @@ export const getDownloadFileName = (file_url, msgType) => {
     return `${BRAND_NAME} ${capitalizeFirstLetter(fileType)} ${time}${extension}`;
 };
 
-export const downloadMediaFile = async (file_url, msgType, file_name, event) => {
+export const downloadMediaFile = async (file_url, msgType, file_name, fileKey, event) => {
     if (blockOfflineAction()) return;
 
     if (file_url) {
@@ -855,15 +858,14 @@ export const downloadMediaFile = async (file_url, msgType, file_name, event) => 
                 event.preventDefault();
                 event.stopPropagation();
             }
-            const { data: { mediaUrl = "" } } = await SDK.getMediaURL(file_url, msgType);
-            const blob = await fetch(mediaUrl, {
-                headers: new Headers({
-                    Origin: window.location.origin
-                })
-            }).then(async (response) => response.blob());
-            fileUrl = window.URL.createObjectURL(blob);
+            const mediaResponse = await SDK.getMediaURL(file_url, fileKey);
+            if (mediaResponse.statusCode === 200) {
+                fileUrl = mediaResponse.data.blobUrl; 
+            } else {
+                console.log("error in downloading media file");
+                return;
+            }            
         }
-
         const anchor = document.createElement("a");
         anchor.style.display = "none";
         anchor.href = fileUrl;
@@ -907,9 +909,9 @@ export const getFavaouriteMsgObj = (msg, chatId) => {
     }
 };
 
-export const getBlobUrlFromToken = (fileToken, dbInstance) => {
+export const getBlobUrlFromToken = (fileToken, dbInstance, fileKey) => {
     return indexedDb
-      .getImageByKey(fileToken, dbInstance)
+      .getImageByKey(fileToken, dbInstance, fileKey)
       .then((blob) =>  window.URL.createObjectURL(blob))
       .catch(() =>  "");
 }

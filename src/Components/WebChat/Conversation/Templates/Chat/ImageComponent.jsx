@@ -21,7 +21,7 @@ const ImageComponent = (props = {}) => {
     msgBody: {
       translatedMessage = "",
       message_type = "",
-      media: { caption = "", file_url = "", thumb_image = "", webWidth, webHeight } = {}
+      media: { caption = "", file_url = "", thumb_image = "", webWidth, webHeight, file_key } = {}
     } = {}
   } = messageObject;
 
@@ -51,7 +51,7 @@ const ImageComponent = (props = {}) => {
       if (isBlobUrl(file_url)) {
         setImageSource(file_url);
       } else {
-        localDb.getImageByKey(file_url, getDbInstanceName("image")).then((blob) => {
+        localDb.getImageByKey(file_url, getDbInstanceName("image"), file_key).then((blob) => {
           setImageSource(window.URL.createObjectURL(blob));
         });
       }

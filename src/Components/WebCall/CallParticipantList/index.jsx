@@ -4,6 +4,7 @@ import { AudioOff, AudioOn, VideoOff, VideoOn } from '../../../assets/images';
 import ProfileImage from '../../WebChat/Common/ProfileImage';
 import { capitalizeFirstLetter } from '../../../Helpers/Utility';
 import { CALL_BUSY_STATUS_MESSAGE, CALL_ENGAGED_STATUS_MESSAGE, CALL_HOLD_STATUS_MESSAGE, CALL_STATUS_BUSY, CALL_STATUS_CALLING, CALL_STATUS_CONNECTING, CALL_STATUS_DISCONNECTED, CALL_STATUS_ENGAGED, CALL_STATUS_HOLD, CALL_STATUS_RECONNECT, CALL_STATUS_RINGING } from '../../../Helpers/Call/Constant';
+import {getFromLocalStorageAndDecrypt} from '../../WebChat/WebChatEncryptDecrypt';
 
 class CallParticipantList extends React.Component  {
 
@@ -20,7 +21,7 @@ class CallParticipantList extends React.Component  {
     
     render() {
         const {userStatus} = this.props;
-        const token = localStorage.getItem('token');
+        const token = getFromLocalStorageAndDecrypt('token');
         let userStatusDisplay = "";
         if(userStatus && userStatus.toLowerCase() !== CALL_STATUS_DISCONNECTED){
             if(userStatus.toLowerCase() === CALL_STATUS_BUSY){

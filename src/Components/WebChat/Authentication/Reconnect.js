@@ -1,5 +1,5 @@
 import SDK from "../../SDK";
-import { decryption } from "../../WebChat/WebChatEncryptDecrypt";
+import { getFromLocalStorageAndDecrypt, encryptAndStoreInLocalStorage} from "../../WebChat/WebChatEncryptDecrypt";
 import { ReconnectRecentChatAction } from "../../../Actions/RecentChatActions";
 import Store from "../../../Store";
 import { formatToArrayofJid, setContactWhoBleckedMe } from "../../../Helpers/Chat/BlockContact";
@@ -148,10 +148,10 @@ const handleFavouriteMessages = async () => {
 
 export async function login() {
   try {
-    if (localStorage.getItem("auth_user")) {
-      let decryptResponse = decryption("auth_user");
+    if (getFromLocalStorageAndDecrypt("auth_user")) {
+      let decryptResponse = getFromLocalStorageAndDecrypt("auth_user");
 
-      const loginResult = await SDK.login(decryptResponse.username, decryptResponse.password, true);
+      const loginResult = await SDK.connect(decryptResponse.username, decryptResponse.password, true);
       console.log("Reconnect loginResult :>> ", loginResult);
       if (loginResult.statusCode === 200) {
         await SDK.getUserProfile(formatUserIdToJid(decryptResponse.username));
@@ -199,7 +199,7 @@ export async function login() {
 
 export function reconnect() {
   // Update connection status
-  localStorage.setItem("connection_status", CONNECTION_STATE_CONNECTING);
+  encryptAndStoreInLocalStorage("connection_status", CONNECTION_STATE_CONNECTING);
   setConnectionStatus(CONNECTION_STATE_CONNECTING);
   Store.dispatch(WebChatConnectionState(CONNECTION_STATE_CONNECTING));
   isAppOnline() && login();

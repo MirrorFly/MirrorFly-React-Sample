@@ -269,4 +269,5 @@ export {ReactComponent as Callendiconplain} from './call-ended.svg';
 export {ReactComponent as IconVerifiyedAccount} from './verifiyed_account.svg';
 export {ReactComponent as IconReport} from './report.svg';
 export {ReactComponent as IconGroupReport} from './group_report.svg';
-export {ReactComponent as IconSingleReport} from './single_report.svg'; 
+export {ReactComponent as IconSingleReport} from './single_report.svg';
+export {default as VideoPlaceholder} from '../videos/placeholder.mp4';

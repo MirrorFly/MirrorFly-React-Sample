@@ -25,7 +25,6 @@ import {
 } from "../../../assets/images";
 import { groupstatus } from "../../../Helpers/Chat/RecentChat";
 import IndexedDb from "../../../Helpers/IndexedDb";
-import { ls } from "../../../Helpers/LocalStorage";
 import {
   getFormatPhoneNumber,
   getFormattedRecentChatText,
@@ -34,7 +33,8 @@ import {
   capitalizeTxt,
   sendNotification,
   blockOfflineAction,
-  getArchiveSetting
+  getArchiveSetting,
+  shouldHideNotification
 } from "../../../Helpers/Utility";
 import Store from "../../../Store";
 import { getAvatarImage, groupAvatar } from "../Common/Avatarbase64";
@@ -70,6 +70,8 @@ import { toast } from "react-toastify";
 import { updateArchiveStatusRecentChat } from "../../../Actions/RecentChatActions";
 import OutsideClickHandler from "react-outside-click-handler";
 import Modal from "../Common/Modal";
+import browserNotify from "../../../Helpers/Browser/BrowserNotify";
+import {getFromLocalStorageAndDecrypt} from "../WebChatEncryptDecrypt";
 
 const allowedIds = ["recent-menu", "recent-menu-archive", "recent-menu-archive-icon", "recent-menu-archive-text"];
 class RecentChatItem extends Component {
@@ -286,8 +288,8 @@ class RecentChatItem extends Component {
     const { recent: { fromUserId } = {} } = response;
     this.props.handlePopupState(true);
     const activeClass = e.target?.closest("li")?.classList?.contains("active");
-    const recordingStatus = localStorage.getItem("recordingStatus");
-    if (activeClass || recordingStatus === "false") return;
+    const recordingStatus = getFromLocalStorageAndDecrypt("recordingStatus");
+    if (activeClass || recordingStatus === false) return;
     this.addActiveClass(e);
     let status = "block";
 
@@ -346,10 +348,6 @@ class RecentChatItem extends Component {
       this.setUnreadCount();
     }
     
-    var msgReceivedUser = messageData?.data?.fromUserId 
-    var receivedUnReadCount = this.props.unreadCountData?.unreadDataObj[msgReceivedUser]?.count 
-    var messageType = messageData?.data?.msgType 
-
     if (
       (this.props?.item?.recent?.msgType === GROUP_CHAT_PROFILE_UPDATED_NOTIFY &&
         this.props?.item?.recent?.timestamp !== prevProps?.item?.recent?.timestamp) ||
@@ -358,7 +356,7 @@ class RecentChatItem extends Component {
 
       const messageFromUser = this.props?.vCardData?.data?.fromUser;
       if (!isLocalUser(publisherId)) {
-        const webSettings = localStorage.getItem("websettings");
+        const webSettings = getFromLocalStorageAndDecrypt("websettings");
         let parserLocalStorage = webSettings ? JSON.parse(webSettings) : {};
         const { Notifications = true } = parserLocalStorage;
 
@@ -371,9 +369,9 @@ class RecentChatItem extends Component {
             if (NotificationTo !== messageFromUser && msgBody === "2") {
               return;
             }
-            Notifications && muteStatus === 0 && archiveStatus !== 1 && (receivedUnReadCount !== "carbonSentSeen"||messageType ==="carbonSentDelivered" ) && messageType==="carbonReceiveMessage"  && this.createPushNotification(recentChat);
+            Notifications && muteStatus === 0 && archiveStatus !== 1 && this.createPushNotification(recentChat);
           } else {
-            Notifications && muteStatus === 0 && archiveStatus !== 1 && (receivedUnReadCount !== "carbonSentSeen"||messageType ==="carbonSentDelivered") && messageType==="carbonReceiveMessage" && this.createPushNotification(recentChat);
+            Notifications && muteStatus === 0 && archiveStatus !== 1 && this.createPushNotification(recentChat);
           }
         }
       }
@@ -416,14 +414,34 @@ class RecentChatItem extends Component {
         if (message_type) updateMessage = `${senderName}: ${updateMessage}`;
       }
 
+      const {
+        unreadCountData: { unreadDataObj }
+      } = this.props;
+      let totalChats = 0;
+      let totalCounts = 0;
+      Object.entries(unreadDataObj).map(item => {
+        let count = item[1].count;
+        totalChats++;
+        totalCounts = totalCounts + count;
+      })
+      if (shouldHideNotification() && browserNotify.isPageHidden) {
+        updateDisplayName = "You have " + totalChats +" new chat" + ((totalChats > 1) ? "s" : "");
+        updateMessage = "Total " + totalCounts + " unread message" + ((totalCounts > 1) ? "s" : "");
+      }
       this.localDb
         .getImageByKey(imageToken, "profileimages")
         .then((blob) => {
-          const blobUrl = window.URL.createObjectURL(blob);
+          let blobUrl = window.URL.createObjectURL(blob);
+          if (shouldHideNotification() && browserNotify.isPageHidden) {
+            blobUrl = "";
+          }
           sendNotification(updateDisplayName, blobUrl, updateMessage, fromUserId);
         })
         .catch((err) => {
-          const avatarImage = chatType === "chat" ? getAvatarImage : groupAvatar;
+          let avatarImage = chatType === "chat" ? getAvatarImage : groupAvatar;
+          if (shouldHideNotification() && browserNotify.isPageHidden) {
+            avatarImage = "";
+          }
           sendNotification(updateDisplayName, avatarImage, updateMessage, fromUserId);
         });
     } catch (error) { }
@@ -519,7 +537,7 @@ class RecentChatItem extends Component {
     const contactName = this.getContactName();
     const iniTail = initialNameHandle(item.roster, contactName);
     const hightlightText = contactName ? getHighlightedText(contactName, searchTerm) : fromUserId;
-    const token = ls.getItem("token");
+    const token = getFromLocalStorageAndDecrypt("token");
     if (chatType === "groupchat" && !groupId) return null;
 
     let selectedRoster = this.props.selectedRoster;

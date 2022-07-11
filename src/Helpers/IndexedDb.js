@@ -1,6 +1,6 @@
 import localforage from "localforage";
 import SDK from '../Components/SDK';
-import { decryption } from '../Components/WebChat/WebChatEncryptDecrypt';
+import { getFromLocalStorageAndDecrypt, encryptAndStoreInLocalStorage} from '../Components/WebChat/WebChatEncryptDecrypt';
 import configureRefreshFetch from './refreshFetch'
 import { REACT_APP_API_URL } from '../Components/processENV';
 import { CHAT_AUDIOS, CHAT_IMAGES, INVALID_STORENAME } from "./Constants";
@@ -9,15 +9,15 @@ const shouldRefreshToken = error => {
     return error.status === 401 && error.message === 'Token Expired'
 }
 const mediaUrl = `${REACT_APP_API_URL}/media/`;
-const retrieveToken = () => localStorage.getItem('token')
+const retrieveToken = () => getFromLocalStorageAndDecrypt('token')
 
 const refreshToken = () =>{
-    let decryptResponse = decryption('auth_user');
+    let decryptResponse = getFromLocalStorageAndDecrypt('auth_user');
     return SDK.getUserToken(decryptResponse.username, decryptResponse.password)
     .then(async resp => {
         if (resp.statusCode === 200) {
             SDK.setUserToken(resp.userToken); 
-            localStorage.setItem("token", resp.userToken);
+            encryptAndStoreInLocalStorage("token", resp.userToken);
         }
     }).catch((error) => {
         console.log("handleLogin error, ", error);
@@ -113,20 +113,17 @@ class IndexedDb {
         return allImages
     }
 
-    
-  makeHttpRequet(key, storeName, options = {}) {
-    const uniqueKey = substringBetween(key,mediaUrl,'?mf')
-    const responseURL = `${mediaUrl}${uniqueKey}?mf=${retrieveToken()}`;  
-    return refreshFetch(responseURL, options, key)
-        .then(async response => {
-            const blob = await response.blob();
-            return this.setImage(uniqueKey, blob, storeName).then(()=>{
+    async makeHttpRequet(key, storeName, fileKey, options = {}) {
+        const uniqueKey = substringBetween(key,mediaUrl,'?mf');
+        const response = await SDK.getMediaURL(uniqueKey, fileKey);
+        if (response.statusCode === 200) {
+            return this.setImage(uniqueKey, response.data.blob, storeName).then(()=>{
                 return this.getImageByKey(uniqueKey, storeName, options)
-             })
-        })
-   }
+            });
+        }
+    }        
 
-    getImageByKey(keyString, storeName, options) {
+    getImageByKey(keyString, storeName, fileKey, options) {
         if (!keyString) {
             return Promise.reject(null)
         }
@@ -136,7 +133,7 @@ class IndexedDb {
         return this._localforage[storeName]?.getItem(keyString)
             .then(blob => {
                 if (!blob) {
-                    return this.makeHttpRequet(keyString, storeName, options)
+                    return this.makeHttpRequet(keyString, storeName, fileKey, options)
                 }
                 return blob;
             })

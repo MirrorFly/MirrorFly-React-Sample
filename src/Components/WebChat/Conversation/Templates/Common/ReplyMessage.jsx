@@ -3,17 +3,17 @@ import { useSelector } from "react-redux";
 import { ChatContactImg,  ChatAudioRecorder, ChatAudioReceiver2 } from '../../../../../assets/images';
 import { displayNameFromRoster, getDisplayNameFromGroup, isSingleChat, isTextMessage } from '../../../../../Helpers/Chat/ChatHelper';
 import { isLocalUser } from "../../../../../Helpers/Chat/User";
-import { ls } from '../../../../../Helpers/LocalStorage';
 import { getThumbBase64URL, millisToMinutesAndSeconds } from "../../../../../Helpers/Utility";
 import { getExtension } from "../../../Common/FileUploadValidation";
 import ImageComponent from '../../../Common/ImageComponent';
+import { getFromLocalStorageAndDecrypt } from "../../../WebChatEncryptDecrypt";
 import GoogleMapMarker from "../Common/GoogleMapMarker";
 import getFileFromType from "./getFileFromType";
 
 const maximumCaptionLimit=90;
 
 const ImageReply = React.memo(({ file_url, caption }) => {
-    const token = ls.getItem('token');
+    const token = getFromLocalStorageAndDecrypt('token');
     return (
         <ImageComponent
             chattype={null}

@@ -3,7 +3,7 @@ import SDK from "../../SDK";
 import { Edit, InfoIcon } from "../../../assets/images";
 import CommonInputTag from "./CommonInputTag";
 import ProfileCrop from "./ProfileCrop";
-import { encryption } from "../../WebChat/WebChatEncryptDecrypt";
+import { encryptAndStoreInLocalStorage} from "../../WebChat/WebChatEncryptDecrypt";
 import { blockOfflineAction, validEmail } from "../../../Helpers/Utility";
 import { REACT_APP_STATUS_CHAR, VIEW_PROFILE_INFO, REACT_APP_PROFILE_NAME_CHAR } from "../../processENV";
 
@@ -25,7 +25,7 @@ function ProfileUpdate(props = {}) {
   });
 
   const updateProfileDetails = async () => {
-    profileDetails.loginData && encryption("auth_user", profileDetails.loginData);
+    profileDetails.loginData && encryptAndStoreInLocalStorage("auth_user", profileDetails.loginData);
     const updateprofile = await SDK.setUserProfile(
       profileDetails.username,
       profileDetails.profileImage,

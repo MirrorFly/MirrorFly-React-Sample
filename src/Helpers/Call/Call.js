@@ -35,6 +35,7 @@ import browserNotify from '../Browser/BrowserNotify';
 import {
     callLinkToast
 } from '../../Components/ToastServices/CustomToast';
+import { getFromLocalStorageAndDecrypt, encryptAndStoreInLocalStorage, deleteItemFromLocalStorage} from '../../Components/WebChat/WebChatEncryptDecrypt';
 
 let callingRemoteStreamRemovalTimer = null;
 let missedCallNotificationTimer = null;
@@ -199,20 +200,20 @@ export function dispatchDisconnected(statusMessage, remoteStreams = []) {
 }
 
 export const disconnectCallConnection = (remoteStreams = []) => {
-    const callConnectionData = JSON.parse(localStorage.getItem('call_connection_status'))
+    const callConnectionData = JSON.parse(getFromLocalStorageAndDecrypt('call_connection_status'))
     SDK.endCall();
     dispatchDisconnected(CALL_STATUS_DISCONNECTED, remoteStreams);
     callLogs.update(callConnectionData.roomId, {
         "endTime": callLogs.initTime(),
         "sessionStatus": CALL_SESSION_STATUS_CLOSED
     });
-    let timeOut = localStorage.getItem("isNewCallExist") === "true" ? 0 : DISCONNECTED_SCREEN_DURATION;
+    let timeOut = getFromLocalStorageAndDecrypt("isNewCallExist") === true ? 0 : DISCONNECTED_SCREEN_DURATION;
     setTimeout(() => {
-        localStorage.setItem('callingComponent', false)
-        localStorage.removeItem('roomName')
-        localStorage.removeItem('callType')
-        localStorage.removeItem('call_connection_status');
-        localStorage.setItem("hideCallScreen", false);
+        encryptAndStoreInLocalStorage('callingComponent', false)
+        deleteItemFromLocalStorage('roomName')
+        deleteItemFromLocalStorage('callType')
+        deleteItemFromLocalStorage('call_connection_status');
+        encryptAndStoreInLocalStorage("hideCallScreen", false);
         resetCallData();
         Store.dispatch(showConfrence({
             showComponent: false,
@@ -253,7 +254,7 @@ export function updateCallTypeAfterCallSwitch(videoMuted) {
         remoteVideoMuted
     } = data || {};
     localVideoMuted = typeof videoMuted != "undefined" ? videoMuted : localVideoMuted;
-    const callConnectionStatus = JSON.parse(localStorage.getItem('call_connection_status'));
+    const callConnectionStatus = JSON.parse(getFromLocalStorageAndDecrypt('call_connection_status'));
     if (!callConnectionStatus) return;
 
     let callType = null;
@@ -268,7 +269,7 @@ export function updateCallTypeAfterCallSwitch(videoMuted) {
 
         if (callType && callType !== callConnectionStatus.callType) {
             callConnectionStatus.callType = callType;
-            localStorage.setItem("call_connection_status", JSON.stringify(callConnectionStatus));
+            encryptAndStoreInLocalStorage("call_connection_status", JSON.stringify(callConnectionStatus));
             callLogs.update(callConnectionStatus.roomId, {
                 callType
             });
@@ -400,7 +401,7 @@ export const getCallDisplayDetailsForOnetoManyCall = (userList, type) => {
 
 export const startMissedCallNotificationTimer = (res) => {
     missedCallNotificationTimer = setTimeout(() => {
-        let callConnectionData = JSON.parse(localStorage.getItem('call_connection_status'));
+        let callConnectionData = JSON.parse(getFromLocalStorageAndDecrypt('call_connection_status'));
         if (callConnectionData) {
             const callDetailObj = callConnectionData ? {
                 ...callConnectionData

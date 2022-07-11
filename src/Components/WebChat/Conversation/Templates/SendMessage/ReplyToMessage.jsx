@@ -4,15 +4,15 @@ import { popUpState } from '../../../../../Actions/ConversationAction';
 import { Camera, CloseReply, Contact, DocumentIcon, Location, VideoIcon2, ChatAudioSender2, ChatAudioRecorderDark } from '../../../../../assets/images';
 import { displayNameFromRoster, getDisplayNameFromGroup, isSingleChat, isTextMessage } from '../../../../../Helpers/Chat/ChatHelper';
 import { isLocalUser } from "../../../../../Helpers/Chat/User";
-import { ls } from '../../../../../Helpers/LocalStorage';
 import { getThumbBase64URL, millisToMinutesAndSeconds } from "../../../../../Helpers/Utility";
 import ImageComponent from '../../../Common/ImageComponent';
+import { getFromLocalStorageAndDecrypt } from "../../../WebChatEncryptDecrypt";
 import GoogleMapMarker from "../Common/GoogleMapMarker";
 
 const maximumCaptionLimit = 220;
 
 const ImageReply = React.memo(({ file_url }) => {
-    const token = ls.getItem('token');
+    const token = getFromLocalStorageAndDecrypt('token');
     return (
         <ImageComponent
             chatType={null}

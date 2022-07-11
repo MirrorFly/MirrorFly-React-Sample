@@ -16,6 +16,7 @@ import  { resetCallData } from '../callbacks';
 import { getUserDetails, initialNameHandle } from '../../Helpers/Chat/User';
 import { toast } from 'react-toastify';
 import CallerProfileList from "./CallerProfileList";
+import { deleteItemFromLocalStorage, encryptAndStoreInLocalStorage} from '../WebChat/WebChatEncryptDecrypt';
 
 let callingTimer;
 
@@ -71,11 +72,11 @@ class CalleScreen extends Component {
             "sessionStatus": CALL_SESSION_STATUS_CLOSED
         });
         setTimeout(() => {
-            localStorage.setItem('callingComponent',false)
-            localStorage.removeItem('roomName')
-            localStorage.removeItem('callType')
-            localStorage.removeItem('call_connection_status')
-            localStorage.setItem("hideCallScreen", false);
+            encryptAndStoreInLocalStorage('callingComponent',false)
+            deleteItemFromLocalStorage('roomName')
+            deleteItemFromLocalStorage('callType')
+            deleteItemFromLocalStorage('call_connection_status')
+            encryptAndStoreInLocalStorage("hideCallScreen", false);
             Store.dispatch(showConfrence({
                 showComponent: false,
                 showCalleComponent:false,
@@ -102,12 +103,12 @@ class CalleScreen extends Component {
                     if(call.message !== PERMISSION_DENIED){
                         toast.error(COMMON_ERROR_MESSAGE);
                     }
-                    localStorage.removeItem('roomName')
-                    localStorage.removeItem('callType')
-                    localStorage.removeItem('call_connection_status')
-                    localStorage.setItem("hideCallScreen", false);
-                    localStorage.setItem('callingComponent',false)
-                    localStorage.setItem("hideCallScreen", false);
+                    deleteItemFromLocalStorage('roomName')
+                    deleteItemFromLocalStorage('callType')
+                    deleteItemFromLocalStorage('call_connection_status')
+                    encryptAndStoreInLocalStorage("hideCallScreen", false);
+                    encryptAndStoreInLocalStorage('callingComponent',false)
+                    encryptAndStoreInLocalStorage("hideCallScreen", false);
                     Store.dispatch(showConfrence({
                         showComponent: false,
                         showCalleComponent: false,
@@ -115,7 +116,7 @@ class CalleScreen extends Component {
                         callStatusText: null
                     }))
                 } else {
-                    localStorage.setItem('connecting',true)
+                    encryptAndStoreInLocalStorage('connecting',true)
                     Store.dispatch(showConfrence({
                         showComponent: true,
                         showCalleComponent:false
@@ -141,10 +142,10 @@ class CalleScreen extends Component {
                 });
                 dispatchDisconnected();
                 setTimeout(() => {
-                    localStorage.removeItem('roomName')
-                    localStorage.removeItem('callType')
-                    localStorage.removeItem('call_connection_status')
-                    localStorage.setItem("hideCallScreen", false);
+                    deleteItemFromLocalStorage('roomName')
+                    deleteItemFromLocalStorage('callType')
+                    deleteItemFromLocalStorage('call_connection_status')
+                    encryptAndStoreInLocalStorage("hideCallScreen", false);
                     Store.dispatch(showConfrence({
                         showComponent: false,
                         showCalleComponent:false,
@@ -308,7 +309,7 @@ class CalleScreen extends Component {
                     </div>
                         <div className="calleeDetails">
                             <div className="calle-info">
-                                <span className="callerName">
+                            <span className="callerName">
                                     {rosterData.displayName}
                                 </span>
                                 {callConnectionDate.data.callMode === "onetomany" && callConnectionDate.data.groupId &&

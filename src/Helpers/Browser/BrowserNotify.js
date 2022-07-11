@@ -6,6 +6,8 @@ import { getAvatarImage, groupAvatar } from '../../Components/WebChat/Common/Ava
 import { getGroupData } from '../Chat/Group';
 import { getCallDisplayDetailsForOnetoManyCall } from '../Call/Call';
 import { getUserDetails } from '../Chat/User';
+import { shouldHideNotification } from '../Utility';
+import {getFromLocalStorageAndDecrypt} from '../../Components/WebChat/WebChatEncryptDecrypt';
 
 const getGroupDetails = (groupId) => {
     let rosterData = {};
@@ -19,11 +21,19 @@ const getGroupDetails = (groupId) => {
 
 const browserNotify = {
     timeOut: 8000,
+    isPageHidden: false,
     init: function(){
         Push.Permission.request(() => {}, () => {});
+        document.addEventListener(
+            "visibilitychange",
+            () => {
+              browserNotify.isPageHidden = document.hidden;
+            },
+            false
+          );
     },
     hasPermission: function(){
-        const webSettings = localStorage.getItem('websettings')
+        const webSettings = getFromLocalStorageAndDecrypt('websettings')
         let parseredWebSettings = webSettings ? JSON.parse(webSettings) : {}
         const { Notifications = true } = parseredWebSettings;
         return Notifications && Push.Permission.has();
@@ -60,10 +70,16 @@ const browserNotify = {
         if(callDetailObj.status === "calling"){
             pageName = 'calleescreen';
             title = `Incoming ${isGroupCall ? 'group' : ''} ${callDetailObj.callType} call`;
+            if (shouldHideNotification() && browserNotify.isPageHidden) {
+                displayName = "New Incoming Call";
+            }
         }
         else if(callDetailObj.status === "ended"){
             pageName = 'calllog';
             title = `You missed ${!isGroupCall && callDetailObj.callType === "audio" ? "an" : "a" }${isGroupCall ? ' group' : ''} ${callDetailObj.callType} call`;
+            if (shouldHideNotification() && browserNotify.isPageHidden) {
+                displayName = "New Missed Call";
+            }
         }
 
         if(!title) return;
@@ -99,7 +115,7 @@ const browserNotify = {
     },
     sendNotification: function(title, bodyObj = {}){
         if(!title) return;
-        const webSettings = localStorage.getItem('websettings')
+        const webSettings = getFromLocalStorageAndDecrypt('websettings')
         let parseredWebSettings = webSettings ? JSON.parse(webSettings) : {}
         const { Sound = false } = parseredWebSettings;
         bodyObj = {...bodyObj, timeout: browserNotify.timeOut, silent:Sound};

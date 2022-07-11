@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 import { IconAudiocall, IconVideocall, IconVideoOutgoingCall, IconAudioOutgoingCall, IconVideoIncommingCall, IconAudioIncommingCall, IconAudioMissedCall, IconVideoMissedCall } from '../../../assets/images';
 import { formatCallLogDate, formatCallLogTime, durationCallLog, getHighlightedText } from '../../../Helpers/Utility';
 import ProfileImage from '../../../Components/WebChat/Common/ProfileImage'
+import {getFromLocalStorageAndDecrypt} from '../../WebChat/WebChatEncryptDecrypt';
 
 const CallLogView = (props = {}) => {
     let { displayName, image, searchterm, callLog, emailId,initialName="", isAdminBlocked, isDeletedUser } = props;
@@ -15,7 +16,7 @@ const CallLogView = (props = {}) => {
         return null;
     }
 
-    const token = localStorage.getItem('token');
+    const token = getFromLocalStorageAndDecrypt('token');
     let date = formatCallLogDate(callLog.callTime / 1000);
     let time = formatCallLogTime(callLog.callTime);
     let durationText = "";
