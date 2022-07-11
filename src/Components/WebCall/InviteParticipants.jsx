@@ -11,6 +11,7 @@ import { toast } from 'react-toastify';
 import Store from '../../Store';
 import { showConfrence } from '../../Actions/CallAction';
 import { getRemoteStream } from '../callbacks';
+import {getFromLocalStorageAndDecrypt} from '../WebChat/WebChatEncryptDecrypt';
 
 class InviteParticipants extends React.Component {
     constructor(props){
@@ -38,7 +39,7 @@ class InviteParticipants extends React.Component {
         && groupsMemberParticipantsListData === prevProps.groupsMemberParticipantsListData)){
             return;
         }
-        this.callConnectionData = JSON.parse(localStorage.getItem('call_connection_status'));
+        this.callConnectionData = JSON.parse(getFromLocalStorageAndDecrypt('call_connection_status'));
         this.currentCallUsers = [];
         this.currentCallUsersArray = [];
         this.groupId = '';
@@ -131,7 +132,7 @@ class InviteParticipants extends React.Component {
     }
 
     invite = async (callType, inviteCallMemberDetails) => {
-        let connectionStatus = localStorage.getItem("connection_status")
+        let connectionStatus = getFromLocalStorageAndDecrypt("connection_status")
         if(connectionStatus === "CONNECTED"){
             const users = inviteCallMemberDetails;
             if(users.length > 0){

@@ -8,14 +8,14 @@ import { getDbInstanceName, isBlobUrl } from "../../../../../Helpers/Utility";
 import { getBlobUrlFromToken } from "../../../../../Helpers/Chat/ChatHelper";
 
 const AudioComponent = (props = {}) => {
-  const { messageObject = {}, uploadStatus, isSender, audioFileDownloadOnclick, mediaUrl = "" } = props;
-  const { msgId = "", msgBody: { media: { file_url = "", audioType = "" } = {} } = {} } = messageObject;
+  const { messageObject = {}, uploadStatus, isSender, audioFileDownloadOnclick, mediaUrl = ""} = props;
+  const { msgId = "", msgBody: { media: { file_url = "", audioType = "", file_key } = {} } = {} } = messageObject;
 
   const [isPlaying, setPlaying] = useState(false);
   const [audioUrl, setAudioUrl] = useState(mediaUrl);
 
   const getAudio = async () => {
-    const audioBlobUrl = await getBlobUrlFromToken(file_url, getDbInstanceName("audio"));
+    const audioBlobUrl = await getBlobUrlFromToken(file_url, getDbInstanceName("audio"), file_key);
     setAudioUrl(audioBlobUrl);
   };
 

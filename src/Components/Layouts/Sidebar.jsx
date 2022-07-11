@@ -27,6 +27,7 @@ import { showModal } from '../../Actions/PopUp';
 import { disconnectCallConnection } from '../../Helpers/Call/Call';
 import { callIntermediateScreen, resetConferencePopup } from '../../Actions/CallAction';
 import { NEW_CHAT_CONTACT_PERMISSION_DENIED, NEW_GROUP_CONTACT_PERMISSION_DENIED } from '../../Helpers/Chat/Constant';
+import { encryptAndStoreInLocalStorage} from '../WebChat/WebChatEncryptDecrypt';
 
 class Sidebar extends React.Component {
 
@@ -225,7 +226,7 @@ class Sidebar extends React.Component {
     }
 
     handleJoinCallAction = () => {
-        localStorage.setItem("isNewCallExist", true);
+        encryptAndStoreInLocalStorage("isNewCallExist", true);
         disconnectCallConnection();
         Store.dispatch(resetConferencePopup());
         this.closeModel("CallConfirm");

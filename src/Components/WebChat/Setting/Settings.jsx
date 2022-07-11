@@ -4,6 +4,7 @@ import { ArrowBack } from '../../../assets/images';
 import { BlockedIcon, chat as ChatIcon, InfoIcon, InformationIcon, LogoutIcon, NextArrow, NotificationIcon, StarredMessage, Archived, IconcontactUs, IconDelete } from './images';
 import { ENABLE_NOTIFICATIONS } from '../../processENV';
 import { blockOfflineAction, getLocalWebsettings, setLocalWebsettings } from '../../../Helpers/Utility';
+import { getFromLocalStorageAndDecrypt, encryptAndStoreInLocalStorage} from '../WebChatEncryptDecrypt';
 
 const imageComponent = {
     chat: ChatIcon,
@@ -38,13 +39,13 @@ export const SettingCheckBox = (props = {}) => {
         }
         else {
             setSettings(checked)
-            const webSettings = localStorage.getItem('websettings')
+            const webSettings = getFromLocalStorageAndDecrypt('websettings')
             let parserLocalStorage = webSettings ? JSON.parse(webSettings) : {}
             const constructObject = {
                 ...parserLocalStorage,
                 [name]: checked
             }
-            localStorage.setItem('websettings', JSON.stringify(constructObject));
+            encryptAndStoreInLocalStorage('websettings', JSON.stringify(constructObject));
         }
     }
 
@@ -54,7 +55,7 @@ export const SettingCheckBox = (props = {}) => {
                 setSettings(false);
             }
             else {
-                const webSettings = localStorage.getItem('websettings');
+                const webSettings = getFromLocalStorageAndDecrypt('websettings');
                 const settings = getLocalWebsettings();
                 if (settings.Notifications === undefined) {
                     setLocalWebsettings("Notifications", true);

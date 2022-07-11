@@ -2,7 +2,7 @@ import React, { Fragment } from 'react';
 import InfiniteScroll from "react-infinite-scroll-component";
 import SDK from '../../SDK';
 import { connect } from 'react-redux';
-import { decryption } from '../../WebChat/WebChatEncryptDecrypt';
+import { getFromLocalStorageAndDecrypt, encryptAndStoreInLocalStorage, deleteItemFromLocalStorage} from '../../WebChat/WebChatEncryptDecrypt';
 import Search from './Search';
 import "../../../assets/scss/minEmoji.scss";
 import loaderSVG from '../../../assets/images/loader.svg';
@@ -112,7 +112,7 @@ class WebChatCallLogs extends React.Component {
             let searchterm = this.state.searchterm;
             let vcardData = getLocalUserDetails();
             let currentUser = vcardData && vcardData.fromUser;
-            const roomId = localStorage.getItem('roomName');
+            const roomId = getFromLocalStorageAndDecrypt('roomName');
             callLogsArray.map((callLog, index) => {
                 let displayName = "";
                 let isAdminBlocked = "0";
@@ -197,7 +197,7 @@ class WebChatCallLogs extends React.Component {
     }
 
     makeCall = async (callMode, callType, groupCallMemberDetails, groupId = null) => {
-        let connectionStatus = localStorage.getItem("connection_status")
+        let connectionStatus = getFromLocalStorageAndDecrypt("connection_status")
         if (connectionStatus === "CONNECTED") {
             let users = [], roomId = "", call = null, image = "";
             const vcardData = getLocalUserDetails();
@@ -236,10 +236,10 @@ class WebChatCallLogs extends React.Component {
                 callConnectionStatus.groupId = groupId;
             }
 
-            localStorage.setItem('call_connection_status', JSON.stringify(callConnectionStatus))
-            localStorage.setItem('callType', callType)
-            localStorage.setItem('callingComponent', true)
-            localStorage.setItem('callFrom', decryption('loggedInUserJidWithResource'));
+            encryptAndStoreInLocalStorage('call_connection_status', JSON.stringify(callConnectionStatus))
+            encryptAndStoreInLocalStorage('callType', callType)
+            encryptAndStoreInLocalStorage('callingComponent', true)
+            encryptAndStoreInLocalStorage('callFrom', getFromLocalStorageAndDecrypt('loggedInUserJidWithResource'));
             Store.dispatch(CallConnectionState(callConnectionStatus));
             const showConfrenceData = Store.getState().showConfrenceData;
             const {
@@ -261,12 +261,12 @@ class WebChatCallLogs extends React.Component {
                     call = await SDK.makeVideoCall(users, groupId);
                 }
                 if (call.statusCode !== 200 && call.message === PERMISSION_DENIED) {
-                    localStorage.removeItem('roomName')
-                    localStorage.removeItem('callType')
-                    localStorage.removeItem('call_connection_status')
-                    localStorage.setItem("hideCallScreen", false);
-                    localStorage.setItem('callingComponent', false)
-                    localStorage.setItem("hideCallScreen", false);
+                    deleteItemFromLocalStorage('roomName')
+                    deleteItemFromLocalStorage('callType')
+                    deleteItemFromLocalStorage('call_connection_status')
+                    encryptAndStoreInLocalStorage("hideCallScreen", false);
+                    encryptAndStoreInLocalStorage('callingComponent', false)
+                    encryptAndStoreInLocalStorage("hideCallScreen", false);
                     Store.dispatch(showConfrence({
                         showComponent: false,
                         showCalleComponent: false,
@@ -287,24 +287,24 @@ class WebChatCallLogs extends React.Component {
                             "groupId": groupId
                         })
                     });
-                    localStorage.setItem('roomName', roomId)
+                    encryptAndStoreInLocalStorage('roomName', roomId)
                     let callConnectionStatusNew = {
                         ...callConnectionStatus,
                         roomId: roomId
                     }
-                    localStorage.setItem('call_connection_status', JSON.stringify(callConnectionStatusNew))
+                    encryptAndStoreInLocalStorage('call_connection_status', JSON.stringify(callConnectionStatusNew))
                     Store.dispatch(CallConnectionState(callConnectionStatusNew));
                     startCallingTimer();
                 }
             } catch (error) {
                 console.log("Error in making call", error);
                 if (error.message === PERMISSION_DENIED) {
-                    localStorage.removeItem('roomName')
-                    localStorage.removeItem('callType')
-                    localStorage.removeItem('call_connection_status')
-                    localStorage.setItem("hideCallScreen", false);
-                    localStorage.setItem('callingComponent', false)
-                    localStorage.setItem("hideCallScreen", false);
+                    deleteItemFromLocalStorage('roomName')
+                    deleteItemFromLocalStorage('callType')
+                    deleteItemFromLocalStorage('call_connection_status')
+                    encryptAndStoreInLocalStorage("hideCallScreen", false);
+                    encryptAndStoreInLocalStorage('callingComponent', false)
+                    encryptAndStoreInLocalStorage("hideCallScreen", false);
                     Store.dispatch(showConfrence({
                         showComponent: false,
                         showCalleComponent: false,
@@ -321,7 +321,7 @@ class WebChatCallLogs extends React.Component {
     }
 
     prepareForCall = async (callLog) => {
-        const roomName = localStorage.getItem('roomName');
+        const roomName = getFromLocalStorageAndDecrypt('roomName');
         if (roomName) {
             toast.info("Can't place a new call while you're already in a call.");
             return;
@@ -334,7 +334,7 @@ class WebChatCallLogs extends React.Component {
             currentGroupID : callLog?.groupId.split("@")[0]
         })
         this.preventMultipleClick = true;
-        let connectionStatus = localStorage.getItem("connection_status")
+        let connectionStatus = getFromLocalStorageAndDecrypt("connection_status")
         if (connectionStatus === "CONNECTED") {
             const callType = callLog.callType;
             const callMode = callLog.callMode;
@@ -410,7 +410,7 @@ class WebChatCallLogs extends React.Component {
 
     showCallParticipants = async (groupId, callType) => {
         const groupid = groupId + '@mix.' + REACT_APP_XMPP_SOCKET_HOST;
-        let connectionStatus = localStorage.getItem("connection_status")
+        let connectionStatus = getFromLocalStorageAndDecrypt("connection_status")
         if (connectionStatus === "CONNECTED") {
             const { groupsMemberParticipantsListData: { groupParticipants = {} } = {} } = this.props || {}
             let participants = groupParticipants[groupid];

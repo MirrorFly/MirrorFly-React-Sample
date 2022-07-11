@@ -92,7 +92,7 @@ const ChatMessageTemplate = (props = {}) => {
     : getDisplayNameFromGroup(messageFrom, groupMemberDetails);
   const style = { color: userColor };
   const { replyTo, media = {} } = messageContent;
-  const { file, caption, thumb_image, file_url, is_uploading, webWidth, fileName } = media || {};
+  const { file, caption, thumb_image, file_url, is_uploading, webWidth, fileName, file_key } = media || {};
 
   const [isChecked, selectedToForward] = useState(false);
   const [dropDownStatus, setDropDown] = useState(false);
@@ -113,7 +113,7 @@ const ChatMessageTemplate = (props = {}) => {
 
   const imgFileDownload = () => {
     localDb
-      .getImageByKey(file_url, getDbInstanceName("image"))
+      .getImageByKey(file_url, getDbInstanceName("image"), file_key)
       .then((blob) => {
         const blobUrl = window.URL.createObjectURL(blob);
         if (isSubscribed) {
@@ -182,7 +182,7 @@ const ChatMessageTemplate = (props = {}) => {
     } = event;
     setUploadStatus(4);
     localDb
-      .getImageByKey(id, getDbInstanceName("image"))
+      .getImageByKey(id, getDbInstanceName("image"), file_key)
       .then((blobFile) => {
         const blobUrl = window.URL.createObjectURL(blobFile);
         if (isSubscribed) {
@@ -239,7 +239,7 @@ const ChatMessageTemplate = (props = {}) => {
 
   const getAudioFile = () => {
     localDb
-      .getImageByKey(file_url, getDbInstanceName("audio"))
+      .getImageByKey(file_url, getDbInstanceName("audio"), file_key)
       .then((blob) => {
         const blobUrl = window.URL.createObjectURL(blob);
         setMediaUrl(blobUrl);
@@ -289,7 +289,7 @@ const ChatMessageTemplate = (props = {}) => {
       setMediaUrl(id);
     } else {
       localDb
-        .getImageByKey(id, getDbInstanceName("audio"))
+        .getImageByKey(id, getDbInstanceName("audio"), file_key)
         .then((blob) => {
           const blobUrl = window.URL.createObjectURL(blob);
           setMediaUrl(blobUrl);
@@ -310,7 +310,7 @@ const ChatMessageTemplate = (props = {}) => {
 
   const downloadAction = async (event) => {
     if (uploadStatus !== 2) return;
-    downloadMediaFile(file_url, "file", fileName, event);
+    downloadMediaFile(file_url, "file", fileName, file_key, event);
   };
 
   const toggleContactPopup = () => {
@@ -390,6 +390,7 @@ const ChatMessageTemplate = (props = {}) => {
             <ImageComponent
               messageObject={messageObject}
               imgSrc={imgSrc}
+              fileKey={file_key}
               handleMediaShow={handleMediaShow}
               isSender={isSender}
               uploadStatus={uploadStatus}
@@ -401,6 +402,7 @@ const ChatMessageTemplate = (props = {}) => {
           {isVideoMessage() && (
             <VideoComponent
               messageObject={messageObject}
+              fileKey={file_key}
               handleMediaShow={handleMediaShow}
               thumbURL={thumbURL}
               isSender={isSender}
@@ -413,6 +415,7 @@ const ChatMessageTemplate = (props = {}) => {
           {isAudioMessage() && (
             <AudioComponent
               mediaUrl={mediaUrl}
+              fileKey={file_key}
               messageObject={messageObject}
               isSender={isSender}
               uploadStatus={uploadStatus}
@@ -425,6 +428,7 @@ const ChatMessageTemplate = (props = {}) => {
           {isDocumentMessage() && (
             <DocumentComponent
               messageObject={messageObject}
+              fileKey={file_key}
               isSender={isSender}
               uploadStatus={uploadStatus}
               downloadAction={downloadAction}
@@ -440,7 +444,7 @@ const ChatMessageTemplate = (props = {}) => {
             />
           )}
 
-          {getMessageTimeElement(messageStatus, createdAt, favouriteStatus, isSender, message_type)}
+          {getMessageTimeElement(messageStatus, createdAt, favouriteStatus, isSender, message_type,fromUserId===fromUser)}
 
           {!isTextMessage(message_type) && (
             <Fragment>

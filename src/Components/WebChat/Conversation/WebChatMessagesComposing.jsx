@@ -5,7 +5,6 @@ import uuidv4 from "uuid/v4";
 import { popUpState, saveMessageContent } from "../../../Actions/ConversationAction";
 import { Attachment, CameraIcon, SendMessage } from "../../../assets/images";
 import Config from "../../../config";
-import { ls } from "../../../Helpers/LocalStorage";
 import MediaPreview from "../../WebChat/MediaPreview";
 import AudioRecorder from "../Common/AudioRecorder";
 import Modal from "../Common/Modal";
@@ -23,6 +22,7 @@ import { blockOfflineMsgAction, isBoxedLayoutEnabled } from "../../../Helpers/Ut
 import { get as _get } from "lodash";
 import Store from "../../../Store";
 import { UpdateTypedMessage } from "../../../Actions/ChatHistory";
+import { encryptAndStoreInLocalStorage } from "../WebChatEncryptDecrypt";
 
 function debounce(func, wait, immediate) {
   var timeout;
@@ -60,7 +60,7 @@ class WebChatMessagesComposing extends Component {
     this.timeout = 0;
     this.gonetimeout = 0;
     this.selectedText = null;
-    ls.setItem("recordingStatus", true);
+    encryptAndStoreInLocalStorage("recordingStatus", true);
     this.cameraPermissionTracks = [];
   }
 
@@ -205,11 +205,11 @@ class WebChatMessagesComposing extends Component {
     this.selectedText = selectedText;
   };
 
-  // handleEmptyContent = () =>{
-  //   this.setState({
-  //     typingMessage:""
-  //   })
-  // }
+  handleEmptyContent = () =>{
+    this.setState({
+      typingMessage:""
+    })
+  }
   
   handleSendMsg = (messageType, messageContent) => {
     let message;
@@ -289,7 +289,7 @@ class WebChatMessagesComposing extends Component {
   };
 
   recordingStatus = (status) => {
-    ls.setItem("recordingStatus", status);
+    encryptAndStoreInLocalStorage("recordingStatus", status);
     this.setState({
       recordingStatus: status
     });
@@ -581,7 +581,7 @@ class WebChatMessagesComposing extends Component {
               handleOnFocus={this.handleOnFocus}
               setCursorPosition={this.setCursorPosition}
               setSelectedText={this.setSelectedText}
-              // handleEmptyContent={this.handleEmptyContent}
+              handleEmptyContent={this.handleEmptyContent}
             />
             <div className="intraction icon">
               {recordingStatus && Config.attachement && (

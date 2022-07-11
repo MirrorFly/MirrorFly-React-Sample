@@ -1,4 +1,5 @@
 import LocalizedStrings from 'react-localization';
+import {getFromLocalStorageAndDecrypt} from '../../Components/WebChat/WebChatEncryptDecrypt';
 import { CombineLocale } from './CombineLocale';
 import { common } from './Common';
 import { user } from './User';
@@ -10,6 +11,6 @@ export const locale = new LocalizedStrings(
     CombineLocale({ common, user })
 );
 
-if ((typeof localStorage.getItem('language') === 'string')) {
-    locale.setLanguage(localStorage.getItem('language'));
+if ((typeof getFromLocalStorageAndDecrypt('language') === 'string')) {
+    locale.setLanguage(getFromLocalStorageAndDecrypt('language'));
 }

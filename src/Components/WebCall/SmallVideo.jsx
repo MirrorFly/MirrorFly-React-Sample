@@ -15,6 +15,7 @@ import {
 } from '../../Helpers/Call/Constant';
 import { IconPin, IconPinActive } from '../../assets/images';
 import { handleAudioClasses } from '../../Helpers/Call/Call';
+import {getFromLocalStorageAndDecrypt} from '../WebChat/WebChatEncryptDecrypt';
 
 class SmallVideo extends React.Component {
 
@@ -56,7 +57,7 @@ class SmallVideo extends React.Component {
         if (jid === vcardData.fromUser) {
             muted = true;
         }
-        const token = localStorage.getItem('token');
+        const token = getFromLocalStorageAndDecrypt('token');
         let userStatusDisplay = "";
         if (userStatus && userStatus.toLowerCase() !== CALL_STATUS_CONNECTED) {
             if (userStatus.toLowerCase() === CALL_STATUS_BUSY) {

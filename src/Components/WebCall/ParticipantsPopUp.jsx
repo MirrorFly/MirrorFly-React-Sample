@@ -14,6 +14,7 @@ import SDK from '../SDK';
 import { getCallFullLink } from '../../Helpers/Utility';
 import Store from '../../Store';
 import { callIntermediateScreen } from '../../Actions/CallAction';
+import {getFromLocalStorageAndDecrypt} from '../WebChat/WebChatEncryptDecrypt';
 
 let rosterDatas = [];
 
@@ -230,7 +231,7 @@ class ParticipantPopUp extends Component {
 
     selectedBadge = () => {
         let { participantToAdd } = this.state;
-        let token = localStorage.getItem('token');
+        let token = getFromLocalStorageAndDecrypt('token');
         return rosterDatas.map((contact, key) => {
             const { displayName, name, username, userJid, image } = contact
             const contactName = displayName || name || username
@@ -261,7 +262,8 @@ class ParticipantPopUp extends Component {
     }
 
     render() {
-        const { filteredContacts, searchValue, participantToAdd, errorMesage,copyToast } = this.state
+        const { searchValue, participantToAdd, errorMesage,copyToast } = this.state
+        const stateFilteredContacts = this.state.filteredContacts
         const { isLoading } = this.props;
         const { popUpData: { modalProps: { groupName, currentCallUsersLength,callType, closePopup } } } = this.props;
         let BadgeList = this.selectedBadge();
@@ -273,8 +275,8 @@ class ParticipantPopUp extends Component {
         const maxMemberReached = Boolean((participantToAdd.length + (currentCallUsersLength || 0)) >= (getMaxUsersInCall() - 1));
         const hideCallNow = Boolean((participantToAdd.length + (currentCallUsersLength || 0)) >= (getMaxUsersInCall()));
         const blockedContactArr = this.props.blockedContact.data;
-        const isAllUsersExists = filteredContacts.length === 0 && !searchValue;
-
+        const isAllUsersExists = stateFilteredContacts.length === 0 && !searchValue;
+        let filteredContacts= stateFilteredContacts.filter(item=>item?.isAdminBlocked !== true)
         return (
             <Fragment>
                 <div className="popup-wrapper">

@@ -11,7 +11,6 @@ import {
 } from '../../../assets/images';
 import "../../../assets/scss/minEmoji.scss";
 import IndexedDb from '../../../Helpers/IndexedDb';
-import { ls } from '../../../Helpers/LocalStorage';
 import { blockOfflineAction, dataURLtoFile, fileToBlob } from '../../../Helpers/Utility';
 import {
     CAMERA_ERROR, CAMERA_NOT_FOUND,
@@ -30,6 +29,7 @@ import WebChatCamera from './WebChatCamera';
 import WebChatFields from './WebChatFields';
 import { NO_INTERNET, PROFILE_UPDATE_SUCCESS } from '../../../Helpers/Constants';
 import ProfileImage from '../Common/ProfileImage';
+import { getFromLocalStorageAndDecrypt } from '../WebChatEncryptDecrypt';
 
 const indexedDb = new IndexedDb();
 
@@ -108,7 +108,7 @@ class WebChatVCard extends React.Component {
      * @param {object} response
      */
     handleProfileImg(response) {
-        let token = ls.getItem('token');
+        let token = getFromLocalStorageAndDecrypt('token');
         if (response.vCardData.data.image && token) {
             this.localDb.getImageByKey(response.vCardData.data.image, 'profileimages').then(blob => {
                 const blobUrl = window.URL.createObjectURL(blob);

@@ -90,26 +90,44 @@ const StarredMessages = (props = {}) => {
      }
    }
  }, [chatHistoreData]);
- 
+
  const getSenderName = (data) => {
-   let messageFrom = isSingleChat(data?.chatType) ? data?.fromUserId : data?.publisherId;
+   let messageFrom = data?.publisherId;
  
-   if (isLocalUser(messageFrom)) {
-     const groupData = getGroupData(data?.fromUserId);
-     return groupData?.groupName || "-";
-   }
-   const { nameToDisplay = "-" } = formatDisplayName(messageFrom) || {};
-   return nameToDisplay;
+  //  if (isLocalUser(messageFrom)) {
+  //    const groupData = getGroupData(data?.fromUserId);
+  //    return groupData?.groupName || "-";
+  //  }
+
+  if(!isLocalUser(messageFrom)){
+    const { nameToDisplay = "-" } =formatDisplayName(messageFrom) || {};
+    return nameToDisplay;
+  }
+  return "You"
  };
  
  const getReceiverName = (data) => {
-   if (isSingleChat(data?.chatType) || (isGroupChat(data?.chatType) && isLocalUser(data?.publisherId))) {
-     return "You";
+   if(isGroupChat(data?.chatType)){
+    const { groupName = "" } =getGroupData(data?.fromUserId) || {};
+    return groupName || "-"; 
    }
-   const { groupName = "" } = getGroupData(data?.fromUserId) || {};
-   return groupName || "-";
- };
- 
+    if(isSingleChat(data?.chatType)){
+    const { nameToDisplay = "-" } =formatDisplayName(data?.fromUserId) || {};
+    if(data?.fromUserId === data?.publisherId){  
+      // if(!isLocalUser(data?.favouriteBy)){
+      //   const { favByName } =formatDisplayName(data?.favouriteBy) || {};
+      //   return favByName;
+      // }
+      return "You"
+    }  
+    return nameToDisplay;
+  }
+  
+  //  if (isSingleChat(data?.chatType) || (isGroupChat(data?.chatType) && isLocalUser(data?.publisherId))) {
+  //    return "You";
+  //  }
+  }
+
  const handleUnStarall = () => {
    setUnstarDrop(false);
    if (blockOfflineAction()) return;
@@ -160,8 +178,8 @@ const StarredMessages = (props = {}) => {
    );
  };
  
- const downloadAction = async (event, file_url, fileName) => {
-   downloadMediaFile(file_url, "file", fileName, event);
+ const downloadAction = async (event, file_url, fileName, fileKey) => {
+   downloadMediaFile(file_url, "file", fileName, fileKey, event);
  };
  
  const getMessageElement = (data) => {

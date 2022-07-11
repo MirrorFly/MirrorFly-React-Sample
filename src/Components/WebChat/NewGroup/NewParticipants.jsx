@@ -11,6 +11,7 @@ import { getContactNameFromRoster, getUserInfoForSearch, getFriendsFromRosters, 
 import { toast } from 'react-toastify';
 import { NO_INTERNET } from '../../../Helpers/Constants';
 import { getMaxUsersInCall } from '../../../Helpers/Call/Call';
+import {getFromLocalStorageAndDecrypt} from '../WebChatEncryptDecrypt';
 
 class NewParticipants extends Component {
 
@@ -199,7 +200,7 @@ class NewParticipants extends Component {
     }
 
     handleMakeNewCall = () => {
-        const roomName = localStorage.getItem('roomName');
+        const roomName = getFromLocalStorageAndDecrypt('roomName');
         if (roomName) {
             toast.info("Can't place a new call while you're already in a call.");
             return;

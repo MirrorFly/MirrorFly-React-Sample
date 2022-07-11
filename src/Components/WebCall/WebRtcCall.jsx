@@ -24,6 +24,7 @@ import _get from "lodash/get"
 import { BackToChat, ClosePopup, IconInvite, IconParticiants, TileView,TileViewRemove } from '../../assets/images';
 import CallParticipantList from './CallParticipantList/index';
 import OutsideClickHandler from 'react-outside-click-handler';
+import {deleteItemFromLocalStorage, getFromLocalStorageAndDecrypt} from '../WebChat/WebChatEncryptDecrypt';
 
 var remoteStreamDatas = [];
 
@@ -170,7 +171,7 @@ class WebRtcCall extends React.Component {
         if (this.props.localStream && this.props.remoteStream.length > 1) {
             remoteStreamDatas = [...this.props.remoteStream];
             const largeVideoUserJid = this.props.largeVideoUserJid;
-            localStorage.removeItem('connecting');
+            deleteItemFromLocalStorage('connecting');
             let keyFound = 0;
             let callMode = remoteStreamDatas.length > 2 ? 'onetomany' : 'onetoone';
             if (largeVideoUserJid) {
@@ -422,7 +423,7 @@ class WebRtcCall extends React.Component {
     handleVideoMute = async (videoMute) => {
         const callStatus = this.getCallStatus();
         if(callStatus && (callStatus.toLowerCase() === CALL_STATUS_CONNECTED || callStatus.toLowerCase() === CALL_STATUS_HOLD)){
-            const callConnectionData = JSON.parse(localStorage.getItem('call_connection_status'));
+            const callConnectionData = JSON.parse(getFromLocalStorageAndDecrypt('call_connection_status'));
             const callMode = (callConnectionData && callConnectionData.callMode) || '';
             const allUsersVideoMuted = await SDK.isAllUsersVideoMuted();
             if (allUsersVideoMuted && callMode === "onetoone") {
@@ -586,7 +587,7 @@ class WebRtcCall extends React.Component {
         const { callLogData: { callAudioMute = false } = {}, showConfrenceData: { data: { videoPermissionDisabled = false } = {}} = {} } = this.props;
 
         let { invite, callState} = this.state;
-        const callConnectionData = JSON.parse(localStorage.getItem('call_connection_status'))
+        const callConnectionData = JSON.parse(getFromLocalStorageAndDecrypt('call_connection_status'))
         let rosterData = {};
         let vcardData = getLocalUserDetails();
         let audioControl = true;

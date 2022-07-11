@@ -64,7 +64,11 @@ import {
 } from './WebChat/Authentication/Reconnect'
 import Store from '../Store';
 import {
-    decryption
+    deleteItemFromLocalStorage,
+    encryptAndStoreInLocalStorage,
+    encryptAndStoreInSessionStorage,
+    getFromLocalStorageAndDecrypt,
+    getFromSessionStorageAndDecrypt
 } from './WebChat/WebChatEncryptDecrypt';
 import {
     setConnectionStatus
@@ -168,7 +172,7 @@ let remoteVideoMuted = [],
  * To check the isLogin status
  */
 export const isLoginLogin = () => {
-    if (localStorage.getItem("token")) return true;
+    if (getFromLocalStorageAndDecrypt("token")) return true;
     return false;
 }
 
@@ -180,8 +184,8 @@ export const resetCallData = () => {
     remoteAudioMuted = [];
     localVideoMuted = false;
     localAudioMuted = false;
-    if (localStorage.getItem("isNewCallExist") === "true") {
-        localStorage.removeItem("isNewCallExist")
+    if (getFromLocalStorageAndDecrypt("isNewCallExist") === true) {
+        deleteItemFromLocalStorage("isNewCallExist")
     } else {
         Store.dispatch(resetCallIntermediateScreen());
     }
@@ -284,7 +288,7 @@ const updateStoreRemoteStream = () => {
 
 const ringing = (res) => {
     if (!onCall) {
-        const callConnectionData = JSON.parse(localStorage.getItem("call_connection_status"));
+        const callConnectionData = JSON.parse(getFromLocalStorageAndDecrypt("call_connection_status"));
         if (callConnectionData.callType === "audio") {
             localVideoMuted = true;
         }
@@ -321,8 +325,8 @@ const ringing = (res) => {
 
 const connecting = (res) => {
     updatingUserStatusInRemoteStream(res.usersStatus);
-    let roomId = localStorage.getItem('roomName');
-    localStorage.setItem('callingComponent', false)
+    let roomId = getFromLocalStorageAndDecrypt('roomName');
+    encryptAndStoreInLocalStorage('callingComponent', false)
     const showConfrenceData = Store.getState().showConfrenceData;
     const {
         data
@@ -332,7 +336,7 @@ const connecting = (res) => {
     // If 'data.showStreamingComponent' is FALSE, then set the 'CONNECTING' state to display.
     if (data && !data.showStreamingComponent && remoteStream.length === 0) {
         remoteStream = [];
-        localStorage.setItem("connecting", true);
+        encryptAndStoreInLocalStorage("connecting", true);
         Store.dispatch(showConfrence({
             showComponent: true,
             showStreamingComponent: false,
@@ -346,7 +350,7 @@ const connecting = (res) => {
 }
 
 const updateCallConnectionStatus = (usersStatus) => {
-    const callConnectionData = JSON.parse(localStorage.getItem("call_connection_status"));
+    const callConnectionData = JSON.parse(getFromLocalStorageAndDecrypt("call_connection_status"));
     let usersLen;
     if (usersStatus.length) {
         let currentUsers = usersStatus.filter(el => el.status.toLowerCase() !== CALL_STATUS_ENDED);
@@ -356,7 +360,7 @@ const updateCallConnectionStatus = (usersStatus) => {
         ...callConnectionData,
         callMode: ((callConnectionData && callConnectionData.groupId && callConnectionData.groupId !== null && callConnectionData.groupId !== "") || usersLen > 2) ? "onetomany" : "onetoone"
     }
-    localStorage.setItem("call_connection_status", JSON.stringify(callDetailsObj));
+    encryptAndStoreInLocalStorage("call_connection_status", JSON.stringify(callDetailsObj));
 }
 
 const connected = (res) => {
@@ -376,7 +380,7 @@ const connected = (res) => {
         let showComponent = !!data.showComponent;
         let showStreamingComponent = !!data.showStreamingComponent;
         if (!showStreamingComponent) {
-            localStorage.removeItem('connecting');
+            deleteItemFromLocalStorage('connecting');
             showComponent = false;
             showStreamingComponent = true;
         }
@@ -392,7 +396,7 @@ const connected = (res) => {
 }
 
 const disconnected = (res) => {
-    let roomId = localStorage.getItem('roomName');
+    let roomId = getFromLocalStorageAndDecrypt('roomName');
     let vcardData = getLocalUserDetails();
     let currentUser = vcardData && vcardData.fromUser;
     currentUser = currentUser + "@" + REACT_APP_XMPP_SOCKET_HOST;
@@ -400,9 +404,9 @@ const disconnected = (res) => {
     let disconnectedUser = res.userJid;
     disconnectedUser = disconnectedUser.includes("@") ? disconnectedUser.split('@')[0] : disconnectedUser;
     if (remoteStream.length < 1 || disconnectedUser === currentUser) {
-        localStorage.removeItem('roomName');
-        localStorage.removeItem('callType');
-        localStorage.removeItem('call_connection_status');
+        deleteItemFromLocalStorage('roomName');
+        deleteItemFromLocalStorage('callType');
+        deleteItemFromLocalStorage('call_connection_status');
         callLogs.update(roomId, {
             "endTime": callLogs.initTime(),
             "sessionStatus": res.sessionStatus
@@ -435,11 +439,11 @@ const disconnected = (res) => {
 }
 
 const localstoreCommon = () => {
-    localStorage.setItem('callingComponent', false)
-    localStorage.removeItem('roomName');
-    localStorage.removeItem('callType');
-    localStorage.removeItem('call_connection_status');
-    localStorage.setItem("hideCallScreen", false);
+    encryptAndStoreInLocalStorage('callingComponent', false)
+    deleteItemFromLocalStorage('roomName');
+    deleteItemFromLocalStorage('callType');
+    deleteItemFromLocalStorage('call_connection_status');
+    encryptAndStoreInLocalStorage("hideCallScreen", false);
 };
 
 const dispatchCommon = () => {
@@ -456,7 +460,7 @@ const dispatchCommon = () => {
 };
 
 const handleEngagedOrBusyStatus = (res) => {
-    let roomId = localStorage.getItem('roomName');
+    let roomId = getFromLocalStorageAndDecrypt('roomName');
     updatingUserStatusInRemoteStream(res.usersStatus);
     if (res.sessionStatus === "closed") {
         callLogs.update(roomId, {
@@ -481,7 +485,7 @@ const handleEngagedOrBusyStatus = (res) => {
             data
         } = showConfrenceData;
         if (!onCall) {
-            let callConnectionData = JSON.parse(localStorage.getItem('call_connection_status'))
+            let callConnectionData = JSON.parse(getFromLocalStorageAndDecrypt('call_connection_status'))
             let userList = callConnectionData.userList.split(",");
             let updatedUserList = [];
             userList.forEach(user => {
@@ -498,7 +502,7 @@ const handleEngagedOrBusyStatus = (res) => {
                     callConnectionData.to = updatedUserList[0];
                 }
             }
-            localStorage.setItem("call_connection_status", JSON.stringify(callConnectionData));
+            encryptAndStoreInLocalStorage("call_connection_status", JSON.stringify(callConnectionData));
             Store.dispatch(CallConnectionState(callConnectionData));
         }
         let userDetails = getUserDetails(res.userJid);
@@ -518,12 +522,12 @@ const handleEngagedOrBusyStatus = (res) => {
 }
 
 const ended = (res) => {
-    let roomId = localStorage.getItem('roomName');
+    let roomId = getFromLocalStorageAndDecrypt('roomName');
     if (res.sessionStatus === "closed") {
         let callConnectionData = null;
         if (remoteStream && !onCall && !res.carbonAttended) {
             // Call ended before attend
-            callConnectionData = JSON.parse(localStorage.getItem('call_connection_status'));
+            callConnectionData = JSON.parse(getFromLocalStorageAndDecrypt('call_connection_status'));
         }
         callLogs.update(roomId, {
             "endTime": callLogs.initTime(),
@@ -685,20 +689,20 @@ export var callbacks = {
         console.log('connStatus :>> ', connStatus);
         if (connStatus === "CONNECTED") {
             strophe = true;
-            localStorage.setItem("connection_status", connStatus);
+            encryptAndStoreInLocalStorage("connection_status", connStatus);
             setConnectionStatus(connStatus)
             Store.dispatch(WebChatConnectionState(connStatus));
         } else if (connStatus === "ERROROCCURED") {
-            localStorage.setItem("connection_status", connStatus);
+            encryptAndStoreInLocalStorage("connection_status", connStatus);
         } else if (connStatus === "DISCONNECTED") {
-            if (isSameSession() && sessionStorage.getItem("isLogout") === null) {
+            if (isSameSession() && getFromSessionStorageAndDecrypt("isLogout") === null) {
                 reconnect()
             }
-            localStorage.setItem("connection_status", connStatus);
+            encryptAndStoreInLocalStorage("connection_status", connStatus);
             setConnectionStatus(connStatus)
             Store.dispatch(WebChatConnectionState(connStatus));
         } else if (connStatus === "CONNECTIONFAILED") {
-            localStorage.setItem("connection_status", connStatus);
+            encryptAndStoreInLocalStorage("connection_status", connStatus);
             setConnectionStatus(connStatus)
             Store.dispatch(WebChatConnectionState(connStatus));
         } else if (connStatus === "AUTHENTICATIONFAILED") {
@@ -726,14 +730,14 @@ export var callbacks = {
             }
         }
         res.callMode = callMode;
-        localStorage.setItem("call_connection_status", JSON.stringify(res));
-        let roomId = localStorage.getItem('roomName');
+        encryptAndStoreInLocalStorage("call_connection_status", JSON.stringify(res));
+        let roomId = getFromLocalStorageAndDecrypt('roomName');
 
         if (roomId === "" || roomId === null || roomId === undefined) {
             resetPinAndLargeVideoUser();
-            localStorage.setItem('roomName', res.roomId);
-            localStorage.setItem('callType', res.callType)
-            localStorage.setItem('callFrom', res.from);
+            encryptAndStoreInLocalStorage('roomName', res.roomId);
+            encryptAndStoreInLocalStorage('callType', res.callType)
+            encryptAndStoreInLocalStorage('callFrom', res.from);
             if (res.callType === "audio") {
                 localVideoMuted = true;
             }
@@ -806,11 +810,11 @@ export var callbacks = {
                     remoteAudioMuted[user.userJid] = user.audioMuted;
                 }
             });
-            const roomName = localStorage.getItem('roomName');
+            const roomName = getFromLocalStorageAndDecrypt('roomName');
             if (roomName === "" || roomName == null || roomName == undefined) { 
                 const { roomId = "" } = SDK.getCallInfo();
                 console.log('localStorage roomId :>> ', roomId);
-                localStorage.setItem('roomName', roomId);
+                encryptAndStoreInLocalStorage('roomName', roomId);
             }
 
             dispatch(showConfrence({
@@ -824,7 +828,7 @@ export var callbacks = {
 
         } else {
             onCall = true;
-            localStorage.setItem('callingComponent', false);
+            encryptAndStoreInLocalStorage('callingComponent', false);
             const streamType = res.trackType;
             let mediaStream = null;
             if (res.track) {
@@ -1025,10 +1029,10 @@ export var callbacks = {
     },
     messageListener: async function (res) {
         if (res.msgType === LOGOUT) {
-            sessionStorage.setItem("isLogout", true);
+            encryptAndStoreInSessionStorage("isLogout", true);
             setTimeout(() => {
                 if (isSameSession()) {
-                    localStorage.removeItem("auth_user");
+                    deleteItemFromLocalStorage("auth_user");
                     window.location.reload();
                 }
             }, 2000);
@@ -1127,10 +1131,10 @@ export var callbacks = {
     },
     setUserToken: function (token) {
         if (!token) {
-            localStorage.removeItem('token');
+            deleteItemFromLocalStorage('token');
             return;
         }
-        localStorage.setItem("token", token);
+        encryptAndStoreInLocalStorage("token", token);
     },
     // New Callback Listeners from New SDK
     friendsListListener: function (res) {
@@ -1138,7 +1142,7 @@ export var callbacks = {
         Store.dispatch(RosterDataAction(res.users));
     },
     userProfileListener: async function (res) {
-        let authUser = decryption('auth_user');
+        let authUser = getFromLocalStorageAndDecrypt('auth_user');
         if (authUser.username === res.userId) {
             Store.dispatch(VCardDataAction(res));
         } else {

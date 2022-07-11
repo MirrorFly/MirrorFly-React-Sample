@@ -1,12 +1,11 @@
 import uuidv4 from 'uuid/v4';
 import { REACT_APP_API_URL } from '../Components/processENV';
 import SDK from '../Components/SDK';
-import { decryption } from '../Components/WebChat/WebChatEncryptDecrypt';
+import { getFromLocalStorageAndDecrypt, encryptAndStoreInLocalStorage} from '../Components/WebChat/WebChatEncryptDecrypt';
 import { formatUserIdToJid } from '../Helpers/Chat/User';
 import { compare, parsedContacts } from '../Helpers/Utility';
 import { ROSTER_DATA, ROSTER_DATA_ADD, ROSTER_PERMISSION } from './Constants';
 
-window.decryption = decryption;
 const mapColorForTouser =  () => '#'+Math.floor(Math.random()*16777215).toString(16);
 
 const createUserMessageColor = ( data = []) =>{
@@ -52,8 +51,8 @@ export const RosterData = (data) => {
 }
 
 function settings(){
-    let token = localStorage.getItem('token');
-    let decryptResponse = decryption('auth_user');
+    let token = getFromLocalStorageAndDecrypt('token');
+    let decryptResponse = getFromLocalStorageAndDecrypt('auth_user');
     fetch(`${REACT_APP_API_URL}/users/config`,{
         headers: {
             'Content-Type': 'application/json',
@@ -63,7 +62,7 @@ function settings(){
        const {data} = res
        return SDK.getSettings(data, decryptResponse.username+decryptResponse.username+decryptResponse.username)
     }).then(response=>{
-        localStorage.setItem('settings',response)
+        encryptAndStoreInLocalStorage('settings',response)
     })
 }
 
@@ -102,10 +101,10 @@ const fetchMailContacts = async(token, data, dispatch) => {
                 let contacts = await parsedData.sort(compare);
                 dispatch(RosterData(contacts));
             } else if (res.status === 401) {
-                let decryptResponse = decryption("auth_user");
+                let decryptResponse = getFromLocalStorageAndDecrypt("auth_user");
                 const tokenResult = await SDK.getUserToken(decryptResponse.username, decryptResponse.password);
                 if (tokenResult.statusCode === 200) {
-                    localStorage.setItem("token", tokenResult.userToken);
+                    encryptAndStoreInLocalStorage("token", tokenResult.userToken);
                     fetchMailContacts(tokenResult.userToken, data, dispatch);
                 }
             } else {
@@ -120,7 +119,7 @@ const fetchMailContacts = async(token, data, dispatch) => {
 }
 
 export const RosterDataAction = (data) => async dispatch => {
-    let token = localStorage.getItem('token');
+    let token = getFromLocalStorageAndDecrypt('token');
     if (token !== null) {
         // Change it to SDK 
         fetchMailContacts(token, data, dispatch);

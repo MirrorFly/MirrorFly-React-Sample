@@ -16,6 +16,7 @@ const ImageComponent = React.memo(
   ({
     userToken,
     imageToken,
+    fileKey = "",
     blocked = false,
     chatType,
     temporary,
@@ -51,7 +52,7 @@ const ImageComponent = React.memo(
       if (new RegExp("^(blob:http|blob:https)://", "i").test(imageToken)) return saveImage(imageToken);
 
       localDb
-        .getImageByKey(imageToken, imageType)
+        .getImageByKey(imageToken, imageType, fileKey)
         .then((blob) => {
           const blobUrl = window.URL.createObjectURL(blob);
           isSubscribed && saveImage(blobUrl);

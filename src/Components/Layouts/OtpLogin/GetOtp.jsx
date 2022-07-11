@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { blockOfflineAction, isSandboxMode } from "../../../Helpers/Utility";
 import SDK from "../../SDK";
-import { encryption } from "../../WebChat/WebChatEncryptDecrypt";
+import { encryptAndStoreInLocalStorage} from "../../WebChat/WebChatEncryptDecrypt";
 import CommonInputTag from "./CommonInputTag";
 import { handleOnlyNumber } from "./otpCommon";
 
@@ -61,7 +61,7 @@ function GetOtp(props = {}) {
                   registerResult;
 
                 if (username && password) {
-                  const loginResult = await SDK.login(username, password);
+                  const loginResult = await SDK.connect(username, password);
 
                   if (loginResult.statusCode === 200) {
                     const loginData = {
@@ -69,8 +69,8 @@ function GetOtp(props = {}) {
                       password,
                       type: "web"
                     };
-                    isProfileUpdated && encryption("auth_user", loginData);
-                    localStorage.setItem("token", token);
+                    isProfileUpdated && encryptAndStoreInLocalStorage("auth_user", loginData);
+                    encryptAndStoreInLocalStorage("token", token);
                     SDK.setUserToken(token);
 
                     if (isSandboxMode() && registerResult.data?.isProfileUpdated) {

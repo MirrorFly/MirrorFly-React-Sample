@@ -7,6 +7,7 @@ import {
   ALLOWED_IMAGE_VIDEO_FORMATS
 } from "../../../Helpers/Constants";
 import { getMessageType } from "../../../Helpers/Utility";
+import {getFromLocalStorageAndDecrypt} from "../WebChatEncryptDecrypt";
 
 const { maxAllowedMediaCount, fileSize, imageFileSize, videoFileSize, audioFileSize, documentFileSize } = Config;
 let connectionStatus = "";
@@ -47,7 +48,7 @@ const durationValdation = (file, fileExtension) => {
 
   let promise = new Promise((resolve) => {
     htmlElement.addEventListener("loadedmetadata", () => {
-      var settings = JSON.parse(localStorage.getItem("settings"));
+      var settings = JSON.parse(getFromLocalStorageAndDecrypt("settings"));
       const { audioLimit = 300, videoLimit = 300 } = settings || {};
       const durationCheck = fileExtension === ".mp4" ? videoLimit : audioLimit;
       const fileType = fileExtension === ".mp4" ? "video" : "audio";

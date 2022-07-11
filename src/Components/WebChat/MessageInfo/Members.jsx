@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { getNameAndStatus } from '../../../Helpers/Chat/ChatHelper';
 import { timeFormat } from '../../../Helpers/Chat/RecentChat';
-import { ls } from '../../../Helpers/LocalStorage';
 import ProfileImage from '../Common/ProfileImage';
 import { getContactNameFromRoster, initialNameHandle } from '../../../Helpers/Chat/User';
 import { getUserFromGroup } from '../../../Helpers/Chat/Group';
+import { getFromLocalStorageAndDecrypt } from '../WebChatEncryptDecrypt';
 
 const Members = (props = {}) => {
     const { jid = "", rosterData: { data: rosterArray = [] } = {}, time = "" } = props;
@@ -21,7 +21,7 @@ const Members = (props = {}) => {
     }, [props.rosterData])
 
     const { image, emailId } = getDetails
-    const token = ls.getItem('token');
+    const token = getFromLocalStorageAndDecrypt('token');
     let username = getContactNameFromRoster(getDetails);
     const updateTime = timeFormat(time);
     const iniTail = initialNameHandle(getDetails, username);

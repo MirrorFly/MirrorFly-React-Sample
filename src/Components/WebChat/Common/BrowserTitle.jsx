@@ -2,11 +2,12 @@ import { Component } from "react";
 import { connect } from "react-redux";
 import { getArchivedChats, getMutedChats } from "../../../Helpers/Chat/ChatHelper";
 import { DEFAULT_TITLE_NAME } from "../../../Helpers/Chat/Constant";
+import { encryptAndStoreInLocalStorage} from "../WebChatEncryptDecrypt";
 
 class Title extends Component {
   constructor(props) {
     super(props);
-    localStorage.setItem("unreadMessageCount", 0);
+    encryptAndStoreInLocalStorage("unreadMessageCount", 0);
     this.state = {
       count: 0,
       defaultTitle: DEFAULT_TITLE_NAME
@@ -26,7 +27,7 @@ class Title extends Component {
           count: unReadUserArr.length
         },
         () => {
-          localStorage.setItem("unreadMessageCount", this.state.count);
+          encryptAndStoreInLocalStorage("unreadMessageCount", this.state.count);
         }
       );
     }

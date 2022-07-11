@@ -3,11 +3,10 @@ import { connect } from 'react-redux';
 import 'react-toastify/dist/ReactToastify.css';
 import { CallConnectionState, showConfrence } from '../../../Actions/CallAction';
 import { ArrowBack, AudioCall, SampleGroupProfile, SampleChatProfile, VideoCall } from '../../../assets/images';
-import { ls } from '../../../Helpers/LocalStorage';
 import Store from '../../../Store';
 import { REACT_APP_XMPP_SOCKET_HOST } from '../../processENV';
 import { hideModal, showModal } from '../../../Actions/PopUp'
-import { decryption } from '../WebChatEncryptDecrypt';
+import { getFromLocalStorageAndDecrypt, encryptAndStoreInLocalStorage, deleteItemFromLocalStorage} from '../WebChatEncryptDecrypt';
 import callLogs from '../../WebCall/CallLogs/callLog';
 import { toast } from 'react-toastify';
 import SDK from '../../SDK';
@@ -129,7 +128,7 @@ class ConversationHeader extends React.Component {
         if (this.state.isAdminBlocked || this.state.isDeletedUser) return;
         
         this.preventMultipleClick = true;
-        let connectionStatus = localStorage.getItem("connection_status")
+        let connectionStatus = getFromLocalStorageAndDecrypt("connection_status")
         if (connectionStatus === CONNECTED) {
             let fromuser = this.props?.vCardData?.data?.fromUser;
             let { activeChatId, userData: { data: { roster } } } = this.props
@@ -150,10 +149,10 @@ class ConversationHeader extends React.Component {
                 userAvatar: image
             }
             console.log("make call callConnectionStatus", callConnectionStatus);
-            localStorage.setItem('call_connection_status', JSON.stringify(callConnectionStatus));
-            localStorage.setItem('callType', callType)
-            localStorage.setItem('callingComponent', true)
-            localStorage.setItem('callFrom', decryption('loggedInUserJidWithResource'));
+            encryptAndStoreInLocalStorage('call_connection_status', JSON.stringify(callConnectionStatus));
+            encryptAndStoreInLocalStorage('callType', callType)
+            encryptAndStoreInLocalStorage('callingComponent', true)
+            encryptAndStoreInLocalStorage('callFrom', getFromLocalStorageAndDecrypt('loggedInUserJidWithResource'));
             Store.dispatch(CallConnectionState(callConnectionStatus));
             const showConfrenceData = Store.getState().showConfrenceData;
             const {
@@ -176,12 +175,12 @@ class ConversationHeader extends React.Component {
                     call = await SDK.makeVideoCall([activeChatId], null);
                 }
                 if (call.statusCode !== 200 && call.message === this.premissionConst) {
-                    localStorage.removeItem('roomName')
-                    localStorage.removeItem('callType')
-                    localStorage.removeItem('call_connection_status')
-                    localStorage.setItem("hideCallScreen", false);
-                    localStorage.setItem('callingComponent', false)
-                    localStorage.setItem("hideCallScreen", false);
+                    deleteItemFromLocalStorage('roomName')
+                    deleteItemFromLocalStorage('callType')
+                    deleteItemFromLocalStorage('call_connection_status')
+                    encryptAndStoreInLocalStorage("hideCallScreen", false);
+                    encryptAndStoreInLocalStorage('callingComponent', false)
+                    encryptAndStoreInLocalStorage("hideCallScreen", false);
                     Store.dispatch(showConfrence({
                         showComponent: false,
                         showCalleComponent: false,
@@ -190,7 +189,7 @@ class ConversationHeader extends React.Component {
                     }))
                 } else {
                     roomId = call.roomId;
-                    localStorage.setItem('roomName', roomId)
+                    encryptAndStoreInLocalStorage('roomName', roomId)
                     callLogs.insert({
                         "callMode": callConnectionStatus.callMode,
                         "callState": 1,
@@ -201,18 +200,18 @@ class ConversationHeader extends React.Component {
                         "userList": callConnectionStatus.userList
                     });
                     let callConnectionStatusNew = { ...callConnectionStatus, roomId: roomId };
-                    localStorage.setItem('call_connection_status', JSON.stringify(callConnectionStatusNew));
+                    encryptAndStoreInLocalStorage('call_connection_status', JSON.stringify(callConnectionStatusNew));
                     Store.dispatch(CallConnectionState(callConnectionStatusNew));
                 }
             } catch (error) {
                 console.log("Error in making call", error);
                 if (error.message !== this.premissionConst) {
-                    localStorage.removeItem('roomName')
-                    localStorage.removeItem('callType')
-                    localStorage.removeItem('call_connection_status')
-                    localStorage.setItem("hideCallScreen", false);
-                    localStorage.setItem('callingComponent', false)
-                    localStorage.setItem("hideCallScreen", false);
+                    deleteItemFromLocalStorage('roomName')
+                    deleteItemFromLocalStorage('callType')
+                    deleteItemFromLocalStorage('call_connection_status')
+                    encryptAndStoreInLocalStorage("hideCallScreen", false);
+                    encryptAndStoreInLocalStorage('callingComponent', false)
+                    encryptAndStoreInLocalStorage("hideCallScreen", false);
                     Store.dispatch(showConfrence({
                         showComponent: false,
                         showCalleComponent: false,
@@ -236,7 +235,7 @@ class ConversationHeader extends React.Component {
             return;
         }
         if (this.state.isAdminBlocked) return;
-        let connectionStatus = localStorage.getItem("connection_status")
+        let connectionStatus = getFromLocalStorageAndDecrypt("connection_status")
         if (connectionStatus === CONNECTED) {
             const { groupMemberDetails = [], activeChatId } = this.props
             let groupMembers = [];
@@ -276,7 +275,7 @@ class ConversationHeader extends React.Component {
     }
 
     makeGroupCall = async (callType, groupCallMemberDetails) => {
-        let connectionStatus = localStorage.getItem("connection_status")
+        let connectionStatus = getFromLocalStorageAndDecrypt("connection_status")
         if (connectionStatus === "CONNECTED") {
             let fromuser = this.props?.vCardData?.data?.fromUser;
             const { activeChatId } = this.props
@@ -308,10 +307,10 @@ class ConversationHeader extends React.Component {
                 userList: users.join(','),
                 groupId
             }
-            localStorage.setItem('call_connection_status', JSON.stringify(callConnectionStatus))
-            localStorage.setItem('callType', callType)
-            localStorage.setItem('callingComponent', true)
-            localStorage.setItem('callFrom', decryption('loggedInUserJidWithResource'));
+            encryptAndStoreInLocalStorage('call_connection_status', JSON.stringify(callConnectionStatus))
+            encryptAndStoreInLocalStorage('callType', callType)
+            encryptAndStoreInLocalStorage('callingComponent', true)
+            encryptAndStoreInLocalStorage('callFrom', getFromLocalStorageAndDecrypt('loggedInUserJidWithResource'));
             const showConfrenceData = Store.getState().showConfrenceData;
             const {
                 data
@@ -333,12 +332,12 @@ class ConversationHeader extends React.Component {
                     call = await SDK.makeVideoCall(users, groupId);
                 }
                 if (call.statusCode !== 200 && call.message !== this.premissionConst) {
-                    localStorage.removeItem('roomName')
-                    localStorage.removeItem('callType')
-                    localStorage.removeItem('call_connection_status')
-                    localStorage.setItem("hideCallScreen", false);
-                    localStorage.setItem('callingComponent', false)
-                    localStorage.setItem("hideCallScreen", false);
+                    deleteItemFromLocalStorage('roomName')
+                    deleteItemFromLocalStorage('callType')
+                    deleteItemFromLocalStorage('call_connection_status')
+                    encryptAndStoreInLocalStorage("hideCallScreen", false);
+                    encryptAndStoreInLocalStorage('callingComponent', false)
+                    encryptAndStoreInLocalStorage("hideCallScreen", false);
                     Store.dispatch(showConfrence({
                         showComponent: false,
                         showCalleComponent: false,
@@ -347,7 +346,7 @@ class ConversationHeader extends React.Component {
                     }))
                 } else {
                     roomId = call.roomId;
-                    localStorage.setItem('roomName', roomId)
+                    encryptAndStoreInLocalStorage('roomName', roomId)
                     callLogs.insert({
                         "callMode": callConnectionStatus.callMode,
                         "callState": 1,
@@ -363,18 +362,18 @@ class ConversationHeader extends React.Component {
                         roomId: roomId
                     }
                     Store.dispatch(CallConnectionState(callConnectionStatusNew));
-                    localStorage.setItem('call_connection_status', JSON.stringify(callConnectionStatusNew))
+                    encryptAndStoreInLocalStorage('call_connection_status', JSON.stringify(callConnectionStatusNew))
                     startCallingTimer();
                 }
             } catch (error) {
                 console.log("Error in making call", error);
                 if (error.message === this.premissionConst) {
-                    localStorage.removeItem('roomName')
-                    localStorage.removeItem('callType')
-                    localStorage.removeItem('call_connection_status')
-                    localStorage.setItem("hideCallScreen", false);
-                    localStorage.setItem('callingComponent', false)
-                    localStorage.setItem("hideCallScreen", false);
+                    deleteItemFromLocalStorage('roomName')
+                    deleteItemFromLocalStorage('callType')
+                    deleteItemFromLocalStorage('call_connection_status')
+                    encryptAndStoreInLocalStorage("hideCallScreen", false);
+                    encryptAndStoreInLocalStorage('callingComponent', false)
+                    encryptAndStoreInLocalStorage("hideCallScreen", false);
                     Store.dispatch(showConfrence({
                         showComponent: false,
                         showCalleComponent: false,
@@ -414,7 +413,7 @@ class ConversationHeader extends React.Component {
     }
 
     isRoomExist() {
-        let room = localStorage.getItem('roomName');
+        let room = getFromLocalStorageAndDecrypt('roomName');
         if (room !== null) {
             return true;
         }
@@ -424,7 +423,7 @@ class ConversationHeader extends React.Component {
     render() {
         const { groupMemberDetails, activeChatId, displayNames,
             userData: { data: { chatId = "",recent: { chatType = "", fromUserId = "" } } = {} } = {} } = this.props || {};
-        const token = ls.getItem('token');
+        const token = getFromLocalStorageAndDecrypt('token');
         const avatarIcon = chatType === 'chat' ? SampleChatProfile : SampleGroupProfile;
         let canSendMessage = this.canSendMessage();
         const { mobileNumber } = this.state.localRoster

@@ -20,6 +20,7 @@
     "@testing-library/user-event": "^7.2.1",
     "axios": "^0.19.2",
     "croppie": "^2.6.5",
+    "cryptlib": "^1.0.3",
     "emoji-mart": "^2.11.2",
     "env-cmd": "^10.1.0",
     "firebase": "^8.10.0",

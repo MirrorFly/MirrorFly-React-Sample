@@ -1,13 +1,13 @@
 import React, { Fragment } from 'react';
 import { connect } from 'react-redux';
 import { ActiveChatAction } from '../../../Actions/RecentChatActions';
-import { ls } from '../../../Helpers/LocalStorage';
 import { getHighlightedText } from '../../../Helpers/Utility';
 import Store from '../../../Store';
 import ProfileImage from '../Common/ProfileImage';
 import { formatUserIdToJid, getContactNameFromRoster } from '../../../Helpers/Chat/User';
 import UserStatus from '../Common/UserStatus';
-const token = ls.getItem('token');
+import { getFromLocalStorageAndDecrypt } from '../WebChatEncryptDecrypt';
+const token = getFromLocalStorageAndDecrypt('token');
 class RosterContacts extends React.Component {
     /**
      * handleContacts() method to display the email contacts in new chat.

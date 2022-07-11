@@ -4,12 +4,12 @@ import { updateBlockedContactAction } from "../../../Actions/BlockAction";
 import { getMaxUsersInCall } from "../../../Helpers/Call/Call";
 import { handleTempArchivedChats } from "../../../Helpers/Chat/ChatHelper";
 import { CHAT_TYPE_SINGLE, UNBLOCK_CONTACT_TYPE } from "../../../Helpers/Chat/Constant";
-import { ls } from '../../../Helpers/LocalStorage';
 import { getHighlightedText } from '../../../Helpers/Utility';
 import Store from "../../../Store";
 import SDK from "../../SDK";
 import Modal from "../Common/Modal";
 import { BlockPopUp } from "../PopUp/BlockPopUp";
+import { getFromLocalStorageAndDecrypt } from "../WebChatEncryptDecrypt";
 import ContactInfoCheckBox from "./ContactInfoCheckBox";
 
 export default function Contact(props) {
@@ -67,7 +67,7 @@ export default function Contact(props) {
         }
     }, [isBlocked])
 
-    const token = ls.getItem('token');
+    const token = getFromLocalStorageAndDecrypt('token');
     const hightlightText = getHighlightedText(contactName, searchValue)
 
     return (

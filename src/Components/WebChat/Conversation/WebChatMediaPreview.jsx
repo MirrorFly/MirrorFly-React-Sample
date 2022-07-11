@@ -26,16 +26,13 @@ import { getExtension } from "../../WebChat/Common/FileUploadValidation";
 import getFileFromType from "./Templates/Common/getFileFromType";
 import {
   getDbInstanceName,
-  getMediaURLByFileToken,
   getThumbBase64URL,
-  getUserIdFromJid,
   millisToMinutesAndSeconds
 } from "../../../Helpers/Utility";
 import {
   downloadMediaFile,
   formatBytes,
   getActiveChatMessages,
-  isMediaMessage
 } from "../../../Helpers/Chat/ChatHelper";
 import { INITIAL_LOAD_MEDIA_LIMIT, LOAD_MORE_MEDIA_LIMIT, PREVIEW_MEDIA_TYPES } from "../../../Helpers/Constants";
 import { formatUserIdToJid } from "../../../Helpers/Chat/User";
@@ -66,14 +63,24 @@ class WebChatMediaPreview extends React.Component {
     document.addEventListener("keydown", this.handleOnKeyPress, false);
   }
 
-  getFile = (fileToken, type, thumbImage) => {
+  getFile = async (fileToken, type, thumbImage, fileKey) => {
     if (!fileToken) return null;
-    return this.localDb
-      .getImageByKey(fileToken, getDbInstanceName(type))
+    if (type === "video") {
+      const mediaResponse = await SDK.getMediaURL(fileToken, fileKey);
+      if (mediaResponse.statusCode === 200) {
+        return mediaResponse.data.blobUrl; 
+      } else {
+        console.log("error in loading media file");
+        return "";
+      }
+    } else {
+      return this.localDb
+      .getImageByKey(fileToken, getDbInstanceName(type), fileKey)
       .then((blob) => {
         return window.URL.createObjectURL(blob);
       })
-      .catch(() => (type === "audio" ? getMediaURLByFileToken(fileToken) : thumbImage));
+      .catch(() => thumbImage);
+    }
   };
 
   handleDisplayMedia = async () => {
@@ -86,6 +93,7 @@ class WebChatMediaPreview extends React.Component {
           media: {
             fileName = null,
             file_url = null,
+            file_key = null,
             file_size = null,
             caption = null,
             thumb_image = null,
@@ -105,7 +113,10 @@ class WebChatMediaPreview extends React.Component {
 
         switch (message_type) {
           case "image":
-            const imageSrc = is_uploading === 1 ? file_url : await this.getFile(file_url, "image", thumb_image);
+            const imageSrc = is_uploading === 1 ? file_url : await this.getFile(file_url, "image", thumb_image, file_key);
+            if (!imageSrc || imageSrc === "") {
+              break;
+            }
             mediaData = {
               class: "type-image",
               imageURL: imageSrc,
@@ -157,7 +168,10 @@ class WebChatMediaPreview extends React.Component {
             break;
 
           case "audio":
-            const audioSrc = is_uploading === 1 ? file_url : await this.getFile(file_url, "audio");
+            const audioSrc = is_uploading === 1 ? file_url : await this.getFile(file_url, "audio", {}, file_key);
+            if (!audioSrc || audioSrc === "") {
+              break;
+            }
             mediaData = {
               class: "type-media audio",
               imageURL: audioType !== "recording" ? AudioFile : AudioRecord,
@@ -177,6 +191,10 @@ class WebChatMediaPreview extends React.Component {
             break;
 
           case "video":
+            const videoSrc = is_uploading === 1 ? file_url : await this.getFile(file_url, "video", {}, file_key);
+            if (!videoSrc || videoSrc === "") {
+              break;
+            }
             mediaData = {
               class: "type-media video",
               imageURL: thumb_image,
@@ -184,7 +202,7 @@ class WebChatMediaPreview extends React.Component {
                 <div className="video-wrapper1" id={`video-player-${msgId}`}>
                   <VideoPlayer
                     {...this.videoControls(
-                      file_url,
+                      videoSrc,
                       msgId,
                       this.props.selectedMessageData.msgId === msgId,
                       thumb_image
@@ -449,17 +467,17 @@ class WebChatMediaPreview extends React.Component {
         this.handleDeleteMedia();
       }
 
-      if (this.props.messageData.data && this.props.messageData.data.msgType === "receiveMessage") {
-        if (this.props.messageData.data.fromUserId === getUserIdFromJid(this.props.jid)) {
-          const { msgBody = {} } = this.props.messageData.data;
-          if (isMediaMessage(msgBody)) {
-            let newMediaList = this.state.mediaList;
-            newMediaList.unshift(this.props.messageData.data);
-            this.setState({ mediaList: newMediaList }, () => this.diplayMedia("add"));
-            this.initializeMutation();
-          }
-        }
-      }
+      // if (this.props.messageData.data && this.props.messageData.data.msgType === "receiveMessage") {
+      //   if (this.props.messageData.data.fromUserId === getUserIdFromJid(this.props.jid)) {
+      //     const { msgBody = {} } = this.props.messageData.data;
+      //     if (isMediaMessage(msgBody)) {
+      //       let newMediaList = this.state.mediaList;
+      //       newMediaList.unshift(this.props.messageData.data);
+      //       this.setState({ mediaList: newMediaList }, () => this.diplayMedia("add"));
+      //       this.initializeMutation();
+      //     }
+      //   }
+      // }
     }
     if (prevProps.groupsData && prevProps.groupsData.id !== this.props.groupsData.id) {
           const groupId = this.props.jid.split("@")[0]
@@ -537,14 +555,13 @@ class WebChatMediaPreview extends React.Component {
   };
 
   videoControls = (fileUrl, msgId, selectedMedia, thumbImage) => {
-    let src = fileUrl.search("blob:") === -1 ? getMediaURLByFileToken(fileUrl) : fileUrl;
     return {
       autoplay: selectedMedia,
       msgId: msgId,
       controls: true,
       sources: [
         {
-          src: src,
+          src: fileUrl,
           type: "video/mp4"
         }
       ],
@@ -563,10 +580,10 @@ class WebChatMediaPreview extends React.Component {
     if (this.tempSelectedItem > -1 && this.state.mediaList.length > 0) {
       const selectedMediaData = this.state.mediaList[this.tempSelectedItem];
       if (selectedMediaData && Object.keys(selectedMediaData).length > 0) {
-        const { msgBody: { media: { file_url, fileName: file_name } = {}, message_type = "" } = {} } =
+        const { msgBody: { media: { file_url, fileName: file_name, file_key } = {}, message_type = "" } = {} } =
           selectedMediaData;
         const fileName = message_type === "file" ? file_name : "";
-        downloadMediaFile(file_url, message_type, fileName);
+        downloadMediaFile(file_url, message_type, fileName, file_key);
       }
     }
   };

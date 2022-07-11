@@ -35,6 +35,7 @@ describe(">>>ContentEditable Page Test cover<<<", () => {
             onInputListener: jest.fn(),
             onKeyDownListner: jest.fn(),
             handleSendTextMsg: jest.fn(),
+            handleEmptyContent: jest.fn(),
         };
         const store = mockStore({
             CusPage: {},

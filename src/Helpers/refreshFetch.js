@@ -1,11 +1,12 @@
 import { REACT_APP_API_URL } from '../Components/processENV';
+import {getFromLocalStorageAndDecrypt} from '../Components/WebChat/WebChatEncryptDecrypt';
 
 function handleErrors(response) {
     if (response.status !== 200) throw (response);
     return response;
 }
 
-const retrieveToken = () => localStorage.getItem('token')
+const retrieveToken = () => getFromLocalStorageAndDecrypt('token')
 
 const handleFetchResponse = (response) => {
     const contentType = response.headers.get("content-type");
