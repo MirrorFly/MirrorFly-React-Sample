@@ -4,7 +4,7 @@ import SDK from '../Components/SDK';
 import { getFromLocalStorageAndDecrypt, encryptAndStoreInLocalStorage} from '../Components/WebChat/WebChatEncryptDecrypt';
 import { formatUserIdToJid } from '../Helpers/Chat/User';
 import { compare, parsedContacts } from '../Helpers/Utility';
-import { ROSTER_DATA, ROSTER_DATA_ADD, ROSTER_PERMISSION } from './Constants';
+import { FETCHING_USER_LIST, ROSTER_DATA, ROSTER_DATA_ADD, ROSTER_DATA_UPSERT, ROSTER_PERMISSION } from './Constants';
 
 const mapColorForTouser =  () => '#'+Math.floor(Math.random()*16777215).toString(16);
 
@@ -46,9 +46,42 @@ export const RosterData = (data) => {
             //     setContactWhoBleckedMe(jidArr);
             // }
         });
-    };
-    
+    };    
 }
+
+export const RosterDataUpsert = (data, pageNumber) => {
+    return (dispatch, getState) => {
+        const getcurrentState = getState()
+        const promise = new Promise((resolve,reject) =>{
+            dispatch({
+                type: ROSTER_DATA_UPSERT,
+                payload: {
+                    id: uuidv4(),
+                    data:createUserMessageColor(data),
+                    pageNumber: pageNumber
+                }
+            });
+           resolve(true) 
+        })
+        const rosterId = getcurrentState?.rosterData?.id
+        if(rosterId) return
+        promise.then(async (res)=> {
+            // const userIBlockedRes = await SDK.getUsersIBlocked();
+            // console.log('userIBlockedRes -- ', userIBlockedRes);
+            // if(userIBlockedRes && userIBlockedRes.statusCode === 200){
+            //     const jidArr = formatToArrayofJid(userIBlockedRes.data);
+            //     Store.dispatch(blockedContactAction(jidArr));
+            // }
+            // const userBlockedMeRes = await SDK.getUsersWhoBlockedMe();
+            // console.log('userBlockedMeRes -- ', userBlockedMeRes);
+            // if(userBlockedMeRes && userBlockedMeRes.statusCode === 200){
+            //     const jidArr = formatToArrayofJid(userBlockedMeRes.data);
+            //     setContactWhoBleckedMe(jidArr);
+            // }
+        });
+    };    
+}
+
 
 function settings(){
     let token = getFromLocalStorageAndDecrypt('token');
@@ -147,5 +180,15 @@ export const RosterPermissionAction = (data) => {
         id: uuidv4(),
         data
       }
+    }
+}
+
+export const fetchingUserList = (isFetchingUserList) => {
+    return {
+        type: FETCHING_USER_LIST,
+        payload: {
+            id: uuidv4(),
+            data: isFetchingUserList
+        }
     }
 }

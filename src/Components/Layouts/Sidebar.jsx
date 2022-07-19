@@ -28,6 +28,7 @@ import { disconnectCallConnection } from '../../Helpers/Call/Call';
 import { callIntermediateScreen, resetConferencePopup } from '../../Actions/CallAction';
 import { NEW_CHAT_CONTACT_PERMISSION_DENIED, NEW_GROUP_CONTACT_PERMISSION_DENIED } from '../../Helpers/Chat/Constant';
 import { encryptAndStoreInLocalStorage} from '../WebChat/WebChatEncryptDecrypt';
+import userList from '../WebChat/RecentChat/userList';
 
 class Sidebar extends React.Component {
 
@@ -73,6 +74,7 @@ class Sidebar extends React.Component {
             this.props.handleContactPermissionPopup(true, NEW_CHAT_CONTACT_PERMISSION_DENIED);
             return;
         }
+        userList.getUsersListFromSDK(1);
         this.setState({ newChatStatus: false });
     }
 

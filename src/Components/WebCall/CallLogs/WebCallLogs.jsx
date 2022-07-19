@@ -20,7 +20,6 @@ import { formatUserIdToJid, getDataFromRoster, getLocalUserDetails, getUserDetai
 import { getGroupData } from '../../../Helpers/Chat/Group';
 import { muteLocalVideo } from "../../callbacks";
 import { COMMON_ERROR_MESSAGE } from '../../../Helpers/Call/Constant';
-import Loader from '../../Layouts/Loader';
 import FloatingCallOption from './FloatingCallOption/FloatingCallOption';
 import { FloatingCallActionSm, ArrowBack, EmptyCallLog } from '../../../assets/images';
 import NewParticipants from '../../WebChat/NewGroup/NewParticipants';
@@ -529,12 +528,14 @@ class WebChatCallLogs extends React.Component {
                 let user = userJid || username || GroupUser;
                 user = user.split('@')[0];
                 let userDetails = getDataFromRoster(user);
-                if (userDetails.isDeletedUser) {
+                if (!userDetails.isDeletedUser) {
                     users.push(user + "@" + REACT_APP_XMPP_SOCKET_HOST);
                 }
             });
         }
-        this.makeCall(callMode, callType, users, "");
+        if (users.length > 0) {
+            this.makeCall(callMode, callType, users, "");
+        }
     }
 
     fetchMoreData = () => {
@@ -570,13 +571,12 @@ class WebChatCallLogs extends React.Component {
                             </div>}
 
                             {callLogArr.length > 0 &&
-                                <ul className="chat-list-ul" id="scrollableUl">
+                                <ul className="chat-list-ul" id="scrollableUl-callLog">
                                     <InfiniteScroll
                                         dataLength={callLogArr.length}
                                         next={this.fetchMoreData}
                                         hasMore={true}
-                                        loader={<Loader />}
-                                        scrollableTarget="scrollableUl"
+                                        scrollableTarget="scrollableUl-callLog"
                                     >
                                         {this.handleCallLogs()}
                                     </InfiniteScroll>

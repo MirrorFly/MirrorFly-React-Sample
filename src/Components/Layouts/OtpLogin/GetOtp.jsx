@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { blockOfflineAction, isSandboxMode } from "../../../Helpers/Utility";
+import { blockOfflineAction } from "../../../Helpers/Utility";
 import SDK from "../../SDK";
 import { encryptAndStoreInLocalStorage} from "../../WebChat/WebChatEncryptDecrypt";
 import CommonInputTag from "./CommonInputTag";
@@ -73,9 +73,9 @@ function GetOtp(props = {}) {
                     encryptAndStoreInLocalStorage("token", token);
                     SDK.setUserToken(token);
 
-                    if (isSandboxMode() && registerResult.data?.isProfileUpdated) {
-                      await SDK.syncContacts(username);
-                    }
+                    // if (isSandboxMode() && registerResult.data?.isProfileUpdated) {
+                    //   await SDK.syncContacts(username);
+                    // }
                     handleOtpverify(userIdentifier, registerResult.data, loginData);
                   }
                 } else {

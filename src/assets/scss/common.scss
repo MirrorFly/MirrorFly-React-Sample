@@ -99,7 +99,21 @@ button {
       left: 0;
       top: 0;
       height: 100%;
+      &.style-2{
+          background: #00000010;
+          z-index: 2;
+        cursor: wait;
+      svg, img{
+        width: 60px !important;
+        height: 60px !important;
+        position: relative;
+        z-index: 3;
+        cursor: wait;
+      }
     }
+    }
+
+   
 
     .recent-chatlist-header {
       @include flexbox();
@@ -4225,6 +4239,7 @@ i{
     .popup-body {
       min-height: 300px;
       max-height: 300px;
+      height: 300px;
       overflow-y: auto;
       padding-bottom: 1em;
       position: relative;
@@ -4237,7 +4252,12 @@ i{
         }
         @include chat-list-li-blocked;
       }
-
+      .contactList{
+        height: 100%;
+      }
+      .chat-list-ul{
+        overflow-y: auto;
+      }
       .loader {
         position: absolute;
         margin: auto;
@@ -6890,6 +6910,35 @@ width: 100%;
     background: transparent !important;
   }
 }
+
+body > iframe {
+  display: none !important;
+}
+
+.response_loader {
+  @include flexbox();
+  @include justify-content(center);
+  @include align-items(center);
+  width: 100%;
+  position: absolute;
+  background-color: $bgc-recent-chatlist-loader-container;
+  left: 0;
+  top: 0;
+  height: 100%;
+  &.style-2{
+      background: #00000010;
+      z-index: 2;
+    cursor: wait;
+  svg, img{
+    width: 60px !important;
+    height: 60px !important;
+    position: relative;
+    z-index: 3;
+    cursor: wait;
+  }
+}
+}
+
 
 @import 'media-in-details.scss';
 @import 'single-group-chat.scss';

@@ -64,7 +64,7 @@ const Participants = (props) => {
 
     const getInitalName = () => {
         if (localUser) return nickName;
-        else if (displayNickname) return "";
+        // else if (displayNickname) return "";
         else return displayName;
     }
 

@@ -155,7 +155,7 @@ export async function login() {
       console.log("Reconnect loginResult :>> ", loginResult);
       if (loginResult.statusCode === 200) {
         await SDK.getUserProfile(formatUserIdToJid(decryptResponse.username));
-        await SDK.getFriendsList();
+        // await SDK.getFriendsList();
         const groupListRes = await SDK.getGroupsList();
         if (groupListRes && groupListRes.statusCode === 200) {
           Store.dispatch(GroupsDataAction(groupListRes.data));

@@ -63,10 +63,11 @@ export const getContactNameFromRoster = (roster) => {
 
 export const initialNameHandle = (roster = {}, name = "") => {
     if (isLocalUser(roster.fromUser)) return name;
-    if (_get(roster, "isFriend", false) !== false || _get(roster, "image", "") !== "") {
-        return name;
+    let imageUrl = _get(roster, "image", "");
+    if (imageUrl === "") {
+        return name
     }
-    return "";
+    return "";    
 }
 
 export const arrayRoasterinitialNameHandle = (roster = [], name = "") => {
@@ -81,9 +82,9 @@ export const arrayRoasterinitialNameHandle = (roster = [], name = "") => {
 export const getUserInfoForSearch = (roster) => {
     if (!roster || typeof roster != "object") return roster;
     const fieldsForSearch = ['nickName', 'groupName'];
-    if (!roster.isFriend) {
-        fieldsForSearch.push('userId');
-    }
+    // if (!roster.isFriend) {
+    //     fieldsForSearch.push('userId');
+    // }
     const userInfo = [];
     fieldsForSearch.map(field => roster[field] && userInfo.push(roster[field]))
     return userInfo;
@@ -107,20 +108,23 @@ export const getLocalUserDetails = () => {
 
 export const getDataFromRoster = (userId) => {
     const currentState = Store.getState()
-    const {
+    let {
         rosterData: {
             rosterNames
         }
     } = currentState
-    if (!rosterNames || !rosterNames.has(userId)) {
-        if (userId) {
-            getDataFromSDK(userId);
+    if (rosterNames instanceof Map){
+        if (!rosterNames || !rosterNames.has(userId)) {
+            if (userId) {
+                getDataFromSDK(userId);
+            }
+            let data = { userId: userId, userJid: formatUserIdToJid(userId) };
+            return data;
+        } else {
+            return rosterNames.get(userId);
         }
-        let data = { userId: userId, userJid: formatUserIdToJid(userId) };
-        return data;        
-    } else {
-        return rosterNames.get(userId);
     }
+    return {};    
 }
 
 export const getDataFromSDK = async(userId) => {

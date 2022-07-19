@@ -48,6 +48,7 @@ import { resetCallData } from "../callbacks";
 import ActionInfoPopup from '../ActionInfoPopup';
 import BlockedFromApplication from "../BlockedFromApplication";
 import { adminBlockStatusUpdate } from "../../Actions/AdminBlockAction";
+import { RosterDataAction, RosterPermissionAction } from "../../Actions/RosterActions";
 
 const createHistory = require("history").createBrowserHistory;
 export const history = createHistory();
@@ -310,7 +311,10 @@ class Login extends React.Component {
       setContactWhoBleckedMe(jidArr);
     }
 
-    await SDK.getFriendsList();
+    //await SDK.getFriendsList();
+    Store.dispatch(RosterPermissionAction(true));
+    Store.dispatch(RosterDataAction([]));
+
     const groupListRes = await SDK.getGroupsList();
 
     if (groupListRes && groupListRes.statusCode === 200) {
@@ -398,22 +402,9 @@ class Login extends React.Component {
 
   submitLogin = async () => {
     const obj = {};
-
     const { username, password } = this.state;
-    if (isSandboxMode()) {
-      const registerResult = await SDK.register(username);
-      const {
-        data: { username: loginUsername = "", password: loginPassword = "", isProfileUpdated = false, token = "" } = {}
-      } = registerResult;
-      obj.isProfileUpdated = isProfileUpdated;
-      obj.token = token;
-      obj.username = loginUsername;
-      obj.password = loginPassword;
-    } else {
-      obj.username = username;
-      obj.password = password;
-    }
-
+    obj.username = username;
+    obj.password = password;
     if (obj.username && obj.password) {
       this.handleLogin(obj);
     }
