@@ -987,7 +987,8 @@ class WebChatConversationHistory extends Component {
     const groupNickName = this.props?.activeChatData?.data?.roster?.nickName;
     const { deleteStatus, deleteEveryOne = null, isSender = null } = replyMessage || {};
     const chatMessages = jid && !loaderStatus ? getChatMessageHistoryById(jid) : [];
-    const { isAdminBlocked = false } = getDataFromRoster(jid) || {};
+    let { isAdminBlocked = false } = getDataFromRoster(jid) || {};
+    isAdminBlocked = isAdminBlocked === 0 || !isAdminBlocked ? false : true;
     return (
       <Fragment>
         {showBlockModal && (

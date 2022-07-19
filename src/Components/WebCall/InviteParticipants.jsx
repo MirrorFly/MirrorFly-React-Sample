@@ -110,7 +110,8 @@ class InviteParticipants extends React.Component {
             makeGroupCall: this.invite,
             callType:this.callConnectionData.callType,
             currentCallUsersLength: this.currentCallUsers.length,
-            closePopup: this.props.closePopup
+            closePopup: this.props.closePopup,
+            currentCallUsers: this.currentCallUsersArray
         });
     }
 

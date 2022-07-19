@@ -29,7 +29,7 @@ class BigVideo extends React.Component {
     }
 
     render() {
-        let { audioMuted, videoMuted, rosterData, stream, remoteStreamLength, volumeLevel,volumeVideo, showVoiceDetect, inverse } = this.props;
+        let { audioMuted, videoMuted, rosterData, stream, volumeLevel, showVoiceDetect, inverse } = this.props;
         const token = getFromLocalStorageAndDecrypt('token');
         const initial = initialNameHandle(rosterData, rosterData.initialName);
         return (
@@ -40,18 +40,18 @@ class BigVideo extends React.Component {
                         <div className="participantCallStatus video">
                         {(this.props.setPinUser && this.props.jid === this.props.pinUserJid) &&
                             <i className="pinned"><IconPinActive /></i>
-                            }
-                        {!audioMuted && !remoteStreamLength <= 2 ?
-                        <>
-                            <div className={`audio_indication left height_adjust transistion_adjust ${handleAudioClasses(volumeVideo)}`}>
+                            }                        <>
+                        {audioMuted &&
+                        <i title="Participant is muted" className="AudioOffRemote"><AudioOff /></i>
+                    }
+                        {!audioMuted && 
+                               <div className={`audio_indication left height_adjust transistion_adjust ${handleAudioClasses(60)}`}>
                                 <div className="audio_indicator audio_indicator_1"></div>
                                 <div className="audio_indicator audio_indicator_2"></div>
                                 <div className="audio_indicator audio_indicator_3"></div>
                             </div>
-                        </>
-                        :
-                        <i title="Participant is muted" className="AudioOffRemote"><AudioOff /></i>
                         }
+                        </>                        
                         </div>
                             <Video stream={stream.video} muted={false} id={stream.video.id} inverse={inverse}/>
                             {/* <Video stream={stream.video} muted={false} id={stream.video.id} inverse={inverse}/> */}
@@ -68,6 +68,13 @@ class BigVideo extends React.Component {
                         {videoMuted && <i title="Participant has stopped the camera" className="videoOffRemote"><VideoOff /></i>}
                         {audioMuted &&
                             <i title="Participant is muted" className="AudioOffRemote"><AudioOff /></i>
+                        }
+                         {!audioMuted &&
+                               <div className={`audio_indication left height_adjust transistion_adjust ${handleAudioClasses(60)}`}>
+                                <div className="audio_indicator audio_indicator_1"></div>
+                                <div className="audio_indicator audio_indicator_2"></div>
+                                <div className="audio_indicator audio_indicator_3"></div>
+                            </div>
                         }
                         {(this.props.setPinUser && this.props.jid === this.props.pinUserJid) &&
                             <i className="pinned"><IconPinActive /></i>

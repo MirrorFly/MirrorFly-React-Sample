@@ -1121,18 +1121,33 @@ export const getRecentChatItem = (fromUserId) => {
 
 export const sendNotification = (displayName = "", imageUrl = "", messageBody = "", fromUser = "") => {
   try {
+
+    let userAgent = window.navigator.userAgent.toLowerCase(),
+    macosPlatforms = /(macintosh|macintel|macppc|mac68k|macos)/i,
+    windowsPlatforms = /(win32|win64|windows|wince)/i,
+    iosPlatforms = /(iphone|ipad|ipod)/i,
+    os = null;
+
     Push.clear();
     const sound = new Audio("sounds/notification.mp3")
-
     const updateDisplayName = displayName ? displayName.toString() : "";
-    sound.play()
-    
-    
+
+    if (macosPlatforms.test(userAgent)) {
+      os = "macos";
+    } else if (iosPlatforms.test(userAgent)) {
+      os = "ios";
+    } else if (windowsPlatforms.test(userAgent)) {
+      os = "windows";
+    } else if (/android/.test(userAgent)) {
+      os = "android";
+    } else if (!os && /linux/.test(userAgent)) {
+      os = "linux";
+    }
+
     Push.create(updateDisplayName, {
       body: handleMessageParseHtml(messageBody),
       ...{ icon: imageUrl ? imageUrl : "" },
       timeout: 8000,
-      silent: true,
       tag: JSON.stringify({fromUserId: fromUser}),
       onClick: (e) => {
         window.focus();
@@ -1148,6 +1163,17 @@ export const sendNotification = (displayName = "", imageUrl = "", messageBody = 
         }
       }
     });
+
+
+    if(os === 'windows'){
+      var windowisChrome = !window.chrome && (!window.chrome.webstore || !window.chrome.runtime);
+      if(windowisChrome){
+        return true;
+      }
+    }else {
+      return sound.play();
+    }
+
   } catch (error) {
     console.log("sendNotification Error :>> ", error);
   }
@@ -1170,7 +1196,7 @@ export const getInitializeObj = () => ({
   apiBaseUrl: REACT_APP_API_URL,
   callbackListeners: callbacks,
   licenseKey: REACT_APP_LICENSE_KEY,
-  isTrialLicenseKey: isSandboxMode(),
+  isSandbox: isSandboxMode(),
 });
 
 export const getSiteDomain = () => REACT_APP_SITE_DOMAIN || window.location.hostname;

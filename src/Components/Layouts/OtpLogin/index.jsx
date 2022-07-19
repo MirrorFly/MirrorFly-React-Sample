@@ -9,8 +9,6 @@ import "./login.scss";
 import config from "../../../config";
 import firebase from "./firebaseConfig";
 import { DEFAULT_USER_STATUS } from "../../../Helpers/Chat/Constant";
-import { isSandboxMode } from "../../../Helpers/Utility";
-import SDK from "../../SDK";
 import OutsideClickHandler from "react-outside-click-handler";
 import BlockedFromApplication from "../../BlockedFromApplication";
 
@@ -145,12 +143,12 @@ function OtpLogin(props = {}) {
   };
 
   const handleProfileDetails = async (value1, e) => {
-    if (isSandboxMode()) {
-      await SDK.syncContacts(resultData.login.username);      
-    }
-    if (profileDetails && profileDetails.registerData && !profileDetails.registerData.isProfileUpdated) {
-      SDK.sendRegisterUpdate();
-    }
+    // if (isSandboxMode()) {
+    //   await SDK.syncContacts(resultData.login.username);      
+    // }
+    // if (profileDetails && profileDetails.registerData && !profileDetails.registerData.isProfileUpdated) {
+    //   SDK.sendRegisterUpdate();
+    // }
     handleLoginSuccess(resultData.register, resultData.login);
   };
 

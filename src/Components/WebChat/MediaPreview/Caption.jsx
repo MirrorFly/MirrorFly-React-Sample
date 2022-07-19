@@ -23,6 +23,8 @@ const Caption = (props = {}) => {
       const valueLength = typeingValue.length;//get typing length
       setCaretPosition(document.getElementById("image-preview-typingContainer"), +valueLength);
       setPosition(pos);
+      typingMessage = valueLength.length-1;
+      if(typingMessage >= 0){valueLength.deleteData(typingMessage,0)}
     } else {
       setPosition(pos);
     }

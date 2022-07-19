@@ -45,7 +45,7 @@ export { ReactComponent as RecordAudio } from './record-mic.svg';
 export { ReactComponent as StartRecord } from './startRecord.svg';
 export { ReactComponent as StopRecord } from './stopRecord.svg';
 export { default as  broadcast } from './broadcast.png';
-export { default as  Loader } from './loader.svg';
+export { default as  Loader , ReactComponent as IconLoader} from './loader.svg';
 export { default as  GroupChatAvatarImg } from './sample-group-profile.svg';
 export { default as  SingleChatAvatarImg } from './sample-callee-profile.png';
 export { ReactComponent as ClosePopup } from './close.svg';

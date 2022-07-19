@@ -330,7 +330,7 @@ class WebCallingLayout extends Component {
                                     <SmallVideo
                                         elKey={`local-user-video-${vcardData.fromUser}`}
                                         videoMuted={localVideoMuted}
-                                        audioMuted={localAudioMuted}
+                                        audioMuted={!localAudioMuted}
                                         stream={localStream}
                                         rosterData={vcardData}
                                         jid={vcardData.fromUser}

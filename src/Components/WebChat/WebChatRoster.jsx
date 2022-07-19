@@ -1,10 +1,11 @@
 import React, { Fragment } from 'react';
 import { connect } from 'react-redux';
+import InfiniteScroll from "react-infinite-scroll-component";
 import { chatResetMessage } from '../../Actions/GroupChatMessageActions';
 import { ActiveChatAction } from '../../Actions/RecentChatActions';
 import { ArrowBack, loaderSVG, MailIcon, EmptySearch, EmptyContact, BlockedIcon } from '../../assets/images';
 import "../../assets/scss/minEmoji.scss";
-import { getHighlightedText, handleFilterBlockedContact } from '../../Helpers/Utility';
+import { getHighlightedText, getValidSearchVal, handleFilterBlockedContact } from '../../Helpers/Utility';
 import Store from '../../Store';
 import ImageComponent from '../WebChat/Common/ImageComponent';
 import WebChatSearch from "./WebChatSearch";
@@ -13,7 +14,7 @@ import UserStatus from '../WebChat/Common/UserStatus';
 import { formatUserIdToJid, getContactNameFromRoster } from '../../Helpers/Chat/User';
 import { NO_SEARCH_CONTACT_FOUND } from '../processENV';
 import {getFromLocalStorageAndDecrypt} from './WebChatEncryptDecrypt';
-
+import userList from './RecentChat/userList';
 
 class WebChatRoster extends React.Component {
 
@@ -26,8 +27,9 @@ class WebChatRoster extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            loaderStatus: true,
+            loaderStatus: !!props?.rosterData?.isFetchingUserList,
             filterItem: [],
+            userList: [],
             searchIn: "contacts",
             searchWith: ""
         }
@@ -45,8 +47,7 @@ class WebChatRoster extends React.Component {
      */
     componentDidMount() {
         let data = (this.props.rosterData && this.props.rosterData.data) || []
-        this.setState({ loaderStatus: false });
-        this.handleUpdateRoster(data);
+        this.handleUpdateRoster(data, this.props?.rosterData?.isFetchingUserList);
     }
 
     /**
@@ -178,13 +179,13 @@ class WebChatRoster extends React.Component {
     /**
      * handleUpdateRoster() method handles if roster dynamic update in search result.
      */
-    handleUpdateRoster = (rosterData) => {
+    handleUpdateRoster = (rosterData, isFetchingUserList = false) => {
         let searchWith = this.state.searchWith;
         let data = handleFilterBlockedContact(rosterData).filter(function (item) {
             let filterVariable = getContactNameFromRoster(item) || item.userId;
             return (item.isFriend) && filterVariable.toLowerCase().search(searchWith.toLowerCase()) !== -1;
         });
-        this.setState({ filterItem: data });
+        this.setState({ filterItem: data, userList: data, loaderStatus: isFetchingUserList });
     }
 
     /**
@@ -195,8 +196,8 @@ class WebChatRoster extends React.Component {
      * @param {object} prevState
      */
     componentDidUpdate(prevProps, prevState) {
-        if (prevProps.rosterData && prevProps.rosterData.id !== this.props.rosterData.id) {
-            this.handleUpdateRoster(this.props.rosterData.data);
+        if (prevProps.rosterData && ( prevProps.rosterData.id !== this.props.rosterData.id || prevProps?.rosterData?.isFetchingUserList !== this.props?.rosterData?.isFetchingUserList)) {
+            this.handleUpdateRoster(this.props.rosterData.data, this.props?.rosterData?.isFetchingUserList);
         }
     }
 
@@ -237,22 +238,45 @@ class WebChatRoster extends React.Component {
     /**
      * handleFilterContactsList() method is to handle the searched contacts from list
      *
-     * @param {object} filterData
      * @param {string} searchWith
      */
-    handleFilterContactsList(filterData, searchWith) {
-        this.setState({ filterItem: filterData, searchWith: searchWith });
+    handleFilterContactsList(searchWith) {
+        this.setState({ searchWith: searchWith });
+    }
+
+    fetchMoreData = () => {
+        let userListArr = this.state.userList;
+        userList.getUsersListFromSDK(Math.ceil((userListArr.length / 20) + 1), getValidSearchVal(this.state.searchWith));
+    }
+
+    handleUserListData() {
+        let dataArr = [];
+        if (this.state.filterItem.length > 0 && this.state.userList.length > 0) {
+            this.state.userList.map((roster, index) => {
+                dataArr.push(
+                    <React.Fragment key={index}>
+                        {roster.emailId ? this.handleEmailContacts(roster) : this.handleMobileContacts(roster)}
+                    </React.Fragment>
+                )
+            });
+        } else if (this.state.filterItem.length === 0 && this.state.searchWith !== "") {
+            dataArr.push(
+                <div key ="0" className="no-search-record-found">
+                    <div className="norecent-chat">
+                        <i className="norecent-chat-img">
+                            <EmptySearch />
+                        </i>
+                        <h4>{NO_SEARCH_CONTACT_FOUND} </h4>
+                    </div>
+                </div>
+                );
+        }
+        return dataArr;
     }
 
     render() {
-        const loaderStyle = {
-            width: 50,
-            height: 50
-        }
         const { newChatStatus } = this.props
-        if (this.state.loaderStatus) {
-            return <img src={loaderSVG} alt="loader" style={loaderStyle} />
-        }
+        const userListArr = this.handleUserListData();
         return (
             <Fragment>
                 <div style={{ display: newChatStatus ? 'none' : '' }} className="contactlist">
@@ -265,9 +289,28 @@ class WebChatRoster extends React.Component {
                         </div>
                     </div>
                     <WebChatSearch searchIn={this.state.searchIn} handleSearchFilterList={this.handleFilterContactsList} />
-                    <ul className="chat-list-ul">
+                    {/* <ul className="chat-list-ul">
                         {this.handleRosterData()}
-                    </ul>
+                    </ul> */}
+
+                    {this.state.loaderStatus && <div className="loader-container style-2">
+                        <img src={loaderSVG} alt="loader"  />
+                    </div>}
+
+                    {userListArr.length > 0 &&
+                        <ul className="chat-list-ul" id="scrollableUl">
+                            <InfiniteScroll
+                                dataLength={userListArr.length}
+                                next={this.fetchMoreData}
+                                hasMore={true}
+                                scrollableTarget="scrollableUl"
+                            >
+                                {this.handleUserListData()}
+                            </InfiniteScroll>
+                        </ul>
+                    }
+
+
                 </div>
             </Fragment>
         );

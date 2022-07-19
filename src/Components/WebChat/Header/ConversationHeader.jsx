@@ -121,6 +121,21 @@ class ConversationHeader extends React.Component {
         return false;
     }
 
+    deleteAndDispatchAction = () => {
+        deleteItemFromLocalStorage('roomName')
+        deleteItemFromLocalStorage('callType')
+        deleteItemFromLocalStorage('call_connection_status')
+        encryptAndStoreInLocalStorage("hideCallScreen", false);
+        encryptAndStoreInLocalStorage('callingComponent', false)
+        encryptAndStoreInLocalStorage("hideCallScreen", false);
+        Store.dispatch(showConfrence({
+            showComponent: false,
+            showCalleComponent: false,
+            stopSound: true,
+            callStatusText: null
+        }));
+    }
+
     makeOne2OneCall = async (callType) => {
         if (this.isRoomExist() || this.preventMultipleClick) {
             return;
@@ -175,18 +190,7 @@ class ConversationHeader extends React.Component {
                     call = await SDK.makeVideoCall([activeChatId], null);
                 }
                 if (call.statusCode !== 200 && call.message === this.premissionConst) {
-                    deleteItemFromLocalStorage('roomName')
-                    deleteItemFromLocalStorage('callType')
-                    deleteItemFromLocalStorage('call_connection_status')
-                    encryptAndStoreInLocalStorage("hideCallScreen", false);
-                    encryptAndStoreInLocalStorage('callingComponent', false)
-                    encryptAndStoreInLocalStorage("hideCallScreen", false);
-                    Store.dispatch(showConfrence({
-                        showComponent: false,
-                        showCalleComponent: false,
-                        stopSound: true,
-                        callStatusText: null
-                    }))
+                    this.deleteAndDispatchAction();
                 } else {
                     roomId = call.roomId;
                     encryptAndStoreInLocalStorage('roomName', roomId)
@@ -206,18 +210,7 @@ class ConversationHeader extends React.Component {
             } catch (error) {
                 console.log("Error in making call", error);
                 if (error.message !== this.premissionConst) {
-                    deleteItemFromLocalStorage('roomName')
-                    deleteItemFromLocalStorage('callType')
-                    deleteItemFromLocalStorage('call_connection_status')
-                    encryptAndStoreInLocalStorage("hideCallScreen", false);
-                    encryptAndStoreInLocalStorage('callingComponent', false)
-                    encryptAndStoreInLocalStorage("hideCallScreen", false);
-                    Store.dispatch(showConfrence({
-                        showComponent: false,
-                        showCalleComponent: false,
-                        stopSound: true,
-                        callStatusText: null
-                    }))
+                    this.deleteAndDispatchAction();
                 }
             }
         } else {
@@ -332,18 +325,7 @@ class ConversationHeader extends React.Component {
                     call = await SDK.makeVideoCall(users, groupId);
                 }
                 if (call.statusCode !== 200 && call.message !== this.premissionConst) {
-                    deleteItemFromLocalStorage('roomName')
-                    deleteItemFromLocalStorage('callType')
-                    deleteItemFromLocalStorage('call_connection_status')
-                    encryptAndStoreInLocalStorage("hideCallScreen", false);
-                    encryptAndStoreInLocalStorage('callingComponent', false)
-                    encryptAndStoreInLocalStorage("hideCallScreen", false);
-                    Store.dispatch(showConfrence({
-                        showComponent: false,
-                        showCalleComponent: false,
-                        stopSound: true,
-                        callStatusText: null
-                    }))
+                    this.deleteAndDispatchAction();
                 } else {
                     roomId = call.roomId;
                     encryptAndStoreInLocalStorage('roomName', roomId)
@@ -368,18 +350,7 @@ class ConversationHeader extends React.Component {
             } catch (error) {
                 console.log("Error in making call", error);
                 if (error.message === this.premissionConst) {
-                    deleteItemFromLocalStorage('roomName')
-                    deleteItemFromLocalStorage('callType')
-                    deleteItemFromLocalStorage('call_connection_status')
-                    encryptAndStoreInLocalStorage("hideCallScreen", false);
-                    encryptAndStoreInLocalStorage('callingComponent', false)
-                    encryptAndStoreInLocalStorage("hideCallScreen", false);
-                    Store.dispatch(showConfrence({
-                        showComponent: false,
-                        showCalleComponent: false,
-                        stopSound: true,
-                        callStatusText: null
-                    }))
+                    this.deleteAndDispatchAction();
                 }
             }
 
