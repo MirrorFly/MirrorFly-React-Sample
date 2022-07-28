@@ -1198,22 +1198,22 @@ export var callbacks = {
             "isEnableArchived": res.archive === 0 ? false : true
         }));
     },
-    helper: {
-        getDisplayName: () => {
-            let vcardData = getLocalUserDetails();
-            if (vcardData && vcardData.nickName) {
-                return vcardData.nickName;
-            }
-            return "Anonymous user " + Math.floor(Math.random() * 10);
-        },
-        getImageUrl: () => {
-            let vcardData = getLocalUserDetails();
-            if (vcardData) {
-                return vcardData.image;
-            }
-            return "";
-        }
-    },
+    // helper: {
+    //     getDisplayName: () => {
+    //         let vcardData = getLocalUserDetails();
+    //         if (vcardData && vcardData.nickName) {
+    //             return vcardData.nickName;
+    //         }
+    //         return "Anonymous user " + Math.floor(Math.random() * 10);
+    //     },
+    //     getImageUrl: () => {
+    //         let vcardData = getLocalUserDetails();
+    //         if (vcardData) {
+    //             return vcardData.image;
+    //         }
+    //         return "";
+    //     }
+    // },
     callUserJoinedListener: function (res) {
         if (res.userJid && !res.localUser) {
             updateStoreRemoteStream();
