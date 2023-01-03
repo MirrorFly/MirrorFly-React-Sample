@@ -5,7 +5,7 @@ import ProfileImage from '../../Common/ProfileImage';
 import Modal from '../../Common/Modal';
 import { BlockPopUp } from '../../PopUp/BlockPopUp';
 import {Noblocked } from '../images';
-import { SettingsHeder } from '../Settings';
+import { SettingsHeader } from '../Settings';
 import './BlockedContacts.scss';
 import { getContactNameFromRoster, formatUserIdToJid } from '../../../../Helpers/Chat/User';
 import UserStatus from '../../Common/UserStatus';
@@ -14,6 +14,7 @@ import { updateBlockedContactAction } from '../../../../Actions/BlockAction';
 import { CHAT_TYPE_SINGLE, UNBLOCK_CONTACT_TYPE } from '../../../../Helpers/Chat/Constant';
 import Store from '../../../../Store';
 import { handleTempArchivedChats } from '../../../../Helpers/Chat/ChatHelper';
+import {getFromLocalStorageAndDecrypt} from '../../WebChatEncryptDecrypt';
 
 class BlockedContacts extends Component {
 
@@ -80,7 +81,7 @@ class BlockedContacts extends Component {
    renderProfile = () => {
       const { contactDetails } = this.state
       if (contactDetails.length === 0) return null
-      const token = localStorage.getItem('token');
+      const token = getFromLocalStorageAndDecrypt('token');
       return contactDetails.map((contact, index) => {
          const { chatType, image, emailId, statusMsg, status, userId, userJid } = contact
          const nameToDisplay = getContactNameFromRoster(contact)
@@ -129,7 +130,7 @@ class BlockedContacts extends Component {
             </Modal>}
             <div>
                <div className="settinglist ">
-                  <SettingsHeder
+                  <SettingsHeader
                      handleBackFromSetting={handleBackToSetting}
                      label={'Blocked Contacts'}
                   />

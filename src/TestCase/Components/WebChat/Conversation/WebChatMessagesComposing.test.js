@@ -54,6 +54,7 @@ describe(">>> WebChatMessagesComposing Test case <<<", () => {
                 }
             },
             handleSendMsg: jest.fn(),
+            featureStateData: {},
         });
         wrapper = mount(
             <Provider store={store}>

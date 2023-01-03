@@ -9,9 +9,8 @@ import "./login.scss";
 import config from "../../../config";
 import firebase from "./firebaseConfig";
 import { DEFAULT_USER_STATUS } from "../../../Helpers/Chat/Constant";
-import { isSandboxMode } from "../../../Helpers/Utility";
-import SDK from "../../SDK";
 import OutsideClickHandler from "react-outside-click-handler";
+import BlockedFromApplication from "../../BlockedFromApplication";
 
 const { helpUrl } = config;
 const otpInitialState = {
@@ -29,6 +28,7 @@ function OtpLogin(props = {}) {
   const [resultData, setResultData] = useState({});
   const [pageLoader, setPageLoader] = useState(false);
   const [errorHide, setErrorHide] = useState(false);
+  const [adminBlocked, setAdminBlocked] = useState(false);
   const [regMobileNo, setRegMobileNo] = useState({
     mobileNumber: "",
     country: "",
@@ -63,7 +63,7 @@ function OtpLogin(props = {}) {
           }
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   };
 
   useEffect(() => {
@@ -117,7 +117,8 @@ function OtpLogin(props = {}) {
       setProfileDetails({
         ...profileDetails,
         mobileNo: mobileNo,
-        loginData: login
+        loginData: login,
+        registerData: register
       });
       setValidate({
         ...validate,
@@ -142,14 +143,12 @@ function OtpLogin(props = {}) {
   };
 
   const handleProfileDetails = async (value1, e) => {
-    if (isSandboxMode()) {
-      await SDK.syncContacts(resultData.login.username);
-    }
-    setValidate({
-      ...validate,
-      getProfileDetails: false
-    });
-    setPageLoader(false);
+    // if (isSandboxMode()) {
+    //   await SDK.syncContacts(resultData.login.username);      
+    // }
+    // if (profileDetails && profileDetails.registerData && !profileDetails.registerData.isProfileUpdated) {
+    //   SDK.sendRegisterUpdate();
+    // }
     handleLoginSuccess(resultData.register, resultData.login);
   };
 
@@ -169,6 +168,13 @@ function OtpLogin(props = {}) {
 
   const fullPageLoader = (status) => {
     setPageLoader(status);
+  };
+  const handleBlockedInfo = () => {
+    setValidate({
+      ...validate,
+      getOtpVerfied: false,
+    });
+    setAdminBlocked(true);
   };
 
   const sendOtp = () => {
@@ -214,9 +220,8 @@ function OtpLogin(props = {}) {
     <Fragment>
       <div className="mirrorfly newLoginScreen">
         <div
-          className={`login-wrapper ${validate.getMobileNo ? " otpWrapper " : ""} ${
-            validate.getOtpVerfied ? " getotpWrapper " : ""
-          } ${validate.getProfileDetails ? " profileWrapper " : ""}`}
+          className={`login-wrapper ${validate.getMobileNo ? " otpWrapper " : ""} ${validate.getOtpVerfied ? " getotpWrapper " : ""
+            } ${validate.getProfileDetails ? " profileWrapper " : ""}`}
         >
           <div className="login-content">
             {validate.getMobileNo && (
@@ -254,9 +259,8 @@ function OtpLogin(props = {}) {
               </div>
             )}
             <div
-              className={`right-col ${validate.getMobileNo ? "otpPage" : ""} ${
-                validate.getOtpVerfied ? "getotpPage" : ""
-              } ${validate.getProfileDetails ? "profilePage" : ""}`}
+              className={`right-col ${validate.getMobileNo ? "otpPage" : ""} ${validate.getOtpVerfied ? "getotpPage" : ""
+                } ${validate.getProfileDetails ? "profilePage" : ""}`}
             >
               <div className="form">
                 {validate.getMobileNo && (
@@ -286,6 +290,7 @@ function OtpLogin(props = {}) {
                 )}
                 {validate.getOtpVerfied && (
                   <GetOtp
+                    handleBlockedInfo={handleBlockedInfo}
                     regMobileNo={regMobileNo}
                     otp={otpverify}
                     handleOtpverify={handleOtpverify}
@@ -308,6 +313,9 @@ function OtpLogin(props = {}) {
                     fromPage={"otpPage"}
                   />
                 )}
+                {adminBlocked &&
+                  <BlockedFromApplication />
+                }
               </div>
               <OutsideClickHandler onOutsideClick={handleCaptchaOutsideClick}>
                 <div id="recaptcha-container" className="recaptcha-container"></div>

@@ -57,4 +57,11 @@ export const GROUP_UPDATE_ACTIONS = [
   GROUP_PROFILE_INFO_UPDATED,
   GROUP_USER_LEFT
 ];
+export const NEW_CHAT_CONTACT_PERMISSION_DENIED = "You have denied contact permission on mobile. Allow permission for MirrorFly to access contacts and start a new chat.";
+export const NEW_GROUP_CONTACT_PERMISSION_DENIED = "You have denied contact permission on mobile. Allow permission for MirrorFly to access contacts and start a new group.";
+export const ADD_PARTICIPANT_GROUP_CONTACT_PERMISSION_DENIED = "You have denied contact permission on mobile. Allow permission for MirrorFly to access contacts and add a new participant.";
+export const NEW_CALL_CONTACT_PERMISSION_DENIED = "You have denied contact permission on mobile. Allow permission for MirrorFly to access contacts and start a new call.";
+export const ADD_PARTICIPANT_CALL_CONTACT_PERMISSION_DENIED = "You have denied contact permission on mobile. Allow permission for MirrorFly to access contacts and add a new participant.";
+export const REPORT_FROM_CONTACT_INFO = "REPORT_FROM_CONTACT_INFO"
+
 

@@ -11,7 +11,7 @@ z-index: 1;
 width: 10em;
 font-family: $regular;
 right: 0.4em;
-top: -12.5em;
+bottom: 4em;
 padding: 0.938em;
 opacity: 1;
 .closedropmedia {
@@ -59,7 +59,7 @@ opacity: 1;
             position: relative;
             width: 1.875em;
             height: auto;
-            top: 0.15em;
+            &:not(.top-0){top: 0.15em;}
         }
         
     }
@@ -77,18 +77,6 @@ opacity: 1;
         user-select: none;
     }
     } 
-    &:first-child {
-        bottom: -197px;
-        }
-    &:nth-child(2) {
-    bottom: -150px;
-    }
-    &:nth-child(3) {
-        bottom: -102px;
-    }
-    &:nth-child(4) {
-        bottom: -52px;
-    }
     &:hover span{
         background: #0F2A5F;
         background-size: 150%;

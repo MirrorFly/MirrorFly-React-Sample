@@ -4,8 +4,9 @@ import { RecordAudio, StartRecord, StopRecord, AudioPermissionIcon } from "../..
 import "./AudioRecorder.scss";
 import { AUDIO_PERMISSION_DENIED, PERMISSION_DENIED } from "../../processENV";
 import Modal from "./Modal";
-import { blockOfflineMsgAction } from "../../../Helpers/Utility";
+import { blockOfflineMsgAction, setRecorder } from "../../../Helpers/Utility";
 import { toast } from "react-toastify";
+import {getFromLocalStorageAndDecrypt} from "../WebChatEncryptDecrypt";
 
 function getBlobDuration(blob) {
   const tempVideoEl = document.createElement("video");
@@ -29,6 +30,7 @@ const AudioRecorder = (props = {}) => {
 
   const stopRecored = () => {
     recorder.stop();
+    setRecorder(null);
     clearTimeout(audioTimer.current);
     const container = document.getElementById("typingContainer");
     container && container.setAttribute("contentEditable", true);
@@ -38,6 +40,7 @@ const AudioRecorder = (props = {}) => {
 
   const autoStop = () => {
     recorder.stop();
+    setRecorder(null);
     clearTimeout(audioTimer.current);
   };
 
@@ -48,6 +51,7 @@ const AudioRecorder = (props = {}) => {
     setRecordStatus(true);
     recordingStatus(true);
     setSendStatus(false);
+    setRecorder(null);
     recorder
       .stop()
       .getMp3()
@@ -85,9 +89,12 @@ const AudioRecorder = (props = {}) => {
       seconds = diff % 60 | 0;
       minutes = minutes < 10 ? "0" + minutes : minutes;
       seconds = seconds < 10 ? "0" + seconds : seconds;
+      if(seconds>=0)
+      {
       display.innerHTML =
         '<span class="recordMinutes">' + minutes + '</span>:<span class="recordSeconds">' + seconds + "</span>";
-      if (diff <= 0) {
+      }
+      if (diff < 0) {
         autoStop();
         return;
       }
@@ -102,12 +109,13 @@ const AudioRecorder = (props = {}) => {
       toast("Unable to record audio while on call.");
       return;
     }
-    let settings = JSON.parse(localStorage.getItem("settings"));
+    let settings = JSON.parse(getFromLocalStorageAndDecrypt("settings"));
     const { audioLimit = 300 } = settings || {};
     navigator.mediaDevices
       .getUserMedia({ audio: true, video: false })
       .then(function (permissionStatus) {
         if (permissionStatus.active) {
+          setRecorder(recorder);
           setMicStatus(false);
           let sounds = document.getElementsByTagName("audio");
           for (let i = 0; i < sounds.length; i++) sounds[i].pause();

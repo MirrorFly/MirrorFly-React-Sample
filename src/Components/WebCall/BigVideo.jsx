@@ -4,6 +4,8 @@ import ProfileImage from '../../Components/WebChat/Common/ProfileImage'
 import { CALL_STATUS_CONNECTED, CALL_STATUS_HOLD } from '../../Helpers/Call/Constant';
 import { AudioOff, DropdownArrow, IconPinActive, VideoOff } from '../../assets/images';
 import { initialNameHandle } from '../../Helpers/Chat/User';
+import { handleAudioClasses } from '../../Helpers/Call/Call';
+import {getFromLocalStorageAndDecrypt} from '../WebChat/WebChatEncryptDecrypt';
 
 class BigVideo extends React.Component {
 
@@ -25,38 +27,11 @@ class BigVideo extends React.Component {
         }
         return false;
     }
-    
-    handleAudioClasses = (volumeVdo = 0) => {
-        let volume = volumeVdo === 'NaN' ? 0 : volumeVdo;
-        if(volume > 5.5){    
-            return "audio_vhigh";
-        }
-        else if(volume > 4.5){    
-            return "audio_high";
-        }
-        else if(volume > 3.5){    
-            return "audio_medium";
-        }
-        else if(volume > 1.5){    
-            return "audio_normal";
-        }
-       else if(volume > .5){    
-            return "audio_low";
-        }
-      else if(volume > 0){    
-                return "audio_slient";
-            }
-     else {
-        return "audio_hidden";
-     }       
-            
-            
-    }
 
     render() {
-        let { audioMuted, videoMuted, rosterData, stream, remoteStreamLength, volumeLevel,volumeVideo, showVoiceDetect, inverse } = this.props;
-        const token = localStorage.getItem('token');
-        const iniTail = initialNameHandle(rosterData, rosterData.initialName);
+        let { audioMuted, videoMuted, rosterData, stream, volumeLevel, showVoiceDetect, inverse } = this.props;
+        const token = getFromLocalStorageAndDecrypt('token');
+        const initial = initialNameHandle(rosterData, rosterData.initialName);
         return (
             <>
                 {!videoMuted && this.props.callStatus && (this.props.callStatus.toLowerCase() === CALL_STATUS_CONNECTED || this.props.callStatus.toLowerCase() === CALL_STATUS_HOLD) && stream && stream.video &&
@@ -65,18 +40,18 @@ class BigVideo extends React.Component {
                         <div className="participantCallStatus video">
                         {(this.props.setPinUser && this.props.jid === this.props.pinUserJid) &&
                             <i className="pinned"><IconPinActive /></i>
-                            }
-                        {!audioMuted && !remoteStreamLength <= 2 ?
-                        <>
-                            <div className={`audio_indication left height_adjust transistion_adjust ${this.handleAudioClasses(volumeVideo)}`}>
+                            }                        <>
+                        {audioMuted &&
+                        <i title="Participant is muted" className="AudioOffRemote"><AudioOff /></i>
+                    }
+                        {!audioMuted && 
+                               <div className={`audio_indication left height_adjust transistion_adjust ${handleAudioClasses(60)}`}>
                                 <div className="audio_indicator audio_indicator_1"></div>
                                 <div className="audio_indicator audio_indicator_2"></div>
                                 <div className="audio_indicator audio_indicator_3"></div>
                             </div>
-                        </>
-                        :
-                        <i title="Participant is muted" className="AudioOffRemote"><AudioOff /></i>
                         }
+                        </>                        
                         </div>
                             <Video stream={stream.video} muted={false} id={stream.video.id} inverse={inverse}/>
                             {/* <Video stream={stream.video} muted={false} id={stream.video.id} inverse={inverse}/> */}
@@ -94,6 +69,13 @@ class BigVideo extends React.Component {
                         {audioMuted &&
                             <i title="Participant is muted" className="AudioOffRemote"><AudioOff /></i>
                         }
+                         {!audioMuted &&
+                               <div className={`audio_indication left height_adjust transistion_adjust ${handleAudioClasses(60)}`}>
+                                <div className="audio_indicator audio_indicator_1"></div>
+                                <div className="audio_indicator audio_indicator_2"></div>
+                                <div className="audio_indicator audio_indicator_3"></div>
+                            </div>
+                        }
                         {(this.props.setPinUser && this.props.jid === this.props.pinUserJid) &&
                             <i className="pinned"><IconPinActive /></i>
                         }
@@ -102,7 +84,7 @@ class BigVideo extends React.Component {
                          <div className={"avatar-info " + (showVoiceDetect ? " v-detect" : "")}>
                              <span style={{ "transform": "scale(" + volumeLevel + ")"}} className="voice"></span>
                             <ProfileImage
-                                name = {iniTail}
+                                name = {initial}
                                 chatType='chat'
                                 userToken={token}
                                 temporary={false}

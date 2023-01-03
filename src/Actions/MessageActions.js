@@ -228,9 +228,9 @@ export const MessageAction = (data) => (dispatch, getState) => {
     msgType === GROUP_CHAT_PROFILE_UPDATED_NOTIFY
   ) {
     handleArchiveActions(data);
-    updateRecentChatMessage(data, getcurrentState);
     updateConversationMessage(data, getcurrentState);
     updateMessageUnreadCount(data, getcurrentState);
+    updateRecentChatMessage(data, getcurrentState);
     return;
   }
 

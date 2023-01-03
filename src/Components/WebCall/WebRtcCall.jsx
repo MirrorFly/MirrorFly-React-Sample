@@ -24,6 +24,7 @@ import _get from "lodash/get"
 import { BackToChat, ClosePopup, IconInvite, IconParticiants, TileView,TileViewRemove } from '../../assets/images';
 import CallParticipantList from './CallParticipantList/index';
 import OutsideClickHandler from 'react-outside-click-handler';
+import {deleteItemFromLocalStorage, getFromLocalStorageAndDecrypt} from '../WebChat/WebChatEncryptDecrypt';
 
 var remoteStreamDatas = [];
 
@@ -170,7 +171,7 @@ class WebRtcCall extends React.Component {
         if (this.props.localStream && this.props.remoteStream.length > 1) {
             remoteStreamDatas = [...this.props.remoteStream];
             const largeVideoUserJid = this.props.largeVideoUserJid;
-            localStorage.removeItem('connecting');
+            deleteItemFromLocalStorage('connecting');
             let keyFound = 0;
             let callMode = remoteStreamDatas.length > 2 ? 'onetomany' : 'onetoone';
             if (largeVideoUserJid) {
@@ -221,13 +222,10 @@ class WebRtcCall extends React.Component {
         } else {
             fromJid = remoteStreamDatas[keyFound].fromJid;
             let anotherUser = fromJid.includes("@") ? fromJid.split('@')[0] : fromJid;
-            let largeVideoUserJid = this.props.largeVideoUserJid;
+            let largeVideoUserJid = this.props.largeVideoUserJid || "";
             largeVideoUserJid = largeVideoUserJid.includes("@") ? largeVideoUserJid.split('@')[0] : largeVideoUserJid
             if(largeVideoUserJid === vcardData.fromUser){
-                rosterData.displayName = "You";
-                rosterData.image = vcardData.image;
-                rosterData.jid = vcardData.fromUser;
-                rosterData.chatType = "chat";
+                rosterData = getUserDetails(largeVideoUserJid);
                 stream = this.props.localStream;
                 inverse = true;
                 remoteVideoMuted[fromJid] = this.state.localVideoMuted;
@@ -425,7 +423,7 @@ class WebRtcCall extends React.Component {
     handleVideoMute = async (videoMute) => {
         const callStatus = this.getCallStatus();
         if(callStatus && (callStatus.toLowerCase() === CALL_STATUS_CONNECTED || callStatus.toLowerCase() === CALL_STATUS_HOLD)){
-            const callConnectionData = JSON.parse(localStorage.getItem('call_connection_status'));
+            const callConnectionData = JSON.parse(getFromLocalStorageAndDecrypt('call_connection_status'));
             const callMode = (callConnectionData && callConnectionData.callMode) || '';
             const allUsersVideoMuted = await SDK.isAllUsersVideoMuted();
             if (allUsersVideoMuted && callMode === "onetoone") {
@@ -589,7 +587,7 @@ class WebRtcCall extends React.Component {
         const { callLogData: { callAudioMute = false } = {}, showConfrenceData: { data: { videoPermissionDisabled = false } = {}} = {} } = this.props;
 
         let { invite, callState} = this.state;
-        const callConnectionData = JSON.parse(localStorage.getItem('call_connection_status'))
+        const callConnectionData = JSON.parse(getFromLocalStorageAndDecrypt('call_connection_status'))
         let rosterData = {};
         let vcardData = getLocalUserDetails();
         let audioControl = true;
@@ -730,7 +728,7 @@ class WebRtcCall extends React.Component {
     }
 }
 
-const mapStateToProps = state => {
+const mapStateToProps = state => {    
     const largeVideoUserData = state.largeVideoUserData;
     const pinUserData = state.pinUserData;
     const pinUserJid = pinUserData && pinUserData.userJid;
@@ -748,7 +746,8 @@ const mapStateToProps = state => {
         volumeLevelVideo,
         popUpData: state.popUpData,
         vCardData: state.vCardData,
-        callLogData: state.callLogData
+        callLogData: state.callLogData,
+        rosterData: state.rosterData
     }
 }
 

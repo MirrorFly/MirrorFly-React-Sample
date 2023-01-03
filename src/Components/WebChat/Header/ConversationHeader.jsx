@@ -3,11 +3,10 @@ import { connect } from 'react-redux';
 import 'react-toastify/dist/ReactToastify.css';
 import { CallConnectionState, showConfrence } from '../../../Actions/CallAction';
 import { ArrowBack, AudioCall, SampleGroupProfile, SampleChatProfile, VideoCall } from '../../../assets/images';
-import { ls } from '../../../Helpers/LocalStorage';
 import Store from '../../../Store';
 import { REACT_APP_XMPP_SOCKET_HOST } from '../../processENV';
 import { hideModal, showModal } from '../../../Actions/PopUp'
-import { decryption } from '../WebChatEncryptDecrypt';
+import { getFromLocalStorageAndDecrypt, encryptAndStoreInLocalStorage, deleteItemFromLocalStorage} from '../WebChatEncryptDecrypt';
 import callLogs from '../../WebCall/CallLogs/callLog';
 import { toast } from 'react-toastify';
 import SDK from '../../SDK';
@@ -19,7 +18,6 @@ import { CONNECTED, NO_INTERNET } from '../../../Helpers/Constants';
 import { formatUserIdToJid, getContactNameFromRoster, getIdFromJid, initialNameHandle } from '../../../Helpers/Chat/User';
 import { muteLocalVideo } from "../../callbacks";
 import { isGroupChat, isSingleChat } from '../../../Helpers/Chat/ChatHelper';
-import JoinCallPopup from '../../WebCall/JoinCallPopup';
 
 let groupId = "";
 let groupName = "";
@@ -36,7 +34,8 @@ class ConversationHeader extends React.Component {
             userstatus: null,
             emailId: null,
             localRoster: {},
-            joinCallPopup: false
+            isAdminBlocked: false,
+            isDeletedUser: false
         }
         this.preventMultipleClick = false;
         this.premissionConst = "Permission denied";
@@ -60,12 +59,15 @@ class ConversationHeader extends React.Component {
         const { userData: { data: { roster } } } = this.props
         const { image, groupImage } = roster
         const displayName = getContactNameFromRoster(roster)
+        const isAdminBlocked = roster.isAdminBlocked
         this.setState({
             displayName,
             image: image || groupImage,
             userstatus: roster.status,
             emailId: roster.emailId,
-            localRoster: roster
+            localRoster: roster,
+            isAdminBlocked:isAdminBlocked,
+            isDeletedUser: roster.isDeletedUser
         })
     }
 
@@ -77,6 +79,8 @@ class ConversationHeader extends React.Component {
         const { activeChatId } = this.props
         const { activeChatData: { data: { chatType, chatId } = {} } } = this.props
         const { groupsData: { id: groupnewId } = {} } = this.props;
+        const { rosterData: { data } } = this.props
+
 
         if (prevProps?.groupsData?.id !== groupnewId && isGroupChat(chatType)) {
             const updateGroupInfo = this.filterProfileFromGroup(chatId)
@@ -93,14 +97,18 @@ class ConversationHeader extends React.Component {
         }
         if (prevProps?.rosterData?.id !== this.props?.rosterData?.id && isSingleChat(chatType)) {
             const rosterInfo = this.filterProfileFromRoster(this.props.activeChatId)
+            let adminStatus = data.find(element => element?.userId === activeChatId)?.isAdminBlocked
+
             if (rosterInfo) {
-                const { image } = rosterInfo
+                const { image, isDeletedUser } = rosterInfo
                 this.setState({
                     displayName: getContactNameFromRoster(rosterInfo),
                     image,
                     userstatus: rosterInfo.status,
                     emailId: rosterInfo.emailId,
-                    localRoster: rosterInfo
+                    localRoster: rosterInfo,
+                    isAdminBlocked: adminStatus,
+                    isDeletedUser: isDeletedUser
                 })
             }
             return true;
@@ -113,12 +121,29 @@ class ConversationHeader extends React.Component {
         return false;
     }
 
+    deleteAndDispatchAction = () => {
+        deleteItemFromLocalStorage('roomName')
+        deleteItemFromLocalStorage('callType')
+        deleteItemFromLocalStorage('call_connection_status')
+        encryptAndStoreInLocalStorage("hideCallScreen", false);
+        encryptAndStoreInLocalStorage('callingComponent', false)
+        encryptAndStoreInLocalStorage("hideCallScreen", false);
+        Store.dispatch(showConfrence({
+            showComponent: false,
+            showCalleComponent: false,
+            stopSound: true,
+            callStatusText: null
+        }));
+    }
+
     makeOne2OneCall = async (callType) => {
         if (this.isRoomExist() || this.preventMultipleClick) {
             return;
         }
+        if (this.state.isAdminBlocked || this.state.isDeletedUser) return;
+        
         this.preventMultipleClick = true;
-        let connectionStatus = localStorage.getItem("connection_status")
+        let connectionStatus = getFromLocalStorageAndDecrypt("connection_status")
         if (connectionStatus === CONNECTED) {
             let fromuser = this.props?.vCardData?.data?.fromUser;
             let { activeChatId, userData: { data: { roster } } } = this.props
@@ -139,10 +164,10 @@ class ConversationHeader extends React.Component {
                 userAvatar: image
             }
             console.log("make call callConnectionStatus", callConnectionStatus);
-            localStorage.setItem('call_connection_status', JSON.stringify(callConnectionStatus));
-            localStorage.setItem('callType', callType)
-            localStorage.setItem('callingComponent', true)
-            localStorage.setItem('callFrom', decryption('loggedInUserJidWithResource'));
+            encryptAndStoreInLocalStorage('call_connection_status', JSON.stringify(callConnectionStatus));
+            encryptAndStoreInLocalStorage('callType', callType)
+            encryptAndStoreInLocalStorage('callingComponent', true)
+            encryptAndStoreInLocalStorage('callFrom', getFromLocalStorageAndDecrypt('loggedInUserJidWithResource'));
             Store.dispatch(CallConnectionState(callConnectionStatus));
             const showConfrenceData = Store.getState().showConfrenceData;
             const {
@@ -158,28 +183,17 @@ class ConversationHeader extends React.Component {
             this.preventMultipleClick = false;
             try {
                 if (callType === "audio") {
-                    muteLocalVideo(true);                    
-                    call = await SDK.makeVoiceCall([activeChatId], null);                    
+                    muteLocalVideo(true);
+                    call = await SDK.makeVoiceCall([activeChatId], null);
                 } else if (callType === "video") {
                     muteLocalVideo(false);
                     call = await SDK.makeVideoCall([activeChatId], null);
                 }
                 if (call.statusCode !== 200 && call.message === this.premissionConst) {
-                    localStorage.removeItem('roomName')
-                    localStorage.removeItem('callType')
-                    localStorage.removeItem('call_connection_status')
-                    localStorage.setItem("hideCallScreen", false);
-                    localStorage.setItem('callingComponent', false)
-                    localStorage.setItem("hideCallScreen", false);
-                    Store.dispatch(showConfrence({
-                        showComponent: false,
-                        showCalleComponent: false,
-                        stopSound: true,
-                        callStatusText: null
-                    }))
+                    this.deleteAndDispatchAction();
                 } else {
                     roomId = call.roomId;
-                    localStorage.setItem('roomName', roomId)
+                    encryptAndStoreInLocalStorage('roomName', roomId)
                     callLogs.insert({
                         "callMode": callConnectionStatus.callMode,
                         "callState": 1,
@@ -190,24 +204,13 @@ class ConversationHeader extends React.Component {
                         "userList": callConnectionStatus.userList
                     });
                     let callConnectionStatusNew = { ...callConnectionStatus, roomId: roomId };
-                    localStorage.setItem('call_connection_status', JSON.stringify(callConnectionStatusNew));
+                    encryptAndStoreInLocalStorage('call_connection_status', JSON.stringify(callConnectionStatusNew));
                     Store.dispatch(CallConnectionState(callConnectionStatusNew));
                 }
             } catch (error) {
                 console.log("Error in making call", error);
-                if (error.message !== this.premissionConst) {    
-                    localStorage.removeItem('roomName')
-                    localStorage.removeItem('callType')
-                    localStorage.removeItem('call_connection_status')
-                    localStorage.setItem("hideCallScreen", false);
-                    localStorage.setItem('callingComponent', false)
-                    localStorage.setItem("hideCallScreen", false);
-                    Store.dispatch(showConfrence({
-                        showComponent: false,
-                        showCalleComponent: false,
-                        stopSound: true,
-                        callStatusText: null
-                    }))
+                if (error.message !== this.premissionConst) {
+                    this.deleteAndDispatchAction();
                 }
             }
         } else {
@@ -224,7 +227,8 @@ class ConversationHeader extends React.Component {
         if (this.isRoomExist()) {
             return;
         }
-        let connectionStatus = localStorage.getItem("connection_status")
+        if (this.state.isAdminBlocked) return;
+        let connectionStatus = getFromLocalStorageAndDecrypt("connection_status")
         if (connectionStatus === CONNECTED) {
             const { groupMemberDetails = [], activeChatId } = this.props
             let groupMembers = [];
@@ -264,7 +268,7 @@ class ConversationHeader extends React.Component {
     }
 
     makeGroupCall = async (callType, groupCallMemberDetails) => {
-        let connectionStatus = localStorage.getItem("connection_status")
+        let connectionStatus = getFromLocalStorageAndDecrypt("connection_status")
         if (connectionStatus === "CONNECTED") {
             let fromuser = this.props?.vCardData?.data?.fromUser;
             const { activeChatId } = this.props
@@ -296,10 +300,10 @@ class ConversationHeader extends React.Component {
                 userList: users.join(','),
                 groupId
             }
-            localStorage.setItem('call_connection_status', JSON.stringify(callConnectionStatus))
-            localStorage.setItem('callType', callType)
-            localStorage.setItem('callingComponent', true)
-            localStorage.setItem('callFrom', decryption('loggedInUserJidWithResource'));
+            encryptAndStoreInLocalStorage('call_connection_status', JSON.stringify(callConnectionStatus))
+            encryptAndStoreInLocalStorage('callType', callType)
+            encryptAndStoreInLocalStorage('callingComponent', true)
+            encryptAndStoreInLocalStorage('callFrom', getFromLocalStorageAndDecrypt('loggedInUserJidWithResource'));
             const showConfrenceData = Store.getState().showConfrenceData;
             const {
                 data
@@ -321,21 +325,10 @@ class ConversationHeader extends React.Component {
                     call = await SDK.makeVideoCall(users, groupId);
                 }
                 if (call.statusCode !== 200 && call.message !== this.premissionConst) {
-                    localStorage.removeItem('roomName')
-                    localStorage.removeItem('callType')
-                    localStorage.removeItem('call_connection_status')
-                    localStorage.setItem("hideCallScreen", false);
-                    localStorage.setItem('callingComponent', false)
-                    localStorage.setItem("hideCallScreen", false);
-                    Store.dispatch(showConfrence({
-                        showComponent: false,
-                        showCalleComponent: false,
-                        stopSound: true,
-                        callStatusText: null
-                    }))
+                    this.deleteAndDispatchAction();
                 } else {
                     roomId = call.roomId;
-                    localStorage.setItem('roomName', roomId)
+                    encryptAndStoreInLocalStorage('roomName', roomId)
                     callLogs.insert({
                         "callMode": callConnectionStatus.callMode,
                         "callState": 1,
@@ -351,24 +344,13 @@ class ConversationHeader extends React.Component {
                         roomId: roomId
                     }
                     Store.dispatch(CallConnectionState(callConnectionStatusNew));
-                    localStorage.setItem('call_connection_status', JSON.stringify(callConnectionStatusNew))
+                    encryptAndStoreInLocalStorage('call_connection_status', JSON.stringify(callConnectionStatusNew))
                     startCallingTimer();
                 }
             } catch (error) {
                 console.log("Error in making call", error);
-                if (error.message === this.premissionConst) {    
-                    localStorage.removeItem('roomName')
-                    localStorage.removeItem('callType')
-                    localStorage.removeItem('call_connection_status')
-                    localStorage.setItem("hideCallScreen", false);
-                    localStorage.setItem('callingComponent', false)
-                    localStorage.setItem("hideCallScreen", false);
-                    Store.dispatch(showConfrence({
-                        showComponent: false,
-                        showCalleComponent: false,
-                        stopSound: true,
-                        callStatusText: null
-                    }))
+                if (error.message === this.premissionConst) {
+                    this.deleteAndDispatchAction();
                 }
             }
 
@@ -402,37 +384,27 @@ class ConversationHeader extends React.Component {
     }
 
     isRoomExist() {
-        let room = localStorage.getItem('roomName');
+        let room = getFromLocalStorageAndDecrypt('roomName');
         if (room !== null) {
             return true;
         }
         return false;
     }
 
-    showJoinCallPopup = () => {
-        this.setState({
-            joinCallPopup: true
-        });
-    }
-
-    cancelJoinCallPopup = () => {
-        this.setState({
-            joinCallPopup: false
-        });
-    }
-
     render() {
-        const { groupMemberDetails, activeChatId, displayNames,
-            userData: { data: { recent: { chatType = "", fromUserId = "" } } = {} } = {} } = this.props || {};
-        const token = ls.getItem('token');
+        const { groupMemberDetails, activeChatId, displayNames, featureStateData,
+            userData: { data: { chatId = "",recent: { chatType = "", fromUserId = "" } } = {} } = {} } = this.props || {};
+        const { isOneToOneCallEnabled = false, isGroupCallEnabled = false } = featureStateData;    
+        const token = getFromLocalStorageAndDecrypt('token');
         const avatarIcon = chatType === 'chat' ? SampleChatProfile : SampleGroupProfile;
         let canSendMessage = this.canSendMessage();
         const { mobileNumber } = this.state.localRoster
         const { image, displayName, emailId } = this.state
-        const iniTail=initialNameHandle(this.state.localRoster, displayName);
+        const iniTail = initialNameHandle(this.state.localRoster, displayName);
         groupName = displayName;
         let blockedContactArr = this.props.blockedContact.data;
         const isBlocked = blockedContactArr.indexOf(formatUserIdToJid(activeChatId)) > -1;
+
         if (isBlocked) {
             canSendMessage = false;
         }
@@ -448,33 +420,36 @@ class ConversationHeader extends React.Component {
                             <ProfileImage
                                 chatType={chatType || 'chat'}
                                 userToken={token}
-                                imageToken={image}
+                                imageToken={this.state.isAdminBlocked ? "" : image}
                                 emailId={emailId}
                                 userId={getIdFromJid(activeChatId)}
                                 name={iniTail}
                             />
-                            <div className="profile-name">
-                                <h4>{displayName || fromUserId}</h4>
-                                <TypingStatus
-                                    fromUserId={fromUserId}
-                                    jid={activeChatId}
-                                    contactNames={displayNames}
-                                    chatType={chatType}
-                                />
-                            </div>
+                                <div className="profile-name">
+                                    <h4>{displayName || fromUserId}</h4>
+                                {!this.state.isAdminBlocked && !this.state.isDeletedUser &&
+                                        <TypingStatus
+                                            fromUserId={chatId}
+                                            jid={activeChatId}
+                                            contactNames={displayNames}
+                                            chatType={chatType}
+                                            />
+                                }
+                                </div>                            
+                          
                         </div>
                     </div>
                     <div className="profile-options">
-                        {canSendMessage && (chatType === "chat" || chatType === 'groupchat') && <>
-                            <i title={this.props.showonGoingcallDuration ? 'You are already in call' : "Audio call"} 
-                            onClick={chatType === "chat" ? () => this.makeOne2OneCall('audio') : () => this.showCallParticipants('audio')} 
-                            className={`audioCall ${this.props.showonGoingcallDuration ? 'calldisabled' : ''}`}>
+                        {canSendMessage && ((isOneToOneCallEnabled && chatType === "chat") || (isGroupCallEnabled && chatType === 'groupchat')) && <>
+                            <i title={this.props.showonGoingcallDuration ? 'You are already in call' : "Audio call"}
+                                onClick={chatType === "chat" ? () => this.makeOne2OneCall('audio') : () => this.showCallParticipants('audio')}
+                                className={`audioCall ${(this.props.showonGoingcallDuration || this.state.isAdminBlocked || this.state.isDeletedUser) ? 'calldisabled' : ''}`}>
                                 <span className="toggleAnimation"></span>
                                 <AudioCall />
                             </i>
-                            <i title={this.props.showonGoingcallDuration ? 'You are already in call' : "Video call"} 
-                            onClick={chatType === "chat" ? () => this.makeOne2OneCall('video') : () => this.showCallParticipants('video')} 
-                            className={`videoCall ${this.props.showonGoingcallDuration ? 'calldisabled' : ''}`}>
+                            <i title={this.props.showonGoingcallDuration ? 'You are already in call' : "Video call"}
+                                onClick={chatType === "chat" ? () => this.makeOne2OneCall('video') : () => this.showCallParticipants('video')}
+                                className={`videoCall ${(this.props.showonGoingcallDuration || this.state.isAdminBlocked || this.state.isDeletedUser) ? 'calldisabled' : ''}`}>
                                 <span className="toggleAnimation"></span><VideoCall />
                             </i>
                         </>}
@@ -493,10 +468,8 @@ class ConversationHeader extends React.Component {
                         handlePopUpClassActive={this.props.handlePopUpClassActive}
                         mobileNumber={mobileNumber}
                         roster={this.state.localRoster}
+                        isAdminBlocked={this.state.isAdminBlocked}
                     />
-                }
-                {this.state.joinCallPopup &&
-                    <JoinCallPopup closePopup={this.cancelJoinCallPopup}/>
                 }
             </Fragment>
         )
@@ -505,6 +478,7 @@ class ConversationHeader extends React.Component {
 
 const mapStateToProps = state => {
     return {
+        featureStateData: state.featureStateData,
         popUpData: state.popUpData,
         messageData: state.messageData,
         blockedContact: state.blockedContact,

@@ -11,7 +11,6 @@ import {
 } from '../../../assets/images';
 import "../../../assets/scss/minEmoji.scss";
 import IndexedDb from '../../../Helpers/IndexedDb';
-import { ls } from '../../../Helpers/LocalStorage';
 import { blockOfflineAction, dataURLtoFile, fileToBlob } from '../../../Helpers/Utility';
 import {
     CAMERA_ERROR, CAMERA_NOT_FOUND,
@@ -30,6 +29,7 @@ import WebChatCamera from './WebChatCamera';
 import WebChatFields from './WebChatFields';
 import { NO_INTERNET, PROFILE_UPDATE_SUCCESS } from '../../../Helpers/Constants';
 import ProfileImage from '../Common/ProfileImage';
+import { getFromLocalStorageAndDecrypt } from '../WebChatEncryptDecrypt';
 
 const indexedDb = new IndexedDb();
 
@@ -108,7 +108,7 @@ class WebChatVCard extends React.Component {
      * @param {object} response
      */
     handleProfileImg(response) {
-        let token = ls.getItem('token');
+        let token = getFromLocalStorageAndDecrypt('token');
         if (response.vCardData.data.image && token) {
             this.localDb.getImageByKey(response.vCardData.data.image, 'profileimages').then(blob => {
                 const blobUrl = window.URL.createObjectURL(blob);
@@ -449,18 +449,24 @@ class WebChatVCard extends React.Component {
                                                         {profileImg !== SampleProfile && <li title={REMOVE_PHOTO} onClick={(e) => this.handleProfilePhotoRemoveShow(e)}>
                                                             <i className="profileedit-options"><Remove /></i>
                                                             <span>{REMOVE_PHOTO}</span></li>}
-                                                        <li className="upload_photo" title={UPLOAD_PHOTO}> <label className="UploadLabel" htmlFor="ProfileUpload"></label><i className="profileedit-options"><Upload /></i>
-                                                            <span className="uploadphoto"><span>{UPLOAD_PHOTO}</span>
+                                                        <li className="upload_photo" title={UPLOAD_PHOTO}> 
+                                                            <label className="UploadLabel" htmlFor="ProfileUpload"></label>
+                                                            <i className="profileedit-options"><Upload /></i>
+                                                            <span className="uploadphoto">
+                                                                <span>{UPLOAD_PHOTO}</span>
                                                             </span>
                                                         </li>
                                                     </>}
 
                                                     {!profileImg && <>
-                                                        <li title={UPLOAD_PHOTO}><i className="profileedit-options"><Upload /></i>
-                                                            <span className="uploadphoto"><span>{UPLOAD_PHOTO}</span>
+                                                        <li title={TAKE_PHOTO} onClick={(e) => this.handleProfileCameraShow(e)}><i className="profileedit-options"><Takephoto /></i><span>{TAKE_PHOTO}</span></li>
+                                                        <li title={UPLOAD_PHOTO}>
+                                                            <label className="UploadLabel" htmlFor="ProfileUpload"></label>
+                                                            <i className="profileedit-options"><Upload /></i>
+                                                            <span className="uploadphoto">
+                                                                <span>{UPLOAD_PHOTO}</span>
                                                             </span>
                                                         </li>
-                                                        <li title={TAKE_PHOTO} onClick={(e) => this.handleProfileCameraShow(e)}><i className="profileedit-options"><Takephoto /></i><span>{TAKE_PHOTO}</span></li>
                                                     </>}
                                                 </ul>
                                             </React.Fragment>}
@@ -469,11 +475,6 @@ class WebChatVCard extends React.Component {
                                                 <>
                                                     {this.WebChatCroppieLoad(loaderIcon, cameraPopup)}
                                                 </>
-                                            }
-                                            {!profileImg && openCropy ?
-                                                <>
-                                                    {this.WebChatCroppieLoad(loaderIcon, cameraPopup)}
-                                                </> : null
                                             }
                                         </React.Fragment>
                                         {showProfileImg && <div className="Viewphoto-container">

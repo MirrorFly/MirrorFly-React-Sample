@@ -25,12 +25,12 @@ class ConversationSection extends Component {
     }
 
     componentDidUpdate(prevProps) {
-        const { groupsMemberListData: { id: groupId }, activeChatData: { id } = {} } = this.props
+        const { rosterData: { id: rosterId }, groupsMemberListData: { id: groupId }, activeChatData: { id } = {} } = this.props
         const previousId = prevProps?.activeChatData?.id
         const previousGroupId = prevProps?.groupsMemberListData?.id
+        const previousRosterId = prevProps?.rosterData?.id
         const { ConnectionStateData } = this.props
-
-        if (previousId !== id || prevProps?.ConnectionStateData?.id && prevProps?.ConnectionStateData?.id !== ConnectionStateData?.id && ConnectionStateData?.data === 'CONNECTED') {
+        if (previousId !== id || previousRosterId !== rosterId || (prevProps?.ConnectionStateData?.id && prevProps?.ConnectionStateData?.id !== ConnectionStateData?.id && ConnectionStateData?.data === 'CONNECTED')) {
             this.constructData()
         } else if (groupId !== previousGroupId) {
             this.updateGroup()
@@ -54,7 +54,6 @@ class ConversationSection extends Component {
         const { groupsMemberListData: { data: groupMemberList } = {} } = this.props
         const { participants } = groupMemberList || {}
         const groupMemberDetails = this.getGroupMembers(participants)
-
         if (!userType) {
             return this.sortUsersDisplayName(groupMemberDetails)
         }
@@ -79,13 +78,26 @@ class ConversationSection extends Component {
         return response
     }
 
-    displayGroupMemberNames = () => {
-        return this.sortUsersByName().map(member => member.displayName).join(', ')
+    displayGroupMemberNames = async () => {
+        let memberNames = []
+        await this.sortUsersByName().map(async (member) => {
+            if (member.userType && member.displayName) {
+                memberNames.push(member.displayName);
+            }
+        });
+        const { groupsMemberListData: { data: groupMemberList } = {} } = this.props
+        const { participants } = groupMemberList || {}
+        const groupMemberDetails = this.getGroupMembers(participants).filter(users => users.userType);
+        if (groupMemberDetails.length === memberNames.length) {
+            return memberNames.join(", ");
+        } else {
+            return "click here for group info";
+        }
     }
 
-    updateGroup = () => {
+    updateGroup = async () => {
         let response = this.sortUsersByName('o')
-        let displayNames = this.displayGroupMemberNames()
+        let displayNames = await this.displayGroupMemberNames()
         this.setState({
             groupMemberDetails: response,
             displayNames: displayNames

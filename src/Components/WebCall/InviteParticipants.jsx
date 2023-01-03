@@ -11,6 +11,7 @@ import { toast } from 'react-toastify';
 import Store from '../../Store';
 import { showConfrence } from '../../Actions/CallAction';
 import { getRemoteStream } from '../callbacks';
+import {getFromLocalStorageAndDecrypt} from '../WebChat/WebChatEncryptDecrypt';
 
 class InviteParticipants extends React.Component {
     constructor(props){
@@ -38,7 +39,7 @@ class InviteParticipants extends React.Component {
         && groupsMemberParticipantsListData === prevProps.groupsMemberParticipantsListData)){
             return;
         }
-        this.callConnectionData = JSON.parse(localStorage.getItem('call_connection_status'));
+        this.callConnectionData = JSON.parse(getFromLocalStorageAndDecrypt('call_connection_status'));
         this.currentCallUsers = [];
         this.currentCallUsersArray = [];
         this.groupId = '';
@@ -83,7 +84,7 @@ class InviteParticipants extends React.Component {
                 let rosterData = {};
                 let user = member.userJid || member.GroupUser || member.username;
                 const userId = user.includes("@") ? user.split('@')[0] : user;
-                if(userId !== this.props?.vCardData?.data?.fromUser  && this.currentCallUsersArray.indexOf(userId) === -1 && (member.isFriend || callMode === 'onetomany')){
+                if(userId !== this.props?.vCardData?.data?.fromUser  && this.currentCallUsersArray.indexOf(userId) === -1 && (member.isFriend || this.groupId)){
                     rosterData = {
                         userJid: user
                     }
@@ -109,7 +110,8 @@ class InviteParticipants extends React.Component {
             makeGroupCall: this.invite,
             callType:this.callConnectionData.callType,
             currentCallUsersLength: this.currentCallUsers.length,
-            closePopup: this.props.closePopup
+            closePopup: this.props.closePopup,
+            currentCallUsers: this.currentCallUsersArray
         });
     }
 
@@ -131,7 +133,7 @@ class InviteParticipants extends React.Component {
     }
 
     invite = async (callType, inviteCallMemberDetails) => {
-        let connectionStatus = localStorage.getItem("connection_status")
+        let connectionStatus = getFromLocalStorageAndDecrypt("connection_status")
         if(connectionStatus === "CONNECTED"){
             const users = inviteCallMemberDetails;
             if(users.length > 0){

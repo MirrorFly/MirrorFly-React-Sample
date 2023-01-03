@@ -8,7 +8,7 @@ import Store from '../../Store';
 import {
     CHAT_TYPE_SINGLE, MSG_SENT_ACKNOWLEDGE_STATUS_ID, MSG_SENT_ACKNOWLEDGE_STATUS, MSG_DELIVERED_STATUS_ID,
     MSG_DELIVERED_STATUS, MSG_DELIVERED_STATUS_CARBON, MSG_SEEN_STATUS_ID, MSG_SEEN_STATUS,
-    MSG_SEEN_STATUS_CARBON, MSG_PROCESSING_STATUS_ID, MSG_PROCESSING_STATUS, CHAT_TYPE_GROUP, GROUP_CHAT_PROFILE_UPDATED_NOTIFY, CHAT_TYPE_BROADCAST, BRAND_NAME
+    MSG_SEEN_STATUS_CARBON, MSG_PROCESSING_STATUS_ID, MSG_PROCESSING_STATUS, CHAT_TYPE_GROUP, GROUP_CHAT_PROFILE_UPDATED_NOTIFY, CHAT_TYPE_BROADCAST, BRAND_NAME,REPORT_FROM_CONTACT_INFO
 } from './Constant';
 import { formatGroupIdToJid, formatUserIdToJid, getContactNameFromRoster, getSenderIdFromMsgObj, isLocalUser, getDataFromRoster, getUserDetails } from './User';
 import { changeTimeFormat, msgStatusOrder } from './RecentChat';
@@ -22,13 +22,17 @@ import { UpdateMediaUploadStatus } from '../../Actions/ChatHistory';
 import { ReplyMessageAction } from '../../Actions/MessageActions';
 import SDK from "../../Components/SDK"
 import { getExtension } from '../../Components/WebChat/Common/FileUploadValidation';
-import { decryption } from '../../Components/WebChat/WebChatEncryptDecrypt';
+import { getFromLocalStorageAndDecrypt, encryptAndStoreInLocalStorage, getFromSessionStorageAndDecrypt, encryptAndStoreInSessionStorage} from '../../Components/WebChat/WebChatEncryptDecrypt';
 import { getGroupData } from './Group';
 import { getAvatarImage, groupAvatar } from '../../Components/WebChat/Common/Avatarbase64';
 import { webSettingLocalAction } from '../../Actions/BrowserAction';
+import Config from "../../config";
+ 
 const indexedDb = new IndexedDb();
 
 const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+const {reportMembers} = Config
 
 export const notificationMessageType = ["1", "2", "3", "4", "5"];
 export function formatBytes(a, b = 2) { 
@@ -76,13 +80,10 @@ export const getNameFromGroup = (group) => {
 
 export const getDisplayNameFromGroup = (messageFrom = '', groupMemberDetails = []) => {
 
-    const userPhoneNumber = messageFrom.split('@')[0]
-    const rosterObject = groupMemberDetails.find(profile => {
-        const rosterJid = (profile.username) ? profile.username : profile.userId;
-        return rosterJid === userPhoneNumber
-    })
+    const userId = messageFrom.split('@')[0]
+    const rosterObject = getDataFromRoster(userId);
     if (!rosterObject) {
-        const userDetails = getUserDetails(userPhoneNumber);
+        const userDetails = getUserDetails(userId);
         if (userDetails && userDetails.nickName) {
             return {
                 nameToDisplay: userDetails.nickName,
@@ -90,12 +91,13 @@ export const getDisplayNameFromGroup = (messageFrom = '', groupMemberDetails = [
             };
         }
         return {
-            nameToDisplay: getFormatPhoneNumber(userPhoneNumber),
+            nameToDisplay: getFormatPhoneNumber(userId),
             userColor: 'black'
         };
     }
     const { displayName, name, nickName, jid, userColor } = rosterObject || {}
-    const nameToDisplay = displayName || name || nickName || jid || getFormatPhoneNumber(messageFrom.split('@')[0]);
+    let nameToDisplay = displayName || name || nickName || jid || getFormatPhoneNumber(messageFrom.split('@')[0]);
+    
     return {
         nameToDisplay,
         userColor
@@ -431,19 +433,19 @@ export const resetStoreData = () => {
 }
 
 export const updateSessionIdInLocalStorage = () => {
-    let currentTabId = sessionStorage.getItem("sessionId");
-    currentTabId != null && localStorage.setItem("sessionId", currentTabId);
+    let currentTabId = getFromSessionStorageAndDecrypt("sessionId");
+    currentTabId != null && encryptAndStoreInLocalStorage("sessionId", currentTabId);
 }
 
 export const isCurrentSessionActive = () =>
-    sessionStorage.getItem("sessionId") === null ||
-    localStorage.getItem("sessionId") == null ||
-    localStorage.getItem("sessionId") === sessionStorage.getItem("sessionId")
+    getFromSessionStorageAndDecrypt("sessionId") === null ||
+    getFromLocalStorageAndDecrypt("sessionId") == null ||
+    getFromLocalStorageAndDecrypt("sessionId") === getFromSessionStorageAndDecrypt("sessionId")
 
 export const updateSessionId = (tabId) => {
-    if (sessionStorage.getItem("sessionId") === null) {
-        sessionStorage.setItem("sessionId", tabId);
-        localStorage.setItem("sessionId", tabId);
+    if (getFromSessionStorageAndDecrypt("sessionId") === null) {
+        encryptAndStoreInSessionStorage("sessionId", tabId);
+        encryptAndStoreInLocalStorage("sessionId", tabId);
     }
 }
 
@@ -470,7 +472,9 @@ export const getReplyMessageFormat = (message) => {
     }
 }
 
-export const isSameSession = () => localStorage.getItem("sessionId") === sessionStorage.getItem("sessionId")
+export const isSameSession = () => {
+    return getFromLocalStorageAndDecrypt("sessionId") === getFromSessionStorageAndDecrypt("sessionId")
+}
 
 export const updateFavicon = (type) => {
     let link = document.querySelector("link[rel~='icon']");
@@ -492,34 +496,60 @@ export const arrayToObject = (arr, key) => {
 };
 
 export const setTempMute = (name, stateData) => {
-    const tempMuteUser = localStorage.getItem('tempMuteUser')
+    const tempMuteUser = getFromLocalStorageAndDecrypt('tempMuteUser')
     let parserLocalStorage = tempMuteUser ? JSON.parse(tempMuteUser) : {}
     const constructObject = {
         ...parserLocalStorage,
         [name]: stateData
     }
-    localStorage.setItem('tempMuteUser', JSON.stringify(constructObject));
+    encryptAndStoreInLocalStorage('tempMuteUser', JSON.stringify(constructObject));
 }
     export const removeTempMute = (name) => {
-        const tempMuteUser = localStorage.getItem('tempMuteUser');
+        const tempMuteUser = getFromLocalStorageAndDecrypt('tempMuteUser');
         if(tempMuteUser){
             let parserLocalStorage = JSON.parse(tempMuteUser);
             delete parserLocalStorage[name];
-            localStorage.setItem('tempMuteUser', JSON.stringify(parserLocalStorage));
+            encryptAndStoreInLocalStorage('tempMuteUser', JSON.stringify(parserLocalStorage));
         }
     }
 
 
-export const getChatHistoryData = (data, stateData) => {
+export const getChatHistoryData = (data, stateData, carbonClear) => {
     // To Avoid Unnecessary Looping, We are Using Key Value Pair for Chat and Messages
     // Eg: userId: {} or groupId: {} or msgId: {}
+if(carbonClear===true){
+    const chatId = getUserIdFromJid(data.userJid || data.groupJid);
+    const state = Object.keys(data).length > 0 ? data[chatId]?.messages || {} : {};
+    const sortedData = concatMessageArray(data.data, Object.values(state), "msgId", "timestamp");
+    const lastMessage = sortedData[sortedData.length - 1];
+    let newSortedData;
+    const localUserJid = getFromLocalStorageAndDecrypt('loggedInUserJidWithResource');
+    const userId = localUserJid ? getUserIdFromJid(localUserJid) : "";
+    if (userId === lastMessage?.publisherId) {
+        newSortedData = sortedData.map((msg => {
+            msg.msgStatus = getMsgStatusInOrder(msg.msgStatus, lastMessage?.msgStatus);
+            return msg;
+        }));
+    } else{
+        newSortedData = sortedData;
+    } 
 
+    let isScrollNeeded = true;
+    if (data.fetchLimit) {
+        isScrollNeeded = data.data.length === data.fetchLimit; // To Check If this is the Last Message in the Chat, So no Scroll Fetch is Needed
+    }
+    const finalData = { isScrollNeeded, messages: arrayToObject(newSortedData, "msgId") };
+    return {
+        ...data,
+        [chatId]: finalData
+    };
+}else{
     const chatId = getUserIdFromJid(data.userJid || data.groupJid);
     const state = Object.keys(stateData).length > 0 ? stateData[chatId]?.messages || {} : {};
     const sortedData = concatMessageArray(data.data, Object.values(state), "msgId", "timestamp");
     const lastMessage = sortedData[sortedData.length - 1];
     let newSortedData;
-    const localUserJid = decryption('loggedInUserJidWithResource');
+    const localUserJid = getFromLocalStorageAndDecrypt('loggedInUserJidWithResource');
     const userId = localUserJid ? getUserIdFromJid(localUserJid) : "";
     if (userId === lastMessage?.publisherId) {
         newSortedData = sortedData.map((msg => {
@@ -538,6 +568,7 @@ export const getChatHistoryData = (data, stateData) => {
         ...stateData,
         [chatId]: finalData
     };
+}
 };
 
 export const getChatHistoryMessagesData = () => {
@@ -603,6 +634,7 @@ export const getUpdatedHistoryDataUpload = (data, stateData) => {
             if (data.statusCode === 200) {
                 currentMessage.msgBody.media.file_url = data.fileToken || "";
                 currentMessage.msgBody.media.thumb_image = data.thumbImage || "";
+                currentMessage.msgBody.media.file_key = data.fileKey || "";
             }
 
             let msgIds = Object.keys(currentChatData?.messages);
@@ -732,7 +764,6 @@ export const uploadFileToSDK = async (file, jid, msgId, media) => {
     } else if (msgType === "audio") {
         response = await SDK.sendAudioMessage(jid, file, fileOptions, replyTo);
     }
-    console.log("response :>> ", msgType, response.statusCode);
     let updateObj = {
         msgId,
         statusCode: response.statusCode,
@@ -745,6 +776,7 @@ export const uploadFileToSDK = async (file, jid, msgId, media) => {
         }
         updateObj.fileToken = response.fileToken;
         updateObj.thumbImage = response.thumbImage;
+        updateObj.fileKey = response.fileKey;
     } else if (response.statusCode === 500) {
         updateObj.uploadStatus = 3;
     }
@@ -841,7 +873,7 @@ export const getDownloadFileName = (file_url, msgType) => {
     return `${BRAND_NAME} ${capitalizeFirstLetter(fileType)} ${time}${extension}`;
 };
 
-export const downloadMediaFile = async (file_url, msgType, file_name, event) => {
+export const downloadMediaFile = async (file_url, msgType, file_name, fileKey, event) => {
     if (blockOfflineAction()) return;
 
     if (file_url) {
@@ -853,16 +885,14 @@ export const downloadMediaFile = async (file_url, msgType, file_name, event) => 
                 event.preventDefault();
                 event.stopPropagation();
             }
-            const { data: { mediaUrl = "" } } = await SDK.getMediaURL(file_url);
-            const blob = await fetch(mediaUrl, {
-                headers: new Headers({
-                    Origin: window.location.origin
-                }),
-                mode: "no-cors"
-            }).then(async (response) => response.blob());
-            fileUrl = window.URL.createObjectURL(blob);
+            const mediaResponse = await SDK.getMediaURL(file_url, fileKey);
+            if (mediaResponse.statusCode === 200) {
+                fileUrl = mediaResponse.data.blobUrl; 
+            } else {
+                console.log("error in downloading media file");
+                return;
+            }            
         }
-
         const anchor = document.createElement("a");
         anchor.style.display = "none";
         anchor.href = fileUrl;
@@ -906,9 +936,9 @@ export const getFavaouriteMsgObj = (msg, chatId) => {
     }
 };
 
-export const getBlobUrlFromToken = (fileToken, dbInstance) => {
+export const getBlobUrlFromToken = (fileToken, dbInstance, fileKey) => {
     return indexedDb
-      .getImageByKey(fileToken, dbInstance)
+      .getImageByKey(fileToken, dbInstance, fileKey)
       .then((blob) =>  window.URL.createObjectURL(blob))
       .catch(() =>  "");
 }
@@ -1075,4 +1105,33 @@ export const handleArchivedChats = async () => {
 export const getRecentChatData = () => {
     const { recentChatData: { data = [] } = {} } = Store.getState();
     return data;
+};
+
+export const getMessagesForReport = (chatId, selectedMsgIdType) => {
+    const chatMessages = getChatMessageHistoryById(chatId);
+    let msgDataArray = [];
+    const sortedData = chatMessages.filter((item)=>(Object.keys(item.msgBody).length !==0)).sort((a, b) => (b.timestamp < a.timestamp ? -1 : 1));
+    if (sortedData.length) {
+        let selectedMsgId = selectedMsgIdType !== REPORT_FROM_CONTACT_INFO ? selectedMsgIdType : sortedData[0]?.msgId
+        let count = 0;
+        const filteredData = sortedData.filter(msg => {
+            if (msg.msgId === selectedMsgId || (count > 0 && count < reportMembers) ) {
+                count++;
+                return msg;
+            }
+        });
+        filteredData.map((item,key)=>{
+            let msgObject = {}
+            msgObject["msgId"] = item?.msgId || ""
+            msgObject["message"] = item?.msgBody?.message || item?.msgBody?.media?.caption || ""
+            msgObject["msgType"] = item?.msgBody?.message_type || ""
+            msgObject["filename"] = item?.msgBody?.media?.fileName || ""
+            msgObject["timestamp"] = item?.timestamp
+            msgObject["publisherId"] = item?.publisherId || item?.fromUserId
+            msgDataArray.push(msgObject)
+        })
+    }else if(sortedData.length === 0){
+        return msgDataArray
+    }
+    return msgDataArray
 };

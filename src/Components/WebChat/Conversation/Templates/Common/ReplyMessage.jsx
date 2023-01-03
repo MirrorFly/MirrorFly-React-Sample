@@ -3,17 +3,17 @@ import { useSelector } from "react-redux";
 import { ChatContactImg,  ChatAudioRecorder, ChatAudioReceiver2 } from '../../../../../assets/images';
 import { displayNameFromRoster, getDisplayNameFromGroup, isSingleChat, isTextMessage } from '../../../../../Helpers/Chat/ChatHelper';
 import { isLocalUser } from "../../../../../Helpers/Chat/User";
-import { ls } from '../../../../../Helpers/LocalStorage';
 import { getThumbBase64URL, millisToMinutesAndSeconds } from "../../../../../Helpers/Utility";
 import { getExtension } from "../../../Common/FileUploadValidation";
 import ImageComponent from '../../../Common/ImageComponent';
+import { getFromLocalStorageAndDecrypt } from "../../../WebChatEncryptDecrypt";
 import GoogleMapMarker from "../Common/GoogleMapMarker";
 import getFileFromType from "./getFileFromType";
 
 const maximumCaptionLimit=90;
 
 const ImageReply = React.memo(({ file_url, caption }) => {
-    const token = ls.getItem('token');
+    const token = getFromLocalStorageAndDecrypt('token');
     return (
         <ImageComponent
             chattype={null}
@@ -73,7 +73,6 @@ export default React.memo(({ msgId, viewOriginalMessage, groupMemberDetails, cha
     const { fileName, duration, caption, audioType,thumb_image } = media;
     const getDisplayName = () => {
         if (isLocalUser(messageFrom)) return 'You';
-
         if (isSingleChat(chatType)) {
             const { rosterData } = replyMessageDetail || {}
             return filterProfileFromRoster(rosterData, messageFrom)
@@ -96,7 +95,7 @@ export default React.memo(({ msgId, viewOriginalMessage, groupMemberDetails, cha
                 {isTextMessage(message_type) && <span id={`reply-${msgId}`}
                 ref={element => callRefSpan = element }
                 className="sender-sends">
-                <span>{getReplyCaption(message)}</span> </span> }
+                <span dangerouslySetInnerHTML={{__html: getReplyCaption(message) }} ></span> </span> }
                 {overflowActive ? <span className="sender-sends">...</span> : ""}
                 {message_type === 'image' && <span className="sender-sends ReplyCamera">{caption === '' ?  "Photo" : getReplyCaption(caption)}</span>}
                 {message_type === 'video' && <span className="sender-sends ReplyVideo">{caption === '' ? "Video" :  getReplyCaption(caption)}</span>}

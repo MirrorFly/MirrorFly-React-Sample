@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { DropdownArrow2 } from "../../../assets/images";
-import { countriescodes } from "../../../Helpers/countries.js";
-import { blockOfflineAction } from "../../../Helpers/Utility";
 import { handleOnlyNumber } from "./otpCommon";
+import { DropdownArrow2 } from "../../../assets/images";
+import { blockOfflineAction } from "../../../Helpers/Utility";
+import { countriescodes } from "../../../Helpers/countries.js";
+import { REACT_APP_PRIVACY_POLICY, REACT_APP_TERMS_AND_CONDITIONS } from "../../processENV";
 
 function GetMobileNumber(props = {}) {
   const { regMobileNo = {}, handleChanges, errorHide = false, sendOtp } = props;
@@ -95,8 +96,20 @@ function GetMobileNumber(props = {}) {
         </div>
       </div>
       <button id="GetOtp" onClick={handleValidate} type="button">
-        Get OTP
+        Continue
       </button>
+      <div className="privary_policy_wrapper">
+        <p>By clicking continue you agree to MirrorFly</p>
+        <div className="privary_policy_Link">
+          <a
+            target="_blank"
+            href={`${REACT_APP_TERMS_AND_CONDITIONS}`}
+            rel="noopener noreferrer">Terms and Conditions,</a> <a
+              target="_blank"
+              href={`${REACT_APP_PRIVACY_POLICY}`}
+              rel="noopener noreferrer">Privacy Policy.</a>
+        </div>
+      </div>
     </form>
   );
 }

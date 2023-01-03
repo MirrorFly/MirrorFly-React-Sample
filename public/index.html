@@ -20,6 +20,13 @@
   <script src="./js/socket.io.js"></script>
   <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
   <script src="./js/index.js"></script>
+  <script>
+    if("%NODE_ENV%" === "production"){
+      if (typeof window.__REACT_DEVTOOLS_GLOBAL_HOOK__ === 'object') {
+        __REACT_DEVTOOLS_GLOBAL_HOOK__.inject = function() {};
+      }
+    }
+  </script>
   
   <!--
       Notice the use of %PUBLIC_URL% in the tags above.

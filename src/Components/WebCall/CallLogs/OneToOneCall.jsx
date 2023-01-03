@@ -3,6 +3,7 @@ import CallDurationCommon from './CallDurationCommon';
 import ProfileImage from '../../../Components/WebChat/Common/ProfileImage'
 import {IconIncoming,IconOutgoing,IconIncomingMissed } from '../../../assets/images';
 import { formatCallLogDate, formatCallLogTime, durationCallLog, getHighlightedText } from '../../../Helpers/Utility';
+import {getFromLocalStorageAndDecrypt} from '../../WebChat/WebChatEncryptDecrypt';
 
 const OneToOneCall = (props) => {
     let { displayName, jid, image, searchterm, callLog: callLogData = {} } = props;
@@ -11,7 +12,7 @@ const OneToOneCall = (props) => {
         props.makeCall(jid, callLogData.callType)
     })
 
-    const token = localStorage.getItem('token');
+    const token = getFromLocalStorageAndDecrypt('token');
     let dateLog = formatCallLogDate(callLogData.callTime / 1000);
     let timeIng = formatCallLogTime(callLogData.callTime);
     let durationTime = "";

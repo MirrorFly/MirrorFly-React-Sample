@@ -9,7 +9,7 @@ const DocumentComponent = (props = {}) => {
   const { messageObject = {}, uploadStatus = 0, isSender, downloadAction } = props;
   const {
     msgId = "",
-    msgBody: { media: { fileName, file_size, file_url } = {} } = {}
+    msgBody: { media: { fileName, file_size, file_url, file_key } = {} } = {}
   } = messageObject;
 
   const fileExtension = getExtension(fileName);
@@ -22,7 +22,7 @@ const DocumentComponent = (props = {}) => {
       <div
         className={`document-message-block ${uploadStatus !== 2 ? "fileProgress" : ""} ${Extension === "pdf" || Extension === "ppt" ? "fileThumb" : ""
           }`}
-        onClick={(e) => downloadAction(e, file_url, fileName)}
+        onClick={(e) => downloadAction(e, file_url, fileName, file_key)}
       >
         <>
           <i className="doc">

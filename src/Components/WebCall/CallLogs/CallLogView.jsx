@@ -2,19 +2,21 @@ import React, { useCallback } from 'react';
 import { IconAudiocall, IconVideocall, IconVideoOutgoingCall, IconAudioOutgoingCall, IconVideoIncommingCall, IconAudioIncommingCall, IconAudioMissedCall, IconVideoMissedCall } from '../../../assets/images';
 import { formatCallLogDate, formatCallLogTime, durationCallLog, getHighlightedText } from '../../../Helpers/Utility';
 import ProfileImage from '../../../Components/WebChat/Common/ProfileImage'
+import {getFromLocalStorageAndDecrypt} from '../../WebChat/WebChatEncryptDecrypt';
 
 const CallLogView = (props = {}) => {
-    let { displayName, image, searchterm, callLog, emailId,initialName="" } = props;
+    let { displayName, image, searchterm, callLog, emailId,initialName="", isAdminBlocked, isDeletedUser } = props;
 
     const onClick = useCallback(() => {
-        props.makeCall(callLog)
+        if(isAdminBlocked || isDeletedUser) return;
+        props.makeCall(callLog);
     })
 
     if (displayName && searchterm !== "" && !displayName.toLowerCase().includes(searchterm)) {
         return null;
     }
 
-    const token = localStorage.getItem('token');
+    const token = getFromLocalStorageAndDecrypt('token');
     let date = formatCallLogDate(callLog.callTime / 1000);
     let time = formatCallLogTime(callLog.callTime);
     let durationText = "";
@@ -34,7 +36,7 @@ const CallLogView = (props = {}) => {
         callStateView = props.callLog.callType === "video" ? <IconVideoIncommingCall /> : <IconAudioIncommingCall/> ;
     }
 
-    return <li className="chat-list-li" onClick={onClick}>
+    return <li className={`chat-list-li ${(isAdminBlocked || isDeletedUser) ? "pointer-default-all" : ""}`} onClick={onClick}>
         <ProfileImage
             chatType={callLog.callMode === "onetoone" ? 'chat' : 'groupchat'}
             userToken={token}

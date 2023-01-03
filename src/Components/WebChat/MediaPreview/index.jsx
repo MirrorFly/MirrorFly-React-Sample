@@ -1,12 +1,13 @@
 import React, { Component, Fragment, Suspense } from "react";
 import { Carousel } from "react-responsive-carousel";
 import "react-responsive-carousel/lib/styles/carousel.min.css";
+import { toast } from "react-toastify";
 import "react-videoplayer/lib/index.css";
 import uuidv4 from "uuid/v4";
 import { AudioFile, dragDrop } from "../../../assets/images";
 import "../../../assets/scss/image-gallery-custom.scss";
 import Config from "../../../config";
-import { INLINE_FLEX } from "../../../Helpers/Constants";
+import { INLINE_FLEX, FEATURE_RESTRICTION_ERROR_MESSAGE } from "../../../Helpers/Constants";
 import { getMessageType, getThumbBase64URL, millisToMinutesAndSeconds, blockOfflineMsgAction } from "../../../Helpers/Utility";
 import { getExtension, sendErrorMessage, validateFile } from "../../WebChat/Common/FileUploadValidation";
 import getFileFromType from "../Conversation/Templates/Common/getFileFromType";
@@ -87,6 +88,7 @@ export default class MediaPreview extends Component {
 
   onDrop = (e) => {
     e.preventDefault();
+    const { seletedFiles: { mediaType } = {} } = this.props;
     var files = e.target.files || (e.dataTransfer && e.dataTransfer.files);
     const imagePreviewContainer = document.getElementById("imagePreviewContainer");
     imagePreviewContainer && imagePreviewContainer.classList.remove("highlight");
@@ -100,23 +102,73 @@ export default class MediaPreview extends Component {
         },
         () => {
           if (Array.from(files).length > 0) {
-            this.handleFiles(files, "");
+            this.handleFiles(files, mediaType);
           }
         }
       );
     }
   };
 
-  createAddFileContainer = (thumbsWrapper) => {
+  createAddFileContainer = (thumbsWrapper,mediaType) => {
+    const {attachment : { isAttachmentEnabled = false  } = {} } = this.props;
     var child = document.createElement("div");
+    if(mediaType === "imagevideo") {
     child.innerHTML = `<div id="dynamicUpload" class="uploadfile" style="display: ${
       this.state.selectedFiles.length >= maxAllowedMediaCount ? "none" : INLINE_FLEX
     }">
-            <div><label for="addfile"><input id="addfile" class="uploadfileinput" type="file" multiple /></label>
+            <div><label for="addfile"><input id="addfile" class="uploadfileinput" type="file"
+            accept=".webm,.mp4,.x-m4v,.png,.jpeg,.jpg,video/x-m4v" multiple /></label>
             <i class="addIcon"></i><span>ADD FILE</span></div></div>`;
+    }
+    else if(mediaType === "image") {
+      child.innerHTML = `<div id="dynamicUpload" class="uploadfile" style="display: ${
+        this.state.selectedFiles.length >= maxAllowedMediaCount ? "none" : INLINE_FLEX
+      }">
+              <div><label for="addfile"><input id="addfile" class="uploadfileinput" type="file"
+              accept=".png,.jpeg,.jpg" multiple /></label>
+              <i class="addIcon"></i><span>ADD FILE</span></div></div>`;
+    }
+    else if(mediaType === "video") {
+      child.innerHTML = `<div id="dynamicUpload" class="uploadfile" style="display: ${
+        this.state.selectedFiles.length >= maxAllowedMediaCount ? "none" : INLINE_FLEX
+      }">
+              <div><label for="addfile"><input id="addfile" class="uploadfileinput" type="file"
+              accept=".webm,.mp4,.x-m4v,video/x-m4v" multiple /></label>
+              <i class="addIcon"></i><span>ADD FILE</span></div></div>`;
+    }
+    else if(mediaType === "audio") {
+      child.innerHTML = `<div id="dynamicUpload" class="uploadfile" style="display: ${
+        this.state.selectedFiles.length >= maxAllowedMediaCount ? "none" : INLINE_FLEX
+      }">
+              <div><label for="addfile"><input id="addfile" class="uploadfileinput" type="file"
+              accept=".wav,.mp3,.aac" multiple /></label>
+              <i class="addIcon"></i><span>ADD FILE</span></div></div>`;
+    }
+    else if(mediaType === "file") {
+      child.innerHTML = `<div id="dynamicUpload" class="uploadfile" style="display: ${
+        this.state.selectedFiles.length >= maxAllowedMediaCount ? "none" : INLINE_FLEX
+      }">
+              <div><label for="addfile"><input id="addfile" class="uploadfileinput" type="file"
+              accept=".pdf,.xlsx,.xls,.txt,.doc, .docx, text/plain, .csv, .ppt, .zip, .rar, .pptx" multiple /></label>
+              <i class="addIcon"></i><span>ADD FILE</span></div></div>`;
+    }else{
+      if(isAttachmentEnabled){
+        child.innerHTML = `<div id="dynamicUpload" class="uploadfile" style="display: ${
+          this.state.selectedFiles.length >= maxAllowedMediaCount ? "none" : INLINE_FLEX
+        }">
+                <div><label for="addfile"><input id="addfile" class="uploadfileinput" type="file"
+                multiple /></label>
+                <i class="addIcon"></i><span>ADD FILE</span></div></div>`;
+      }
+      else{
+        toast.error(FEATURE_RESTRICTION_ERROR_MESSAGE);
+        return this.closePreview();
+       }
+    }
+  
     child = child.firstChild;
     child.querySelector(".uploadfileinput").addEventListener("change", (event) => {
-      this.handleFiles(event.target.files, "", "new");
+      this.handleFiles(event.target.files, mediaType, "new");
     });
     thumbsWrapper.appendChild(child);
     var sendButtonChild = document.createElement("div");
@@ -171,7 +223,7 @@ export default class MediaPreview extends Component {
                 const thumbsWrapper = document.getElementById("imagePreviewContainer").querySelector(".thumbs-wrapper");
                 const uploadcontainer = document.getElementById("dynamicUpload");
                 if (thumbsWrapper && !uploadcontainer) {
-                  this.createAddFileContainer(thumbsWrapper);
+                  this.createAddFileContainer(thumbsWrapper,mediaType);
                 } else {
                   if (uploadcontainer)
                     uploadcontainer.style.display = this.state.selectedFiles.length >= maxAllowedMediaCount

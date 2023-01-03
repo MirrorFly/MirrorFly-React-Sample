@@ -6,7 +6,6 @@ import _truncate from "lodash/truncate";
 import moment from "moment";
 import SDK from "../Components/SDK";
 import linkify from "./linkify";
-import { ls } from "./LocalStorage";
 import { DateTime } from "luxon";
 import { changeTimeFormat, handleMessageParseHtml } from "./Chat/RecentChat";
 import {
@@ -30,19 +29,19 @@ import {
   INITIALS_COLOR_CODES
 } from "./Constants";
 import { getExtension } from "../Components/WebChat/Common/FileUploadValidation";
-import { REACT_APP_API_URL, REACT_APP_ENCRYPT_KEY, REACT_APP_JANUS_URL, REACT_APP_LICENSE_KEY, REACT_APP_SANDBOX_MODE, REACT_APP_SOCKETIO_SERVER_HOST, REACT_APP_SSL, REACT_APP_STUN_URL, REACT_APP_TURN_PASSWORD, REACT_APP_TURN_URL, REACT_APP_TURN_USERNAME, REACT_APP_XMPP_SOCKET_HOST, REACT_APP_XMPP_SOCKET_PORT, REACT_APP_SITE_DOMAIN, REACT_APP_AUTOMATION_CHROME_USER, REACT_APP_AUTOMATION_CHROME_PASS, REACT_APP_AUTOMATION_EDGE_USER, REACT_APP_AUTOMATION_FIREFOX_USER, REACT_APP_AUTOMATION_FIREFOX_PASS, REACT_APP_AUTOMATION_EDGE_PASS } from "../Components/processENV";
+import { REACT_APP_API_URL, REACT_APP_LICENSE_KEY, REACT_APP_SANDBOX_MODE,REACT_APP_SITE_DOMAIN, REACT_APP_AUTOMATION_CHROME_USER, REACT_APP_AUTOMATION_CHROME_PASS, REACT_APP_AUTOMATION_EDGE_USER, REACT_APP_AUTOMATION_FIREFOX_USER, REACT_APP_AUTOMATION_FIREFOX_PASS, REACT_APP_AUTOMATION_EDGE_PASS, REACT_APP_HIDE_NOTIFICATION_CONTENT, REACT_APP_XMPP_SOCKET_HOST } from "../Components/processENV";
 import Store from "../Store";
 import { getContactNameFromRoster, formatUserIdToJid, isSingleChatJID, getLocalUserDetails } from "./Chat/User";
 import { MSG_PROCESSING_STATUS, GROUP_CHAT_PROFILE_UPDATED_NOTIFY, MSG_SENT_STATUS_CARBON, CHAT_TYPE_SINGLE, CHAT_TYPE_GROUP } from "./Chat/Constant";
 import toastr from "toastr";
 import { isGroupChat } from "./Chat/ChatHelper";
 import Push from "push.js";
-import { getMaxUsersInCall } from "./Call/Call";
 import { callbacks } from "../Components/callbacks";
 import config from "../config";
 import { ActiveChatAction } from "../Actions/RecentChatActions";
 import { UnreadCountDelete } from "../Actions/UnreadCount"
 import { callIntermediateScreen } from "../Actions/CallAction";
+import { getFromLocalStorageAndDecrypt, encryptAndStoreInLocalStorage} from "../Components/WebChat/WebChatEncryptDecrypt";
 
 const PNF = require("google-libphonenumber").PhoneNumberFormat;
 const phoneUtil = require("google-libphonenumber").PhoneNumberUtil.getInstance();
@@ -360,14 +359,8 @@ export const validURL = (str) => {
     return false;
   }
   var pattern = new RegExp(
-    "^(https?:\\/\\/)?" + // protocol
-      "((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|" + // domain name
-      "((\\d{1,3}\\.){3}\\d{1,3}))" + // OR ip (v4) address
-      "(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*" + // port and path
-      "(\\?[;&a-z\\d%_.~+=-]*)?" + // query string
-      "(\\#[-a-z\\d_]*)?$",
-    "i"
-  ); // fragment locator
+    /^(?:(?:https?|ftp):\/\/)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:\/\S*)?$/
+    ); // fragment locator
   return pattern.test(str);
 };
 
@@ -497,18 +490,16 @@ export const captionLink = (text) => {
  * logout() Method to call the SDK.logout() and removed the localstorage values. <br />
  * Window.location.reload() function performed.
  */
-export const logout = () => {
-  let items = [
-    "auth_user",
-    "blocklist_data",
-    "connection_status",
-    "token"
-  ];
-  for (let item of items) {
-    ls.removeItem(item);
-  }
+export const logout = async(type = "") => {
+  localStorage.clear();
+  await deleteAllIndexedDb();
   SDK && SDK.logout();
-  window.location.reload();
+  if (type === "accountDeleted") {
+    encryptAndStoreInLocalStorage("deleteAccount", true);
+  }
+  if (type !== "block") {
+    window.location.reload();
+  }
 };
 
 export const formatCallLogDate = (date) => {
@@ -844,7 +835,7 @@ export const getRecentChatMsgObj = (dataObj) => {
     };
   }
   const fromUserId = getUserIdFromJid(jid);
-  const getMute = localStorage.getItem("tempMuteUser");
+  const getMute = getFromLocalStorageAndDecrypt("tempMuteUser");
   let parserLocalStorage = getMute ? JSON.parse(getMute) : {};
   const isMuted = parserLocalStorage[fromUserId] ? 1 : 0;
   if (isMuted){
@@ -946,11 +937,6 @@ export const blockOfflineAction = (msg = null) => {
 
 export const blockOfflineMsgAction = () => {
   return blockOfflineAction();
-};
-
-export const getMediaURLByFileToken = (fileToken) => {
-  const token = ls.getItem("token");
-  return `${REACT_APP_API_URL}/media/${fileToken}?mf=${token}`;
 };
 
 export const getThumbBase64URL = (thumb) => `data:image/png;base64,${thumb}`;
@@ -1086,13 +1072,13 @@ export const getColorCodeInitials = (name) => {
 export const getInitialsFromName = (name = "") => {
   let acronym, matches = [];
   if(!name) return null;
-  if(name.match(/\b(\w)/g).length === 1){
+  if(name.match(/\b(\w)/g) && name.match(/\b(\w)/g).length === 1){
     matches = name.split("");
     acronym = [matches[0],matches[1]].join('');
   }
   else {
     matches = name.match(/\b(\w)/g);
-    acronym = [matches[0],matches[1]].join('');
+    acronym = matches ? [matches[0],matches[1]].join('') : "";
   }
   return acronym && acronym.toUpperCase();
 };
@@ -1100,18 +1086,18 @@ export const getInitialsFromName = (name = "") => {
 export const isBlobUrl = (fileToken) => new RegExp("^(blob:http|blob:https)://", "i").test(fileToken);
 
 export const getLocalWebsettings = () => {
-  const webSettings = localStorage.getItem('websettings')
+  const webSettings = getFromLocalStorageAndDecrypt('websettings')
   return webSettings ? JSON.parse(webSettings) : {}
 }
 
 export const setLocalWebsettings = (key, value) => {
-  const webSettings = localStorage.getItem('websettings');
+  const webSettings = getFromLocalStorageAndDecrypt('websettings');
   let parserLocalStorage = webSettings ? JSON.parse(webSettings) : {}
   const constructObject = {
     ...parserLocalStorage,
     [key]: value
   }
-  localStorage.setItem('websettings', JSON.stringify(constructObject));
+  encryptAndStoreInLocalStorage('websettings', JSON.stringify(constructObject));
 }
 export const isTranslateEnabled = () => {
     const settings = getLocalWebsettings();
@@ -1131,18 +1117,37 @@ export const getArchiveSetting = () => {
 export const getRecentChatItem = (fromUserId) => {
   const { recentChatData: { rosterData: { recentChatItems = [] } = {} } = {} } = Store.getState() || {};
   return recentChatItems.find((ele) => ele.recent?.fromUserId === fromUserId);
-}
+}    
 
 export const sendNotification = (displayName = "", imageUrl = "", messageBody = "", fromUser = "") => {
   try {
+
+    let userAgent = window.navigator.userAgent.toLowerCase(),
+    macosPlatforms = /(macintosh|macintel|macppc|mac68k|macos)/i,
+    windowsPlatforms = /(win32|win64|windows|wince)/i,
+    iosPlatforms = /(iphone|ipad|ipod)/i,
+    os = null;
+
     Push.clear();
+    const sound = new Audio("sounds/notification.mp3")
     const updateDisplayName = displayName ? displayName.toString() : "";
+
+    if (macosPlatforms.test(userAgent)) {
+      os = "macos";
+    } else if (iosPlatforms.test(userAgent)) {
+      os = "ios";
+    } else if (windowsPlatforms.test(userAgent)) {
+      os = "windows";
+    } else if (/android/.test(userAgent)) {
+      os = "android";
+    } else if (!os && /linux/.test(userAgent)) {
+      os = "linux";
+    }
 
     Push.create(updateDisplayName, {
       body: handleMessageParseHtml(messageBody),
       ...{ icon: imageUrl ? imageUrl : "" },
       timeout: 8000,
-      silent: false,
       tag: JSON.stringify({fromUserId: fromUser}),
       onClick: (e) => {
         window.focus();
@@ -1158,6 +1163,17 @@ export const sendNotification = (displayName = "", imageUrl = "", messageBody = 
         }
       }
     });
+
+
+    if(os === 'windows'){
+      var windowisChrome = !window.chrome && (!window.chrome.webstore || !window.chrome.runtime);
+      if(windowisChrome){
+        return true;
+      }
+    }else {
+      return sound.play();
+    }
+
   } catch (error) {
     console.log("sendNotification Error :>> ", error);
   }
@@ -1177,28 +1193,10 @@ export const isSandboxMode = () => {
 };
 
 export const getInitializeObj = () => ({
-  xmppSocketHost: REACT_APP_XMPP_SOCKET_HOST,
-  xmppSocketPort: Number(REACT_APP_XMPP_SOCKET_PORT),
-  ssl: REACT_APP_SSL === "true",
-  encryptKey: REACT_APP_ENCRYPT_KEY,
   apiBaseUrl: REACT_APP_API_URL,
   callbackListeners: callbacks,
-  signalServer: REACT_APP_SOCKETIO_SERVER_HOST,
-  janusUrl: REACT_APP_JANUS_URL,
   licenseKey: REACT_APP_LICENSE_KEY,
   isSandbox: isSandboxMode(),
-  stunTurnServers: [
-    {
-      urls: REACT_APP_TURN_URL,
-      username: REACT_APP_TURN_USERNAME,
-      credential: REACT_APP_TURN_PASSWORD
-    },
-    {
-      urls: REACT_APP_STUN_URL
-    }
-  ],
-  maxUsersIncall: getMaxUsersInCall(),
-  pingTime: 10 // In Seconds
 });
 
 export const getSiteDomain = () => REACT_APP_SITE_DOMAIN || window.location.hostname;
@@ -1286,3 +1284,28 @@ export const getAutomationLoginCredentials = () => {
   }
   return staticCredential;
 };
+
+export const handleFilterBlockedContact = (rosterData) => {
+  let data = rosterData.filter(function (item) {
+    return item.isAdminBlocked !== true;
+  });
+  return data;
+}
+
+const deleteAllIndexedDb = async() => {
+  window.indexedDB.deleteDatabase("mirrorflydb");
+}
+
+export const shouldHideNotification = () => REACT_APP_HIDE_NOTIFICATION_CONTENT === "true";
+
+let recorder = null;
+export const setRecorder = (recorderNew) => {
+  recorder = recorderNew;
+}
+
+export const stopRecorder = () => {
+  if (recorder != null) {
+    recorder.stop();
+    encryptAndStoreInLocalStorage("recordingStatus", true);
+  }
+}

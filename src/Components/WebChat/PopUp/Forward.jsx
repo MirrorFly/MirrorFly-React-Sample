@@ -1,6 +1,6 @@
 import React, { Component, Fragment } from "react";
 import { connect } from "react-redux";
-import { Close2, Info, SendMessage } from "../../../assets/images";
+import { Close2, Info, loaderSVG, SendMessage } from "../../../assets/images";
 import Config from "../../../config";
 import { NO_SEARCH_CHAT_CONTACT_FOUND, REACT_APP_XMPP_SOCKET_HOST } from "../../processENV";
 import SDK from "../../SDK";
@@ -12,6 +12,7 @@ import {
   getRecentChatMsgObjForward,
   getUserIdFromJid,
   getValidSearchVal,
+  handleFilterBlockedContact,
   isAppOnline
 } from "../../../Helpers/Utility";
 import {
@@ -31,6 +32,8 @@ import { ChatMessageHistoryDataAction } from "../../../Actions/ChatHistory";
 import { ActiveChatAction, RecentChatUpdateAction } from "../../../Actions/RecentChatActions";
 import _get from "lodash/get";
 import { CHAT_TYPE_SINGLE } from "../../../Helpers/Chat/Constant";
+import InfiniteScroll from "react-infinite-scroll-component";
+import userList from "../RecentChat/userList";
 
 const { maximumCharForwardPopUp } = Config;
 class ForwardPopUp extends Component {
@@ -43,22 +46,26 @@ class ForwardPopUp extends Component {
       contactsToForward: [],
       contactsToDisplay: [],
       filteredContacts: [],
-      filteredRecentChat: []
+      filteredRecentChat: [],
+      unBlockedUserName: [],
+      loaderStatus: !!props?.rosterData?.isFetchingUserList,
+      userList: []
     };
     this.timer = 0;
   }
 
   componentDidMount() {
-    this.timer = setTimeout(() => {
-      this.setState(
-        {
-          isLoading: false
-        },
-        () => {
-          this.initialLoad("");
-        }
-      );
-    }, 100);
+    // this.timer = setTimeout(() => {
+    //   this.setState(
+    //     {
+    //       isLoading: false
+    //     },
+    //     () => {
+    //       this.initialLoad("");
+    //     }
+    //   );
+    // }, 100);
+    userList.getUsersListFromSDK(1);
   }
 
   componentWillUnmount() {
@@ -66,8 +73,8 @@ class ForwardPopUp extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    if (prevProps.rosterData && prevProps.rosterData.id !== this.props.rosterData.id) {
-      this.searchFilterList(this.state.searchValue);
+    if ((prevProps.rosterData && prevProps.rosterData.id !== this.props.rosterData.id) || (prevProps.groupsData && prevProps.groupsData.id !== this.props.groupsData.id)) {
+      this.initialLoad(getValidSearchVal(this.state.searchValue), getValidSearchVal(this.state.searchValue));
     }
   }
 
@@ -75,7 +82,8 @@ class ForwardPopUp extends Component {
     this.setState({
       contactsToForward: this.state.contactsToForward.concat(jid),
       contactsToDisplay: this.state.contactsToDisplay.concat(userName),
-      jidArray: this.state.jidArray.concat(updateJid)
+      jidArray: this.state.jidArray.concat(updateJid),
+      unBlockedUserName: this.state.unBlockedUserName.concat(userName)
     });
   };
 
@@ -83,7 +91,8 @@ class ForwardPopUp extends Component {
     this.setState({
       contactsToForward: this.state.contactsToForward.filter((user) => user !== jid),
       contactsToDisplay: this.state.contactsToDisplay.filter((user) => user !== userName),
-      jidArray: this.state.jidArray.filter((user) => user !== updateJid)
+      jidArray: this.state.jidArray.filter((user) => user !== updateJid),
+      unBlockedUserName: this.state.unBlockedUserName.filter((user) => user !== userName)
     });
   };
 
@@ -95,6 +104,7 @@ class ForwardPopUp extends Component {
     } = this.props;
     return recentChatItems.filter((item) => {
       const { roster, recent } = item;
+      if (roster.isDeletedUser) return false;
       const { existGroup } = roster;
       const { leftGroup } = recent;
       if (existGroup || leftGroup) return false;
@@ -116,7 +126,7 @@ class ForwardPopUp extends Component {
     } = this.props;
 
     if (!contactData) return [];
-    return contactData.filter((item) => {
+    return handleFilterBlockedContact(contactData).filter((item) => {
       const userJid = item.username ? item.username : item.userId;
       if (recentNames.indexOf(userJid) > -1) {
         return false;
@@ -131,20 +141,57 @@ class ForwardPopUp extends Component {
   };
 
   initialLoad = (searchWith = "", searchValue = "") => {
-    const updatedList = this.recentChatSearchFilter(searchWith);
+
+    const updatedList = this.recentChatSearchFilter(searchWith).filter(item => (item?.roster?.isAdminBlocked !== true && item?.roster?.isDeletedUser !== true && item?.recent?.profileUpdatedStatus !== "userLeft"));
     const filteredContacts = this.contactsSearch(searchWith);
+    const { contactsToDisplay, contactsToForward, jidArray, unBlockedUserName } = this.state
+
+    let filteredRecentNames = updatedList.map((item, key) => (
+      item?.roster?.name || item?.roster?.groupName
+    ))
+    let filteredContactNames = filteredContacts.map((item, key) => (
+      item?.name
+    ))
+    let allContactList = [...filteredRecentNames, ...filteredContactNames]
+    let adminContactsToDisplay = [];
+    let adminContactsToForward = contactsToForward
+    let adminJidArray = jidArray
+    let adminUnBlockedUserName = unBlockedUserName
+
+
+    contactsToDisplay.map((item, key) => {
+      if (allContactList.includes(item)) {
+        adminContactsToDisplay.push(item)
+      } else {
+        adminContactsToForward.splice(key, 1)
+      }
+    }
+    )
+    adminUnBlockedUserName.map((item, key) => {
+      if (allContactList.includes(item) && !adminContactsToDisplay.includes(item)) {
+        adminContactsToDisplay.push(item)
+        adminContactsToForward.push(adminJidArray[key])
+      }
+    })
+
     this.setState({
       searchValue: searchValue,
       filteredRecentChat: updatedList,
-      filteredContacts: filteredContacts
+      filteredContacts: filteredContacts,
+      userList: filteredContacts,
+      loaderStatus: this.props?.rosterData?.isFetchingUserList,
+      contactsToDisplay: adminContactsToDisplay,
+      contactsToForward: adminContactsToForward,
     });
   };
 
   searchFilterList = (searchValue) => {
     clearTimeout(this.timer);
     this.timer = setTimeout(() => {
-      let searchWith = getValidSearchVal(searchValue);
+      searchValue = getValidSearchVal(searchValue);
+      let searchWith = searchValue;
       this.initialLoad(searchWith, searchValue);
+      userList.getUsersListFromSDK(1, searchWith);
     }, 0);
   };
 
@@ -216,8 +263,52 @@ class ForwardPopUp extends Component {
     this.props.closeMessageOption(true);
   };
 
+  handleUserListData() {
+    let dataArr = [];
+    var { searchValue, jidArray, contactsToForward } = this.state;
+    if (this.state.userList.length > 0) {
+      this.state.userList.map((contact) => {
+        const { username, userId } = contact;
+        const contactName = getContactNameFromRoster(contact);
+        const updateJid = userId || username;
+        const isChanged = jidArray.findIndex((jid) => jid === updateJid);
+        const blockedContactArr = this.props.blockedContact.data;
+        const isBlockedUser =
+          blockedContactArr.indexOf(
+            updateJid.includes("@") ? updateJid : updateJid + "@" + REACT_APP_XMPP_SOCKET_HOST
+          ) > -1;
+        dataArr.push(
+          <li key={updateJid} className={`chat-list-li ${isBlockedUser ? "Blocked" : ""}`}>
+            <Users
+              key={updateJid}
+              isBlockedUser={isBlockedUser}
+              searchValue={searchValue}
+              contactName={contactName}
+              addContact={this.addContact}
+              updateJid={updateJid}
+              temporary={false}
+              isChanged={isChanged}
+              selectedContact={contactsToForward.length}
+              chatType={"chat"}
+              removeContact={this.removeContact}
+              roster={contact}
+              {...contact}
+            />
+          </li>
+        )
+      });
+    }
+    return dataArr;
+  }
+
+  fetchMoreData = () => {
+    let userListArr = this.state.userList;
+    let searchWith = getValidSearchVal(this.state.searchValue);
+    userList.getUsersListFromSDK(Math.ceil((userListArr.length / 20) + 1), searchWith);
+  }
+
   render() {
-    const { filteredContacts, filteredRecentChat, isLoading, searchValue, contactsToForward, jidArray } = this.state;
+    const { filteredContacts, filteredRecentChat, searchValue, contactsToForward, jidArray } = this.state;
     const { closePopup } = this.props;
     const usersName = this.state.contactsToDisplay.join(", ");
     const messageLength =
@@ -225,7 +316,7 @@ class ForwardPopUp extends Component {
         Array.isArray(this.props.selectedMessageData.data) &&
         this.props.selectedMessageData.data.length) ||
       0;
-
+    const userListArr = this.handleUserListData();
     return (
       <Fragment>
         <div className="popup-wrapper">
@@ -238,49 +329,10 @@ class ForwardPopUp extends Component {
                 <h5>Forward message{messageLength > 1 ? "s" : ""} to</h5>
               </div>
               <RecentSearch search={this.searchFilterList} />
-              <div className="popup-body">
-                {isLoading && <div className="loader"></div>}
-                {!isLoading && (
-                  <div className="contactList">
-                    <ul className="chat-list-ul">
-                      <li className="list-heading">Recent Chat</li>
-                      {filteredRecentChat.map((contact) => {
-                        const { roster, recent } = contact;
-                        const { fromUserId: recentChatMesasge } = recent;
-                        const chatType = contact?.recent?.chatType;
-                        const { userId } = roster;
-                        const contactName = getContactNameFromRoster(roster) || recentChatMesasge;
-                        const updateJid = userId || recentChatMesasge;
-                        const isChanged = jidArray.findIndex((jid) => jid === updateJid);
-                        const blockedContactArr = this.props.blockedContact.data;
-                        const isBlockedUser =
-                          blockedContactArr.indexOf(
-                            updateJid.includes("@") ? updateJid : updateJid + "@" + REACT_APP_XMPP_SOCKET_HOST
-                          ) > -1;
-
-                        return (
-                          <li key={updateJid} className={`chat-list-li ${isBlockedUser ? "Blocked" : ""}`}>
-                            <Users
-                              isBlockedUser={isBlockedUser}
-                              searchValue={searchValue}
-                              contactName={contactName}
-                              temporary={false}
-                              addContact={this.addContact}
-                              updateJid={updateJid}
-                              chatType={chatType}
-                              isChanged={isChanged}
-                              selectedContact={contactsToForward.length}
-                              removeContact={this.removeContact}
-                              roster={roster}
-                              {...roster}
-                            />
-                          </li>
-                        );
-                      })}
-                    </ul>
-                    <ul className="chat-list-ul">
-                      <li className="list-heading">Contacts</li>
-                      {filteredContacts.map((contact) => {
+              <div className="popup-body" style={{ overflow: "hidden" }}>
+                <div className="contactList" style={{ height: "100%" }}>
+                  <ul className="chat-list-ul" style={{ height: "100%" }} id="scrollableUl-forward">
+                    {/* {filteredContacts.map((contact) => {
                         const { username, userId } = contact;
                         const contactName = getContactNameFromRoster(contact);
                         const updateJid = userId || username;
@@ -308,15 +360,65 @@ class ForwardPopUp extends Component {
                             />
                           </li>
                         );
-                      })}
-                      {filteredContacts.length === 0 && filteredRecentChat.length === 0 && searchValue && (
-                        <span className="searchErrorMsg">
-                          <Info /> {NO_SEARCH_CHAT_CONTACT_FOUND}
-                        </span>
-                      )}
-                    </ul>
-                  </div>
-                )}
+                      })} */}
+
+                    {this.state.loaderStatus && <div className="response_loader style-2">
+                      <img src={loaderSVG} alt="loader" />
+                    </div>
+                    }
+                    
+                    {filteredContacts.length === 0 && filteredRecentChat.length === 0 && searchValue &&
+                      <span className="searchErrorMsg"><Info />
+                        {NO_SEARCH_CHAT_CONTACT_FOUND}
+                      </span>}
+                    {(userListArr.length > 0 || filteredRecentChat.length > 0) &&
+                      <InfiniteScroll
+                        dataLength={userListArr.length}
+                        next={this.fetchMoreData}
+                        hasMore={true}
+                        scrollableTarget="scrollableUl-forward"
+                      >
+                        <li className="list-heading">Recent Chat</li>
+                        {filteredRecentChat.map((contact) => {
+                          const { roster, recent } = contact;
+                          const { fromUserId: recentChatMesasge } = recent;
+                          const chatType = contact?.recent?.chatType;
+                          const { userId } = roster;
+                          const contactName = getContactNameFromRoster(roster) || recentChatMesasge;
+                          const updateJid = userId || recentChatMesasge;
+                          const isChanged = jidArray.findIndex((jid) => jid === updateJid);
+                          const blockedContactArr = this.props.blockedContact.data;
+                          const isBlockedUser =
+                            blockedContactArr.indexOf(
+                              updateJid.includes("@") ? updateJid : updateJid + "@" + REACT_APP_XMPP_SOCKET_HOST
+                            ) > -1;
+                          return (
+                            <li key={updateJid} className={`chat-list-li ${isBlockedUser ? "Blocked" : ""}`}>
+                              <Users
+                                isBlockedUser={isBlockedUser}
+                                searchValue={searchValue}
+                                contactName={contactName}
+                                temporary={false}
+                                addContact={this.addContact}
+                                updateJid={updateJid}
+                                chatType={chatType}
+                                isChanged={isChanged}
+                                selectedContact={contactsToForward.length}
+                                removeContact={this.removeContact}
+                                roster={roster}
+                                {...roster}
+                              />
+                            </li>
+                          );
+                        })}
+                        <li className="list-heading">Contacts</li>
+
+                        {this.handleUserListData()}
+
+                      </InfiniteScroll>
+                    }
+                  </ul>
+                </div>
               </div>
               <div className="popup-footer">
                 {/*
@@ -354,7 +456,8 @@ const mapStateToProps = (state, props) => {
     popUpData: state.popUpData,
     recentChatData: state.recentChatData,
     selectedMessageData: state.selectedMessageData,
-    blockedContact: state.blockedContact
+    blockedContact: state.blockedContact,
+    groupsData: state.groupsData
   };
 };
 

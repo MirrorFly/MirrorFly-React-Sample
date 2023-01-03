@@ -28,8 +28,6 @@ import {
 } from "../../../Helpers/Utility";
 import {
   getUserInfoForSearch,
-  formatUserIdToJid,
-  addVcardDataToRoster,
   getDataFromRoster
 } from "../../../Helpers/Chat/User";
 import { isSingleChat } from "../../../Helpers/Chat/ChatHelper";
@@ -104,25 +102,21 @@ class RecentChatSection extends Component {
   };
 
   constructRecentChatItems = (recentChatArray, filteredRoaster) => {
-    return sortBydate([...recentChatArray])
-      .map((chat) => {
+    let recent = [];
+    sortBydate([...recentChatArray])
+      .map(async(chat) => {
         let data = {};
         if (isSingleChat(chat.chatType)) {
-          data = this.filterProfileFromRoster(filteredRoaster, chat.fromUserId);
-          if (Object.keys(data).length === 0) {
-            data = { userId: chat.fromUserId, userJid: formatUserIdToJid(chat.fromUserId) };
-            addVcardDataToRoster(data);
-            SDK.getUserProfile(formatUserIdToJid(chat.fromUserId));
-          }
+          data = this.filterProfileFromRoster(filteredRoaster, chat.fromUserId);          
         } else {
           data = this.getRoaster(chat.chatType, chat.fromUserId);
         }
-        return {
+        recent.push({
           recent: chat,
           roster: data || {}
-        };
+        });
       })
-      .filter((eachmessage) => eachmessage);
+      return recent.filter((eachmessage) => eachmessage);
   };
 
   componentWillUnmount() {
@@ -296,9 +290,10 @@ class RecentChatSection extends Component {
       newChatStatus,
       callMode,
       pageType,
-      unreadCountData: { unreadDataObj = {} } = {}
+      unreadCountData: { unreadDataObj = {} } = {},
+      featureStateData
     } = this.props;
-
+    const { isRecentChatSearchEnabled = false } = featureStateData;
     const updatedRecentChat = searchEnable ? filteredRecentChat : recentChatItems;
     const loaderStyle = {
       width: 80,
@@ -330,33 +325,31 @@ class RecentChatSection extends Component {
     return (
       <Fragment>
         <div style={{ display: !newChatStatus ? "none" : "" }}>
-          {pageType === "recent" && <RecentSearch search={this.searchFilterList} />}
+          {pageType === "recent" && isRecentChatSearchEnabled && <RecentSearch search={this.searchFilterList} />}
           {(!this.props.isAppOnline ||
             isConnStateEqualTo([
               CONNECTION_STATE_CONNECTING,
               CONNECTION_STATE_CONN_FAILED,
               CONNECTION_STATE_ERROR_OCCURED
             ])) && (
-            <div className="networkoffline">
-              {!this.props.isAppOnline
-                ? "Please check your Internet connection"
-                : capitalizeFirstLetter(CONNECTION_STATE_CONNECTING.toLocaleLowerCase())}
-            </div>
-          )}
+              <div className="networkoffline">
+                {!this.props.isAppOnline
+                  ? "Please check your Internet connection"
+                  : capitalizeFirstLetter(CONNECTION_STATE_CONNECTING.toLocaleLowerCase())}
+              </div>
+            )}
           {
             <div
-              className={`chat-list ${
-                !this.props.isAppOnline ||
-                isConnStateEqualTo([
-                  CONNECTION_STATE_CONNECTING,
-                  CONNECTION_STATE_CONN_FAILED,
-                  CONNECTION_STATE_ERROR_OCCURED
-                ])
+              className={`chat-list ${!this.props.isAppOnline ||
+                  isConnStateEqualTo([
+                    CONNECTION_STATE_CONNECTING,
+                    CONNECTION_STATE_CONN_FAILED,
+                    CONNECTION_STATE_ERROR_OCCURED
+                  ])
                   ? "offline"
                   : ""
-              } ${pageType === "archive" ? "archive" : ""} ${
-                pageType === "archive" && updatedRecentChat.length === 0 && !searchValue ? " no-chat-archive " : ""
-              } ${!pageType === "archive" && updatedRecentChat.length === 0 && !searchValue ? " no-chat " : ""}`}
+                } ${pageType === "archive" ? "archive" : ""} ${pageType === "archive" && updatedRecentChat.length === 0 && !searchValue ? " no-chat-archive " : ""
+                } ${!pageType === "archive" && updatedRecentChat.length === 0 && !searchValue ? " no-chat " : ""}`}
             >
               {isPermanentArchvie && pageType === "recent" && archivedChats.length > 0 && (
                 <div className="archivedWrapper" onClick={this.props.handleArchivedChatList}>
@@ -390,9 +383,8 @@ class RecentChatSection extends Component {
 
               {!this.chatExist && filteredContacts.length === 0 && searchValue && (
                 <div
-                  className={`no-search-record-found ${
-                    pageType === "recent" && archivedChats.length ? "has-archive" : ""
-                  }`}
+                  className={`no-search-record-found ${pageType === "recent" && archivedChats.length ? "has-archive" : ""
+                    }`}
                 >
                   <div className={`norecent-chat`}>
                     <i className="norecent-chat-img">
@@ -446,6 +438,7 @@ class RecentChatSection extends Component {
 
 const mapStateToProps = (state, props) => {
   return {
+    featureStateData: state.featureStateData,
     rosterData: state.rosterData,
     recentChatData: state.recentChatData,
     singleChatMsgHistoryData: state.singleChatMsgHistoryData,

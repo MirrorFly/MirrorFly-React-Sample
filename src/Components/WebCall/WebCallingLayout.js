@@ -16,6 +16,7 @@ import { resetCallData } from '../../Components/callbacks';
 import { getGroupData } from '../../Helpers/Chat/Group';
 import SmallVideo from './SmallVideo';
 import CallerProfileList from "./CallerProfileList";
+import { deleteItemFromLocalStorage, encryptAndStoreInLocalStorage} from '../WebChat/WebChatEncryptDecrypt';
 
 class WebCallingLayout extends Component {
     audio = new Audio('sounds/outgoingRinging.wav');
@@ -48,6 +49,13 @@ class WebCallingLayout extends Component {
         }, 30000);
     }
 
+    componentDidUpdate(prevProps){
+        if (this.props.adminBlockData?.data && Object.keys(this.props.adminBlockData.data).length) {
+            this.stopAudio();
+        }
+    }
+
+
     endCall = async () => {
         this.stopAudio();
         const { callConnectionDate } = this.props;
@@ -59,12 +67,12 @@ class WebCallingLayout extends Component {
             "sessionStatus": CALL_SESSION_STATUS_CLOSED
         });
         setTimeout(() => {
-            localStorage.removeItem('roomName')
-            localStorage.removeItem('callType')
-            localStorage.removeItem('call_connection_status')
-            localStorage.setItem("hideCallScreen", false);
-            localStorage.setItem('callingComponent', false)
-            localStorage.setItem("hideCallScreen", false);
+            deleteItemFromLocalStorage('roomName')
+            deleteItemFromLocalStorage('callType')
+            deleteItemFromLocalStorage('call_connection_status')
+            encryptAndStoreInLocalStorage("hideCallScreen", false);
+            encryptAndStoreInLocalStorage('callingComponent', false)
+            encryptAndStoreInLocalStorage("hideCallScreen", false);
             Store.dispatch(showConfrence({
                 showComponent: false,
                 showCalleComponent: false,
@@ -284,8 +292,7 @@ class WebCallingLayout extends Component {
                             </div>
                             <div className="calleeDetails">
                                 <div className="calle-info">
-                                    <span className="callerName">{rosterData.displayName ? rosterData.displayName : toUser}</span>
-                                
+                                <span className="callerName">{rosterData.displayName ? rosterData.displayName : toUser}</span>                                
                                     {callConnectionDate.data.callMode === "onetomany" && callConnectionDate.data.groupId &&
                                         <span className="memmber-details" >
                                             ({callConnectionData.userList && callConnectionData.userList.split(",").length > 0 ? callConnectionData.userList.split(",").length : 0} {callConnectionData.userList.split(",").length > 1 ? "members" : "member"})
@@ -323,7 +330,7 @@ class WebCallingLayout extends Component {
                                     <SmallVideo
                                         elKey={`local-user-video-${vcardData.fromUser}`}
                                         videoMuted={localVideoMuted}
-                                        audioMuted={localAudioMuted}
+                                        audioMuted={!localAudioMuted}
                                         stream={localStream}
                                         rosterData={vcardData}
                                         jid={vcardData.fromUser}
@@ -357,7 +364,9 @@ const mapStateToProps = state => {
         callConnectionDate: state.callConnectionDate,
         vCardData: state.vCardData,
         activeChatData: state.activeChatData,
-        showConfrenceData: state.showConfrenceData
+        showConfrenceData: state.showConfrenceData,
+        rosterData: state.rosterData,
+        adminBlockData: state.adminBlockData
     }
 }
 export default connect(mapStateToProps, null)(WebCallingLayout);

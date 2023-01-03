@@ -1155,6 +1155,7 @@
       }
     }
     .recentchats {
+      max-width: calc(100% - 50px);
       @include flex(1);
       padding-left: 0.938em;
       .recent-username-block {
@@ -1195,6 +1196,7 @@
         display: inline-block;
       }
       span {
+        max-width: 100%;
         font-size: 0.69rem;
         font-family: $regular;
         white-space: nowrap;

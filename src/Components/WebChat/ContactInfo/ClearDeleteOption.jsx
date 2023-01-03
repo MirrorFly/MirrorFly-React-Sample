@@ -1,14 +1,14 @@
 import React, { Fragment } from "react";
 import Participants from "./Participants";
-import { AddParticiapants, BlockedInfo, ClearChat, Delete, IconExitGroup } from "../../../assets/images";
+import { AddParticiapants, BlockedInfo, ClearChat, Delete, IconExitGroup, IconGroupReport } from "../../../assets/images";
 import ChatMuteOption from "./ChatMuteOption";
 import { useSelector } from "react-redux";
 import { getArchiveSetting } from "../../../Helpers/Utility";
+import { isLocalUser } from "../../../Helpers/Chat/User";
 
 const ClearDeleteOption = (props = {}) => {
   const {
     isAdmin,
-    exitGroup,
     vCardData,
     groupuniqueId,
     participants = [],
@@ -16,9 +16,14 @@ const ClearDeleteOption = (props = {}) => {
     deletePopupAction,
     dispatchExitAction,
     handleChatMuteAction,
-    handleNewParticipants
+    reportGroupChatAction = () => { }
   } = props;
 
+  const handleNewParticipants = () => {
+    props.handleNewParticipants();
+  }
+
+  let exitGroup = !participants.find(users => isLocalUser(users.userId));
   const isPermanentArchvie = getArchiveSetting();
   const { data: { chatId = "", recent: { muteStatus = 0, archiveStatus = 0 } = {} } = {} } =
     useSelector((store) => store.activeChatData) || {};
@@ -26,12 +31,23 @@ const ClearDeleteOption = (props = {}) => {
   return (
     <Fragment>
       <div className="contactinfo-about-no action">
-        {(archiveStatus !== 1 || !isPermanentArchvie) ? (
-          <ChatMuteOption chatId={chatId} handleChatMuteAction={handleChatMuteAction} isChatMute={muteStatus === 1} />
-        )
-        :
-        <div className="text-disbaled"><BlockedInfo /> <span>Archived chats are muted</span></div>
-      }
+        {!exitGroup &&
+          <>
+            {(archiveStatus !== 1 || !isPermanentArchvie) ?
+              <ChatMuteOption
+                chatId={chatId}
+                isChatMute={muteStatus === 1}
+                handleChatMuteAction={handleChatMuteAction}
+              />
+              :
+              <div className="text-disbaled">
+                <BlockedInfo />
+                <span>Archived chats are muted</span>
+              </div>
+            }
+          </>
+        }
+
       </div>
       <div className="contactinfo-media group-members">
         <h5>
@@ -39,7 +55,7 @@ const ClearDeleteOption = (props = {}) => {
           <span className="count">{participants.length}</span>
         </h5>
         <ul>
-          {isAdmin && (
+          {isAdmin && (<>
             <li className="addMembers" onClick={handleNewParticipants} data-jest-id={"jesthandleNewParticipants"}>
               <div className="user-profile-name">
                 <div className="profile-image">
@@ -52,6 +68,7 @@ const ClearDeleteOption = (props = {}) => {
                 </div>
               </div>
             </li>
+          </>
           )}
           {participants &&
             participants.map((members, index) => {
@@ -88,6 +105,12 @@ const ClearDeleteOption = (props = {}) => {
               <span className="delete">{"Delete Group"}</span>
             </div>
           )}
+          <div data-jest-id={"jestGroupReportAction"} className="about-no" onClick={reportGroupChatAction}>
+            <i className="reportIcon">
+              <IconGroupReport />
+            </i>
+            <span className="report">{"Report Group"}</span>
+          </div>
         </div>
       </div>
     </Fragment>

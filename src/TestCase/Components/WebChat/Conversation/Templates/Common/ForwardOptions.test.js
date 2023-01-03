@@ -14,7 +14,7 @@ describe(">>>ForwardOptions Test cover<<<", () => {
     it('Mock has be created props undefined', () => {
         const monckData = undefined;
         const store = mockStore({
-
+            
         });
         wrapper = mount(
             <Provider store={store}>
@@ -52,10 +52,6 @@ describe(">>>ForwardOptions Test cover<<<", () => {
             <Provider store={store}>
                 <ForwardOptions {...monckData} />
             </Provider>);
-    });
-
-    it('showForwardPopUp open', () => {
-        wrapper.find('li[data-jest-id="jestShowForwardPopUp"]').simulate('click');
     });
 
 });

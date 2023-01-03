@@ -19,7 +19,7 @@ import CalleScreen from "../WebCall/calleeScreen";
 import Connecting from "../WebCall/Connecting";
 import WebCallingLayout from "../WebCall/WebCallingLayout";
 import ConversationSection from "../WebChat/ConversationSection";
-import { decryption, encryption } from "../WebChat/WebChatEncryptDecrypt";
+import { getFromLocalStorageAndDecrypt, encryptAndStoreInLocalStorage, getFromSessionStorageAndDecrypt, deleteItemFromSessionStorage, deleteItemFromLocalStorage} from "../WebChat/WebChatEncryptDecrypt";
 import Sidebar from "./Sidebar";
 import WebRtcCall from "../WebCall/WebRtcCall";
 import { toast, ToastContainer } from "react-toastify";
@@ -37,7 +37,7 @@ import {
   updateSessionId,
   updateSessionIdInLocalStorage
 } from "../../Helpers/Chat/ChatHelper";
-import { CHAT_TYPE_GROUP, DEFAULT_TITLE_NAME } from "../../Helpers/Chat/Constant";
+import { CHAT_TYPE_GROUP, DEFAULT_TITLE_NAME, NEW_CHAT_CONTACT_PERMISSION_DENIED } from "../../Helpers/Chat/Constant";
 import { NO_INTERNET_TOAST } from "../../Helpers/Constants";
 import { formatUserIdToJid } from "../../Helpers/Chat/User";
 import { setGroupParticipantsByGroupId } from "../../Helpers/Chat/Group";
@@ -45,11 +45,15 @@ import { StarredMessagesList } from "../../Actions/StarredAction";
 import OtpLogin from "./OtpLogin/index";
 import MeetingScreenJoin from "../WebCall/MeetingScreenJoin/";
 import { resetCallData } from "../callbacks";
+import ActionInfoPopup from '../ActionInfoPopup';
+import BlockedFromApplication from "../BlockedFromApplication";
+import { adminBlockStatusUpdate } from "../../Actions/AdminBlockAction";
+import { RosterDataAction, RosterPermissionAction } from "../../Actions/RosterActions";
+import { FeatureEnableState } from "../../Actions/FeatureAction";
 
 const createHistory = require("history").createBrowserHistory;
 export const history = createHistory();
 let callStatus = "";
-
 class Login extends React.Component {
   /**
    * WebChatQRCode Constructor <br />
@@ -73,12 +77,22 @@ class Login extends React.Component {
       newSession: false,
       openStatus: true,
       showMessageinfo: false,
-      joinCallPopup: false
+      joinCallPopup: false,
+      contactPermissionPopup: false,
+      contactPermissionPopupText: "",
+      accountDeletedToast: getFromLocalStorageAndDecrypt("deleteAccount")
     };
     this.handleQRCode = this.handleQRCode.bind(this);
     this.handleLogin = this.handleLogin.bind(this);
-    localStorage.setItem("hideCallScreen", false);
+    encryptAndStoreInLocalStorage("hideCallScreen", false);
     registerWindowEvent();
+  }
+
+  handleContactPermissionPopup = (state, value = "") => {
+    this.setState({
+      contactPermissionPopup: state,
+      contactPermissionPopupText: value ? value : NEW_CHAT_CONTACT_PERMISSION_DENIED
+    });
   }
 
   handleIframeTask = (e) => {
@@ -96,22 +110,22 @@ class Login extends React.Component {
 
   endOngoingCall = () => {
     SDK.endCall();
-    localStorage.setItem('callingComponent', false)
-    localStorage.removeItem('roomName')
-    localStorage.removeItem('callType')
-    localStorage.removeItem('call_connection_status');
-    localStorage.setItem("hideCallScreen", false);
+    encryptAndStoreInLocalStorage('callingComponent', false)
+    deleteItemFromLocalStorage('roomName')
+    deleteItemFromLocalStorage('callType')
+    deleteItemFromLocalStorage('call_connection_status');
+    encryptAndStoreInLocalStorage("hideCallScreen", false);
     resetCallData();
   }
 
   handleOnStorageChange = () => {
     if (
-      sessionStorage.getItem("sessionId") !== null &&
-      localStorage.getItem("sessionId") !== sessionStorage.getItem("sessionId") &&
+      getFromSessionStorageAndDecrypt("sessionId") !== null &&
+      getFromLocalStorageAndDecrypt("sessionId") !== getFromSessionStorageAndDecrypt("sessionId") &&
       !this.state.newSession
     ) {
       this.endOngoingCall();
-      sessionStorage.removeItem("sessionId");
+      deleteItemFromSessionStorage("sessionId");
       document.getElementById("root").classList.remove("boxLayout");
       this.setState({ newSession: true });
       document.title = DEFAULT_TITLE_NAME;
@@ -129,7 +143,7 @@ class Login extends React.Component {
   }
 
   handleShowCallScreen = () => {
-    localStorage.setItem("hideCallScreen", false);
+    encryptAndStoreInLocalStorage("hideCallScreen", false);
     this.setState({ hideCallScreen: false });
     if (this.props.callIntermediateScreen?.data?.hideCallScreen) {
       Store.dispatch(callIntermediateScreen({ hideCallScreen: false }));
@@ -137,7 +151,7 @@ class Login extends React.Component {
   };
 
   hideCallScreen = () => {
-    localStorage.setItem("hideCallScreen", true);
+    encryptAndStoreInLocalStorage("hideCallScreen", true);
     this.setState({ hideCallScreen: true });
   };
 
@@ -185,7 +199,7 @@ class Login extends React.Component {
 
     const { callIntermediateScreen: { data: { toggleCallScreen, hideCallScreen } = {} } = {} } = this.props;
     if (toggleCallScreen !== prevProps.callIntermediateScreen?.data?.toggleCallScreen) {
-      localStorage.setItem("hideCallScreen", toggleCallScreen);
+      encryptAndStoreInLocalStorage("hideCallScreen", toggleCallScreen);
       this.setState({ hideCallScreen: toggleCallScreen });
     }
 
@@ -208,6 +222,7 @@ class Login extends React.Component {
     let responseCall = { statusCode: 200 };
 
     if (response.statusCode === 200 && responseCall.statusCode === 200) {
+      SDK.setMediaEncryption(true); //Enable the media encryption
       if (window.location.hostname === REACT_APP_AUTOMATION_URL) {
         const staticCredential = getAutomationLoginCredentials();
         console.log("staticCredential :>> ", staticCredential);
@@ -216,9 +231,9 @@ class Login extends React.Component {
         });
         return;
       }
-    
-      if (localStorage.getItem("auth_user") !== null) {
-        let decryptResponse = decryption("auth_user");
+
+      if (getFromLocalStorageAndDecrypt("auth_user") !== null) {
+        let decryptResponse = getFromLocalStorageAndDecrypt("auth_user");
 
         if (isCurrentSessionActive())
           this.setState({ webChatStatus: true }, () => {
@@ -267,9 +282,18 @@ class Login extends React.Component {
   }
 
   handleLoginSuccess = async (data) => {
-    sessionStorage.removeItem("isLogout");
-    localStorage.setItem("recordingStatus", true);
-    encryption("auth_user", data);
+
+    let resource = SDK.getCurrentUserJid();
+    if (resource.statusCode === 200) encryptAndStoreInLocalStorage("loggedInUserJidWithResource", resource.userJid);
+    
+    const tokenResult = await SDK.getUserToken(data.username, data.password);
+    if (tokenResult.statusCode === 200) {
+      encryptAndStoreInLocalStorage("token", tokenResult.userToken);
+    }
+
+    deleteItemFromSessionStorage("isLogout");
+    encryptAndStoreInLocalStorage("recordingStatus", true);
+    encryptAndStoreInLocalStorage("auth_user", data);
 
     if (isBoxedLayoutEnabled()) {
       document.getElementById("root").classList.add("boxLayout");
@@ -288,18 +312,30 @@ class Login extends React.Component {
       setContactWhoBleckedMe(jidArr);
     }
 
-    await SDK.getFriendsList();
-    const groupListRes = await SDK.getGroupsList();
+    const featureResponse = SDK.getAvailableFeatures();
+    if(featureResponse.statusCode === 200) {
+      const featureData = featureResponse.data;
+      Store.dispatch(FeatureEnableState(featureData));
+      encryptAndStoreInLocalStorage("featureRestrictionFlags",featureData);
+    }
 
-    if (groupListRes && groupListRes.statusCode === 200) {
-      groupListRes.data.map(async (group) => {
-        const groupJid = formatUserIdToJid(group.groupId, CHAT_TYPE_GROUP);
-        const groupPartRes = await SDK.getGroupParticipants(groupJid);
-        if (groupPartRes && groupPartRes.statusCode === 200) {
-          setGroupParticipantsByGroupId(groupJid, groupPartRes.data.participants);
-        }
-      });
-      Store.dispatch(GroupsDataAction(groupListRes.data));
+    //await SDK.getFriendsList();
+    Store.dispatch(RosterPermissionAction(true));
+    Store.dispatch(RosterDataAction([]));
+    const { featureStateData: { isGroupChatEnabled = false } } = this.props;
+    if(isGroupChatEnabled) {
+      const groupListRes = await SDK.getGroupsList();
+
+      if (groupListRes && groupListRes.statusCode === 200) {
+        groupListRes.data.map(async (group) => {
+          const groupJid = formatUserIdToJid(group.groupId, CHAT_TYPE_GROUP);
+          const groupPartRes = await SDK.getGroupParticipants(groupJid);
+          if (groupPartRes && groupPartRes.statusCode === 200) {
+            setGroupParticipantsByGroupId(groupJid, groupPartRes.data.participants);
+          }
+        });
+        Store.dispatch(GroupsDataAction(groupListRes.data));
+      }
     }
 
     handleUserSettings();
@@ -313,7 +349,7 @@ class Login extends React.Component {
         const urlPath = this.props.location?.pathname ? this.props.location?.pathname.split("/") : [];
         if (urlPath.length > 1 && urlPath[1]) {
           Store.dispatch(callIntermediateScreen({ show: true, link: urlPath[1] }));
-          this.props.history.replace({ pathname: `/`});
+          this.props.history.replace({ pathname: `/` });
         }
 
         const favResult = await SDK.getAllFavouriteMessages();
@@ -323,9 +359,6 @@ class Login extends React.Component {
   };
 
   async handleLoginToken(data) {
-    let resource = SDK.getCurrentUserJid();
-    if (resource.statusCode === 200) encryption("loggedInUserJidWithResource", resource.userJid);
-    await SDK.getUserToken(data.username, data.password);
     this.handleLoginSuccess(data);
   }
 
@@ -337,7 +370,7 @@ class Login extends React.Component {
 
   /**
    * handleLogin()
-   * To call the SDK.login() method with user name and password.
+   * To call the SDK.connect() method with user name and password.
    */
   handleLogin(response) {
     let loginResponse = {
@@ -346,21 +379,28 @@ class Login extends React.Component {
       type: "web"
     };
     let tabId = Date.now();
-
-    SDK.login(response.username, response.password)
+    SDK.connect(response.username, response.password)
       .then(async (res) => {
         if (res.statusCode === 200) {
-          if (isSandboxMode() && response.isProfileUpdated === false) 
-            this.handleSandboxProfileUpdate(response);
+          // if (isSandboxMode() && response.isProfileUpdated === false) {
+          //   this.handleSandboxProfileUpdate(response);
+          // }
           updateSessionId(tabId);
           this.handleLoginToken(loginResponse);
           return;
+        } else if (res.statusCode === 403) {
+          Store.dispatch(adminBlockStatusUpdate({
+            toUserId: response.username,
+            isAdminBlocked: true
+          }));
+          logout("block");
+          return
         }
         throw new Error("login Failed");
       })
       .catch((error) => {
         console.log("handleLogin error, ", error);
-        localStorage.removeItem("auth_user");
+        deleteItemFromLocalStorage("auth_user");
         this.setState({ webChatStatus: false, loaderStatus: false });
       });
   }
@@ -372,22 +412,9 @@ class Login extends React.Component {
 
   submitLogin = async () => {
     const obj = {};
-
     const { username, password } = this.state;
-    if (isSandboxMode()) {
-      const registerResult = await SDK.register(username);
-      const {
-        data: { username: loginUsername = "", password: loginPassword = "", isProfileUpdated = false, token = "" } = {}
-      } = registerResult;
-      obj.isProfileUpdated = isProfileUpdated;
-      obj.token = token;
-      obj.username = loginUsername;
-      obj.password = loginPassword;
-    } else {
-      obj.username = username;
-      obj.password = password;
-    }
-
+    obj.username = username;
+    obj.password = password;
     if (obj.username && obj.password) {
       this.handleLogin(obj);
     }
@@ -517,11 +544,11 @@ class Login extends React.Component {
 
     const selectedMedia = singleChatSelectedMedia.jid ? singleChatSelectedMedia : groupChatSelectedMedia;
 
-    const callConnectionDate = JSON.parse(localStorage.getItem("call_connection_status"));
+    const callConnectionDate = JSON.parse(getFromLocalStorageAndDecrypt("call_connection_status"));
     if (callConnectionDate === null || callConnectionDate === undefined) {
       hideCallScreen = false;
     }
-    hideCallScreen = hideCallScreen && localStorage.getItem("hideCallScreen") === "true" ? true : false;
+    hideCallScreen = hideCallScreen && getFromLocalStorageAndDecrypt("hideCallScreen") === true ? true : false;
     let anotherUser = "";
     if (callConnectionDate && callConnectionDate.from && this.props.showConfrenceData?.data) { // TODO
       if (this.props.showConfrenceData?.data?.callStatusText) {
@@ -547,10 +574,25 @@ class Login extends React.Component {
       }
     }
 
+    let accountDeletedToast = this.state.accountDeletedToast;
+    if (accountDeletedToast) {
+      setTimeout( () => {
+        deleteItemFromLocalStorage("deleteAccount");
+        this.setState({
+          accountDeletedToast: false
+        });
+      }, 3000)
+    }
+
     return !webChatStatus ? (
       <div className="container">
         <div className="login-container" id="login-container">
           {this.renderLoginTemplate()}
+          { accountDeletedToast && 
+            <div className='toast_container'>
+                <span>Your MirrorFly account has been deleted.</span>
+            </div>
+          }
         </div>
       </div>
     ) : (
@@ -573,7 +615,7 @@ class Login extends React.Component {
 
         {this.props.showConfrenceData &&
           this.props.showConfrenceData.data &&
-          localStorage.getItem("callingComponent") === "true" && (
+          getFromLocalStorageAndDecrypt("callingComponent") === true && (
             <div className={`${(hideCallScreen && "BackToConversion") || ""}`}>
               <WebCallingLayout
                 callStatus={this.props.showConfrenceData.data.callStatusText}
@@ -591,6 +633,7 @@ class Login extends React.Component {
           callType={(callConnectionDate && callConnectionDate.callType) || ""}
           handlePopupState={this.handlePopupState}
           callMode={(callConnectionDate && callConnectionDate.callMode) || ""}
+          handleContactPermissionPopup={this.handleContactPermissionPopup}
         />
         <ConversationSection
           showMessageinfo={this.state.showMessageinfo}
@@ -644,6 +687,17 @@ class Login extends React.Component {
             </div>
           )}
         <ToastContainer />
+        {(this.props.adminBlockData?.data?.toUserId && (this.props.adminBlockData?.data?.toUserId === this.props.vCardData?.data?.fromUser)) &&
+          <BlockedFromApplication />
+        }
+        {this.state.contactPermissionPopup && !this.props.contactPermission &&
+          <ActionInfoPopup
+            textActionBtn={"Ok"}
+            handleAction={() => this.handleContactPermissionPopup(false)}
+            textHeading={"Contact permission"}
+            textInfo={this.state.contactPermissionPopupText}
+          />
+        }
       </div>
     );
   };
@@ -676,11 +730,11 @@ class Login extends React.Component {
 
   handleUseHere = () => {
     if (this.props.isAppOnline) {
-      let currentTabId = sessionStorage.getItem("sessionId");
-      localStorage.setItem("sessionId", currentTabId);
+      let currentTabId = getFromSessionStorageAndDecrypt("sessionId");
+      encryptAndStoreInLocalStorage("sessionId", currentTabId);
       updateFavicon("");
-      if (localStorage.getItem("auth_user") !== null) {
-        let decryptResponse = decryption("auth_user");
+      if (getFromLocalStorageAndDecrypt("auth_user") !== null) {
+        let decryptResponse = getFromLocalStorageAndDecrypt("auth_user");
         this.setState({ webChatStatus: true, newSession: false }, () => {
           resetStoreData();
           this.handleLogin(decryptResponse);
@@ -726,6 +780,7 @@ class Login extends React.Component {
 
 const mapStateToProps = (state, props) => {
   return {
+    featureStateData: state.featureStateData,
     ConnectionStateData: state.ConnectionStateData,
     messageData: state.messageData,
     showConfrenceData: state.showConfrenceData,
@@ -733,7 +788,9 @@ const mapStateToProps = (state, props) => {
     SingleChatSelectedMediaData: state.SingleChatSelectedMediaData,
     GroupChatSelectedMediaData: state.GroupChatSelectedMediaData,
     isAppOnline: state?.appOnlineStatus?.isOnline,
-    callIntermediateScreen: state?.callIntermediateScreen
+    callIntermediateScreen: state?.callIntermediateScreen,
+    contactPermission: state?.contactPermission?.data,
+    adminBlockData: state.adminBlockData
   };
 };
 

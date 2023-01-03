@@ -62,7 +62,7 @@ const Caption = (props = {}) => {
       ...prevState,
       value:
         (prevState.value.length === 0 && targetVal.trim().length === 0) ||
-        (targetVal.length === 1 && targetVal === "\n")
+          (targetVal.length === 1 && targetVal === "\n")
           ? ""
           : targetVal
     }));

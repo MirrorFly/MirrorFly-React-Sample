@@ -1,11 +1,11 @@
 import SDK from "../../SDK";
-import { decryption } from "../../WebChat/WebChatEncryptDecrypt";
+import { getFromLocalStorageAndDecrypt, encryptAndStoreInLocalStorage} from "../../WebChat/WebChatEncryptDecrypt";
 import { ReconnectRecentChatAction } from "../../../Actions/RecentChatActions";
 import Store from "../../../Store";
 import { formatToArrayofJid, setContactWhoBleckedMe } from "../../../Helpers/Chat/BlockContact";
 import { blockedContactAction } from "../../../Actions/BlockAction";
 import { GroupsDataAction } from "../../../Actions/GroupsAction";
-import { isAppOnline } from "../../../Helpers/Utility";
+import { isAppOnline, logout } from "../../../Helpers/Utility";
 import { setConnectionStatus } from "../Common/FileUploadValidation";
 import { CONNECTION_STATE_CONNECTING } from "../../../Helpers/Chat/Constant";
 import { WebChatConnectionState } from "../../../Actions/ConnectionState";
@@ -24,6 +24,10 @@ import { RECONNECT_GET_CHAT_LIMIT } from "../../../Helpers/Constants";
 import { ChatMessageHistoryDataAction, UpdateFavouriteStatus } from "../../../Actions/ChatHistory";
 import { StarredMessagesList } from "../../../Actions/StarredAction";
 import { chatSeenPendingMsg } from "../../../Actions/SingleChatMessageActions";
+import { adminBlockStatusUpdate } from "../../../Actions/AdminBlockAction";
+import { toast } from 'react-toastify';
+import { ActiveChatResetAction } from "../../../Actions/RecentChatActions"
+import { hideModal } from '../../../Actions/PopUp';
 
 const handleBlockMethods = async () => {
   const userIBlockedRes = await SDK.getUsersIBlocked();
@@ -54,7 +58,7 @@ const getAndUpdateChatMessages = async (chatId, chatType, rowId) => {
     delete chatMessageRes.statusCode;
     delete chatMessageRes.message;
     if (chatId === getIdFromJid(chatMessageRes.userJid || chatMessageRes.groupJid)) {
-      Store.dispatch(ChatMessageHistoryDataAction(chatMessageRes));
+      Store.dispatch(ChatMessageHistoryDataAction(chatMessageRes,true));
       const groupId = isGroupChat(chatType) ? chatId : "";
       chatMessageRes.data.map((el) => {
         if (!isLocalUser(el.publisherId) && el.rowId !== rowId) {
@@ -144,20 +148,28 @@ const handleFavouriteMessages = async () => {
 
 export async function login() {
   try {
-    if (localStorage.getItem("auth_user")) {
-      let decryptResponse = decryption("auth_user");
+    if (getFromLocalStorageAndDecrypt("auth_user")) {
+      let decryptResponse = getFromLocalStorageAndDecrypt("auth_user");
 
-      const loginResult = await SDK.login(decryptResponse.username, decryptResponse.password, true);
+      const loginResult = await SDK.connect(decryptResponse.username, decryptResponse.password, true);
       console.log("Reconnect loginResult :>> ", loginResult);
       if (loginResult.statusCode === 200) {
         await SDK.getUserProfile(formatUserIdToJid(decryptResponse.username));
-        await SDK.getFriendsList();
-
+        // await SDK.getFriendsList();
         const groupListRes = await SDK.getGroupsList();
         if (groupListRes && groupListRes.statusCode === 200) {
           Store.dispatch(GroupsDataAction(groupListRes.data));
         }
-
+      const { data = [] } = groupListRes 
+        data.map(item=>{
+          if( isActiveConversationUserOrGroup(item?.groupId) && item?.isAdminBlocked){
+            Store.dispatch(ActiveChatResetAction());
+            toast.info("This group is no longer available")
+            Store.dispatch(hideModal())
+          }  
+        }
+        )
+        
         const oldRecentChatData = getRecentChatData();
         const recentChatsRes = await SDK.getRecentChats();
         let recentChatArr = [];
@@ -171,6 +183,13 @@ export async function login() {
         handleArchivedChats();
         handleBlockMethods();
         handleFavouriteMessages();
+      } else if (loginResult.statusCode === 403) {
+        Store.dispatch(adminBlockStatusUpdate({
+          toUserId: decryptResponse.username,
+          isAdminBlocked: true
+        }));
+        logout("block");
+        return
       }
     }
   } catch (error) {
@@ -180,7 +199,7 @@ export async function login() {
 
 export function reconnect() {
   // Update connection status
-  localStorage.setItem("connection_status", CONNECTION_STATE_CONNECTING);
+  encryptAndStoreInLocalStorage("connection_status", CONNECTION_STATE_CONNECTING);
   setConnectionStatus(CONNECTION_STATE_CONNECTING);
   Store.dispatch(WebChatConnectionState(CONNECTION_STATE_CONNECTING));
   isAppOnline() && login();

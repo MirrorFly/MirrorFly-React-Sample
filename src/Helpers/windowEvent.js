@@ -5,17 +5,18 @@ import { CONNECTION_STATE_DISCONNECTED } from "./Chat/Constant";
 import { reconnect } from "../Components/WebChat/Authentication/Reconnect";
 import { setConnectionStatus } from "../Components/WebChat/Common/FileUploadValidation";
 import { isSameSession } from "./Chat/ChatHelper";
+import { encryptAndStoreInLocalStorage, getFromSessionStorageAndDecrypt} from "../Components/WebChat/WebChatEncryptDecrypt";
 
 const isOnline = () => {
     setTimeout(() => {
         Store.dispatch(appOnlineStatusAction(true));
-        isSameSession() && sessionStorage.getItem("isLogout") === null && reconnect();
+        isSameSession() && getFromSessionStorageAndDecrypt("isLogout") === null && reconnect();
     }, 1500);
 }
 const isOffline = () => {
     Store.dispatch(appOnlineStatusAction(false));
     // Update connection status
-    localStorage.setItem("connection_status", CONNECTION_STATE_DISCONNECTED);
+    encryptAndStoreInLocalStorage("connection_status", CONNECTION_STATE_DISCONNECTED);
     setConnectionStatus(CONNECTION_STATE_DISCONNECTED);
     Store.dispatch(WebChatConnectionState(CONNECTION_STATE_DISCONNECTED));
 }

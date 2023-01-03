@@ -26,6 +26,9 @@ import ActionPopup from '../ActionPopup/index';
 import { showModal } from '../../Actions/PopUp';
 import { disconnectCallConnection } from '../../Helpers/Call/Call';
 import { callIntermediateScreen, resetConferencePopup } from '../../Actions/CallAction';
+import { NEW_CHAT_CONTACT_PERMISSION_DENIED, NEW_GROUP_CONTACT_PERMISSION_DENIED } from '../../Helpers/Chat/Constant';
+import { encryptAndStoreInLocalStorage} from '../WebChat/WebChatEncryptDecrypt';
+import userList from '../WebChat/RecentChat/userList';
 
 class Sidebar extends React.Component {
 
@@ -67,6 +70,11 @@ class Sidebar extends React.Component {
     }
 
     handleNewChat = () => {
+        if(this.props.contactPermission === 0){
+            this.props.handleContactPermissionPopup(true, NEW_CHAT_CONTACT_PERMISSION_DENIED);
+            return;
+        }
+        userList.getUsersListFromSDK(1);
         this.setState({ newChatStatus: false });
     }
 
@@ -99,6 +107,10 @@ class Sidebar extends React.Component {
 
     //New group participant list
     handleCreateNewGroup = () => {
+        if(this.props.contactPermission === 0){
+            this.props.handleContactPermissionPopup(true, NEW_GROUP_CONTACT_PERMISSION_DENIED);
+            return;
+        }
         this.setState({ newGroupParticipants: true }, () => {
             this.setState({ menuDropDownStatus: false })
         });
@@ -216,12 +228,14 @@ class Sidebar extends React.Component {
     }
 
     handleJoinCallAction = () => {
+        encryptAndStoreInLocalStorage("isNewCallExist", true);
         disconnectCallConnection();
         Store.dispatch(resetConferencePopup());
         this.closeModel("CallConfirm");
         const newLink = this.props.popUpData?.modalProps?.newCallLink
-        localStorage.setItem("isNewCallExist", true);
-        Store.dispatch(callIntermediateScreen({ show: true, link: newLink }));
+        setTimeout(() => {
+            Store.dispatch(callIntermediateScreen({ show: true, link: newLink }));
+        }, 10);
     };
 
     handleCancel = () => {
@@ -231,7 +245,8 @@ class Sidebar extends React.Component {
     render() {
         let { menuDropDownStatus, popupStatus, newChatStatus, newGroupParticipants, settingStatus,
             callLogs, archivedChatList, callLogCount } = this.state;
-        const { vCardData, popUpData: { modalProps: { open, modelType } }, callConversionData } = this.props
+        const { vCardData, popUpData: { modalProps: { open, modelType } }, callConversionData, featureStateData } = this.props
+        const { isOneToOneCallEnabled = false, isGroupCallEnabled = false, isGroupChatEnabled = false } = featureStateData;
         if (callConversionData && callConversionData.status) {
             if (callConversionData.status === CALL_CONVERSION_STATUS_ACCEPT) {
                 if (this.remoteUserRequestingCallSwitch === true && this.currentUserRequestingCallSwitch === true) {
@@ -257,16 +272,18 @@ class Sidebar extends React.Component {
                             <div className="recent-chatlist-header">
                                 <WebChatVCard />
                                 <div className="profile-options">
-                                    <i className="callLogs" onClick={this.handleCallLogs} title="Call logs">
-                                        {callLogCount ?
-                                            <div className='callLogCount'>
+                                    {(isOneToOneCallEnabled || isGroupCallEnabled) &&
+                                        <i className="callLogs" onClick={this.handleCallLogs} title="Call logs">
+                                            {callLogCount ?
+                                                <div className='callLogCount'>
+                                                    <CallLogs />
+                                                    <span style={{ display: "none" }}>{callLogCount}</span>
+                                                </div>
+                                                :
                                                 <CallLogs />
-                                                <span style={{ display: "none" }}>{callLogCount}</span>
-                                            </div>
-                                            :
-                                            <CallLogs />
-                                        }
-                                    </i>
+                                            }
+                                        </i>
+                                    }
                                     <i className="newchat-icon" onClick={this.handleNewChat} title="New chat">
                                         <span className="toggleAnimation"></span>
                                         <NewChat />
@@ -279,7 +296,7 @@ class Sidebar extends React.Component {
                                 {menuDropDownStatus ? <>
                                     <OutsideClickHandler onOutsideClick={() => this.outsidePopupClick()} >
                                         <ul className="menu-dropdown open">
-                                            <li title="New Group" onClick={this.handleCreateNewGroup}><i><NewGroup /></i><span>New Group</span></li>
+                                           {isGroupChatEnabled && <li title="New Group" onClick={this.handleCreateNewGroup}><i><NewGroup /></i><span>New Group</span></li>}
                                             {!this.props.isEnableArchived && <li title="Archived Chats" onClick={this.handleArchivedChatList} ><i><Archived style={{ color: "#6a92c5", fill: "#6a92c5" }} /></i><span>Archived</span></li>}
                                             <li title="Settings" onClick={this.handleSetting}><i><Settings /></i><span>Settings</span></li>
                                             <WebChatLogout history={this.props.history} logoutStatus={this.handleLogutStatus} handleDropdownStatus={this.handleDropdownStatus} />
@@ -316,7 +333,7 @@ class Sidebar extends React.Component {
                         </div>
                     }
                     {
-                        callLogs && <WebChatCallLogs handleBackStatus={this.handleBackFromCallLogs} />
+                        callLogs && <WebChatCallLogs handleBackStatus={this.handleBackFromCallLogs} handleContactPermissionPopup={this.props.handleContactPermissionPopup}/>
                     }
 
                     {settingStatus &&
@@ -358,11 +375,13 @@ class Sidebar extends React.Component {
 
 const mapStateToProps = state => {
     return {
+        featureStateData: state.featureStateData,
         popUpData: state.popUpData,
         vCardData: state.vCardData,
         callConversionData: state.callConversionData,
         browserNotifyData: state.browserNotifyData,
-        isEnableArchived: state?.webLocalStorageSetting?.isEnableArchived
+        isEnableArchived: state?.webLocalStorageSetting?.isEnableArchived,
+        contactPermission: state?.contactPermission?.data
     }
 }
 

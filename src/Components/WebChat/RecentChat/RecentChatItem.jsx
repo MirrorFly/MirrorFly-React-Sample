@@ -25,7 +25,6 @@ import {
 } from "../../../assets/images";
 import { groupstatus } from "../../../Helpers/Chat/RecentChat";
 import IndexedDb from "../../../Helpers/IndexedDb";
-import { ls } from "../../../Helpers/LocalStorage";
 import {
   getFormatPhoneNumber,
   getFormattedRecentChatText,
@@ -34,7 +33,8 @@ import {
   capitalizeTxt,
   sendNotification,
   blockOfflineAction,
-  getArchiveSetting
+  getArchiveSetting,
+  shouldHideNotification
 } from "../../../Helpers/Utility";
 import Store from "../../../Store";
 import { getAvatarImage, groupAvatar } from "../Common/Avatarbase64";
@@ -69,6 +69,9 @@ import { Archived, IconPinChat, IconUnarchive } from "../Setting/images";
 import { toast } from "react-toastify";
 import { updateArchiveStatusRecentChat } from "../../../Actions/RecentChatActions";
 import OutsideClickHandler from "react-outside-click-handler";
+import Modal from "../Common/Modal";
+import browserNotify from "../../../Helpers/Browser/BrowserNotify";
+import {getFromLocalStorageAndDecrypt} from "../WebChatEncryptDecrypt";
 
 const allowedIds = ["recent-menu", "recent-menu-archive", "recent-menu-archive-icon", "recent-menu-archive-text"];
 class RecentChatItem extends Component {
@@ -76,6 +79,7 @@ class RecentChatItem extends Component {
     super(props);
     this.state = {
       image: null,
+      showModal: false,
       recentDrop: false,
       pinChat: false,
       archiveChat: false,
@@ -93,7 +97,6 @@ class RecentChatItem extends Component {
   handleToggleMute = async () => {
     const { callLogData: { callAudioMute = false } = {} } = this.props;
     const audioMuteResult = await SDK.muteAudio(!callAudioMute);
-    console.log('Recentchat audioMuteResult :>> ', audioMuteResult?.statusCode);
     if (audioMuteResult?.statusCode === 200) {
       muteLocalAudio(!callAudioMute);
       Store.dispatch(isMuteAudioAction(!callAudioMute));
@@ -117,7 +120,7 @@ class RecentChatItem extends Component {
       // Media type icon mapping
       const icons = {
         image: (
-          <i className="chat-missedcall">
+          <i className="chat-camera">
             <Camera />
           </i>
         ),
@@ -181,7 +184,7 @@ class RecentChatItem extends Component {
    * handleLastMessage function is to handle the last message publisher name along with last message.
    */
   handleLastMessage = (data) => {
-    const { rosterData: { data: rosterArray = [] } = {}, vCardData: { data: { fromUser } = {} } = {} } = this.props;
+    const { vCardData: { data: { fromUser } = {} } = {} } = this.props;
     const {
       recent: { chatType, publisherId, msgBody, msgType }
     } = data;
@@ -190,10 +193,7 @@ class RecentChatItem extends Component {
     const condionCheck = conditionArray.some((ele) => ele.condition === chatType);
     if (condionCheck) {
       if (publisherId !== fromUser) {
-        const senderDetails = rosterArray.find((roster) => {
-          const contactName = roster.username ? roster.username : roster.userId;
-          return publisherId === contactName;
-        });
+        const senderDetails = getDataFromRoster(publisherId);
 
         if (senderDetails) {
           const lastMessageBy = getContactNameFromRoster(senderDetails);
@@ -288,8 +288,8 @@ class RecentChatItem extends Component {
     const { recent: { fromUserId } = {} } = response;
     this.props.handlePopupState(true);
     const activeClass = e.target?.closest("li")?.classList?.contains("active");
-    const recordingStatus = localStorage.getItem("recordingStatus");
-    if (activeClass || recordingStatus === "false") return;
+    const recordingStatus = getFromLocalStorageAndDecrypt("recordingStatus");
+    if (activeClass || recordingStatus === false) return;
     this.addActiveClass(e);
     let status = "block";
 
@@ -335,7 +335,7 @@ class RecentChatItem extends Component {
       messageData
     } = this.props;
     const { data: { msgType, msgId, msgBody } = {} } = messageData || {};
-
+    
     if (msgType && msgType === "carbonSentSeen" && prevProps.messageData.id !== messageData.id && msgId === messageId) {
       Store.dispatch(UnreadCountDelete({ fromUserId }));
     }
@@ -347,15 +347,16 @@ class RecentChatItem extends Component {
     ) {
       this.setUnreadCount();
     }
-
+    
     if (
       (this.props?.item?.recent?.msgType === GROUP_CHAT_PROFILE_UPDATED_NOTIFY &&
         this.props?.item?.recent?.timestamp !== prevProps?.item?.recent?.timestamp) ||
       prevProps?.messageId !== messageId
     ) {
+
       const messageFromUser = this.props?.vCardData?.data?.fromUser;
       if (!isLocalUser(publisherId)) {
-        const webSettings = localStorage.getItem("websettings");
+        const webSettings = getFromLocalStorageAndDecrypt("websettings");
         let parserLocalStorage = webSettings ? JSON.parse(webSettings) : {};
         const { Notifications = true } = parserLocalStorage;
 
@@ -399,7 +400,6 @@ class RecentChatItem extends Component {
         },
         roster: { image, groupImage }
       } = recentChat;
-
       const messageBody = isTextMessage(message_type) ? message : `${capitalizeTxt(message_type || "")}`;
       let updateMessage = message_type ? messageBody : this.handleMessageType(recentChat);
       let updateDisplayName, imageToken;
@@ -414,17 +414,37 @@ class RecentChatItem extends Component {
         if (message_type) updateMessage = `${senderName}: ${updateMessage}`;
       }
 
+      const {
+        unreadCountData: { unreadDataObj }
+      } = this.props;
+      let totalChats = 0;
+      let totalCounts = 0;
+      Object.entries(unreadDataObj).map(item => {
+        let count = item[1].count;
+        totalChats++;
+        totalCounts = totalCounts + count;
+      })
+      if (shouldHideNotification() && browserNotify.isPageHidden) {
+        updateDisplayName = "You have " + totalChats +" new chat" + ((totalChats > 1) ? "s" : "");
+        updateMessage = "Total " + totalCounts + " unread message" + ((totalCounts > 1) ? "s" : "");
+      }
       this.localDb
         .getImageByKey(imageToken, "profileimages")
         .then((blob) => {
-          const blobUrl = window.URL.createObjectURL(blob);
+          let blobUrl = window.URL.createObjectURL(blob);
+          if (shouldHideNotification() && browserNotify.isPageHidden) {
+            blobUrl = "";
+          }
           sendNotification(updateDisplayName, blobUrl, updateMessage, fromUserId);
         })
         .catch((err) => {
-          const avatarImage = chatType === "chat" ? getAvatarImage : groupAvatar;
+          let avatarImage = chatType === "chat" ? getAvatarImage : groupAvatar;
+          if (shouldHideNotification() && browserNotify.isPageHidden) {
+            avatarImage = "";
+          }
           sendNotification(updateDisplayName, avatarImage, updateMessage, fromUserId);
         });
-    } catch (error) {}
+    } catch (error) { }
   };
 
   shouldComponentUpdate(nextProps) {
@@ -479,6 +499,17 @@ class RecentChatItem extends Component {
     );
   };
 
+  handleRecentChatClick = (e, item) => {
+    if (item?.recent?.chatType === "groupchat") {
+      const groupData = this.props.groupsData?.data?.find((ele) => ele.groupId === item?.roster?.groupId);
+      if (groupData?.isAdminBlocked) {
+        this.setState({ showModal: true });
+        return
+      }
+    }
+    this.clickListener(e, item);
+  }
+
   render() {
     const {
       item,
@@ -488,14 +519,14 @@ class RecentChatItem extends Component {
       callUserJID,
       hidden,
       callStatus,
-      enableDropDown = false
+      enableDropDown = false,
+      isAdminBlocked = false
     } = this.props;
     const {
       item: { roster: { image, groupImage } = {} } = {},
       callLogData: { callAudioMute = false } = {},
       pageType = ""
     } = this.props;
-
     const {
       roster: { groupId, emailId, userId },
       recent: { chatType, createdAt, msgStatus, fromUserId, msgType, deleteStatus, muteStatus, archiveStatus } = {}
@@ -506,7 +537,7 @@ class RecentChatItem extends Component {
     const contactName = this.getContactName();
     const iniTail = initialNameHandle(item.roster, contactName);
     const hightlightText = contactName ? getHighlightedText(contactName, searchTerm) : fromUserId;
-    const token = ls.getItem("token");
+    const token = getFromLocalStorageAndDecrypt("token");
     if (chatType === "groupchat" && !groupId) return null;
 
     let selectedRoster = this.props.selectedRoster;
@@ -529,16 +560,15 @@ class RecentChatItem extends Component {
       " call…";
 
     const activeClass = userId ? userId : groupId;
-    const { recentDrop, pinChat, archiveChat } = this.state;
+    const { recentDrop, pinChat, archiveChat, showModal } = this.state;
     const isPermanentArchvie = getArchiveSetting();
 
     return (
       <Fragment>
         <li
           style={{ display: hidden ? "none" : "" }}
-          className={`chat-list-li  ${pageType ? "recentLiCustom" : ""} ${
-            activeClass === selectedJid ? "active" : ""
-          } ${recentDrop ? "set-top" : ""} ${fromUserId === callUserJID ? " activeCall" : ""} `}
+          className={`chat-list-li  ${pageType ? "recentLiCustom" : ""} ${activeClass === selectedJid ? "active" : ""
+            } ${recentDrop ? "set-top" : ""} ${fromUserId === callUserJID ? " activeCall" : ""} `}
           // className={`chat-list-li ${(msgfrom == callUserJID) ? '' : ''}`}
           id="chat-list-id"
           data-name="list"
@@ -546,7 +576,7 @@ class RecentChatItem extends Component {
           ref={(event) => (this.listElement = event)}
           onClick={(e) => {
             if (allowedIds.includes(e.target.id)) return;
-            this.clickListener(e, item);
+            this.handleRecentChatClick(e, item)
           }}
         >
           <ProfileImage
@@ -554,7 +584,7 @@ class RecentChatItem extends Component {
             userToken={token}
             userId={userId || groupId}
             temporary={false}
-            imageToken={image || groupImage}
+            imageToken={isAdminBlocked ? "" : image || groupImage}
             emailId={emailId}
             name={iniTail}
           />
@@ -604,10 +634,10 @@ class RecentChatItem extends Component {
               <div className="recent-message-icon">
                 {((muteStatus === 1 && pageType === "recent") ||
                   (muteStatus === 1 && pageType === "archive" && !isPermanentArchvie)) && (
-                  <i className="MuteChat">
-                    <ChatMute />
-                  </i>
-                )}
+                    <i className="MuteChat">
+                      <ChatMute />
+                    </i>
+                  )}
                 {pinChat && (
                   <i className="pinChat">
                     <IconPinChat style={{ color: "#2698F9" }} />
@@ -672,7 +702,26 @@ class RecentChatItem extends Component {
             </div>
           )}
         </li>
-      </Fragment>
+        {(showModal) &&
+          <Modal containerId='container'>
+            <div className="popup-wrapper BlockedPopUp">
+              <div className="popup-container">
+                <div className="popup-container-inner" style={{ maxWidth: "23em" }}>
+                  <div className="popup-label"><label>{"This group is no longer available"}</label></div>
+                  <div className="popup-noteinfo">
+                    <button onClick={() => this.setState({ showModal: false })}
+                      type="button"
+                      name="btn-action"
+                      className="popup btn-action danger"
+                    >
+                      {"OK"}</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Modal>
+        }
+      </Fragment >
     );
   }
 }

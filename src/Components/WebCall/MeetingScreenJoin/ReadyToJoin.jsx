@@ -48,7 +48,7 @@ const ReadyToJoin = ({ participantsData = [], displayName = "", handleTryAgain, 
                 Cancel
               </button>
             </div>
-            <p className="internet show">Maximum 8 members allowed in call</p>
+            <p className="internet show">Maximum {getMaxUsersInCall()} members allowed in call</p>
           </>
         ) : (
           <button type="button" onClick={handleJoinCall} className="Meeting_join">

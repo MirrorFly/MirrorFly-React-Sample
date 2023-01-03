@@ -10,6 +10,7 @@ import {
 } from "./CallReducer";
 import { showConfrenceReducer } from "./confrenceReducer";
 import { ConnectionStateReducer } from "./ConnectionStateReducer";
+import { FeatureStateReducer } from "./FeatureStateReducer";
 import { ConversationState } from "./ConversationState";
 import {
   GroupChatMediaReducer,
@@ -52,11 +53,14 @@ import { StarredMessagesReducer } from "./StarredReducer";
 import { TranslateLanguage } from "./TranslateLanguage";
 import { CommonDataReducer } from "./CommonReducer";
 import { callIntermediateScreenReducer } from "./CallIntermediateScreen";
+import { RosterPermissionReducer } from "./RosterPermissionReducer";
+import { AdminBlockReducer } from "./AdminBlockReducer";
 
 export default combineReducers({
   TranslateLanguage:TranslateLanguage,
   modalPopUpReducer: modalPopUpReducer,
   ConnectionStateData: ConnectionStateReducer,
+  featureStateData: FeatureStateReducer,
   vCardData: VCardReducer,
   rosterData: RosterReducer,
   recentChatData: RecentChatReducer,
@@ -105,5 +109,7 @@ export default combineReducers({
   starredMessages: StarredMessagesReducer,
   webLocalStorageSetting : webLocalStorageSettingReducer,
   commonData: CommonDataReducer,
-  callIntermediateScreen: callIntermediateScreenReducer
+  callIntermediateScreen: callIntermediateScreenReducer,
+  contactPermission: RosterPermissionReducer,
+  adminBlockData: AdminBlockReducer
 });

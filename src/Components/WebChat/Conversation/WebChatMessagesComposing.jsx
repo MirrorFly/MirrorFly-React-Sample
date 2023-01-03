@@ -5,7 +5,6 @@ import uuidv4 from "uuid/v4";
 import { popUpState, saveMessageContent } from "../../../Actions/ConversationAction";
 import { Attachment, CameraIcon, SendMessage } from "../../../assets/images";
 import Config from "../../../config";
-import { ls } from "../../../Helpers/LocalStorage";
 import MediaPreview from "../../WebChat/MediaPreview";
 import AudioRecorder from "../Common/AudioRecorder";
 import Modal from "../Common/Modal";
@@ -23,6 +22,7 @@ import { blockOfflineMsgAction, isBoxedLayoutEnabled } from "../../../Helpers/Ut
 import { get as _get } from "lodash";
 import Store from "../../../Store";
 import { UpdateTypedMessage } from "../../../Actions/ChatHistory";
+import { encryptAndStoreInLocalStorage } from "../WebChatEncryptDecrypt";
 
 function debounce(func, wait, immediate) {
   var timeout;
@@ -54,13 +54,14 @@ class WebChatMessagesComposing extends Component {
       showAttachement: false,
       recordingStatus: true,
       showCamera: false,
-      cameraPermission: 0
+      cameraPermission: 0,
+      featuresAvailable: {}
     };
     this.position = 0;
     this.timeout = 0;
     this.gonetimeout = 0;
     this.selectedText = null;
-    ls.setItem("recordingStatus", true);
+    encryptAndStoreInLocalStorage("recordingStatus", true);
     this.cameraPermissionTracks = [];
   }
 
@@ -71,6 +72,8 @@ class WebChatMessagesComposing extends Component {
     const { chatId = "" } = _get(this.props, "activeChatData.data", "");
     if (chatId) {
       const { typedMessage = "" } = this.props?.chatConversationHistory?.data[chatId] || {};
+      const { featureStateData } = this.props;
+      this.setState({featuresAvailable: featureStateData})
       this.setState(
         {
           typingMessage: typedMessage
@@ -205,6 +208,12 @@ class WebChatMessagesComposing extends Component {
     this.selectedText = selectedText;
   };
 
+  handleEmptyContent = () =>{
+    this.setState({
+      typingMessage:""
+    })
+  }
+  
   handleSendMsg = (messageType, messageContent) => {
     let message;
     const { loaderStatus, handleSendMsg } = this.props;
@@ -223,16 +232,20 @@ class WebChatMessagesComposing extends Component {
     const showEmoji = this.state.showEmoji;
     this.setState(
       {
-        typingMessage: "",
+        // typingMessage: "",
         showEmoji: false,
         showPreview: false,
-        showAttachement: false
+        showAttachement: false,
+        seletedFiles: {}
       },
       () => {
         handleSendMsg(message);
         showEmoji && this.updateEmojiPopUpState();
       }
     );
+    setTimeout(() => {
+      this.setState({ typingMessage: "" })
+    }, 250);
   };
 
   handleSendTextMsg = () => {
@@ -264,7 +277,8 @@ class WebChatMessagesComposing extends Component {
     this.setState({
       selectedSlide: 0,
       showAttachement: false,
-      showPreview: !this.state.showPreview
+      showPreview: !this.state.showPreview,
+      seletedFiles: {}
     });
   };
 
@@ -280,7 +294,7 @@ class WebChatMessagesComposing extends Component {
   };
 
   recordingStatus = (status) => {
-    ls.setItem("recordingStatus", status);
+    encryptAndStoreInLocalStorage("recordingStatus", status);
     this.setState({
       recordingStatus: status
     });
@@ -436,39 +450,39 @@ class WebChatMessagesComposing extends Component {
   };
 
   renderCameraPopup = () => {
-    return(
-        <div className="camera-container mediaAttachCamera">
-          <div className="camera-popup">
-            <h4>{PERMISSION_DENIED}</h4>
-            <i>
-              <CameraIcon />
-            </i>
-            <p>{CAMERA_PERMISSION_DENIED}</p>
-            <div className="popup-controls">
-              <button
-                type="button"
-                className="btn-okay"
-                onClick={(e) => this.handleCameraPopupClose(e)}
-                name="btn-cancel"
-              >
-                {"Okay"}
-              </button>
-            </div>
+    return (
+      <div className="camera-container mediaAttachCamera">
+        <div className="camera-popup">
+          <h4>{PERMISSION_DENIED}</h4>
+          <i>
+            <CameraIcon />
+          </i>
+          <p>{CAMERA_PERMISSION_DENIED}</p>
+          <div className="popup-controls">
+            <button
+              type="button"
+              className="btn-okay"
+              onClick={(e) => this.handleCameraPopupClose(e)}
+              name="btn-cancel"
+            >
+              {"Okay"}
+            </button>
           </div>
         </div>
-      );
-   };
+      </div>
+    );
+  };
 
-   renderCameraCapture = () => {
-     return(
+  renderCameraCapture = () => {
+    return (
       <Camera
-      stopCameraPermissionTracks={this.stopCameraPermissionTracks}
-      onClickClose={this.closeCamera}
-      cropEnabled={false}
-      onSuccess={this.handleCameraTakenFile}
-    />
-     );
-   };
+        stopCameraPermissionTracks={this.stopCameraPermissionTracks}
+        onClickClose={this.closeCamera}
+        cropEnabled={false}
+        onSuccess={this.handleCameraTakenFile}
+      />
+    );
+  };
 
   render() {
     const {
@@ -480,8 +494,21 @@ class WebChatMessagesComposing extends Component {
       showAttachement,
       recordingStatus,
       showCamera,
-      cameraPermission
+      cameraPermission,
+      featuresAvailable
     } = this.state;
+    let { 
+      isAttachmentEnabled = false,
+      isImageAttachmentEnabled = false,
+      isVideoAttachmentEnabled = false,
+      isAudioAttachmentEnabled = false,
+      isDocumentAttachmentEnabled = false
+        } = featuresAvailable;
+    if(!isImageAttachmentEnabled && !isVideoAttachmentEnabled &&
+      !isAudioAttachmentEnabled && !isDocumentAttachmentEnabled)
+    {
+      isAttachmentEnabled = false;
+    }
     const { jid, loaderStatus, vCardData, rosterData, closeReplyAction, chatType, groupMemberDetails } = this.props;
     const { autoReplay = false, autoMsgfind = {} } = this.findReply(jid);
 
@@ -504,6 +531,7 @@ class WebChatMessagesComposing extends Component {
 
         {recordingStatus && Config.attachement && showAttachement && (
           <Attachement
+            attachment={featuresAvailable}
             selectFile={this.selectFile}
             onclose={this.toggleAttachement}
             closeAttachment={this.onCloseAttachment}
@@ -514,37 +542,38 @@ class WebChatMessagesComposing extends Component {
 
         {showCamera && (
           <>
-          {isBoxedLayoutEnabled() ?
-          <>
-            <Modal containerId="container">
-              {this.renderCameraCapture()}
-          </Modal>
+            {isBoxedLayoutEnabled() ?
+              <>
+                <Modal containerId="container">
+                  {this.renderCameraCapture()}
+                </Modal>
+              </>
+              :
+              <>
+                {this.renderCameraCapture()}
+              </>
+            }
           </>
-          :
-          <>
-          {this.renderCameraCapture()}
-          </>
-        }
-        </>
         )}
 
         {cameraPermission === 2 && (
           <>
-           {isBoxedLayoutEnabled() ?
-            <Modal containerId="container">
-              {this.renderCameraPopup()}
-            </Modal>
-          :
-          <>
-            {this.renderCameraPopup()}
+            {isBoxedLayoutEnabled() ?
+              <Modal containerId="container">
+                {this.renderCameraPopup()}
+              </Modal>
+              :
+              <>
+                {this.renderCameraPopup()}
+              </>
+            }
           </>
-        }
-      </>
-    )}
+        )}
 
         {showPreview && (
           <Modal containerId="container">
             <MediaPreview
+              attachment={featuresAvailable}
               seletedFiles={seletedFiles}
               jid={jid}
               selectedSlide={selectedSlide}
@@ -553,7 +582,7 @@ class WebChatMessagesComposing extends Component {
             />
           </Modal>
         )}
-        <form className="message-area-container">
+        <form style={{visibility:this.props.forwardOption ? "hidden" : " "}} className="message-area-container">
           <div className="message-area">
             <i
               className="em em-slightly_smiling_face"
@@ -572,9 +601,10 @@ class WebChatMessagesComposing extends Component {
               handleOnFocus={this.handleOnFocus}
               setCursorPosition={this.setCursorPosition}
               setSelectedText={this.setSelectedText}
+              handleEmptyContent={this.handleEmptyContent}
             />
             <div className="intraction icon">
-              {recordingStatus && Config.attachement && (
+              {recordingStatus && Config.attachement && isAttachmentEnabled && (
                 <i
                   title="Attachment"
                   className={showAttachement ? "attachment open" : "attachment"}
@@ -586,7 +616,7 @@ class WebChatMessagesComposing extends Component {
               )}
             </div>
           </div>
-          {!this.isTypingMessageHasData() && (
+          {!this.isTypingMessageHasData() && isAudioAttachmentEnabled && (
             <AudioRecorder
               jid={this.props.jid}
               handleSendMediaMsg={this.handleSendMediaMsg}
@@ -611,6 +641,7 @@ class WebChatMessagesComposing extends Component {
 
 const mapStateToProps = (state) => {
   return {
+    featureStateData: state.featureStateData,
     conversationState: state.conversationState,
     chatConversationHistory: state.chatConversationHistory,
     activeChatData: state.activeChatData

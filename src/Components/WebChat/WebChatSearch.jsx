@@ -3,7 +3,8 @@ import ReactDOM from 'react-dom';
 import { connect } from 'react-redux';
 import { Search, Close } from '../../assets/images';
 import { getValidSearchVal } from '../../Helpers/Utility';
-import { getUserInfoForSearch } from '../../Helpers/Chat/User';
+import userList from './RecentChat/userList';
+
 class WebChatSearch extends React.Component {
 
   /**
@@ -19,22 +20,24 @@ class WebChatSearch extends React.Component {
   searchFilterList = () => {
     let search = ReactDOM.findDOMNode(this).getElementsByClassName('search-contacts');
     const value = search.length ? search[0].value : '';
-    const { searchIn, rosterDataResponse, rosterData: { data }, handleSearchFilterList } = this.props
-    let updatedList = (searchIn === 'recent-chat') ? rosterDataResponse : data;
+    const { handleSearchFilterList } = this.props
+
+    // let updatedList = (searchIn === 'recent-chat') ? rosterDataResponse : handleFilterBlockedContact(data);
     const searchWith = getValidSearchVal(value);
     this.setState({
       isTyping: value ? true : false
     })
-    updatedList = updatedList.filter((item) => {
-      const { roster, recent } = item
-      let filterData = (searchIn === 'recent-chat') ? roster || recent : item;
-      const regexList = getUserInfoForSearch(filterData);
-      return regexList.find((str) => {
-        if (!item.isFriend || !str) return false
-        return (str.search(new RegExp(searchWith, "i")) !== -1)
-      });
-    });
-    handleSearchFilterList(updatedList, value)
+    // updatedList = updatedList.filter((item) => {
+    //   const { roster, recent } = item
+    //   let filterData = (searchIn === 'recent-chat') ? roster || recent : item;
+    //   const regexList = getUserInfoForSearch(filterData);
+    //   return regexList.find((str) => {
+    //     if (!item.isFriend || !str) return false
+    //     return (str.search(new RegExp(searchWith, "i")) !== -1)
+    //   });
+    // });
+    handleSearchFilterList(searchWith)
+    userList.getUsersListFromSDK(1, searchWith);
   }
 
   /**

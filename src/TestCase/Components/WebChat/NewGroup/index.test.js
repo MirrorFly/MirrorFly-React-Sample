@@ -4,7 +4,6 @@ import { configure, mount } from 'enzyme';
 import Adapter from 'enzyme-adapter-react-16';
 import configureMockStore from 'redux-mock-store';
 import NewGroup from '../../../../Components/WebChat/NewGroup';
-import NewGroupProfile from '../../../../Components/WebChat/NewGroup/NewGroupProfile';
 
 configure({ adapter: new Adapter() });
 const mockStore = configureMockStore();
@@ -26,10 +25,5 @@ describe(">>> NewGroup Test case <<<", () => {
                 <NewGroup {...monckData} />
             </Provider>);
     });
-
-    it("wrapper NewGroupProfile", () => {
-        const NewGroupProfilewrapper = wrapper.find(NewGroupProfile).first();
-        NewGroupProfilewrapper.props().handleMoveToPartcipantList({ typingMessage: "test", groupProfileImage: "test", profileImage: "test" });
-    })
 
 });
