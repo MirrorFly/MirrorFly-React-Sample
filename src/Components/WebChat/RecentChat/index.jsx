@@ -290,9 +290,10 @@ class RecentChatSection extends Component {
       newChatStatus,
       callMode,
       pageType,
-      unreadCountData: { unreadDataObj = {} } = {}
+      unreadCountData: { unreadDataObj = {} } = {},
+      featureStateData
     } = this.props;
-
+    const { isRecentChatSearchEnabled = false } = featureStateData;
     const updatedRecentChat = searchEnable ? filteredRecentChat : recentChatItems;
     const loaderStyle = {
       width: 80,
@@ -324,7 +325,7 @@ class RecentChatSection extends Component {
     return (
       <Fragment>
         <div style={{ display: !newChatStatus ? "none" : "" }}>
-          {pageType === "recent" && <RecentSearch search={this.searchFilterList} />}
+          {pageType === "recent" && isRecentChatSearchEnabled && <RecentSearch search={this.searchFilterList} />}
           {(!this.props.isAppOnline ||
             isConnStateEqualTo([
               CONNECTION_STATE_CONNECTING,
@@ -437,6 +438,7 @@ class RecentChatSection extends Component {
 
 const mapStateToProps = (state, props) => {
   return {
+    featureStateData: state.featureStateData,
     rosterData: state.rosterData,
     recentChatData: state.recentChatData,
     singleChatMsgHistoryData: state.singleChatMsgHistoryData,

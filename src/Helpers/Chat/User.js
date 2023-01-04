@@ -107,6 +107,10 @@ export const getLocalUserDetails = () => {
 }
 
 export const getDataFromRoster = (userId) => {
+    if (isLocalUser(userId)) { 
+        const vCardData = Store.getState().vCardData;
+        return vCardData?.data;
+    }
     const currentState = Store.getState()
     let {
         rosterData: {
@@ -201,7 +205,10 @@ export const getUserNickName = (userObj) => {
 }
 
 export const isDisplayNickName = (userObj) => {
-    return !isLocalUser(userObj.userId) && !userObj.isFriend;
+    if(userObj.nickName!==userObj.userId){
+        userObj.nickName="";
+    }
+    return !isLocalUser(userObj.userId) && !userObj.isFriend && userObj.nickName;
 }
 
 export const getFriendsFromRosters = (rosters) => {

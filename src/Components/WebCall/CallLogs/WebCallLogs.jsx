@@ -19,7 +19,7 @@ import { NO_INTERNET } from '../../../Helpers/Constants';
 import { formatUserIdToJid, getDataFromRoster, getLocalUserDetails, getUserDetails, initialNameHandle } from '../../../Helpers/Chat/User';
 import { getGroupData } from '../../../Helpers/Chat/Group';
 import { muteLocalVideo } from "../../callbacks";
-import { COMMON_ERROR_MESSAGE } from '../../../Helpers/Call/Constant';
+import { COMMON_ERROR_MESSAGE, FEATURE_RESTRICTION_ERROR_MESSAGE } from '../../../Helpers/Call/Constant';
 import FloatingCallOption from './FloatingCallOption/FloatingCallOption';
 import { FloatingCallActionSm, ArrowBack, EmptyCallLog } from '../../../assets/images';
 import NewParticipants from '../../WebChat/NewGroup/NewParticipants';
@@ -376,13 +376,15 @@ class WebChatCallLogs extends React.Component {
                 });
             }
 
+            const { featureStateData: {isOneToOneCallEnabled = false, isGroupCallEnabled = false } = {} } =this.props;
+
             if (groupMembers.length === 0) {
                 toast.error(COMMON_ERROR_MESSAGE);
                 this.preventMultipleClick = false;
                 return false
-            } else if (callMode === 'onetoone') {
+            } else if (callMode === 'onetoone' && isOneToOneCallEnabled) {
                 this.makeCall(callMode, callType, groupMembers, groupId);
-            }else {
+            }else if( callMode === 'onetomany' && isGroupCallEnabled) {
                     this.props.callParticiapants({
                         open: true,
                         modelType: 'calllogparticipants',
@@ -394,6 +396,11 @@ class WebChatCallLogs extends React.Component {
                         callType: callType,
                         closePopup: this.closePopup
                     });
+            }else {
+                if(toast.error.length > 1) {
+                    toast.dismiss();
+                    toast.error(FEATURE_RESTRICTION_ERROR_MESSAGE);
+                } 
             }
             this.preventMultipleClick = false;
         } else {
@@ -517,6 +524,7 @@ class WebChatCallLogs extends React.Component {
     }
 
     makeNewcall = (callType, userList) => {
+        const { featureStateData: {isOneToOneCallEnabled = false, isGroupCallEnabled = false } = {} } =this.props;
         let callMode = "onetoone";
         let users = [];
         if (userList.length > 1) {
@@ -533,8 +541,15 @@ class WebChatCallLogs extends React.Component {
                 }
             });
         }
-        if (users.length > 0) {
+        if (users.length === 1 && isOneToOneCallEnabled) {
             this.makeCall(callMode, callType, users, "");
+        }else if(users.length > 1 && isGroupCallEnabled) {
+            this.makeCall(callMode, callType, users, "");
+        }else{
+            if(toast.error.length > 1) {
+                toast.dismiss();
+                toast.error(FEATURE_RESTRICTION_ERROR_MESSAGE);
+            } 
         }
     }
 
@@ -629,6 +644,7 @@ class WebChatCallLogs extends React.Component {
 const mapStateToProps = (state, props) => {
 
     return ({
+        featureStateData: state.featureStateData,
         callLogData: state.callLogData,
         vCardData: state.vCardData.data,
         VCardContactData: state.VCardContactData,

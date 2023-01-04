@@ -14,21 +14,7 @@ const Caption = (props = {}) => {
   });
   const [selectedText, setSelectedTextState] = useState(null);
   const [position, setPosition] = useState(0);
-  // const setCursorPosition = (pos) => setPosition(pos);
-
-  //cursor point set
-  const setCursorPosition = (pos = 0) => {
-    const { value: typeingValue = "" } = typingMessage;
-    if (typeingValue) {
-      const valueLength = typeingValue.length;//get typing length
-      setCaretPosition(document.getElementById("image-preview-typingContainer"), +valueLength);
-      setPosition(pos);
-      typingMessage = valueLength.length-1;
-      if(typingMessage >= 0){valueLength.deleteData(typingMessage,0)}
-    } else {
-      setPosition(pos);
-    }
-  }
+  const setCursorPosition = (pos) => setPosition(pos);
 
   const handleEmojiText = (emojiObject) => {
     const { value: typeVal } = typingMessage;

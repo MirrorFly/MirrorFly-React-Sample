@@ -1297,3 +1297,15 @@ const deleteAllIndexedDb = async() => {
 }
 
 export const shouldHideNotification = () => REACT_APP_HIDE_NOTIFICATION_CONTENT === "true";
+
+let recorder = null;
+export const setRecorder = (recorderNew) => {
+  recorder = recorderNew;
+}
+
+export const stopRecorder = () => {
+  if (recorder != null) {
+    recorder.stop();
+    encryptAndStoreInLocalStorage("recordingStatus", true);
+  }
+}

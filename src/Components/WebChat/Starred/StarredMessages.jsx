@@ -226,6 +226,12 @@ const StarredMessages = (props = {}) => {
  };
  
  const unStarMessage = async (data) => {
+   const storeData = Store.getState();
+   const { recentChatData: { rosterData: { recentChatItems = [] } = {} } = {} } = storeData || {};
+   const dataFind = recentChatItems.filter((ele) => ele.recent.fromUserId === data.fromUserId);
+   if (dataFind.length >= 1 && dataFind[0]?.roster?.groupId != null && dataFind[0]?.roster?.isAdminBlocked) {
+     return;
+   }
    setDropDown(-1);
    if (blockOfflineAction()) return;
    SDK.updateFavouriteStatus(data.fromUserJid, [data.msgId], false);
@@ -259,6 +265,10 @@ const StarredMessages = (props = {}) => {
      dataFind[0].chatId = msgItem.fromUserId;
      dataFind[0].chatType = msgItem.chatType;
      dataFind[0].chatJid = msgItem.fromUserJid;
+     if (dataFind[0]?.roster?.groupId != null && dataFind[0]?.roster?.isAdminBlocked) {
+        toast.info("This group is no longer available")
+        return;
+     }
      const dataMsgHistory = getChatMessageHistoryById(msgItem.fromUserId);
      if (dataMsgHistory.length === 0) {
        Store.dispatch(ActiveChatAction(dataFind[0]));//open recent chat

@@ -49,6 +49,7 @@ import ActionInfoPopup from '../ActionInfoPopup';
 import BlockedFromApplication from "../BlockedFromApplication";
 import { adminBlockStatusUpdate } from "../../Actions/AdminBlockAction";
 import { RosterDataAction, RosterPermissionAction } from "../../Actions/RosterActions";
+import { FeatureEnableState } from "../../Actions/FeatureAction";
 
 const createHistory = require("history").createBrowserHistory;
 export const history = createHistory();
@@ -281,7 +282,7 @@ class Login extends React.Component {
   }
 
   handleLoginSuccess = async (data) => {
-    
+
     let resource = SDK.getCurrentUserJid();
     if (resource.statusCode === 200) encryptAndStoreInLocalStorage("loggedInUserJidWithResource", resource.userJid);
     
@@ -311,21 +312,30 @@ class Login extends React.Component {
       setContactWhoBleckedMe(jidArr);
     }
 
+    const featureResponse = SDK.getAvailableFeatures();
+    if(featureResponse.statusCode === 200) {
+      const featureData = featureResponse.data;
+      Store.dispatch(FeatureEnableState(featureData));
+      encryptAndStoreInLocalStorage("featureRestrictionFlags",featureData);
+    }
+
     //await SDK.getFriendsList();
     Store.dispatch(RosterPermissionAction(true));
     Store.dispatch(RosterDataAction([]));
+    const { featureStateData: { isGroupChatEnabled = false } } = this.props;
+    if(isGroupChatEnabled) {
+      const groupListRes = await SDK.getGroupsList();
 
-    const groupListRes = await SDK.getGroupsList();
-
-    if (groupListRes && groupListRes.statusCode === 200) {
-      groupListRes.data.map(async (group) => {
-        const groupJid = formatUserIdToJid(group.groupId, CHAT_TYPE_GROUP);
-        const groupPartRes = await SDK.getGroupParticipants(groupJid);
-        if (groupPartRes && groupPartRes.statusCode === 200) {
-          setGroupParticipantsByGroupId(groupJid, groupPartRes.data.participants);
-        }
-      });
-      Store.dispatch(GroupsDataAction(groupListRes.data));
+      if (groupListRes && groupListRes.statusCode === 200) {
+        groupListRes.data.map(async (group) => {
+          const groupJid = formatUserIdToJid(group.groupId, CHAT_TYPE_GROUP);
+          const groupPartRes = await SDK.getGroupParticipants(groupJid);
+          if (groupPartRes && groupPartRes.statusCode === 200) {
+            setGroupParticipantsByGroupId(groupJid, groupPartRes.data.participants);
+          }
+        });
+        Store.dispatch(GroupsDataAction(groupListRes.data));
+      }
     }
 
     handleUserSettings();
@@ -770,6 +780,7 @@ class Login extends React.Component {
 
 const mapStateToProps = (state, props) => {
   return {
+    featureStateData: state.featureStateData,
     ConnectionStateData: state.ConnectionStateData,
     messageData: state.messageData,
     showConfrenceData: state.showConfrenceData,

@@ -24,12 +24,4 @@ describe(">>> WebChatPopup Test case <<<", () => {
                 <WebChatPopup {...monckData} />
             </Provider>);
     });
-
-    it('cancel', () => {
-        wrapper.find('button[data-id="jesthandleLogoutCancel"]').simulate('click');
-    });
-
-    it('logOut', () => {
-        wrapper.find('button[data-id="jesthandleLogout"]').simulate('click');
-    });
 });

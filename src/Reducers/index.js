@@ -10,6 +10,7 @@ import {
 } from "./CallReducer";
 import { showConfrenceReducer } from "./confrenceReducer";
 import { ConnectionStateReducer } from "./ConnectionStateReducer";
+import { FeatureStateReducer } from "./FeatureStateReducer";
 import { ConversationState } from "./ConversationState";
 import {
   GroupChatMediaReducer,
@@ -59,6 +60,7 @@ export default combineReducers({
   TranslateLanguage:TranslateLanguage,
   modalPopUpReducer: modalPopUpReducer,
   ConnectionStateData: ConnectionStateReducer,
+  featureStateData: FeatureStateReducer,
   vCardData: VCardReducer,
   rosterData: RosterReducer,
   recentChatData: RecentChatReducer,

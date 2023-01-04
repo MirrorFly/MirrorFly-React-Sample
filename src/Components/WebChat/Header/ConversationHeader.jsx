@@ -392,8 +392,9 @@ class ConversationHeader extends React.Component {
     }
 
     render() {
-        const { groupMemberDetails, activeChatId, displayNames,
+        const { groupMemberDetails, activeChatId, displayNames, featureStateData,
             userData: { data: { chatId = "",recent: { chatType = "", fromUserId = "" } } = {} } = {} } = this.props || {};
+        const { isOneToOneCallEnabled = false, isGroupCallEnabled = false } = featureStateData;    
         const token = getFromLocalStorageAndDecrypt('token');
         const avatarIcon = chatType === 'chat' ? SampleChatProfile : SampleGroupProfile;
         let canSendMessage = this.canSendMessage();
@@ -439,7 +440,7 @@ class ConversationHeader extends React.Component {
                         </div>
                     </div>
                     <div className="profile-options">
-                        {canSendMessage && (chatType === "chat" || chatType === 'groupchat') && <>
+                        {canSendMessage && ((isOneToOneCallEnabled && chatType === "chat") || (isGroupCallEnabled && chatType === 'groupchat')) && <>
                             <i title={this.props.showonGoingcallDuration ? 'You are already in call' : "Audio call"}
                                 onClick={chatType === "chat" ? () => this.makeOne2OneCall('audio') : () => this.showCallParticipants('audio')}
                                 className={`audioCall ${(this.props.showonGoingcallDuration || this.state.isAdminBlocked || this.state.isDeletedUser) ? 'calldisabled' : ''}`}>
@@ -477,6 +478,7 @@ class ConversationHeader extends React.Component {
 
 const mapStateToProps = state => {
     return {
+        featureStateData: state.featureStateData,
         popUpData: state.popUpData,
         messageData: state.messageData,
         blockedContact: state.blockedContact,

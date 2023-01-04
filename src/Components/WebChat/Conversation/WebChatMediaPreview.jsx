@@ -235,7 +235,7 @@ class WebChatMediaPreview extends React.Component {
             break;
           }
         return (
-          <div key={msgId} className={mediaData.class} id={msgId + index}>
+          <div key={msgId} className={mediaData.class} id={msgId}>
             <img src={mediaData.imageURL} alt={mediaData.fileName} />
             {mediaData.media}
           </div>
@@ -344,11 +344,10 @@ class WebChatMediaPreview extends React.Component {
 
   handleMediaOnChange = (index, item) => {
     const dataMsgIdValue = item?.props?.id || "";
-    const removeLastIndexValue = dataMsgIdValue.slice(0, -1);
+    const removeLastIndexValue = dataMsgIdValue;
     if (removeLastIndexValue) {
-      const { starredMessages: { data = [] } = {} } = this.props;
-      const checkInitalStar = data.some((ele) => ele.msgId === removeLastIndexValue);
-      this.setState({ starStatusCheck: checkInitalStar, seletedMsgId: removeLastIndexValue })
+      const checkInitalStar = this.state.mediaList.some((ele) => ele.msgId === removeLastIndexValue && ele.favouriteStatus);
+      this.setState({ starStatusCheck: checkInitalStar, seletedMsgId: removeLastIndexValue });
     }
     this.tempSelectedItem = index;
     // Load Next Pagination on Media Slide/Selection
@@ -442,9 +441,8 @@ class WebChatMediaPreview extends React.Component {
 
   initialCall = () => {
     const { mediaList = [], allowInitialCall = false, selectedItem = 0 } = this.state;
-    const { starredMessages: { data = [] } = {} } = this.props;
     if (mediaList.length > 0 && !allowInitialCall) {
-      const checkInitalStar = data.some((ele) => ele.msgId === mediaList[selectedItem].msgId)
+      const checkInitalStar = mediaList[selectedItem].favouriteStatus === 1 ? true : false;
       this.setState(
         {
           allowInitialCall: true,

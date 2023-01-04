@@ -4,7 +4,15 @@ import {
   ALLOWED_ALL_FILE_FORMATS,
   ALLOWED_AUDIO_FORMATS,
   ALLOWED_DOCUMENT_FORMATS,
-  ALLOWED_IMAGE_VIDEO_FORMATS
+  ALLOWED_IMAGE_VIDEO_FORMATS,
+  ALLOWED_IMAGE_FORMATS,
+  ALLOWED_VIDEO_FORMATS,
+  IMAGE_FORMATS,
+  VIDEO_FORMATS,
+  IMAGE_VIDEO_FORMATS,
+  AUDIO_FORMATS,
+  DOCUMENT_FORMATS,
+  FEATURE_RESTRICTION_ERROR_MESSAGE
 } from "../../../Helpers/Constants";
 import { getMessageType } from "../../../Helpers/Utility";
 import {getFromLocalStorageAndDecrypt} from "../WebChatEncryptDecrypt";
@@ -67,19 +75,98 @@ const durationValdation = (file, fileExtension) => {
 };
 
 const validateFileExtension = (file, mediaType) => {
+  const featureFlags = getFromLocalStorageAndDecrypt("featureRestrictionFlags");
+  const {
+    isImageAttachmentEnabled = false,
+    isVideoAttachmentEnabled = false,
+    isAudioAttachmentEnabled = false,
+    isDocumentAttachmentEnabled = false
+  } = featureFlags;
   const fileExtension = getExtension(file.name);
   const allowedFilescheck = new RegExp("([a-zA-Z0-9s_\\.-:])+(" + ALLOWED_ALL_FILE_FORMATS.join("|") + ")$", "i");
+  const allowedImageVideoFilescheck = new RegExp("([a-zA-Z0-9s_\\.-:])+(" + ALLOWED_IMAGE_VIDEO_FORMATS.join("|") + ")$", "i");
+  const allowedImageFilescheck = new RegExp("([a-zA-Z0-9s_\\.-:])+(" + ALLOWED_IMAGE_FORMATS.join("|") + ")$", "i");
+  const allowedVideoFilescheck = new RegExp("([a-zA-Z0-9s_\\.-:])+(" + ALLOWED_VIDEO_FORMATS.join("|") + ")$", "i");
+  const allowedAudioFilescheck = new RegExp("([a-zA-Z0-9s_\\.-:])+(" + ALLOWED_AUDIO_FORMATS.join("|") + ")$", "i");
+  const allowedDocFilescheck = new RegExp("([a-zA-Z0-9s_\\.-:])+(" + ALLOWED_DOCUMENT_FORMATS.join("|") + ")$", "i");
   let fileType = file.type;
-
-  if (!allowedFilescheck.test(fileExtension) || fileType === "video/mpeg") {
-    let message = "Unsupported file format. Files allowed: ";
-    if (mediaType === "imagevideo") message = message + `${ALLOWED_IMAGE_VIDEO_FORMATS.join(", ")}`;
-    else if (mediaType === "audio") message = message + `${ALLOWED_AUDIO_FORMATS.join(", ")}`;
-    else if (mediaType === "file") message = message + `${ALLOWED_DOCUMENT_FORMATS.join(", ")}`;
-    else message = message + `${ALLOWED_ALL_FILE_FORMATS.join(", ")}`;
-
+  let message = "Unsupported file format. Files allowed: ";
+  if(toast.error.length > 1) {
+    toast.dismiss();
+  }
+  if (!allowedImageVideoFilescheck.test(fileExtension) && mediaType === "imagevideo") {
+    message = message + `${ALLOWED_IMAGE_VIDEO_FORMATS.join(", ")}`;
     toast.error(message);
     return Promise.resolve(false);
+  }else if(!allowedImageFilescheck.test(fileExtension) && mediaType === "image"){
+    message = message + `${ALLOWED_IMAGE_FORMATS.join(", ")}`;
+    toast.error(message);
+    return Promise.resolve(false);
+  }else if (!allowedVideoFilescheck.test(fileExtension) && mediaType === "video"){
+    message = message + `${ALLOWED_VIDEO_FORMATS.join(", ")}`;
+    toast.error(message);
+    return Promise.resolve(false);
+  }else if (!allowedAudioFilescheck.test(fileExtension) && mediaType === "audio"){
+    message = message + `${ALLOWED_AUDIO_FORMATS.join(", ")}`;
+    toast.error(message);
+    return Promise.resolve(false);
+  }else if (!allowedDocFilescheck.test(fileExtension) && mediaType === "file"){
+    message = message + `${ALLOWED_DOCUMENT_FORMATS.join(", ")}`;
+    toast.error(message);
+    return Promise.resolve(false);
+  }else if(mediaType === undefined || ""){ //this case is works when drag & drop from Conversation Page
+    if((isImageAttachmentEnabled && isVideoAttachmentEnabled && isAudioAttachmentEnabled && isDocumentAttachmentEnabled) ||
+     ((fileType === "" || null || undefined) &&
+      (isImageAttachmentEnabled || isVideoAttachmentEnabled || isAudioAttachmentEnabled || isDocumentAttachmentEnabled )))
+     {
+        if(!allowedFilescheck.test(fileExtension)){
+          message = message + `${ALLOWED_ALL_FILE_FORMATS.join(", ")}`;
+          toast.error(message);
+          return Promise.resolve(false);
+        }
+      } 
+    else if(IMAGE_VIDEO_FORMATS.includes(fileType) && isImageAttachmentEnabled && isVideoAttachmentEnabled) {
+      if(!allowedImageVideoFilescheck.test(fileExtension)){
+          message = message + `${ALLOWED_IMAGE_VIDEO_FORMATS.join(", ")}`;
+          toast.error(message);
+          return Promise.resolve(false);
+      }
+    }
+    else if(IMAGE_FORMATS.includes(fileType) && isImageAttachmentEnabled) {
+      if(!allowedImageFilescheck.test(fileExtension)){
+          message = message + `${ALLOWED_IMAGE_FORMATS.join(", ")}`;
+          toast.error(message);
+          return Promise.resolve(false);
+      }
+    }
+    else if(VIDEO_FORMATS.includes(fileType) && isVideoAttachmentEnabled) {
+      if(!allowedVideoFilescheck.test(fileExtension)){
+          message = message + `${ALLOWED_VIDEO_FORMATS.join(", ")}`;
+          toast.error(message);
+          return Promise.resolve(false);
+      }
+    }
+    else if(AUDIO_FORMATS.includes(fileType) && isAudioAttachmentEnabled) {
+      if(!allowedAudioFilescheck.test(fileExtension)){
+          message = message + `${ALLOWED_AUDIO_FORMATS.join(", ")}`;
+          toast.error(message);
+          return Promise.resolve(false);
+      }
+    }
+    else if(DOCUMENT_FORMATS.includes(fileType) && isDocumentAttachmentEnabled) {
+      if(!allowedDocFilescheck.test(fileExtension)){
+          message = message + `${ALLOWED_DOCUMENT_FORMATS.join(", ")}`;
+          toast.error(message);
+          return Promise.resolve(false);
+      }
+    
+    }
+    else{
+      message = FEATURE_RESTRICTION_ERROR_MESSAGE;
+      toast.error(message);
+      return Promise.resolve(false);
+    }
+    
   }
   return validateFileSize(file);
 };

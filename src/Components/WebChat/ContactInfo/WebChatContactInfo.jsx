@@ -25,7 +25,7 @@ import WebChatEmoji from '../WebChatEmoji';
 import { initialNameHandle, isLocalUser } from '../../../Helpers/Chat/User';
 import { isSingleChat, isGroupChat, getChatMessageHistoryById, getActiveConversationChatId, getActiveConversationChatJid, handleTempArchivedChats } from '../../../Helpers/Chat/ChatHelper';
 import { updateBlockedContactAction } from '../../../Actions/BlockAction';
-import { CHAT_TYPE_SINGLE, REPORT_FROM_CONTACT_INFO, UNBLOCK_CONTACT_TYPE } from '../../../Helpers/Chat/Constant';
+import { ADD_PARTICIPANT_GROUP_CONTACT_PERMISSION_DENIED, CHAT_TYPE_SINGLE, REPORT_FROM_CONTACT_INFO, UNBLOCK_CONTACT_TYPE } from '../../../Helpers/Chat/Constant';
 import Store from '../../../Store';
 import UserStatus from '../Common/UserStatus';
 import { isUserWhoBlockedMe } from '../../../Helpers/Chat/BlockContact';
@@ -73,7 +73,8 @@ class WebChatContactInfo extends React.Component {
             exitGroup: false,
             confirmExitGroup: false,
             isAdminBlocked:this.props?.roster?.isAdminBlocked,
-            isDeletedAccount:this.props?.roster?.isDeletedUser
+            isDeletedAccount:this.props?.roster?.isDeletedUser,
+            contactPermissionPopup: false
             // userNameChars : REACT_APP_GROUP_NAME_CHAR
 
         }
@@ -81,6 +82,7 @@ class WebChatContactInfo extends React.Component {
         this.userNameSelectedText = '';
         this.userStatusCursorPostion = 0;
         this.userStatusSelectedText = '';
+        this.addNewParticipantsPopOpen = false;
     }
     
     updateLocalUserGroupState = () => {
@@ -311,11 +313,16 @@ class WebChatContactInfo extends React.Component {
         if (!isAdmin) {
             return
         }
+        if (!this.props.contactPermission) {
+            this.setState({ contactPermissionPopup: true });
+            return;
+        }
         const { rosterName, participants = [] } = this.props
         const groupMembers = participants.map(participant => {
             const { userId, username, GroupUser } = participant
             return userId || username || GroupUser
         })
+        this.addNewParticipantsPopOpen = true;
         this.props.addParticiapants({
             open: true,
             modelType: 'participants',
@@ -323,6 +330,20 @@ class WebChatContactInfo extends React.Component {
             groupMembers: groupMembers,
             groupuniqueId: this.state.groupuniqueId
         })
+    }
+
+    handleCloseAddNewParticipantsPopup = () => {
+        const {
+            popUpData: {
+            modalProps: { open , modelType }
+            }
+        } = this.props;
+        if (open && modelType === "participants" && this.addNewParticipantsPopOpen) {
+            console.log("handleCloseAddNewParticipantsPopup", "close the popup");
+            this.addNewParticipantsPopOpen = false;
+            this.props.closePopup();
+            this.setState({ contactPermissionPopup: true });
+        }
     }
 
     dispatchAction = () => {
@@ -543,6 +564,9 @@ class WebChatContactInfo extends React.Component {
         const { showModal, contactInfoMediaGrid, viewEdit, showReportPopup, isAdminBlocked,
             isAdmin, groupuniqueId, isBlocked, showDeletePopup, showClearPopup, showMediaInDetailPopup, exitGroup, groupName } = this.state;
         const chatJid = getActiveConversationChatJid()
+        if (!this.props.contactPermission) {
+            this.handleCloseAddNewParticipantsPopup();
+        }
         return (
             <Fragment>
                 <div>
@@ -586,7 +610,7 @@ class WebChatContactInfo extends React.Component {
                                             chatType={'chat'}
                                             temporary={false}
                                             emailContactInfo={true}
-                                            imageToken={this.props.rosterImage}
+                                            imageToken={this.props.isAdminBlocked ? "" : this.props.rosterImage}
                                             blocked={isUserWhoBlockedMe(chatJid)}
                                             emailId={this.props.roster?.emailId}
                                             profileImageView={this.handleContactInfoImg}
@@ -597,7 +621,7 @@ class WebChatContactInfo extends React.Component {
                                             {this.props.rosterName}
                                         </span>
                                     </div>
-                                    {this.state.showContactProfileImg &&
+                                    {this.state.showContactProfileImg && !this.props.isAdminBlocked &&
                                         <Modal containerId='container'>
                                             <div className="Viewphoto-container">
                                                 <div className="Viewphoto-preview">
@@ -726,8 +750,13 @@ class WebChatContactInfo extends React.Component {
                                             dispatchExitAction={this.dispatchExitAction}
                                             handleNewParticipants={this.handleNewParticipants}
                                             reportGroupChatAction={() => this.reportChatAction('group', true)}
-                                            contactPermission={this.props.contactPermission}
                                         />
+                                        {this.state.contactPermissionPopup && <ActionInfoPopup
+                                            textActionBtn={"Ok"}
+                                            textHeading={"Contact permission"}
+                                            textInfo={ADD_PARTICIPANT_GROUP_CONTACT_PERMISSION_DENIED}
+                                            />
+                                        }
                                     </div>
                                 }
                                 {showMediaInDetailPopup &&
@@ -752,7 +781,9 @@ class WebChatContactInfo extends React.Component {
                         handleAction={(e) => this.reportConfirmAction(e)}
                         handleCancel={() => this.setState({ showReportPopup: false })}
                         textInfo={
-                            `The last 5 messages from this contact will be forwarded to admin. 
+                            `The last 5 messages from this ${this.state.reportPopup === 'single' ?
+                            "contact" : "group"
+                            } will be forwarded to admin. 
                             ${this.state.reportPopup === 'single' ?
                                 "This contact will not be notified." : ""
                             }
@@ -801,14 +832,15 @@ const mapStateToProps = state => {
         groupsMemberListData: state.groupsMemberListData,
         contactsWhoBlockedMe: state.contactsWhoBlockedMe,
         popUpData: state.popUpData,
-        contactPermission: state?.contactPermission?.data
+        contactPermission: state?.contactPermission?.data,
+        popUpData: state.popUpData
     }
 }
 
 const mapDispatchToProps = {
     addParticiapants: showModalPopupAction,
     updateBlockedContactAction,
-    closePopup: hideModal
+    closePopup: hideModal,
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(WebChatContactInfo);

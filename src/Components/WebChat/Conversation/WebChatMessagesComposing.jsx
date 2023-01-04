@@ -54,7 +54,8 @@ class WebChatMessagesComposing extends Component {
       showAttachement: false,
       recordingStatus: true,
       showCamera: false,
-      cameraPermission: 0
+      cameraPermission: 0,
+      featuresAvailable: {}
     };
     this.position = 0;
     this.timeout = 0;
@@ -71,6 +72,8 @@ class WebChatMessagesComposing extends Component {
     const { chatId = "" } = _get(this.props, "activeChatData.data", "");
     if (chatId) {
       const { typedMessage = "" } = this.props?.chatConversationHistory?.data[chatId] || {};
+      const { featureStateData } = this.props;
+      this.setState({featuresAvailable: featureStateData})
       this.setState(
         {
           typingMessage: typedMessage
@@ -232,7 +235,8 @@ class WebChatMessagesComposing extends Component {
         // typingMessage: "",
         showEmoji: false,
         showPreview: false,
-        showAttachement: false
+        showAttachement: false,
+        seletedFiles: {}
       },
       () => {
         handleSendMsg(message);
@@ -273,7 +277,8 @@ class WebChatMessagesComposing extends Component {
     this.setState({
       selectedSlide: 0,
       showAttachement: false,
-      showPreview: !this.state.showPreview
+      showPreview: !this.state.showPreview,
+      seletedFiles: {}
     });
   };
 
@@ -489,8 +494,21 @@ class WebChatMessagesComposing extends Component {
       showAttachement,
       recordingStatus,
       showCamera,
-      cameraPermission
+      cameraPermission,
+      featuresAvailable
     } = this.state;
+    let { 
+      isAttachmentEnabled = false,
+      isImageAttachmentEnabled = false,
+      isVideoAttachmentEnabled = false,
+      isAudioAttachmentEnabled = false,
+      isDocumentAttachmentEnabled = false
+        } = featuresAvailable;
+    if(!isImageAttachmentEnabled && !isVideoAttachmentEnabled &&
+      !isAudioAttachmentEnabled && !isDocumentAttachmentEnabled)
+    {
+      isAttachmentEnabled = false;
+    }
     const { jid, loaderStatus, vCardData, rosterData, closeReplyAction, chatType, groupMemberDetails } = this.props;
     const { autoReplay = false, autoMsgfind = {} } = this.findReply(jid);
 
@@ -513,6 +531,7 @@ class WebChatMessagesComposing extends Component {
 
         {recordingStatus && Config.attachement && showAttachement && (
           <Attachement
+            attachment={featuresAvailable}
             selectFile={this.selectFile}
             onclose={this.toggleAttachement}
             closeAttachment={this.onCloseAttachment}
@@ -554,6 +573,7 @@ class WebChatMessagesComposing extends Component {
         {showPreview && (
           <Modal containerId="container">
             <MediaPreview
+              attachment={featuresAvailable}
               seletedFiles={seletedFiles}
               jid={jid}
               selectedSlide={selectedSlide}
@@ -584,7 +604,7 @@ class WebChatMessagesComposing extends Component {
               handleEmptyContent={this.handleEmptyContent}
             />
             <div className="intraction icon">
-              {recordingStatus && Config.attachement && (
+              {recordingStatus && Config.attachement && isAttachmentEnabled && (
                 <i
                   title="Attachment"
                   className={showAttachement ? "attachment open" : "attachment"}
@@ -596,7 +616,7 @@ class WebChatMessagesComposing extends Component {
               )}
             </div>
           </div>
-          {!this.isTypingMessageHasData() && (
+          {!this.isTypingMessageHasData() && isAudioAttachmentEnabled && (
             <AudioRecorder
               jid={this.props.jid}
               handleSendMediaMsg={this.handleSendMediaMsg}
@@ -621,6 +641,7 @@ class WebChatMessagesComposing extends Component {
 
 const mapStateToProps = (state) => {
   return {
+    featureStateData: state.featureStateData,
     conversationState: state.conversationState,
     chatConversationHistory: state.chatConversationHistory,
     activeChatData: state.activeChatData

@@ -52,7 +52,8 @@ import {
 import {
     getUserIdFromJid,
     logout,
-    setLocalWebsettings
+    setLocalWebsettings,
+    stopRecorder
 } from '../Helpers/Utility';
 import callLogs from './WebCall/CallLogs/callLog';
 import {
@@ -118,13 +119,10 @@ import {
 import {
     setGroupParticipants,
     getGroupData,
-    isUserExistInGroup,
     setGroupParticipantsByGroupId
 } from '../Helpers/Chat/Group';
 import {
-    activeConversationChatType,
     getActiveConversationChatId,
-    getActiveConversationGroupJid,
     getArchivedChats,
     handleTempArchivedChats,
     isActiveConversationUserOrGroup,
@@ -1148,18 +1146,6 @@ export var callbacks = {
         } else {
             Store.dispatch(VCardContactDataAction(res));
         }
-        // Whenever user change the profile details, need to update those details in group user list
-        // if the user exist in group
-        const isGroupChatScreenActive = activeConversationChatType(CHAT_TYPE_GROUP);
-        if (isGroupChatScreenActive && isUserExistInGroup(res.userId)) {
-            const groupJid = getActiveConversationGroupJid();
-            if (!groupJid) return;
-            const groupPartRes = await SDK.getGroupParticipants(groupJid);
-            const activeChatScreenGroupJid = getActiveConversationGroupJid();
-            if (groupPartRes && groupPartRes.statusCode === 200 && activeChatScreenGroupJid === groupJid) {
-                setGroupParticipants(groupPartRes.data);
-            }
-        }
     },
     favouriteMessageListener: function (res) {
         Store.dispatch(UpdateFavouriteStatus(res));
@@ -1198,22 +1184,22 @@ export var callbacks = {
             "isEnableArchived": res.archive === 0 ? false : true
         }));
     },
-    // helper: {
-    //     getDisplayName: () => {
-    //         let vcardData = getLocalUserDetails();
-    //         if (vcardData && vcardData.nickName) {
-    //             return vcardData.nickName;
-    //         }
-    //         return "Anonymous user " + Math.floor(Math.random() * 10);
-    //     },
-    //     getImageUrl: () => {
-    //         let vcardData = getLocalUserDetails();
-    //         if (vcardData) {
-    //             return vcardData.image;
-    //         }
-    //         return "";
-    //     }
-    // },
+    helper: {
+        getDisplayName: () => {
+            let vcardData = getLocalUserDetails();
+            if (vcardData && vcardData.nickName) {
+                return vcardData.nickName;
+            }
+            return "Anonymous user " + Math.floor(Math.random() * 10);
+        },
+        getImageUrl: () => {
+            let vcardData = getLocalUserDetails();
+            if (vcardData) {
+                return vcardData.image;
+            }
+            return "";
+        }
+    },
     callUserJoinedListener: function (res) {
         if (res.userJid && !res.localUser) {
             updateStoreRemoteStream();
@@ -1227,16 +1213,22 @@ export var callbacks = {
         }
     },
     adminBlockListener: function (res) {
-        console.log('res :>>', res);
-        const callConnectionGroupJid = Store.getState()?.callConnectionDate?.data?.groupId
+        let callConnectionGroupJid = null;
+        if (onCall) {
+            callConnectionGroupJid = Store.getState()?.callConnectionDate?.data?.groupId
+        }
         if (isLocalUser(res.toUserId)) {
             if (res.blockStatus === "1") {
                 Store.dispatch(adminBlockStatusUpdate(res));
                 SDK.endCall();
                 resetCallData();
+                stopRecorder();
                 logout("block");
             }
         } else if (isSingleChatJID(res.toUserJid)) {
+            if (isActiveConversationUserOrGroup(res.toUserId) && res.blockStatus === "1") {
+                stopRecorder();
+            }
             Store.dispatch(VCardContactDataAction({
                 userId: res.toUserId,
                 isAdminBlocked: res.blockStatus === "1"
@@ -1246,6 +1238,7 @@ export var callbacks = {
                 if(res.blockStatus === "1"){
                     Store.dispatch(messageForwardReset());
                     Store.dispatch(ActiveChatResetAction());
+                    stopRecorder();
                     toast.info("This group is no longer available")
                     Store.dispatch(hideModal())
                     if(callConnectionGroupJid === res.toUserJid){

@@ -36,3 +36,5 @@ export const CALL_TYPE_VIDEO = "video";
 
 export const COMMON_ERROR_MESSAGE = "Something went wrong. Please try again.";
 export const PERMISSION_DENIED = "Permission denied";
+
+export const FEATURE_RESTRICTION_ERROR_MESSAGE = "Feature unavailable for your plan";

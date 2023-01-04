@@ -1,4 +1,6 @@
 export const ALLOWED_IMAGE_VIDEO_FORMATS = ["png", "jpeg", "jpg", "mp4"];
+export const ALLOWED_IMAGE_FORMATS = ["png","jpeg","jpg"];
+export const ALLOWED_VIDEO_FORMATS = ["mp4"];
 export const ALLOWED_AUDIO_FORMATS = ["mp3", "aac", "wav"];
 export const AUDIO_VIDEO_FORMATS = ["mp3", "aac", "wav", "mp4"];
 export const ALLOWED_DOCUMENT_FORMATS = [
@@ -15,9 +17,10 @@ export const ALLOWED_DOCUMENT_FORMATS = [
   "rar"
 ];
 
+export const IMAGE_VIDEO_FORMATS = ["image/png", "image/jpeg", "image/jpg", "video/mp4"];
 export const IMAGE_FORMATS = ["image/png", "image/jpeg", "image/jpg"];
 export const AUDIO_FORMATS = ["audio/mp3", "audio/wav", "audio/mpeg", "audio/ogg", "audio/aac", "audio/vnd.dlna.adts"];
-export const VIDEO_FORMATS = ["video/mp4"];
+export const VIDEO_FORMATS = ["video/mp4","video/webm"];
 export const DOCUMENT_FORMATS = [
   "application/pdf",
   "application/msword",
@@ -58,6 +61,7 @@ export const ALLOWED_ALL_FILE_FORMATS = [
   "pptx",
   "acc"
 ];
+export const FEATURE_RESTRICTION_ERROR_MESSAGE = "Feature unavailable for your plan"
 export const CHAT_IMAGES = "chatimages";
 export const CHAT_AUDIOS = "chataudios";
 

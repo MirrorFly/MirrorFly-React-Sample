@@ -4,7 +4,7 @@ import { RecordAudio, StartRecord, StopRecord, AudioPermissionIcon } from "../..
 import "./AudioRecorder.scss";
 import { AUDIO_PERMISSION_DENIED, PERMISSION_DENIED } from "../../processENV";
 import Modal from "./Modal";
-import { blockOfflineMsgAction } from "../../../Helpers/Utility";
+import { blockOfflineMsgAction, setRecorder } from "../../../Helpers/Utility";
 import { toast } from "react-toastify";
 import {getFromLocalStorageAndDecrypt} from "../WebChatEncryptDecrypt";
 
@@ -30,6 +30,7 @@ const AudioRecorder = (props = {}) => {
 
   const stopRecored = () => {
     recorder.stop();
+    setRecorder(null);
     clearTimeout(audioTimer.current);
     const container = document.getElementById("typingContainer");
     container && container.setAttribute("contentEditable", true);
@@ -39,6 +40,7 @@ const AudioRecorder = (props = {}) => {
 
   const autoStop = () => {
     recorder.stop();
+    setRecorder(null);
     clearTimeout(audioTimer.current);
   };
 
@@ -49,6 +51,7 @@ const AudioRecorder = (props = {}) => {
     setRecordStatus(true);
     recordingStatus(true);
     setSendStatus(false);
+    setRecorder(null);
     recorder
       .stop()
       .getMp3()
@@ -112,6 +115,7 @@ const AudioRecorder = (props = {}) => {
       .getUserMedia({ audio: true, video: false })
       .then(function (permissionStatus) {
         if (permissionStatus.active) {
+          setRecorder(recorder);
           setMicStatus(false);
           let sounds = document.getElementsByTagName("audio");
           for (let i = 0; i < sounds.length; i++) sounds[i].pause();

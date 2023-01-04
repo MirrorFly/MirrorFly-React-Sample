@@ -514,10 +514,36 @@ export const setTempMute = (name, stateData) => {
     }
 
 
-export const getChatHistoryData = (data, stateData) => {
+export const getChatHistoryData = (data, stateData, carbonClear) => {
     // To Avoid Unnecessary Looping, We are Using Key Value Pair for Chat and Messages
     // Eg: userId: {} or groupId: {} or msgId: {}
+if(carbonClear===true){
+    const chatId = getUserIdFromJid(data.userJid || data.groupJid);
+    const state = Object.keys(data).length > 0 ? data[chatId]?.messages || {} : {};
+    const sortedData = concatMessageArray(data.data, Object.values(state), "msgId", "timestamp");
+    const lastMessage = sortedData[sortedData.length - 1];
+    let newSortedData;
+    const localUserJid = getFromLocalStorageAndDecrypt('loggedInUserJidWithResource');
+    const userId = localUserJid ? getUserIdFromJid(localUserJid) : "";
+    if (userId === lastMessage?.publisherId) {
+        newSortedData = sortedData.map((msg => {
+            msg.msgStatus = getMsgStatusInOrder(msg.msgStatus, lastMessage?.msgStatus);
+            return msg;
+        }));
+    } else{
+        newSortedData = sortedData;
+    } 
 
+    let isScrollNeeded = true;
+    if (data.fetchLimit) {
+        isScrollNeeded = data.data.length === data.fetchLimit; // To Check If this is the Last Message in the Chat, So no Scroll Fetch is Needed
+    }
+    const finalData = { isScrollNeeded, messages: arrayToObject(newSortedData, "msgId") };
+    return {
+        ...data,
+        [chatId]: finalData
+    };
+}else{
     const chatId = getUserIdFromJid(data.userJid || data.groupJid);
     const state = Object.keys(stateData).length > 0 ? stateData[chatId]?.messages || {} : {};
     const sortedData = concatMessageArray(data.data, Object.values(state), "msgId", "timestamp");
@@ -542,6 +568,7 @@ export const getChatHistoryData = (data, stateData) => {
         ...stateData,
         [chatId]: finalData
     };
+}
 };
 
 export const getChatHistoryMessagesData = () => {

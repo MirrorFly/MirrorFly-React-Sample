@@ -27,7 +27,6 @@ export { ReactComponent as VideoOff } from './webcall/video-off.svg';
 export { ReactComponent as AttenCall } from './webcall/attenCall.svg';
 export { ReactComponent as BackToChat } from './webcall/backToChat.svg';
 export { ReactComponent as Avatar } from './sample-profile.svg';
-export { ReactComponent as AvatarCallee } from './sample-callee-profile.png';
 export { ReactComponent as Chat } from './new-images/chart.svg';
 export { ReactComponent as Call } from './new-images/call.svg';
 export { ReactComponent as UnsavedContact } from './call.svg';
@@ -112,6 +111,7 @@ export { ReactComponent as AttachmentCamera } from './file-camera.svg';
 export { ReactComponent as AttachmentDoc } from './file-document.svg';
 export { ReactComponent as AttachmentImageVideo } from './file-image.svg';
 export { ReactComponent as AttachMusic } from './file-headset.svg';
+export { ReactComponent as AttachVideo } from './file-video.svg';
 // Message Dropdown option Icons start
 export { ReactComponent as DeleteMessage } from './deleteMessage.svg';
 export { ReactComponent as Forward } from './forward.svg';

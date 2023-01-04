@@ -12,7 +12,7 @@ import { getFromLocalStorageAndDecrypt } from '../WebChatEncryptDecrypt';
 const Participants = (props) => {
 
     const { isAdmin, groupuniqueId, members: { GroupUser, userId: fromuser, username, image, userId, emailId, status, statusMsg, userType } = {} } = props
-    const displayName = getContactNameFromRoster(getDataFromRoster(userId)) || getFormatPhoneNumber(userId);
+    const displayName = isLocalUser(userId) ? "You" : getContactNameFromRoster(getDataFromRoster(userId)) || getFormatPhoneNumber(userId);
 
     const [menuDropDownStatus, setmenuDropDownStatus] = useState(false)
     useEffect(() => {
