@@ -40,7 +40,7 @@ const CallLogView = (props = {}) => {
         <ProfileImage
             chatType={callLog.callMode === "onetoone" ? 'chat' : 'groupchat'}
             userToken={token}
-            imageToken={image}
+            imageToken={isAdminBlocked ? "" : image}
             emailId={emailId}
             name={initialName}
         />

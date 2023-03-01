@@ -55,6 +55,7 @@ class WebChatMediaPreview extends React.Component {
       starStatusCheck: false,
       allowInitialCall: false,
       seletedMsgId: "",
+      viewAllMedias: true
     };
     this.tempSelectedItem = 0;
     this.localDb = new IndexedDb();
@@ -417,11 +418,17 @@ class WebChatMediaPreview extends React.Component {
   };
 
   componentDidMount() {
+    this.commonForDidMountAndFailedDidMount();
+  }
+
+  commonForDidMountAndFailedDidMount(isFailed = false) {
     this.initializeMutation();
     const chatMediaList = getActiveChatMessages();
     let mediaList = chatMediaList.filter(
       (el) => el && el.msgBody && PREVIEW_MEDIA_TYPES.includes(el.msgBody.message_type) && el.deleteStatus === 0
     );
+    const { featureStateData : {isViewAllMediasEnabled = false} = {}} = this.props;
+    this.setState({viewAllMedias: isViewAllMediasEnabled});
     if (mediaList.length) {
       mediaList.sort((a, b) => (b.timestamp > a.timestamp ? 1 : -1));
       let selectedItem = mediaList.findIndex((el) => el.msgId === this.props.selectedMessageData.msgId);
@@ -432,10 +439,14 @@ class WebChatMediaPreview extends React.Component {
         // Load More Data if the Inital Fetched Media Count is Less than the Config Value
         selectedItem <= INITIAL_LOAD_MEDIA_LIMIT && this.loadMoreMedia();
       });
-      if(this.state.previewData.length === 0){this.failedComponentDidMount()}
+      if(isFailed === false){
+        if(this.state.previewData.length === 0){this.failedComponentDidMount()}
+      }
     } else{
       this.handleGetMedia();
-      if(this.state.previewData.length === 0){this.failedComponentDidMount()} 
+      if(isFailed === false){
+        if(this.state.previewData.length === 0){this.failedComponentDidMount()} 
+      }
     }
   }
 
@@ -501,30 +512,32 @@ class WebChatMediaPreview extends React.Component {
       const duration = item.props?.children[1]?.props?.duration;
       const videoIcon = item.props?.className === "type-media video" ? "video-icon" : "";
       const FileIcon = item.props?.className === "type-image file" ? "File" : "";
-      return (
-        <div key={index} className={`thumb-img ${videoIcon || FileIcon} img-load`}>
-          <img
-            src={url}
-            key={`${index}-Img`}
-            alt=""
-            onLoad={this.imageOnLoad}
-            className="image-load"
-            style={{ display: "none" }}
-          />
-          <Spinner />
+      if(this.state.viewAllMedias) {
+        return (
+          <div key={index} className={`thumb-img ${videoIcon || FileIcon} img-load`}>
+            <img
+              src={url}
+              key={`${index}-Img`}
+              alt=""
+              onLoad={this.imageOnLoad}
+              className="image-load"
+              style={{ display: "none" }}
+            />
+            <Spinner />
 
-          {duration && (
-            <p className="audio-duration" key={`${index}-Duration`}>
-              {duration}
-            </p>
-          )}
-        </div>
-      );
+            {duration && (
+              <p className="audio-duration" key={`${index}-Duration`}>
+                {duration}
+              </p>
+            )}
+          </div>
+        );
+      }
     });
 
   handlePrev = (onClickHandler, hasPrev) => {
     return (
-      hasPrev && (
+     this.state.viewAllMedias && hasPrev && (
         <button
           type="button"
           onClick={onClickHandler}
@@ -539,7 +552,7 @@ class WebChatMediaPreview extends React.Component {
 
   handleNext = (onClickHandler, hasNext) => {
     return (
-      hasNext && (
+      this.state.viewAllMedias && hasNext && (
         <button
           type="button"
           onClick={onClickHandler}
@@ -611,28 +624,12 @@ class WebChatMediaPreview extends React.Component {
   };
   
   failedComponentDidMount(){
-    this.initializeMutation();
-    const chatMediaList = getActiveChatMessages();
-    let mediaList = chatMediaList.filter(
-      (el) => el && el.msgBody && PREVIEW_MEDIA_TYPES.includes(el.msgBody.message_type) && el.deleteStatus === 0
-    );
-    if (mediaList.length) {
-      mediaList.sort((a, b) => (b.timestamp > a.timestamp ? 1 : -1));
-      let selectedItem = mediaList.findIndex((el) => el.msgId === this.props.selectedMessageData.msgId);
-      this.tempSelectedItem = selectedItem;
-      
-      this.setState({ mediaList, selectedItem }, () => {
-        this.diplayMedia();
-        // Load More Data if the Inital Fetched Media Count is Less than the Config Value
-        selectedItem <= INITIAL_LOAD_MEDIA_LIMIT && this.loadMoreMedia();
-      });
-    } else{
-      this.handleGetMedia();
-    } 
+    this.commonForDidMountAndFailedDidMount(true);
   }
 
   render() {
     const { previewData, selectedItem, starStatusCheck = false } = this.state;
+    const { featureStateData : {isStarMessageEnabled = false} = {}} = this.props;
     return (
       <Suspense
         fallback={<div>Loading...</div>}>
@@ -651,22 +648,24 @@ class WebChatMediaPreview extends React.Component {
                     </i>
                   </li>
 
-                  <li
-                    onClick={() => this.handleStarMessage()}>
-                    <i
-                      className="icon-star"
-                      title={starStatusCheck === true ? "Star" : "Unstar"}
-                    >
-                      <PreviewStar fill="#fff"
-                        id={"starFillId"}
-                        style={{ display: starStatusCheck ? "none" : "inline-block" }}
-                      />
-                      <PreviewStarActive
-                        id={"starFillId"}
-                        style={{ display: starStatusCheck ? "inline-block" : "none" }}
-                      />
-                    </i>
-                  </li>
+                  {isStarMessageEnabled &&
+                    <li
+                      onClick={() => this.handleStarMessage()}>
+                      <i
+                        className="icon-star"
+                        title={starStatusCheck === true ? "Star" : "Unstar"}
+                      >
+                        <PreviewStar fill="#fff"
+                          id={"starFillId"}
+                          style={{ display: starStatusCheck ? "none" : "inline-block" }}
+                        />
+                        <PreviewStarActive
+                          id={"starFillId"}
+                          style={{ display: starStatusCheck ? "inline-block" : "none" }}
+                        />
+                      </i>
+                    </li>
+                  } 
 
                   {this.state.NeedDevelopment && (
                     <>
@@ -715,6 +714,7 @@ class WebChatMediaPreview extends React.Component {
 
 const mapStateToProps = (state) => {
   return {
+    featureStateData: state.featureStateData,
     messageData: state.messageData,
     starredMessages: state.starredMessages,
     groupsData:state.groupsData

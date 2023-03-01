@@ -14,7 +14,11 @@ describe(">>> BlockUnBlockOption Test case <<<", () => {
     it('Mock has be created Users', () => {
         const monckData = {
             logoutStatus: jest.fn(),
-            isBlocked: true
+            isBlocked: true,
+            isClearChatEnabled: true,
+            isDeleteChatEnabled: true,
+            isBlockEnabled: true,
+            isReportEnabled: true
         };
         const store = mockStore({
             CusPage: {},
@@ -33,7 +37,11 @@ describe(">>> BlockUnBlockOption Test case <<<", () => {
     it('Mock has be created Users modalProps undefined', () => {
         const monckData = {
             logoutStatus: jest.fn(),
-            isBlocked: false
+            isBlocked: false,
+            isClearChatEnabled:  false,
+            isDeleteChatEnabled: false,
+            isBlockEnabled: false,
+            isReportEnabled: false
         };
         const store = mockStore({
             CusPage: {},
@@ -55,6 +63,10 @@ describe(">>> BlockUnBlockOption Test case <<<", () => {
 
     it('deletePopupAction click', () => {
         wrapper.find('div[data-jest-id="jestdeletePopupAction"]').simulate('click');
+    });
+
+    it('SingleReportAction click', () => {
+        wrapper.find('div[data-jest-id="jestSingleReportAction"]').simulate('click');
     });
 
 

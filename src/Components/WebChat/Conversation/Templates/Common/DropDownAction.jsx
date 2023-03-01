@@ -12,6 +12,7 @@ import {
   IconReport
 } from "../../../../../assets/images";
 import { MEDIA_MESSAGE_TYPES } from "../../../../../Helpers/Constants";
+import { useSelector } from "react-redux";
 
 class WatchClickOutside extends Component {
   constructor(props) {
@@ -56,7 +57,12 @@ const DropDownComponent = (props = {}) => {
     msgType,
     favouriteStatus,
   } = props;
-
+  const featureStateData = useSelector((state) => state.featureStateData);
+  const {
+     isStarMessageEnabled = true,
+     isDeleteMessageEnabled = true,
+     isReportEnabled = true
+    } = featureStateData;
   const issingleChat = isSingleChat(chatType);
   const container = document && document.getElementById("message-containner");
   const ClientHeight = container && container.clientHeight;
@@ -112,30 +118,34 @@ const DropDownComponent = (props = {}) => {
               <span>Forward</span>
             </li>
 
-            {favouriteStatus === 0 ? (
-              <li className="Starred" title="Starred">
-                <i>
-                  <Starred />
-                </i>
-                <span>Star</span>
-              </li>
-            ) : (
-              <li className="Starred" title="UnStarred">
-                <i>
-                  <UnStar />
-                </i>
-                <span>Unstar</span>
-              </li>
-            )}
+            {isStarMessageEnabled &&
+              favouriteStatus === 0 ? (
+                <li className="Starred" title="Starred">
+                  <i>
+                    <Starred />
+                  </i>
+                  <span>Star</span>
+                </li>
+              ) : isStarMessageEnabled && (
+                <li className="Starred" title="UnStarred">
+                  <i>
+                    <UnStar />
+                  </i>
+                  <span>Unstar</span>
+                </li>
+              )
+            }  
           </Fragment>
         )}
 
-        <li className="delete" title="Delete">
-          <i>
-            <DeleteMessage />
-          </i>
-          <span>Delete</span>
-        </li>
+        {isDeleteMessageEnabled &&
+          <li className="delete" title="Delete">
+            <i>
+              <DeleteMessage />
+            </i>
+            <span>Delete</span>
+          </li>
+        }
 
         {!issingleChat && !recall && !isSender && messageInfoOptions && (
           <li className="messageinfo 1" title="MessageInfo">
@@ -153,7 +163,7 @@ const DropDownComponent = (props = {}) => {
             <span>Download</span>
           </li>
         )}
-        {isSender &&
+        {isReportEnabled && isSender &&
           <li className="Report" title="Report">
             <i>
               <IconReport />

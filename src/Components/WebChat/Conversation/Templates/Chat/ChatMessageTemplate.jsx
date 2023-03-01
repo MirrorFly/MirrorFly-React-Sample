@@ -45,7 +45,11 @@ import ContactComponent from "./ContactComponent";
 const ChatMessageTemplate = (props = {}) => {
   const dispatch = useDispatch();
   const globalState = useSelector((state) => state.webLocalStorageSetting);
-  const { isEnableTranslate = false } = globalState || {};
+  const { isTranslationEnabled = false } = useSelector((state) => state.featureStateData);
+  let isEnableTranslate = false;
+  if (isTranslationEnabled) {
+    isEnableTranslate = globalState.isEnableTranslate || false;
+  }
   const {
     jid,
     messageAction,

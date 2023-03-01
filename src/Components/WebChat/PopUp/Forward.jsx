@@ -8,6 +8,7 @@ import RecentSearch from "../RecentChat/RecentSearch";
 import Users from "./Users";
 import {
   blockOfflineAction,
+  escapeRegex,
   getMessageObjForward,
   getRecentChatMsgObjForward,
   getUserIdFromJid,
@@ -112,7 +113,7 @@ class ForwardPopUp extends Component {
       const regexList = getUserInfoForSearch(roster);
       return regexList.find((str) => {
         if (!str) return false;
-        return str.search(new RegExp(searchWith, "i")) !== -1;
+        return str.search(new RegExp(`(${escapeRegex(searchWith)})`, "i")) !== -1;
       });
     });
   };
@@ -141,8 +142,8 @@ class ForwardPopUp extends Component {
   };
 
   initialLoad = (searchWith = "", searchValue = "") => {
-
-    const updatedList = this.recentChatSearchFilter(searchWith).filter(item => (item?.roster?.isAdminBlocked !== true && item?.roster?.isDeletedUser !== true && item?.recent?.profileUpdatedStatus !== "userLeft"));
+    searchWith = searchWith.replace(/\\/g, "");
+    const updatedList = this.recentChatSearchFilter(searchWith).filter(item => (item?.roster?.isAdminBlocked !== true && item?.roster?.isDeletedUser !== true && (item?.recent?.userId !== this.props.vCardData.data.userId && (item?.recent?.profileUpdatedStatus !== "userLeft" || item?.recent?.leftGroup !== true || item?.recent?.profileUpdatedStatus !== "userRemoved"))));
     const filteredContacts = this.contactsSearch(searchWith);
     const { contactsToDisplay, contactsToForward, jidArray, unBlockedUserName } = this.state
 
@@ -235,10 +236,10 @@ class ForwardPopUp extends Component {
     let msgIds = data.sort((a, b) => (b.timestamp > a.timestamp ? -1 : 1)).map((el) => el.msgId);
 
     let newMsgIds = [];
+    let mentionedUserIds = []
     let totalLength = data.length + contactsToForward.length;
     for (let i = 0; i < totalLength; i++) newMsgIds.push(uuidv4());
-    SDK.forwardMessagesToMultipleUsers(contactsToForward, msgIds, true, newMsgIds);
-
+    SDK.forwardMessagesToMultipleUsers(contactsToForward, msgIds, true, newMsgIds, mentionedUserIds);
     const chatToOpen = contactsToForward[contactsToForward.length - 1];
     const response = this.findLastChat(chatToOpen);
     const { recent: { chatType } = {} } = response[0];
@@ -371,7 +372,7 @@ class ForwardPopUp extends Component {
                       <span className="searchErrorMsg"><Info />
                         {NO_SEARCH_CHAT_CONTACT_FOUND}
                       </span>}
-                    {(userListArr.length > 0 || filteredRecentChat.length > 0) &&
+                    {this.props.isAppOnline ?(userListArr.length > 0 || filteredRecentChat.length > 0) &&
                       <InfiniteScroll
                         dataLength={userListArr.length}
                         next={this.fetchMoreData}
@@ -416,6 +417,7 @@ class ForwardPopUp extends Component {
                         {this.handleUserListData()}
 
                       </InfiniteScroll>
+                      : this.handleUserListData()
                     }
                   </ul>
                 </div>
@@ -457,7 +459,10 @@ const mapStateToProps = (state, props) => {
     recentChatData: state.recentChatData,
     selectedMessageData: state.selectedMessageData,
     blockedContact: state.blockedContact,
-    groupsData: state.groupsData
+    groupsData: state.groupsData,
+    vCardData: state.vCardData,
+    isAppOnline: state?.appOnlineStatus?.isOnline,
+
   };
 };
 

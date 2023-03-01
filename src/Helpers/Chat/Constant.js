@@ -62,6 +62,9 @@ export const NEW_GROUP_CONTACT_PERMISSION_DENIED = "You have denied contact perm
 export const ADD_PARTICIPANT_GROUP_CONTACT_PERMISSION_DENIED = "You have denied contact permission on mobile. Allow permission for MirrorFly to access contacts and add a new participant.";
 export const NEW_CALL_CONTACT_PERMISSION_DENIED = "You have denied contact permission on mobile. Allow permission for MirrorFly to access contacts and start a new call.";
 export const ADD_PARTICIPANT_CALL_CONTACT_PERMISSION_DENIED = "You have denied contact permission on mobile. Allow permission for MirrorFly to access contacts and add a new participant.";
-export const REPORT_FROM_CONTACT_INFO = "REPORT_FROM_CONTACT_INFO"
-
+export const REPORT_FROM_CONTACT_INFO = "REPORT_FROM_CONTACT_INFO";
+export const LOGIN_EXCEEDED_ERROR_MESSAGE = "You have reached maximum sessions allowed.";
+export const COMMON_ERROR_MESSAGE = "Something went wrong. Please try again.";
+export const SESSION_LOGOUT = "The session has been logged out";
+export const SERVER_LOGOUT = "serverLogout";
 

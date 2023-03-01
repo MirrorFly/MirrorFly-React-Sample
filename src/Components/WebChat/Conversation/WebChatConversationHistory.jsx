@@ -5,7 +5,8 @@ import {
   messageForwardReset,
   MessageAction,
   messageInfoAction,
-  ReplyMessageAction
+  ReplyMessageAction,
+  selectedMessageInfo
 } from "../../../Actions/MessageActions";
 import { get as _get } from "lodash";
 import { loaderSVG, BlockedIcon } from "../../../assets/images";
@@ -57,7 +58,7 @@ import {
 import { scrollBottomChatHistoryAction } from "../../../Actions/ScrollAction";
 import { updateMsgSeenStatus } from "../Common/createMessage";
 import { ChatMessageHistoryDataAction, TranslateMessageHistory } from "../../../Actions/ChatHistory";
-import { CHAT_HISTORY_LIMIT, RECONNECT_GET_CHAT_LIMIT } from "../../../Helpers/Constants";
+import { CHAT_HISTORY_LIMIT, FEATURE_RESTRICTION_ERROR_MESSAGE, RECONNECT_GET_CHAT_LIMIT } from "../../../Helpers/Constants";
 import { CHAT_TYPE_GROUP, CHAT_TYPE_SINGLE, UNBLOCK_CONTACT_TYPE } from "../../../Helpers/Chat/Constant";
 import { BlockPopUp } from "../PopUp/BlockPopUp";
 import { updateBlockedContactAction } from "../../../Actions/BlockAction";
@@ -310,7 +311,7 @@ class WebChatConversationHistory extends Component {
           messageInfo: {},
           forwardOption: false,
           addionalnfo: {
-            forward: false
+           forward: false
           }
         },
         () => {
@@ -597,6 +598,8 @@ class WebChatConversationHistory extends Component {
           const { msgId: messageId } = this.state.messageInfo;
           Store.dispatch(messageInfoAction({ statusUpdate: false, messageId }, true));
           messageId && SDK.getGroupMsgInfo(jid, messageId);
+          Store.dispatch(selectedMessageInfo(selectedMessage))
+
         }
       );
       return;
@@ -809,7 +812,7 @@ class WebChatConversationHistory extends Component {
       let jid = this.prepareJid();
       const jids = getIdFromJid(jid);
       let msgId = uuidv4();
-      if (chatType === CHAT_TYPE_SINGLE || chatType === CHAT_TYPE_GROUP) {
+      if (chatType === CHAT_TYPE_SINGLE || chatType === CHAT_TYPE_GROUP) {         
         const dataObj = {
           jid,
           msgType: "text",
@@ -817,11 +820,12 @@ class WebChatConversationHistory extends Component {
           userProfile,
           chatType,
           msgId,
-          replyTo
+          replyTo,
+          mentionedUsersIds: message?.mentionedUsersIds
         };
         const conversationChatObj = await getMessageObjSender(dataObj);
         const recentChatObj = getRecentChatMsgObj(dataObj);
-        SDK.sendTextMessage(jid, handleMessageParseHtml(message.content), msgId, replyTo);
+        SDK.sendTextMessage(jid, handleMessageParseHtml(message.content), msgId, replyTo, message?.mentionedUsersIds);
         SDK.sendTypingGoneStatus(jid);
         Store.dispatch(MessageAction(conversationChatObj));
         const dispatchData = {
@@ -852,7 +856,8 @@ class WebChatConversationHistory extends Component {
         });
       }
     }
-  };
+  }
+  ;
 
   closeMessageOption = (forward = null) => {
     const { addionalnfo } = this.state;
@@ -937,22 +942,32 @@ class WebChatConversationHistory extends Component {
     this.setState({
       showBlockModal: false
     });
-    const userJid = formatUserIdToJid(this.state.blockId);
-    const res = await SDK.unblockUser(userJid);
-    if (res && res.statusCode === 200) {
-      Store.dispatch(updateBlockedContactAction(this.state.blockId, UNBLOCK_CONTACT_TYPE));
-      toast.success(`${this.state.nameToDisplay || "User"} has been Unblocked`);
-      handleTempArchivedChats(userJid, CHAT_TYPE_SINGLE);
+    const {featureStateData: {isBlockEnabled = false} = {} } = this.props;
+    if(isBlockEnabled) {
+      const userJid = formatUserIdToJid(this.state.blockId);
+      const res = await SDK.unblockUser(userJid);
+      if (res && res.statusCode === 200) {
+        Store.dispatch(updateBlockedContactAction(this.state.blockId, UNBLOCK_CONTACT_TYPE));
+        toast.success(`${this.state.nameToDisplay || "User"} has been Unblocked`);
+        handleTempArchivedChats(userJid, CHAT_TYPE_SINGLE);
+      }
+    } else {
+      toast.error(FEATURE_RESTRICTION_ERROR_MESSAGE);
     }
+    
   };
 
   popUpToggleAction = (userJid, nameToDisplay) => {
-    const { activeChatData: { data: { roster } = [] } = {} } = this.props;
-    this.setState({
-      showBlockModal: !this.state.showBlockModal,
-      blockId: userJid ? userJid : null,
-      nameToDisplay: getContactNameFromRoster(roster)
-    });
+    const { activeChatData: { data: { roster } = [] }, featureStateData: {isBlockEnabled = false} = {} } = this.props;
+    if(isBlockEnabled) {
+      this.setState({
+        showBlockModal: !this.state.showBlockModal,
+        blockId: userJid ? userJid : null,
+        nameToDisplay: getContactNameFromRoster(roster)
+      });
+    } else {
+      toast.error(FEATURE_RESTRICTION_ERROR_MESSAGE);
+    }
   };
 
   loadMoreUpdate = (value) => {
@@ -1214,6 +1229,7 @@ class WebChatConversationHistory extends Component {
 
 const mapStateToProps = (state) => {
   return {
+    featureStateData: state.featureStateData,
     activeChatData: state.activeChatData,
     singleChatMsgHistoryData: state.singleChatMsgHistoryData,
     groupsMemberListData: state.groupsMemberListData,
@@ -1224,7 +1240,8 @@ const mapStateToProps = (state) => {
     blockedContact: state.blockedContact,
     browserTabData: state.browserTabData,
     chatConversationHistory: state.chatConversationHistory,
-    selectedMessageData: state.selectedMessageData
+    selectedMessageData: state.selectedMessageData,
+    addMentionedDataReducer: state.addMentionedDataReducer
   };
 };
 

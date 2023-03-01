@@ -18,29 +18,41 @@ export const getSelectedText = () => {
     }
     return selectedText && selectedText.toString && selectedText.toString();
 }
-export const getCaretPosition = (element) => {
-    if (!element) return 0;
-    var caretOffset = 0;
-    var doc = element.ownerDocument || element.document;
-    var win = doc.defaultView || doc.parentWindow;
-    let sel = doc.selection
-    if (typeof win.getSelection != "undefined") {
-        sel = win.getSelection();
-        if (sel.rangeCount > 0) {
-            var range = win.getSelection().getRangeAt(0);
-            var preCaretRange = range.cloneRange();
-            preCaretRange.selectNodeContents(element);
-            preCaretRange.setEnd(range.endContainer, range.endOffset);
-            caretOffset = preCaretRange.toString().length;
-        }
-    } else if (sel?.type !== "Control") {
-        var textRange = sel?.createRange();
-        var preCaretTextRange = doc?.body?.createTextRange();
-        preCaretTextRange.moveToElementText(element);
-        preCaretTextRange.setEndPoint("EndToEnd", textRange);
-        caretOffset = preCaretTextRange.text.length;
-    }
-    return caretOffset;
+// export const getCaretPosition = (element) => {
+//     if (!element) return 0;
+//     var caretOffset = 0;
+//     var doc = element.ownerDocument || element.document;
+//     var win = doc.defaultView || doc.parentWindow;
+//     let sel = doc.selection
+//     if (typeof win.getSelection != "undefined") {
+//         sel = win.getSelection();
+//         if (sel.rangeCount > 0) {
+//             var range = win.getSelection().getRangeAt(0);
+//             var preCaretRange = range.cloneRange();
+//             preCaretRange.selectNodeContents(element);
+//             preCaretRange.setEnd(range.endContainer, range.endOffset);
+//             caretOffset = preCaretRange.toString().length;
+//         }
+//     } else if (sel?.type !== "Control") {
+//         var textRange = sel?.createRange();
+//         var preCaretTextRange = doc?.body?.createTextRange();
+//         preCaretTextRange.moveToElementText(element);
+//         preCaretTextRange.setEndPoint("EndToEnd", textRange);
+//         caretOffset = preCaretTextRange.text.length;
+//     }
+//     return caretOffset;
+// }
+
+export const getCaretPosition = (node) => {
+    var range = window.getSelection().getRangeAt(0),
+    preCaretRange = range.cloneRange(),
+    caretPosition,
+    tmp = document.createElement("div");
+    preCaretRange.selectNodeContents(node);
+    preCaretRange.setEnd(range.endContainer, range.endOffset);
+    tmp.appendChild(preCaretRange.cloneContents());
+    caretPosition = tmp.innerHTML.length;
+    return caretPosition;
 }
 
 const createRange = (node, chars, range) => {

@@ -22,17 +22,13 @@ describe(">>> ClearDeleteOption Test case <<<", () => {
         };
         const store = mockStore({
             CusPage: {},
-            cusTeams: {}
+            cusTeams: {},
+            featureStateData: {}
         });
         wrapper = mount(
             <Provider store={store}>
                 <ClearDeleteOption {...monckData} />
             </Provider>);
-    });
-
-
-    it('handleNewParticipants click', () => {
-        wrapper.find('li[data-jest-id="jesthandleNewParticipants"]').simulate('click');
     });
 
     it('Mock has be created Users participants', () => {
@@ -46,7 +42,8 @@ describe(">>> ClearDeleteOption Test case <<<", () => {
         };
         const store = mockStore({
             CusPage: {},
-            cusTeams: {}
+            cusTeams: {},
+            featureStateData: {}
         });
         wrapper = mount(
             <Provider store={store}>

@@ -25,6 +25,7 @@ import { BackToChat, ClosePopup, IconInvite, IconParticiants, TileView,TileViewR
 import CallParticipantList from './CallParticipantList/index';
 import OutsideClickHandler from 'react-outside-click-handler';
 import {deleteItemFromLocalStorage, getFromLocalStorageAndDecrypt} from '../WebChat/WebChatEncryptDecrypt';
+import userList from '../WebChat/RecentChat/userList';
 
 var remoteStreamDatas = [];
 
@@ -130,6 +131,11 @@ class WebRtcCall extends React.Component {
 
     handleInvitePeople = () => {
         const callStatus = this.getCallStatus();
+        const callConnectionData = JSON.parse(getFromLocalStorageAndDecrypt('call_connection_status'))
+        if(callConnectionData.callMode === "onetoone"){
+            userList.getUsersListFromSDK(1);
+        }   
+
         if(callStatus && (callStatus.toLowerCase() === CALL_STATUS_CONNECTED || callStatus.toLowerCase() === CALL_STATUS_HOLD)){
             this.setState({ invite: !this.state.invite });
         }
@@ -427,6 +433,7 @@ class WebRtcCall extends React.Component {
             const callMode = (callConnectionData && callConnectionData.callMode) || '';
             const allUsersVideoMuted = await SDK.isAllUsersVideoMuted();
             if (allUsersVideoMuted && callMode === "onetoone") {
+                this.setState({ localVideoMuted: this.props.showConfrenceData?.data?.localVideoMuted })
                 Store.dispatch(callConversion({ status: 'request_init' }));
                 return;
             }
@@ -611,8 +618,8 @@ class WebRtcCall extends React.Component {
                     rosterData = getUserDetails(largeVideoUserJid);
                 } else {
                     if (this.props.remoteStream?.length) {
-                        let userList = this.props.remoteStream.map((item, key) =>  item.fromJid);
-                        rosterData = getCallDisplayDetailsForOnetoManyCall(userList);
+                        let usersList = this.props.remoteStream.map((item, key) =>  item.fromJid);
+                        rosterData = getCallDisplayDetailsForOnetoManyCall(usersList);
                     } else {
                         rosterData = getUserDetails(largeVideoUserJid);
                     }

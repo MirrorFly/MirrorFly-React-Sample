@@ -5,6 +5,7 @@ import ChatMuteOption from "./ChatMuteOption";
 import { useSelector } from "react-redux";
 import { getArchiveSetting } from "../../../Helpers/Utility";
 import { isLocalUser } from "../../../Helpers/Chat/User";
+import userList from "../RecentChat/userList";
 
 const ClearDeleteOption = (props = {}) => {
   const {
@@ -16,18 +17,20 @@ const ClearDeleteOption = (props = {}) => {
     deletePopupAction,
     dispatchExitAction,
     handleChatMuteAction,
-    reportGroupChatAction = () => { }
+    reportGroupChatAction = () => { },
   } = props;
 
   const handleNewParticipants = () => {
     props.handleNewParticipants();
+    userList.getUsersListFromSDK(1);
   }
 
   let exitGroup = !participants.find(users => isLocalUser(users.userId));
   const isPermanentArchvie = getArchiveSetting();
   const { data: { chatId = "", recent: { muteStatus = 0, archiveStatus = 0 } = {} } = {} } =
     useSelector((store) => store.activeChatData) || {};
-
+  const {isReportEnabled = false, isClearChatEnabled = false, isDeleteChatEnabled = false} = useSelector((store) => store.featureStateData);  
+  
   return (
     <Fragment>
       <div className="contactinfo-about-no action">
@@ -84,12 +87,14 @@ const ClearDeleteOption = (props = {}) => {
             })}
         </ul>
         <div className="contactinfo-about-no action">
-          <div className="about-no" onClick={ClearPopupAction} data-jest-id={"jestClearPopupAction"}>
-            <i className="deleteIcon">
-              <ClearChat />
-            </i>
-            <span className="delete">{"Clear Chat"}</span>
-          </div>
+          {isClearChatEnabled && 
+            <div className="about-no" onClick={ClearPopupAction} data-jest-id={"jestClearPopupAction"}>
+              <i className="deleteIcon">
+                <ClearChat />
+              </i>
+              <span className="delete">{"Clear Chat"}</span>
+            </div>
+          }
           {!exitGroup ? (
             <div className="about-no grp-exit" onClick={dispatchExitAction} data-jest-id={"jestdispatchExitAction"}>
               <i>
@@ -97,20 +102,22 @@ const ClearDeleteOption = (props = {}) => {
               </i>
               <span className="delete">Exit Group</span>
             </div>
-          ) : (
+          ) : isDeleteChatEnabled &&
             <div className="about-no" data-jest-id={"jestdeletePopupAction"} onClick={deletePopupAction}>
               <i className="deleteIcon">
                 <Delete />
               </i>
               <span className="delete">{"Delete Group"}</span>
             </div>
-          )}
-          <div data-jest-id={"jestGroupReportAction"} className="about-no" onClick={reportGroupChatAction}>
-            <i className="reportIcon">
-              <IconGroupReport />
-            </i>
-            <span className="report">{"Report Group"}</span>
-          </div>
+          }
+          {isReportEnabled && 
+            <div data-jest-id={"jestGroupReportAction"} className="about-no" onClick={reportGroupChatAction}>
+              <i className="reportIcon">
+                <IconGroupReport />
+              </i>
+              <span className="report">{"Report Group"}</span>
+            </div>
+          }
         </div>
       </div>
     </Fragment>

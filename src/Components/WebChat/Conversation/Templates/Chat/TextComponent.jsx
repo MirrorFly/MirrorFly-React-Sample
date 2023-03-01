@@ -1,8 +1,11 @@
+import SDK from '../../../../SDK';
+import Translate from "./Translate";
 import React, { Fragment } from "react";
-import { useSelector } from "react-redux";
+import Store from "../../../../../Store";
 import renderHTML from "react-render-html";
-import { callIntermediateScreen } from "../../../../../Actions/CallAction";
+import { useSelector, connect } from "react-redux";
 import { showModal } from "../../../../../Actions/PopUp";
+import { callIntermediateScreen } from "../../../../../Actions/CallAction";
 import { IconMeetingVideo, ImgFavicon } from "../../../../../assets/images";
 import { CALL_STATUS_CONNECTED } from "../../../../../Helpers/Call/Constant";
 import {
@@ -12,24 +15,21 @@ import {
   getSiteDomain,
   isCallLink
 } from "../../../../../Helpers/Utility";
-import Store from "../../../../../Store";
-import Translate from "./Translate";
-import SDK from '../../../../SDK';
+import {  handleMentionedUser } from '../../../../../Helpers/Chat/User';
 
 const TextComponent = (props = {}) => {
-  const { messageObject = {}, isSender = false, pageType } = props;
+  const { messageObject = {}, isSender = false, pageType, vCardData = {}} = props;
   const { msgBody = {} } = messageObject;
+  const { data = {} } = vCardData;
   const messageLink = convertTextToURL(msgBody.message);
   const { data: conferenceData = {} } = useSelector((state) => state.showConfrenceData || {});
   const { data: callData = {} } = useSelector((state) => state.callIntermediateScreen || {});
-
   const isTranslated = () =>
     !isSender &&
     pageType === "conversation" &&
     msgBody?.translatedMessage &&
     Object.keys(msgBody.translatedMessage).length;
-
-  const renderMessageBody = () => (msgBody ? renderHTML(getFormattedText(messageLink)) : null);
+  const renderMessageBody = () => (msgBody ? renderHTML(handleMentionedUser(getFormattedText(messageLink), msgBody.mentionedUsersIds, !isSender && data.userId)) : null);
 
   const subscribeToCall = async () => {
     if (blockOfflineAction()) return "";
@@ -83,4 +83,11 @@ const TextComponent = (props = {}) => {
   );
 };
 
-export default TextComponent;
+const mapStateToProps = (state, props) => {
+  return {
+    groupsMemberListData: state.groupsMemberListData,
+    vCardData:state.vCardData,
+
+  }
+}
+export default connect(mapStateToProps, null)(TextComponent);

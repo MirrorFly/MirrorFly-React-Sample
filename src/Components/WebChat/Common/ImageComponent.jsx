@@ -75,7 +75,7 @@ const ImageComponent = React.memo(
       }
     }, [updatedUrl]);
 
-    if (showInitials) {
+    if (showInitials && !blocked) {
       return <SvgProfileName userShortName={initialsData.inital} initialColor={initialsData.colorCode} />;
     }
     return (

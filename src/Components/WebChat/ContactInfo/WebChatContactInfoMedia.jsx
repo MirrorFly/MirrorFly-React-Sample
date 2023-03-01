@@ -142,9 +142,10 @@ class WebChatContactInfoMedia extends React.Component {
 
   render() {
     let { mediaList = [] } = this.state || {};
-
+    const { featureStateData: {isViewAllMediasEnabled = false} = {} } = this.props;
     return (
       <div>
+      {isViewAllMediasEnabled &&
         <div className="contactinfo-media">
           <h5>
             <span className="media">
@@ -162,7 +163,7 @@ class WebChatContactInfoMedia extends React.Component {
               </span>
             )}
           </h5>
-          {mediaList.length !== 0 && (
+          {mediaList.length !== 0 && 
             <ul className="mediadocs">
               {mediaList.map((media, index) => {
                 let audioType = media?.msgBody?.media?.audioType;
@@ -220,7 +221,8 @@ class WebChatContactInfoMedia extends React.Component {
                 return "";
               })}
             </ul>
-          )}
+          }
+ 
           {mediaList.length === 0 && (
             <div className="noMedia">
               <i>
@@ -230,6 +232,7 @@ class WebChatContactInfoMedia extends React.Component {
             </div>
           )}
         </div>
+      }
       </div>
     );
   }
@@ -240,6 +243,7 @@ class WebChatContactInfoMedia extends React.Component {
  */
 const mapStateToProps = (state) => {
   return {
+    featureStateData: state.featureStateData,
     SingleChatMediaData: state.SingleChatMediaData,
     GroupChatMediaData: state.GroupChatMediaData,
     singleChatMsgHistoryData: state.singleChatMsgHistoryData,

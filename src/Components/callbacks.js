@@ -110,6 +110,7 @@ import {
     GROUP_USER_LEFT,
     GROUP_PROFILE_INFO_UPDATED,
     LOGOUT,
+    SERVER_LOGOUT,
     MSG_CLEAR_CHAT,
     MSG_CLEAR_CHAT_CARBON,
     MSG_DELETE_CHAT,
@@ -664,6 +665,7 @@ const callStatus = (res) => {
         connecting(res);
     } else if (res.status === "connected") {
         connected(res);
+        handleCallParticipantToast(res.userJid, "join");
     } else if (res.status === "busy") {
         handleEngagedOrBusyStatus(res);
     } else if (res.status === "disconnected") {
@@ -692,6 +694,7 @@ export var callbacks = {
             Store.dispatch(WebChatConnectionState(connStatus));
         } else if (connStatus === "ERROROCCURED") {
             encryptAndStoreInLocalStorage("connection_status", connStatus);
+            logout(SERVER_LOGOUT);
         } else if (connStatus === "DISCONNECTED") {
             if (isSameSession() && getFromSessionStorageAndDecrypt("isLogout") === null) {
                 reconnect()
@@ -1174,9 +1177,7 @@ export var callbacks = {
         }
     },
     archiveChatListener: function (res) {
-        if (res?.type === "carbon") {
-            Store.dispatch(updateArchiveStatusRecentChat(res));
-        }
+        Store.dispatch(updateArchiveStatusRecentChat(res));
     },
     userSettingsListener: function (res) {
         setLocalWebsettings("archive", res.archive === 0 ? false : true);
@@ -1203,7 +1204,6 @@ export var callbacks = {
     callUserJoinedListener: function (res) {
         if (res.userJid && !res.localUser) {
             updateStoreRemoteStream();
-            handleCallParticipantToast(res.userJid, "join");
         }
     },
     callUserLeftListener: function (res) {

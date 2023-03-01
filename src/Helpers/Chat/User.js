@@ -64,7 +64,8 @@ export const getContactNameFromRoster = (roster) => {
 export const initialNameHandle = (roster = {}, name = "") => {
     if (isLocalUser(roster.fromUser)) return name;
     let imageUrl = _get(roster, "image", "");
-    if (imageUrl === "") {
+    const contactsWhoBlockedMe = Store.getState().contactsWhoBlockedMe.data
+     if (imageUrl === "" && !roster.isAdminBlocked && !roster.isDeletedUser && !contactsWhoBlockedMe.indexOf(formatUserIdToJid(roster.userId)) > -1)  {
         return name
     }
     return "";    
@@ -232,9 +233,9 @@ export const getUserDetails = (userJid = "") => {
         if (Object.keys(userDetails).length > 0) {
             rosterData = userDetails;
             rosterData.displayName = getContactNameFromRoster(userDetails);
-            rosterData.image = userDetails.image;
+            rosterData.image = userDetails.isAdminBlocked ? "" : userDetails.image;
             rosterData.chatType = "chat";
-            rosterData.initialName = rosterData.displayName;
+            rosterData.initialName = userDetails.isAdminBlocked ? "" : rosterData.displayName;
             rosterData.isAdminBlocked = userDetails.isAdminBlocked
         } else {
             rosterData.displayName = getFormatPhoneNumber(user);
@@ -255,4 +256,28 @@ export const getLocalUserId = () => {
     let vcardData = getLocalUserDetails();
     if (vcardData && Object.keys(vcardData).length) return vcardData.fromUser;
     return "";
+}
+
+export const handleMentionedUser = (text = "" ,mentionedUsersIds, mentionedMe) => {
+    let UserId = mentionedUsersIds;
+    if (!text) return "";
+  const pattern = /@(?:\W\D\W)/gi;
+  if (text !== "" && text.match(pattern) !== null && text.match(pattern).length > 0 && text.match(pattern) !== undefined) {
+    let content = text;
+    let particiantData =[]
+    particiantData = content.match(pattern);
+    particiantData.map((uidPattern) => {
+      const uid = uidPattern
+     for (let i = 0;i < UserId.length;  i++) {
+      const mentionedUserId = UserId[i];
+      let rosterData = getUserDetails(mentionedUserId);
+      let displayName = rosterData.displayName;
+      content = `${content.replace(uid, `<button data-mentioned="${mentionedUserId}" class='${mentionedMe === mentionedUserId ?" tagged  ":" "} mentioned'><b>@</b> <i>${displayName}</i> </button> `)}`;
+      }
+    });
+    return content;
+  }
+  else {
+    return text;
+  }
 }

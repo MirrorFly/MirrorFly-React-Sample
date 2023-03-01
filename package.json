@@ -10,7 +10,7 @@
     "start:prod": "env-cmd -f .env.prod react-scripts start",
     "build": "react-scripts build",
     "eject": "react-scripts eject",
-    "test": "npm run test:codeCoverage  -- --coverage --watchAll=false",
+    "test": "npm run test:codeCoverage  -- --coverage --watchAll=false --runInBand",
     "test:coverage": "react-scripts test '$FILE'",
     "test:codeCoverage": "react-scripts test"
   },
@@ -19,8 +19,13 @@
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/user-event": "^7.2.1",
     "axios": "^0.21.3",
+    "babel-plugin-transform-runtime": "^6.23.0",
+    "babel-runtime": "^6.26.0",
     "croppie": "^2.6.5",
     "cryptlib": "^1.0.3",
+    "crypto-hash": "^2.0.1",
+    "crypto-js": "^4.1.1",
+    "crypto-random-string": "^5.0.0",
     "emoji-mart": "^2.11.2",
     "env-cmd": "^10.1.0",
     "firebase": "^8.10.0",
@@ -33,7 +38,7 @@
     "luxon": "^1.24.1",
     "mic-recorder-to-mp3": "^2.2.2",
     "moment": "^2.29.4",
-    "node-sass": "^6.0.1",
+    "node-sass": "^7.0.2",
     "prop-types": "^15.7.2",
     "push.js": "^1.0.12",
     "react": "^16.14.0",
@@ -66,8 +71,10 @@
     "runes": "^0.4.3",
     "sass-loader": "^10.2.0",
     "socket.io-client": "^4.5.4",
+    "stream": "^0.0.2",
     "sync-request": "^6.1.0",
     "toastr": "^2.1.4",
+    "util": "^0.12.5",
     "uuid": "^3.4.0"
   },
   "eslintConfig": {
@@ -87,11 +94,22 @@
   },
   "devDependencies": {
     "@testing-library/react": "^9.5.0",
+    "assert": "^2.0.0",
+    "buffer": "^6.0.3",
+    "crypto-browserify": "^3.12.0",
     "enzyme": "^3.11.0",
     "enzyme-adapter-react-16": "^1.15.6",
+    "https-browserify": "^1.0.0",
+    "os-browserify": "^0.3.0",
     "redux-devtools": "^3.5.0",
     "redux-mock-store": "^1.5.4",
+    "stream-browserify": "^3.0.0",
+    "stream-http": "^3.2.0",
+    "url": "^0.11.0",
     "video.js": "^7.8.3"
+  },
+  "browser": {
+    "crypto": false
   },
   "jest": {
     "coverageReporters": [

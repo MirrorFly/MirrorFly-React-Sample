@@ -24,7 +24,7 @@ import {
   GroupsMemberParticipantsListReducer
 } from "./GroupsReducer";
 import { LastActivityReducer } from "./LastActivityReducer";
-import { messageForwardReducer, messageInfoReducer, MessageReducer, ReplyMessageReducer } from "./MessageReducer";
+import { messageForwardReducer, messageInfoReducer, MessageReducer, ReplyMessageReducer , selectedMessageInfoReducer} from "./MessageReducer";
 import { PopUp } from "./PopUp";
 import { PresenceReducer } from "./PresenceReducer";
 import {
@@ -111,5 +111,6 @@ export default combineReducers({
   commonData: CommonDataReducer,
   callIntermediateScreen: callIntermediateScreenReducer,
   contactPermission: RosterPermissionReducer,
-  adminBlockData: AdminBlockReducer
+  adminBlockData: AdminBlockReducer,
+  selectedMessageInfoReducer: selectedMessageInfoReducer
 });

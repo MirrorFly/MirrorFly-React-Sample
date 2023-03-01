@@ -610,11 +610,12 @@ class WebChatContactInfo extends React.Component {
                                             chatType={'chat'}
                                             temporary={false}
                                             emailContactInfo={true}
-                                            imageToken={this.props.isAdminBlocked ? "" : this.props.rosterImage}
+                                            imageToken={this.props.isAdminBlocked  ? "" : this.props.rosterImage}
                                             blocked={isUserWhoBlockedMe(chatJid)}
                                             emailId={this.props.roster?.emailId}
                                             profileImageView={this.handleContactInfoImg}
                                             name={iniTail}
+                                            userId={chatJid}
                                         />
                                         <span
                                             title={this.props.rosterName}>
@@ -675,6 +676,7 @@ class WebChatContactInfo extends React.Component {
                                         deletePopupAction={this.deletePopupAction}
                                         reportSingleChatAction={() => this.reportChatAction('single', true)}
                                         isAdminBlocked={isAdminBlocked}
+                                        featureStateData={this.props.featureStateData}
                                     />
                                 </div>
                                 }
@@ -824,6 +826,7 @@ class WebChatContactInfo extends React.Component {
  */
 const mapStateToProps = state => {
     return {
+        featureStateData: state.featureStateData,
         activeChatData: state.activeChatData,
         rosterData: state.rosterData,
         blockedContact: state.blockedContact,

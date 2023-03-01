@@ -14,14 +14,15 @@ import ContactComponent from '../../../../../../Components/WebChat/Conversation/
 configure({ adapter: new Adapter() });
 const mockStore = configureMockStore();
 let wrapper;
+const store = mockStore({
+    featureStateData: {}
+});
 
 describe("LocationComponent Test cover", () => {
 
     it('Mock has be created props undefined', () => {
         const monckData = undefined
-        const store = mockStore({
-
-        });
+     
         wrapper = mount(
             <Provider store={store}>
                 <ChatMessageTemplate {...monckData} />
@@ -42,9 +43,7 @@ describe("LocationComponent Test cover", () => {
             },
             requestReplyMessage: jest.fn(),
         };
-        const store = mockStore({
-
-        });
+        
         wrapper = mount(
             <Provider store={store}>
                 <ChatMessageTemplate {...monckData} />
@@ -66,9 +65,7 @@ describe("LocationComponent Test cover", () => {
             message_type: "image",
             requestReplyMessage: jest.fn(),
         };
-        const store = mockStore({
-
-        });
+        
         wrapper = mount(
             <Provider store={store}>
                 <ChatMessageTemplate {...monckData} />
@@ -100,9 +97,7 @@ describe("LocationComponent Test cover", () => {
             message_type: "video",
             requestReplyMessage: jest.fn(),
         };
-        const store = mockStore({
-
-        });
+        
         wrapper = mount(
             <Provider store={store}>
                 <ChatMessageTemplate {...monckData} />
@@ -129,9 +124,7 @@ describe("LocationComponent Test cover", () => {
             message_type: "audio",
             requestReplyMessage: jest.fn(),
         };
-        const store = mockStore({
-
-        });
+        
         wrapper = mount(
             <Provider store={store}>
                 <ChatMessageTemplate {...monckData} />
@@ -158,9 +151,7 @@ describe("LocationComponent Test cover", () => {
             message_type: "location",
             requestReplyMessage: jest.fn(),
         };
-        const store = mockStore({
-
-        });
+        
         wrapper = mount(
             <Provider store={store}>
                 <ChatMessageTemplate {...monckData} />
@@ -186,9 +177,7 @@ describe("LocationComponent Test cover", () => {
             message_type: "file",
             requestReplyMessage: jest.fn(),
         };
-        const store = mockStore({
-
-        });
+        
         wrapper = mount(
             <Provider store={store}>
                 <ChatMessageTemplate {...monckData} />
@@ -210,9 +199,7 @@ describe("LocationComponent Test cover", () => {
             message_type: "contact",
             requestReplyMessage: jest.fn(),
         };
-        const store = mockStore({
-
-        });
+        
         wrapper = mount(
             <Provider store={store}>
                 <ChatMessageTemplate {...monckData} />

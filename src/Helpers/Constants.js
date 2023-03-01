@@ -93,6 +93,7 @@ export const CONNECTED = "CONNECTED";
 export const INLINE_FLEX = "inline-flex";
 export const INVALID_STORENAME = "store name is not mentioned";
 export const NO_INTERNET = "Please check your Internet connection";
+export const SESSION_LOGOUT = "The session has been logged out";
 export const RECONNECT_GET_CHAT_LIMIT = 50;
 export const NO_INTERNET_TOAST = "Make sure your computer has active internet connection";
 export const PROFILE_UPDATE_SUCCESS = "Profile updated successfully";

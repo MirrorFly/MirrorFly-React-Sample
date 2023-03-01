@@ -14,7 +14,7 @@ import Store from '../../../Store';
 import { transLateLanguageAction } from '../../../Actions/TranslateAction';
 import DeleteMyAccount from './DeleteMyAccount';
 
-const optionsArray = [
+let optionsArray = [
     { label: 'Chat', image: 'chat' },
     { label: 'Archived Settings', image: 'Archived' },
     { label: 'Notifications', image: 'notification' },
@@ -77,7 +77,18 @@ export default class Setting extends Component {
     }
 
     render() {
-        const { handleBackFromSetting } = this.props
+        const { handleBackFromSetting, featureStateData = {} } = this.props
+        const {isStarMessageEnabled = false, isBlockEnabled = false} = featureStateData;
+        if(!isStarMessageEnabled && !isBlockEnabled) {
+            const filteredArray = optionsArray.filter(option => option.label !== "Starred" && option.label !== "Blocked");
+            optionsArray = filteredArray;
+        } else if(!isStarMessageEnabled) {
+            const filteredArray = optionsArray.filter(option => option.label !== "Starred");
+            optionsArray = filteredArray;
+        } else if(!isBlockEnabled) {
+            const filteredArray = optionsArray.filter(option => option.label !== "Blocked");
+            optionsArray = filteredArray;
+        }
         const { parrentView, activeTab } = this.state
         return (
             <Fragment>
@@ -113,9 +124,16 @@ export default class Setting extends Component {
                         {activeTab === 'chat' &&
                             <Chat
                                 setSelectedLaun={(this.setSelectedLaun() !== "") ? this.setSelectedLaun() : "English"}
-                                handleBackToSetting={this.handleBackToSetting} />}
+                                handleBackToSetting={this.handleBackToSetting}
+                                featureStateData={featureStateData}
+                                 />}
                         {activeTab === 'notification' && <Notification handleBackToSetting={this.handleBackToSetting} />}
-                        {activeTab === 'star' && <StarredMessages handleBackToSetting={this.handleBackToSetting} />}
+                        {activeTab === 'star' &&
+                            <StarredMessages
+                            handleBackToSetting={this.handleBackToSetting}
+                            featureStateData={featureStateData}
+                            />
+                        }
                         {activeTab === 'blocked' && <Blocked handleBackToSetting={this.handleBackToSetting} />}
                         {activeTab === 'about' && <About handleBackToSetting={this.handleBackToSetting} />}
                         {activeTab === 'delete' && <DeleteMyAccount handleBackToSetting={this.handleBackToSetting} />}

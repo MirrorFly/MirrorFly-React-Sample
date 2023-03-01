@@ -43,7 +43,7 @@ function ProgressLoader(props = {}) {
       data[msgId].source.cancel("User Cancelled!");
     }
 
-    if (uploadStatus === 0) {
+    if (uploadStatus === 0 || uploadStatus === 1) {
       const cancelObj = {
         msgId,
         fromUserId: getActiveConversationChatId(),
@@ -94,9 +94,9 @@ function ProgressLoader(props = {}) {
 </div>
     );
   };
-  const progressViewdiffer=()=> setTimeout(() => {
+  const progressViewdiffer=()=> {
     progressView();
-  }, 200);
+  };
   return (
     <React.Fragment>
       <div className="progressOverlay">

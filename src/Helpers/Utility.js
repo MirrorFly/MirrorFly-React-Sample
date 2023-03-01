@@ -26,13 +26,14 @@ import {
   MAX_HEIGHT_AND,
   MIN_OFFSET_WIDTH,
   MIN_OFFSET_HEIGHT,
-  INITIALS_COLOR_CODES
+  INITIALS_COLOR_CODES,
+  NO_INTERNET
 } from "./Constants";
 import { getExtension } from "../Components/WebChat/Common/FileUploadValidation";
 import { REACT_APP_API_URL, REACT_APP_LICENSE_KEY, REACT_APP_SANDBOX_MODE,REACT_APP_SITE_DOMAIN, REACT_APP_AUTOMATION_CHROME_USER, REACT_APP_AUTOMATION_CHROME_PASS, REACT_APP_AUTOMATION_EDGE_USER, REACT_APP_AUTOMATION_FIREFOX_USER, REACT_APP_AUTOMATION_FIREFOX_PASS, REACT_APP_AUTOMATION_EDGE_PASS, REACT_APP_HIDE_NOTIFICATION_CONTENT, REACT_APP_XMPP_SOCKET_HOST } from "../Components/processENV";
 import Store from "../Store";
 import { getContactNameFromRoster, formatUserIdToJid, isSingleChatJID, getLocalUserDetails } from "./Chat/User";
-import { MSG_PROCESSING_STATUS, GROUP_CHAT_PROFILE_UPDATED_NOTIFY, MSG_SENT_STATUS_CARBON, CHAT_TYPE_SINGLE, CHAT_TYPE_GROUP } from "./Chat/Constant";
+import { MSG_PROCESSING_STATUS, GROUP_CHAT_PROFILE_UPDATED_NOTIFY, MSG_SENT_STATUS_CARBON, CHAT_TYPE_SINGLE, CHAT_TYPE_GROUP, COMMON_ERROR_MESSAGE, SERVER_LOGOUT } from "./Chat/Constant";
 import toastr from "toastr";
 import { isGroupChat } from "./Chat/ChatHelper";
 import Push from "push.js";
@@ -392,7 +393,7 @@ export const getHighlightedText = (name, higlight) => {
   // Split on higlight term and include term into parts, ignore case
   // var replacedStr = (higlight || '').trim().split(/\s+/).map(x => x.replace(/[-[\]{}()*+!<=:?.\\^$|#\s,]/g, '\\$&')).join("|");
   // Commented "replacedStr" inorder to match space
-  higlight = higlight.trim();
+  higlight = higlight.replace(/\\/g, "").trim();
   let parts = name.split(new RegExp(`(${escapeRegex(higlight)})`, "gi"));
   return parts.map((part, i) => {
     return (
@@ -491,20 +492,32 @@ export const captionLink = (text) => {
  * Window.location.reload() function performed.
  */
 export const logout = async(type = "") => {
-  localStorage.clear();
-  await deleteAllIndexedDb();
-  SDK && SDK.logout();
-  if (type === "accountDeleted") {
-    encryptAndStoreInLocalStorage("deleteAccount", true);
-  }
-  if (type !== "block") {
-    window.location.reload();
+
+  if(isAppOnline()){
+    const logoutResult = SDK && await SDK.logout();
+    if(logoutResult.statusCode === 200){
+      localStorage.clear();
+      await deleteAllIndexedDb();
+      if (type === "accountDeleted") {
+        encryptAndStoreInLocalStorage("deleteAccount", true);
+      }
+      if(type === SERVER_LOGOUT){
+        encryptAndStoreInLocalStorage("serverLogout",type);
+      }
+      if (type !== "block") {
+        window.location.reload();
+      }
+    }else{
+      toastr.error(COMMON_ERROR_MESSAGE);
+    }
+  }else{
+    toastr.warning(NO_INTERNET);
   }
 };
 
 export const formatCallLogDate = (date) => {
   const datesDiff = daysBetween(new Date(), new Date(date));
-  if (datesDiff === null || datesDiff === undefined || datesDiff === "") {
+  if (datesDiff === null || datesDiff === undefined ||  Number.isNaN(datesDiff)) {
     return "?";
   }
   if (datesDiff === 0) {
@@ -707,14 +720,15 @@ export const stripTags = (dirtyString) => {
 };
 
 export const getMessageObjSender = async (dataObj, idx) => {
-  const { jid, msgType, userProfile, msgId, chatType, message = "", file, fileOptions = {}, replyTo, fileDetails } = dataObj;
+  const { jid, msgType, userProfile, msgId, chatType, message = "", file, fileOptions = {}, replyTo, fileDetails, mentionedUsersIds} = dataObj;
 
   const timestamp = Date.now() * 1000;
   const senderId = userProfile.data.fromUser;
   const msgBody = {
     message_type: msgType,
     nickName: userProfile.data.nickName,
-    ...(replyTo && { replyTo })
+    ...(replyTo && { replyTo }),
+    mentionedUsersIds: mentionedUsersIds
   };
 
   if (msgType === "text") {
@@ -734,7 +748,7 @@ export const getMessageObjSender = async (dataObj, idx) => {
     } else if (msgType === "video") {
       ({ webWidth, webHeight, androidWidth, androidHeight, originalWidth, originalHeight } = fileDetails);
     }
-
+    msgBody.message = "";
     msgBody.media = {
       file,
       caption: fileOptions.caption || "",
@@ -809,13 +823,14 @@ export const getMessageObjReceiver = (messgeObject, newChatTo) => {
 };
 
 export const getRecentChatMsgObj = (dataObj) => {
-  const { jid, msgType, userProfile, msgId, chatType, message = "", fileOptions = {} } = dataObj;
+  const { jid, msgType, userProfile, msgId, chatType, message = "", fileOptions = {}, mentionedUsersIds } = dataObj;
 
   const createdAt = changeTimeFormat(Date.now() * 1000)
   const senderId = userProfile.data.fromUser;
   const msgBody = {
     message_type: msgType,
-    nickName: userProfile.data.nickName
+    nickName: userProfile.data.nickName,
+    mentionedUsersIds: mentionedUsersIds
   };
 
   if (msgType === "text") {
@@ -939,7 +954,13 @@ export const blockOfflineMsgAction = () => {
   return blockOfflineAction();
 };
 
-export const getThumbBase64URL = (thumb) => `data:image/png;base64,${thumb}`;
+export const getThumbBase64URL = (thumb) => {
+  if (thumb !== "" && thumb !== null) {
+    return `data:image/png;base64,${thumb}`
+  } else {
+    return `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAATUAAACqCAYAAADMWNgmAAAABHNCSVQICAgIfAhkiAAADxBJREFUeF7tnfuOFEUUh0tBQOQWNggEEOR+SSCIBqKLxoRsjE/gk/gQvog+ASEbEsIlZDfAH5Cg3EQQjEHl4gUISsD5VXI2xezszDDV01NV/XWycdnpqj7nO9XfVlWPO2+8fPlyjXPum9bXROtrdeuLAwIQgEBuBO61Ap5sfX39Rktq37a++Sq3DIgXAhCAQAcC30lqj1ovLAcPBCAAgQII/CmpvSwgEVKAAAQg4AkgNQYCBCBQFAGkVlQ5SQYCEEBqjAEIQKAoAkitqHKSDAQggNQYAxCAQFEEkFpR5SQZCEAAqTEGIACBogggtaLKSTIQgABSYwxAAAJFEUBqRZWTZCAAAaTGGIAABIoigNSKKifJQAACSI0xAAEIFEUAqRVVTpKBAASQGmMAAhAoigBSK6qcJAMBCCA1xgAEIFAUAaRWVDlJBgIQQGqMAQhAoCgCSK2ocpIMBCCA1BgDEIBAUQSQWlHlJBkIQACpMQYgAIGiCCC1ospJMhCAAFJjDEAAAkURQGpFlZNkIAABpMYYgAAEiiKA1IoqJ8lAAAJIjTEAAQgURQCpFVVOkoEABJAaY8ATuH79urt79657+vRpEkT27t3r1q9fn0QsBJEXAaSWV72GEu3U1JR78ODBUPqO6RSxxdBrbluk1tza+8y///57d+vWLf/9unXr/OxobGxsZFQ0Y9SXHYhtZKXI9sJILdvSxQf+/PlzNzk56TvatGmT2717d3ynkT20S03dIbZIqA1rjtQaVvAw3fv377vp6Wn/o4mJCTd//vyR0+gkNcQ28rJkFQBSy6pc1QZrUlu6dKk7fPhwtZ0P2NtcUkNsAwJtYDOk1sCiW8omtZUrV7pDhw4lQaKb1BBbEiVKPgiklnyJhhdgjlJDbMMbD6X0jNRKqeQAeeQqNcQ2QLEb1ASpNajY7anmLDXE1uCB2yN1pNbgsZG71BBbgwdvl9SRWoPHRQlSQ2wNHsBzpI7UGjwmSpEaYmvwIO6QOlJr8HgoSWqIrcEDuS11pNbgsVCa1BBbgwdzkDpSa/A4KFFqKuf4+LhbtmxZgyvb7NSRWoPrn6LUFNOgfwbJ/h7cwYMHR/qXRho8pJJIHaklUYbRBJGi1GJI2N+FQ2oxFPNvi9Tyr+HAGSC1gdHRMGECSC3h4gw7NKQ2bML0PwoCSG0U1BO5JlJLpBCEUSkBpFYpzrw6Q2p51Yto+yOA1PrjVORZSK3IsjY+KaTW4CGA1Bpc/IJTR2oFF7dXakitFyFez5EAUsuxahXFjNQqAkk3SRFAakmVo95gkFq9vLlaPQSQWj2ck7wKUkuyLAQVSQCpRQLMuTlSy7l6xD4XAaTW4LGB1Bpc/IJTR2oFF7dXakitFyFez5EAUsuxahXFjNQqAkk3SRFAakmVo95gkFq9vLlaPQSQWj2ck7wKUkuyLAQVSQCpRQLMuTlSy7l6xM7TT8bALAJIjUFRIgFmaiVWtc+ckFqfoDgtKwJILatyVRssUquWJ72lQQCppVGHkUSB1EaCnYsOmQBSGzLglLtHailXh9gGJYDUBiVXQDukVkARSWEWAaTW4EGB1Bpc/IJTR2oFF7dXakitFyFez5EAUsuxahXFjNQqAkk3SRFAakmVo95gkFq9vLlaPQSQWj2ck7wKUkuyLAQVSQCpRQLMuTlSy7l6xD4XAaTW4LGB1Bpc/IJTR2oFF7dXakitFyFez5EAUsuxahXFjNQqAkk3SRFAakmVo95gkFq9vLlaPQSQWj2ck7wKUkuyLAQVSQCpRQLMuTlSy7l6xM7TT8bALAJIjUFRIgFmaiVWtc+ckFqfoDgtKwJILatyVRssUquWJ72lQQCppVGHkUSB1EaCnYsOmQBSGzLglLtHailXh9gGJYDUBiVXQDukVkARSWEWAaTW4EGB1Bpc/IJTR2oFF7dXakitFyFez5EAUsuxahXFjNQqAkk3SRFAakmVo95gkFq9vLlaPQSQWj2ck7wKUkuyLAQVSQCpRQLMublJbf78+W5iYiLnVHzsk5OT7vnz5+7gwYNubGws+3xIYDACSG0wbkW0+uuvv9yZM2d8LrmLwAStXD7//HP39ttvF1Ejknh9Akjt9ZkV1eL06dPu77//dpqtHTp0yC1btiy7/CTnqakpP0tbunSpO3z4cHY5EHB1BJBadSyz7CmcrSmBlStXZpfHgwcPZmIeHx/PUszZQU84YKSWcHHqCk1Lt0uXLrmnT5/WdcnKr6Pl5t69e9lLq5xsfh0itfxqNpSItXST3DRzy+3QklkPBrSE5oAAUmMMQAACRRFAakWVk2QgAAGkxhiAAASKIoDUiionyUAAAkiNMQABCBRFAKkVVU6SgQAEkBpjAAIQKIoAUiuqnCQDAQggNcYABCBQFAGkVlQ5SQYCEEBqjAEIQKAoAkitqHKSDAQggNQYAxCAQFEEkFpR5SQZCEAAqTEGIACBogggtaLKSTIQgABSYwy8NoHffvvNXblyxe3cudO9++67r91+1A2uXbvm/vjjD7d//34fiv445pIlS9yKFSu6hmZ5r1mzxm3fvr3juXfv3nULFizIksuo61LV9ZFaVST77Ofo0aP+zPZPPLp48aL75Zdf3K5du9z777/fZ2+jOe2nn35yP/zwg9u6deucN/doIuvvqhcuXHC///67++CDD9y///7r/5T56tWr3YEDB7p2IGH1Olf11Z8WV305RkMAqdXM3aSmmcGnn346c/WcpFYzsqFerh9RWQD9nIvUhlquvjpHan1hqu4kk5p6DGc67VLTh6BoVqClkQ799t+zZ0/HZc2pU6fcP//842cbmoG8ePHilfPtZtSySJ9FsHDhQj+T0Izrxx9/9LOVN998023evNnPvDSTuXfv3iuzxsuXL7vbt2/7mBVbOKtsj1XC/uijj3wMx48f9/EfOXLE//fs2bPu0aNH/kNS1q9f72PQrG/jxo0+v/DQcu/GjRv+fB3Wr74/ceLErBnRsWPHfG76qD997F+ntorJeImBfeiMzdQsl4cPH3qOYqZYtcw2jopDh5jrWLdundu3b5//vl1qtmS1c/uZEVY32prZE1Krue426HVZ3UAff/yx38tpl5pu2mfPnnnRvPXWW+7WrVuvnB+GbTepxLRjxw735MkTLyD9+4svvpi5GU1cixcv9s0lTd3k27Ztcz///LOXh6SleM6fP+8/zEQfcqxD11C/n332mdOeVCg1u77EpFhv3rzpPwRFIpuenvbisOW2xCNZmAgs7w8//HCWsCVESVgM/vvvP5+TzXBNjsbPhGP9dmvbTWoWr/rRB7pcvXrVx/vll1/OcBQPsdE5169f93UxKYdS089Pnjzp+aku+lAbcQu51jz8GnE5pFZzmW3Qa1Yicdj+Syg1iaF976bb0sdu0nDmZ7Mt/UwSU3/hzWRSMJnoBpRITRrhDMtek+wkkTDWd955x+dhrwmnXVszHIlQMybtFdq5Oseuo9g1U/zkk09mfaq6Xlu+fPnMLEjxKRYJ8s6dO75fy9muafl0a3vu3Dk/y+o0U1M/EqliV23CWavVJZyJGhvN6CTxUGo2uw1noZaDJMkxHAJIbThc5+w1HPQmB/3G12GzH/uN3v7QYK79mnDmoRtRRyhBLXnaJRku1ayN9aMbLpTE48ePX3kwEErNZoWhUMNZk25oCVQxLFq0yMto1apVfnmr6ygOzYgky15HmKfOlSBMpvpeh5aelk/YX9i2m9TaY+j1y0bnh32Hy+L22aTOtf5s+d0rZ15/fQJI7fWZRbVoF5PdEJpFaZkmkdUhtXBvrz0hzWC0J6UZmKSkWY32mLT0lDDCG91i7QTF9o90o8+bN8/vd2lJrbeCWN9aUnbaTzMB6NPX2z9k2ZaykoauL5Hp+3BvSzHO1bab1LTHJ/HaHpjlpbp0mkF3k5rVthObHJ5yRw30ETZGajXDb5ea9rGmpqb8vo2OuW6eKpaf4SZ1+wa+YVA89n4tnaNllWZj4WwqlJr2usJlYIjT+rK3UGifTbM0barbTDHcVwzbat9O/UpUenjRvsGvf9s5ilfXsqVnr7ZzSW3Lli1ejupv9+7ds/Y6TWrhWzZs+amfSa7hTM3252zfz/IzSXeaUdY8HIu8HFKruaydlpC292JS0/vUbO9Fyzp7UKBZjt5b1f6G13BGICnaklBC0l5V+xO+cBmkG/i9996b2fvqtDem8+d6Uqs3omozXFI2IetBgWY6Jhl7wql+bNllSzOTQfsNHgpL8SkHLc912EzNhKKfhf30attLauKm2aQ4KpcwNy3jdRi3bg8KwqfO6k+/APS0WUenPcSah2Kxl0NqNZe2176YLUs6vU1CTwH1Noj2w6SmWc2vv/7qb0JtZtv5c83yNOPSW0DsLR1r1671S0GbqentCFom6qmpLT1DIVqsnd56sWHDhpk3EZt8wn5M5N2eBNoMT/noPEnGHhSYBE2O4dJTMXZr2235KSHqSbCYiKFml5oFhjNo8dHDBIlbOYmbzSbb6yuh25NrxaU89Esrx/8To+ZbZeDLIbWB0aXTsNODgnSiIxII1EsAqdXLeyhXQ2pDwUqnmRJAapkWLgxbyz8tl7S0YfO5gIKSQhQBpBaFj8YQgEBqBJBaahUhHghAIIoAUovCR2MIQCA1AkgttYoQDwQgEEUAqUXhozEEIJAaAaSWWkWIBwIQiCKA1KLw0RgCEEiNAFJLrSLEAwEIRBFAalH4aAwBCKRGAKmlVhHigQAEogggtSh8NIYABFIjgNRSqwjxQAACUQSQWhQ+GkMAAqkRQGqpVYR4IACBKAJILQofjSEAgdQIILXUKkI8EIBAFAGkFoWPxhCAQGoEkFpqFSEeCEAgigBSi8JHYwhAIDUCSC21ihAPBCAQRQCpReGjMQQgkBoBpJZaRYgHAhCIIoDUovDRGAIQSI0AUkutIsQDAQhEEUBqUfhoDAEIpEYAqaVWEeKBAASiCCC1KHw0hgAEUiOA1FKrCPFAAAJRBJBaFD4aQwACqRFAaqlVhHggAIEoAkgtCh+NIQCB1AggtdQqQjwQgEAUAaQWhY/GEIBAagQktUetoJanFhjxQAACEBiAwJ+S2rethl8N0JgmEIAABFIj8J2ktqYV1Tetr4nW1+rUIiQeCEAAAn0QuNc6Z7L19fX/doZFDEYWe9MAAAAASUVORK5CYII=`;
+  }
+};
 
 /**
  * Return TRUE If given 'state' variable value is match with local connection state.
@@ -1166,7 +1187,7 @@ export const sendNotification = (displayName = "", imageUrl = "", messageBody = 
 
 
     if(os === 'windows'){
-      var windowisChrome = !window.chrome && (!window.chrome.webstore || !window.chrome.runtime);
+      var windowisChrome = (!window.chrome.webstore || !window.chrome.runtime) && !window.chrome;
       if(windowisChrome){
         return true;
       }

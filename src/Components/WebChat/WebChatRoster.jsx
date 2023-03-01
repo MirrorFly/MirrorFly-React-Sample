@@ -46,7 +46,7 @@ class WebChatRoster extends React.Component {
      * In this method, get the roster data from localstorage and set the data into state.
      */
     componentDidMount() {
-        let data = (this.props.rosterData && this.props.rosterData.data) || []
+        let data =  []
         this.handleUpdateRoster(data, this.props?.rosterData?.isFetchingUserList);
     }
 
@@ -245,13 +245,14 @@ class WebChatRoster extends React.Component {
     }
 
     fetchMoreData = () => {
+        // if(this.props.isAppOnline)
         let userListArr = this.state.userList;
         userList.getUsersListFromSDK(Math.ceil((userListArr.length / 20) + 1), getValidSearchVal(this.state.searchWith));
     }
 
     handleUserListData() {
         let dataArr = [];
-        if (this.state.filterItem.length > 0 && this.state.userList.length > 0) {
+        if (this.state.filterItem.length > 0 && this.state.userList.length > 0 ) {
             this.state.userList.map((roster, index) => {
                 dataArr.push(
                     <React.Fragment key={index}>
@@ -297,9 +298,10 @@ class WebChatRoster extends React.Component {
                         <img src={loaderSVG} alt="loader"  />
                     </div>}
 
-                    {userListArr.length > 0 &&
+                    {userListArr.length > 0  && 
                         <ul className="chat-list-ul" id="scrollableUl">
-                            <InfiniteScroll
+                        { this.props.isAppOnline ?
+                            <InfiniteScroll 
                                 dataLength={userListArr.length}
                                 next={this.fetchMoreData}
                                 hasMore={true}
@@ -307,6 +309,9 @@ class WebChatRoster extends React.Component {
                             >
                                 {this.handleUserListData()}
                             </InfiniteScroll>
+                            : this.handleUserListData()
+
+                        }
                         </ul>
                     }
 
@@ -324,7 +329,8 @@ const mapStateToProps = (state, props) => {
         VCardContactData: state.VCardContactData,
         messageData: state.messageData,
         contactsWhoBlockedMe: state.contactsWhoBlockedMe,
-        blockedContact: state.blockedContact
+        blockedContact: state.blockedContact,
+        isAppOnline: state?.appOnlineStatus?.isOnline,
     });
 };
 
