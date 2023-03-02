@@ -111,6 +111,7 @@ class Sidebar extends React.Component {
             this.props.handleContactPermissionPopup(true, NEW_GROUP_CONTACT_PERMISSION_DENIED);
             return;
         }
+        userList.getUsersListFromSDK(1);
         this.setState({ newGroupParticipants: true }, () => {
             this.setState({ menuDropDownStatus: false })
         });
@@ -257,9 +258,7 @@ class Sidebar extends React.Component {
                 this.currentUserRequestingCallSwitch = true;
             } else if (callConversionData.status === CALL_CONVERSION_STATUS_REQUEST) {
                 this.remoteUserRequestingCallSwitch = true;
-            } else if (callConversionData.status === CALL_CONVERSION_STATUS_CANCEL) {
-                this.resetCallConversionRequestData();
-            } else if (callConversionData.status === CALL_CONVERSION_STATUS_DECLINE) {
+            } else if (callConversionData.status === CALL_CONVERSION_STATUS_CANCEL || CALL_CONVERSION_STATUS_DECLINE) {
                 this.resetCallConversionRequestData();
             }
         }
@@ -340,6 +339,7 @@ class Sidebar extends React.Component {
                         <Setting
                             handleBackFromSetting={this.handleBackFromSetting}
                             logoutStatus={this.handleLogutStatus}
+                            featureStateData={featureStateData}
                         />
                     }
                 </div>

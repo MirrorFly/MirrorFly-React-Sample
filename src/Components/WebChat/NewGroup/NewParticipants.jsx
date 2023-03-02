@@ -7,7 +7,7 @@ import Contact from '../ContactInfo/Contact';
 import RecentSearch from '../RecentChat/RecentSearch';
 import Badge from './Badge';
 import { getValidSearchVal, handleFilterBlockedContact, isAppOnline } from '../../../Helpers/Utility';
-import { getContactNameFromRoster, getUserInfoForSearch, formatUserIdToJid } from '../../../Helpers/Chat/User';
+import { getContactNameFromRoster, getUserInfoForSearch, formatUserIdToJid, getFriendsFromRosters } from '../../../Helpers/Chat/User';
 import { toast } from 'react-toastify';
 import { NO_INTERNET } from '../../../Helpers/Constants';
 import { getMaxUsersInCall } from '../../../Helpers/Call/Call';
@@ -33,7 +33,10 @@ class NewParticipants extends Component {
     }
 
     componentDidMount() {
-        userList.getUsersListFromSDK(1);
+        this.setState({
+            userList : [],
+            loaderStatus: this.props?.rosterData?.isFetchingUserList,
+        })
     }
 
     errorMessageListner = (errorMesage) => {
@@ -155,12 +158,11 @@ class NewParticipants extends Component {
             newSelectedParticipant = newSelectedParticipant.filter(function (element) {
                 return element !== undefined;
             });
-            const filteredContacts = this.contactsSearch(this.state.searchValue)
             this.setState({
                 participantToAdd: newSelectedParticipant,
                 loaderStatus: this.props?.rosterData?.isFetchingUserList,
-                filteredContacts: filteredContacts,
-                userList: filteredContacts
+                filteredContacts: getFriendsFromRosters(handleFilterBlockedContact(this.props.rosterData?.data)),
+                userList:  getFriendsFromRosters(handleFilterBlockedContact(this.props.rosterData?.data))
             });
         }
     }
@@ -302,6 +304,7 @@ class NewParticipants extends Component {
                                         </ul>
                                     </div>
                                 </li>
+                                { this.props.isAppOnline ?
                                 <InfiniteScroll
                                     dataLength={userListArr.length}
                                     next={this.fetchMoreData}
@@ -310,6 +313,9 @@ class NewParticipants extends Component {
                                 >
                                     {this.handleUserListData()}
                                 </InfiniteScroll>
+                                : this.handleUserListData()
+
+                                }
                             </ul>
                         }
                         {this.state.loaderStatus && <div className="loader-container style-2">
@@ -333,7 +339,9 @@ const mapStateToProps = (state, props) => {
         popUpData: state.popUpData,
         messageData: state.messageData,
         contactsWhoBlockedMe: state.contactsWhoBlockedMe,
-        blockedContact: state.blockedContact
+        blockedContact: state.blockedContact,
+        isAppOnline: state?.appOnlineStatus?.isOnline,
+
     }
 }
 

@@ -1,9 +1,11 @@
 import React, { Fragment, useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 import { toast } from 'react-toastify';
 import { updateBlockedContactAction } from "../../../Actions/BlockAction";
 import { getMaxUsersInCall } from "../../../Helpers/Call/Call";
 import { handleTempArchivedChats } from "../../../Helpers/Chat/ChatHelper";
 import { CHAT_TYPE_SINGLE, UNBLOCK_CONTACT_TYPE } from "../../../Helpers/Chat/Constant";
+import { FEATURE_RESTRICTION_ERROR_MESSAGE } from "../../../Helpers/Constants";
 import { getHighlightedText } from '../../../Helpers/Utility';
 import Store from "../../../Store";
 import SDK from "../../SDK";
@@ -42,13 +44,18 @@ export default function Contact(props) {
         setNameToDisplay(nameToDisplays ? nameToDisplays : null)
     };
 
+    const {isBlockEnabled = false} = useSelector((store) => store.featureStateData);
     const dispatchAction = async () => {
         setshowModal(!showModal);
-        const res = await SDK.unblockUser(blockId);
-        if (res && res.statusCode === 200) {
-            Store.dispatch(updateBlockedContactAction(blockId, UNBLOCK_CONTACT_TYPE));
-            toast.success(`${nameToDisplay || 'User'} has been Unblocked`);
-            handleTempArchivedChats(blockId, CHAT_TYPE_SINGLE);
+        if(isBlockEnabled) {
+            const res = await SDK.unblockUser(blockId);
+            if (res && res.statusCode === 200) {
+                Store.dispatch(updateBlockedContactAction(blockId, UNBLOCK_CONTACT_TYPE));
+                toast.success(`${nameToDisplay || 'User'} has been Unblocked`);
+                handleTempArchivedChats(blockId, CHAT_TYPE_SINGLE);
+            }
+        } else {
+            toast.error(FEATURE_RESTRICTION_ERROR_MESSAGE);
         }
     }
 

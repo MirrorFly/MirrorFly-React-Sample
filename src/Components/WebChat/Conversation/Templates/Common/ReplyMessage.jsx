@@ -2,13 +2,14 @@ import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { ChatContactImg,  ChatAudioRecorder, ChatAudioReceiver2 } from '../../../../../assets/images';
 import { displayNameFromRoster, getDisplayNameFromGroup, isSingleChat, isTextMessage } from '../../../../../Helpers/Chat/ChatHelper';
-import { isLocalUser } from "../../../../../Helpers/Chat/User";
+import { handleMentionedUser, isLocalUser } from "../../../../../Helpers/Chat/User";
 import { getThumbBase64URL, millisToMinutesAndSeconds } from "../../../../../Helpers/Utility";
 import { getExtension } from "../../../Common/FileUploadValidation";
 import ImageComponent from '../../../Common/ImageComponent';
 import { getFromLocalStorageAndDecrypt } from "../../../WebChatEncryptDecrypt";
 import GoogleMapMarker from "../Common/GoogleMapMarker";
 import getFileFromType from "./getFileFromType";
+
 
 const maximumCaptionLimit=90;
 
@@ -66,10 +67,9 @@ export default React.memo(({ msgId, viewOriginalMessage, groupMemberDetails, cha
         return null
     }
 
-    const { replyMsgId, fromUserId: messageFrom, replyMsgContent: { message, message_type, media = { },
+    const { replyMsgId, fromUserId: messageFrom, replyMsgContent: { message, message_type, media = { },mentionedUsersIds,
         location: { latitude, longitude } = {},
         contact: { name } = {} } } = replyMessageData 
-
     const { fileName, duration, caption, audioType,thumb_image } = media;
     const getDisplayName = () => {
         if (isLocalUser(messageFrom)) return 'You';
@@ -80,7 +80,7 @@ export default React.memo(({ msgId, viewOriginalMessage, groupMemberDetails, cha
         const { nameToDisplay } = getDisplayNameFromGroup(messageFrom, groupMemberDetails);
         return nameToDisplay;
     }
-
+  
     const fileExtension = getExtension(fileName);
     const placeholder = getFileFromType(null, fileExtension);
 
@@ -95,7 +95,7 @@ export default React.memo(({ msgId, viewOriginalMessage, groupMemberDetails, cha
                 {isTextMessage(message_type) && <span id={`reply-${msgId}`}
                 ref={element => callRefSpan = element }
                 className="sender-sends">
-                <span dangerouslySetInnerHTML={{__html: getReplyCaption(message) }} ></span> </span> }
+                <span dangerouslySetInnerHTML={{__html: handleMentionedUser(getReplyCaption(message),mentionedUsersIds,false )}} ></span> </span> }
                 {overflowActive ? <span className="sender-sends">...</span> : ""}
                 {message_type === 'image' && <span className="sender-sends ReplyCamera">{caption === '' ?  "Photo" : getReplyCaption(caption)}</span>}
                 {message_type === 'video' && <span className="sender-sends ReplyVideo">{caption === '' ? "Video" :  getReplyCaption(caption)}</span>}

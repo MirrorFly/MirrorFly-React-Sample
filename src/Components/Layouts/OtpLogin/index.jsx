@@ -142,6 +142,18 @@ function OtpLogin(props = {}) {
     setPageLoader(false);
   };
 
+  const handlecancelFromPopup = () => {
+    setValidate({
+      ...validate,
+      getMobileNo: true,
+      getOtpVerfied: false
+    });
+    regMobileNo.mobileNumber = "";
+    setOtpverify(otpInitialState);
+    handleSDKIntialize();
+    setPageLoader(false);
+  }
+
   const handleProfileDetails = async (value1, e) => {
     // if (isSandboxMode()) {
     //   await SDK.syncContacts(resultData.login.username);      
@@ -299,6 +311,7 @@ function OtpLogin(props = {}) {
                     toast={toast}
                     fullPageLoader={(e) => fullPageLoader(e)}
                     sendOtp={sendOtp}
+                    handlecancelFromPopup={handlecancelFromPopup}
                   />
                 )}
                 {validate.getProfileDetails && (

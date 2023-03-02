@@ -753,16 +753,17 @@ export const uploadFileToSDK = async (file, jid, msgId, media) => {
         ...(msgType === "video" && { thumbImage: imageUrl }),
         ...(msgType === "audio" && { audioType })
     };
+    let mentionedUsersIds =[]
 
     let response = {};
     if (msgType === "file") {
-        response = await SDK.sendDocumentMessage(jid, file, fileOptions, replyTo);
+        response = await SDK.sendDocumentMessage(jid, file, fileOptions, replyTo, mentionedUsersIds);
     } else if (msgType === "image") {
-        response = await SDK.sendImageMessage(jid, file, fileOptions, replyTo);
+        response = await SDK.sendImageMessage(jid, file, fileOptions, replyTo, mentionedUsersIds);
     } else if (msgType === "video") {
-        response = await SDK.sendVideoMessage(jid, file, fileOptions, replyTo);
+        response = await SDK.sendVideoMessage(jid, file, fileOptions, replyTo, mentionedUsersIds);
     } else if (msgType === "audio") {
-        response = await SDK.sendAudioMessage(jid, file, fileOptions, replyTo);
+        response = await SDK.sendAudioMessage(jid, file, fileOptions, replyTo, mentionedUsersIds);
     }
     let updateObj = {
         msgId,
@@ -922,8 +923,8 @@ export const getFavaouriteMsgObj = (msg, chatId) => {
         favDate: changeTimeFormat(Date.now() * 1000),
         msgType: msg?.msgBody?.message_type,
         ...(isSingleChat(msg.chatType) && {
-            publisherId: msg.fromUserId,
-            publisherJid: msg.fromUserJid,
+            publisherId: msg.publisherId,
+            publisherJid: formatUserIdToJid(msg.publisherId),
             fromUserId: chatId,
             fromUserJid: formatUserIdToJid(chatId)
         }),

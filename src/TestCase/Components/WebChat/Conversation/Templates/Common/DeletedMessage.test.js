@@ -28,7 +28,7 @@ describe(">>>DeletedMessage Test cover<<<", () => {
             messageAction: jest.fn(),
         };
         const store = mockStore({
-
+            featureStateData:{}
         });
         wrapper = mount(
             <Provider store={store}>

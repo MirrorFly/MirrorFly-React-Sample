@@ -173,7 +173,6 @@ class ConversationSection extends Component {
                 </div>
             </div>);
         }
-
         const { activeChatId, groupMemberDetails, displayNames } = this.state
         return (
             <Fragment>

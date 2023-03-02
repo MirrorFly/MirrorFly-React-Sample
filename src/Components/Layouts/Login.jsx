@@ -37,7 +37,7 @@ import {
   updateSessionId,
   updateSessionIdInLocalStorage
 } from "../../Helpers/Chat/ChatHelper";
-import { CHAT_TYPE_GROUP, DEFAULT_TITLE_NAME, NEW_CHAT_CONTACT_PERMISSION_DENIED } from "../../Helpers/Chat/Constant";
+import { CHAT_TYPE_GROUP, DEFAULT_TITLE_NAME, NEW_CHAT_CONTACT_PERMISSION_DENIED, SERVER_LOGOUT, SESSION_LOGOUT } from "../../Helpers/Chat/Constant";
 import { NO_INTERNET_TOAST } from "../../Helpers/Constants";
 import { formatUserIdToJid } from "../../Helpers/Chat/User";
 import { setGroupParticipantsByGroupId } from "../../Helpers/Chat/Group";
@@ -140,6 +140,11 @@ class Login extends React.Component {
     window.addEventListener("storage", this.handleOnStorageChange, false);
     browserTab.init();
     browserNotify.init();
+    const checkServerLogout=getFromLocalStorageAndDecrypt("serverLogout");
+    if(checkServerLogout === SERVER_LOGOUT){
+      toast.info(SESSION_LOGOUT);
+      deleteItemFromLocalStorage("serverLogout");
+    }
   }
 
   handleShowCallScreen = () => {
@@ -213,6 +218,7 @@ class Login extends React.Component {
   }
 
   componentWillUnmount() {
+    window.removeEventListener("message", this.handleIframeTask);
     window.removeEventListener("storage", this.handleOnStorageChange);
   }
 
@@ -402,6 +408,7 @@ class Login extends React.Component {
         console.log("handleLogin error, ", error);
         deleteItemFromLocalStorage("auth_user");
         this.setState({ webChatStatus: false, loaderStatus: false });
+        window.location.reload();
       });
   }
 
@@ -760,8 +767,8 @@ class Login extends React.Component {
             <div className="popup-wraper">
               <div className="popup-inner">
                 <div className="popup-header">
-                  <label>{`MirrorFly is open in another window.
-                  Click “Use Here” to use MirrorFly in this window.`}</label>
+                  <label>{`${DEFAULT_TITLE_NAME} is open in another window.
+                  Click “Use Here” to use ${DEFAULT_TITLE_NAME} in this window.`}</label>
                 </div>
                 <div className="popup-footer">
                   <button type="button" className="btn-action" name="btn-action" onClick={this.handleUseHere}>
@@ -770,7 +777,7 @@ class Login extends React.Component {
                 </div>
               </div>
             </div>
-            <ToastContainer />
+            <ToastContainer />            
           </>
         )}
       </>

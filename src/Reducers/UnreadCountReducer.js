@@ -1,4 +1,4 @@
-import { UNREAD_MESSAGE_UPDATE, UNREAD_MESSAGE_DELETE, RESET_UNREAD_COUNT, UPDATE_MUTE_RECENT_CHAT } from '../Actions/Constants';
+import { UNREAD_MESSAGE_UPDATE, UNREAD_MESSAGE_DELETE, RESET_UNREAD_COUNT, UPDATE_MUTE_RECENT_CHAT, CLEAR_ALL_CHAT } from '../Actions/Constants';
 
 const initialState = {
     id:null,
@@ -59,7 +59,13 @@ export function UnreadCountReducer(state = {...initialState}, action = {}) {
             return {
                 ...state
             }
-        
+        case CLEAR_ALL_CHAT:
+            return {
+                 ...state,
+                 id: payload.fromUserId,
+                 unreadDataObj: {}
+            }
+      
         default:
             return state;
     }

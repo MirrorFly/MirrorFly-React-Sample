@@ -48,7 +48,10 @@ class ParticipantPopUp extends Component {
         // this.timer = setTimeout(() => {
         //     this.setState({ isLoading: false, filteredContacts: this.contactsSearch('') })
         // }, 500);
-        userList.getUsersListFromSDK(1);
+        this.setState({
+            userList : [],
+            loaderStatus: this.props?.rosterData?.isFetchingUserList,
+        })
     }
 
     componentWillUnmount() {
@@ -306,6 +309,7 @@ class ParticipantPopUp extends Component {
                                                         </ul>
                                                     </div>
                                                 </li>
+                                                { this.props.isAppOnline ?
                                                 <InfiniteScroll
                                                     dataLength={userListArr.length}
                                                     next={this.fetchMoreData}
@@ -314,6 +318,9 @@ class ParticipantPopUp extends Component {
                                                 >
                                                     {this.handleUserListData()}
                                                 </InfiniteScroll>
+                                                 : this.handleUserListData()
+
+                                                }
                                             </ul>
                                         }
                                     </div>
@@ -332,7 +339,9 @@ const mapStateToProps = (state, props) => {
         rosterData: state.rosterData,
         popUpData: state.popUpData,
         contactsWhoBlockedMe: state.contactsWhoBlockedMe,
-        blockedContact: state.blockedContact
+        blockedContact: state.blockedContact,
+        isAppOnline: state?.appOnlineStatus?.isOnline,
+
     }
 }
 const mapDispatchToProps = {

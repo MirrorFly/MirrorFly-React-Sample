@@ -133,8 +133,8 @@ class WebChatCallLogs extends React.Component {
                                 let name = displayNameFromRencentChat(roster) || getFormatPhoneNumber(phoneNumber);
                                 displayName = displayName ? `${displayName}, ${name}` : name;
                                 initialName = initialNameHandle(roster, displayName);
-                                isAdminBlocked = roster.isAdminBlocked;
-                                deletedUser.push(roster.isDeletedUser ? true : false);
+                                let blockedContactArr = this.props.contactsWhoBlockedMe.data;
+                                 isAdminBlocked = blockedContactArr.indexOf(formatUserIdToJid(roster.userId)) > -1;                                
                                 image = userListLength > 1 ? null : roster.image;
                                 emailId = roster.emailId
                             } else {
@@ -163,12 +163,12 @@ class WebChatCallLogs extends React.Component {
                             <CallLogView
                                 key={`${callLog.roomId}-${index}`}
                                 displayName={displayName}
-                                image={image}
+                                image={isAdminBlocked? "" : image}
                                 searchterm={searchterm}
                                 callLog={callLog}
                                 makeCall={this.prepareForCall}
                                 emailId={emailId}
-                                initialName={initialName}
+                                initialName={isAdminBlocked? "" : initialName}
                                 isAdminBlocked={isAdminBlocked}
                                 isDeletedUser={isDeletedUser}
                             />
@@ -653,7 +653,9 @@ const mapStateToProps = (state, props) => {
         showConfrenceData: state.showConfrenceData, // Line - added to update the call log UI to display the last ended call when user on call log page. 
         groupsMemberParticipantsListData: state.groupsMemberParticipantsListData,
         contactPermission: state?.contactPermission?.data,
-        groupsData: state.groupsData
+        groupsData: state.groupsData,
+        contactsWhoBlockedMe: state.contactsWhoBlockedMe,
+
     });
 };
 

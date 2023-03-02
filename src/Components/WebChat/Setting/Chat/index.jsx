@@ -16,7 +16,7 @@ const Chat = (props = {}) => {
 
   const globalStoteData = useSelector((state) => state || {})
   const { TranslateLanguage: { translateLanguages: { translateLanguages = [] } }, webLocalStorageSetting : {isEnableArchived} = {} } = globalStoteData;
-  const { handleBackToSetting , setSelectedLaun = "English" } = props;
+  const { handleBackToSetting , setSelectedLaun = "English", featureStateData: { isTranslationEnabled = false } = {} } = props;
   const [enableTranslate, setEnableTranslate] = useState(false);
   const [language, setLaunguage] = useState(setSelectedLaun)
   const [showDrop, setshowDrop] = useState(false);
@@ -26,13 +26,27 @@ const Chat = (props = {}) => {
   useEffect(() => {
     const webSettings = getLocalWebsettings();
     if (webSettings && Object.keys(webSettings).length) {
-      setEnableTranslate(webSettings.translate || false);
-      setTranslate(webSettings.translate || false );
+      if (isTranslationEnabled) {
+        setEnableTranslate(webSettings.translate || false);
+        setTranslate(webSettings.translate || false );
+        setLocalWebsettings("translate", webSettings.translate || false);
+      } else {
+        setEnableTranslate(false);
+        setTranslate(false);
+        setLocalWebsettings("translate", false);
+      }
       setBoxedLayout(webSettings.boxLayout || false );
-      Store.dispatch(webSettingLocalAction({
-        "translate": webSettings.translate || false,
-        "isEnableArchived": webSettings.archive
-      }));
+      if (isTranslationEnabled) {
+        Store.dispatch(webSettingLocalAction({
+          "translate": webSettings.translate || false,
+          "isEnableArchived": webSettings.archive
+        }));
+      } else {
+        Store.dispatch(webSettingLocalAction({
+          "translate": false,
+          "isEnableArchived": webSettings.archive
+        }));
+      }      
     }
   }, []);
 
@@ -96,7 +110,7 @@ const Chat = (props = {}) => {
               id={"boxedLayout"}
               label={"Boxed View"}
               />}
-            <SettingCheckBox
+            {isTranslationEnabled && <SettingCheckBox
               getaAtion={handleTranslationState}
               chat={true}
               dafaultSetting={translate}
@@ -145,7 +159,7 @@ const Chat = (props = {}) => {
                   </p>
                 </div>
               )}
-            </SettingCheckBox>
+            </SettingCheckBox>}
           </ul>
         </div>
       </div>

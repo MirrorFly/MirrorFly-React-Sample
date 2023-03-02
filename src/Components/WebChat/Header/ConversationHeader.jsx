@@ -402,9 +402,8 @@ class ConversationHeader extends React.Component {
         const { image, displayName, emailId } = this.state
         const iniTail = initialNameHandle(this.state.localRoster, displayName);
         groupName = displayName;
-        let blockedContactArr = this.props.blockedContact.data;
-        const isBlocked = blockedContactArr.indexOf(formatUserIdToJid(activeChatId)) > -1;
-
+        let blockedContactArr = this.props.contactsWhoBlockedMe.data;
+        const isBlocked = blockedContactArr.indexOf(formatUserIdToJid(activeChatId)) > -1 || this.state.isAdminBlocked
         if (isBlocked) {
             canSendMessage = false;
         }
@@ -468,7 +467,7 @@ class ConversationHeader extends React.Component {
                         handlePopUpClassActive={this.props.handlePopUpClassActive}
                         mobileNumber={mobileNumber}
                         roster={this.state.localRoster}
-                        isAdminBlocked={this.state.isAdminBlocked}
+                        isAdminBlocked={ isBlocked  }
                     />
                 }
             </Fragment>

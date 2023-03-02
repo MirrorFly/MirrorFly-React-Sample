@@ -17,6 +17,7 @@ import { callIntermediateScreen } from '../../Actions/CallAction';
 import {getFromLocalStorageAndDecrypt} from '../WebChat/WebChatEncryptDecrypt';
 import userList from '../WebChat/RecentChat/userList';
 import InfiniteScroll from 'react-infinite-scroll-component';
+import { FEATURE_RESTRICTION_ERROR_MESSAGE } from '../../Helpers/Constants';
 
 let rosterDatas = [];
 
@@ -27,7 +28,6 @@ class ParticipantPopUp extends Component {
         const { popUpData: { modalProps: { groupMembers, modelType } } } = props;
         this.isInviteModelType = modelType === 'inviteParticipants';
         this.isCallLogModelType = modelType === 'calllogparticipants';
-
         this.state = {
             searchValue: '',
             groupMembers: [],
@@ -67,11 +67,16 @@ class ParticipantPopUp extends Component {
             selectedContactId = selectedContactId.filter(function( element ) {
                 return element !== undefined;
              });
-
-            this.setState({
-                participantToAdd: selectedContactId,
-                loaderStatus: this.props?.rosterData?.isFetchingUserList
-            });
+             const { rosterData: { data },
+                     popUpData: { modalProps: { groupName } } } = this.props
+            if(!groupName) {
+                this.setState({
+                    participantToAdd: selectedContactId,
+                    loaderStatus: this.props?.rosterData?.isFetchingUserList,
+                    userList: getFriendsFromRosters(handleFilterBlockedContact(data)),
+                    filteredContacts: getFriendsFromRosters(handleFilterBlockedContact(data))
+                });
+            }
         }
     }
 
@@ -98,10 +103,10 @@ class ParticipantPopUp extends Component {
 
     componentDidMount() {
         this.getCallInfoDetails();
-        this.setState({ isLoading: false })
+        this.setState({ isLoading: this.props?.rosterData?.isFetchingUserList })
         const { popUpData: { modalProps: { groupName } } } = this.props;
         if (this.isInviteModelType && !groupName && !this.isCallLogModelType) {
-            userList.getUsersListFromSDK(1);
+            this.setState({userList: []})
         }
     }
 
@@ -111,7 +116,7 @@ class ParticipantPopUp extends Component {
 
     renderParticpantPopup = () => {
         const { popUpData: { modalProps: { groupMemberDetails, groupMembers, selectDefault, groupName, currentCallUsers } } } = this.props
-        let { searchValue, participantToAdd  } = this.state;
+        let { searchValue } = this.state;
         let data = [];
         const vcardData = getLocalUserDetails();
 
@@ -136,12 +141,6 @@ class ParticipantPopUp extends Component {
                     rosterData = getUserDetails(userId);
                     data.push(rosterData)
                 }
-            });
-        }
-
-        if(selectDefault && data.length <= 7){
-            data.forEach((user) => {
-                this.prepareContactToAdd(user.userJid);
             });
         }
         rosterDatas = data;
@@ -169,7 +168,12 @@ class ParticipantPopUp extends Component {
             });
         });
         const adminFilteredContact = filteredContacts.filter(item=>item?.isAdminBlocked !== true && item?.isDeletedUser !== true)
-        this.setState({ participantToAdd: participantToAdd, filteredContacts: adminFilteredContact, userList: adminFilteredContact, groupMembers: rosterDatas });
+        if(selectDefault && adminFilteredContact.length <= 7){
+            adminFilteredContact.forEach((user) => {
+                this.prepareContactToAdd(user.userJid);
+            });
+        }
+        this.setState({ filteredContacts: adminFilteredContact, userList: adminFilteredContact, groupMembers: rosterDatas });
     }
 
     addParticipant = (userName, userInfo) => {
@@ -353,7 +357,9 @@ class ParticipantPopUp extends Component {
     render() {
         const { searchValue, participantToAdd, errorMesage,copyToast } = this.state
         const stateFilteredContacts = this.state.filteredContacts
-        const { popUpData: { modalProps: { groupName, currentCallUsersLength,callType, closePopup } } } = this.props;
+        const { popUpData: { modalProps: { groupName, currentCallUsersLength,callType, closePopup } },
+                featureStateData:{isOneToOneCallEnabled = false}
+             } = this.props;
         let BadgeList = this.selectedBadge();
         
         const title = this.isCallLogModelType ? 'Participants' : this.invideModeFun();
@@ -458,6 +464,7 @@ class ParticipantPopUp extends Component {
                                                 <span className="searchErrorMsg"><Info /> All members of your contacts are already in the call.</span>
                                             }
                                             <li>{errorMesage && <div className="errorMesage"><Info /><span>{errorMesage}</span></div>}</li>
+                                            {this.props.isAppOnline ?
                                             <InfiniteScroll
                                                 dataLength={userListArr.length}
                                                 next={this.fetchMoreData}
@@ -466,6 +473,8 @@ class ParticipantPopUp extends Component {
                                             >
                                                 {this.handleUserListData()}
                                             </InfiniteScroll>
+                                            : this.handleUserListData()
+                                            }
                                         </ul>
                                     }
                                     {this.state.loaderStatus && <div className="response_loader style-2">
@@ -474,7 +483,12 @@ class ParticipantPopUp extends Component {
                                     }
                                 </div>
                             </div>
-                            <div className={`webcallConnet ${(isAllUsersExists || hideCallNow) ? "disabled": ""}`} onClick={this.state.participantToAdd.length >= 1 ? this.addUsersInCall : ()=>{toast.info("Please select any Participant");}}>
+                            <div className={`webcallConnet ${(isAllUsersExists || hideCallNow) ? "disabled": ""}`} 
+                            onClick={this.state.participantToAdd.length > 1 ? this.addUsersInCall
+                               : (this.state.participantToAdd.length === 1 && isOneToOneCallEnabled) ? this.addUsersInCall 
+                               :()=> (this.state.participantToAdd.length === 1 && !isOneToOneCallEnabled) ? toast.error(FEATURE_RESTRICTION_ERROR_MESSAGE)
+                             : toast.info("Please select any Participant")
+                             }>
                                <span className="callBtn"><i>{callType === "audio" ? <FloatingCallAudio /> : <FloatingCallVideo/> }</i>
                                <span>Call now {this.state.participantToAdd.length ? `(${this.state.participantToAdd.length})` : null}</span></span>
                             </div>
@@ -497,7 +511,9 @@ const mapStateToProps = (state, props) => {
         rosterData: state.rosterData,
         popUpData: state.popUpData,
         blockedContact: state.blockedContact,
-        callIntermediateScreen: state.callIntermediateScreen
+        callIntermediateScreen: state.callIntermediateScreen,
+        isAppOnline: state?.appOnlineStatus?.isOnline,
+        featureStateData: state.featureStateData
     }
 }
 

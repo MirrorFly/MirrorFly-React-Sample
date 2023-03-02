@@ -25,6 +25,7 @@ import {
 import WebChatEmoji from '../../WebChat/WebChatEmoji';
 import { removeMoreNumberChar } from "../../../Helpers/Chat/ContentEditableEle"
 import { dataURLtoFile } from '../../../Helpers/Utility';
+import userList from '../RecentChat/userList';
 var cropme;
 export default class NewGroupProfile extends Component {
     constructor(props) {
@@ -290,6 +291,8 @@ export default class NewGroupProfile extends Component {
             })
             return
         }
+        userList.getUsersListFromSDK(1);
+
         this.props.handleMoveToPartcipantList({
             typingMessage, groupProfileImage, profileImage: true
         })

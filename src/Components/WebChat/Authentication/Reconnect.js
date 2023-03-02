@@ -7,7 +7,7 @@ import { blockedContactAction } from "../../../Actions/BlockAction";
 import { GroupsDataAction } from "../../../Actions/GroupsAction";
 import { isAppOnline, logout } from "../../../Helpers/Utility";
 import { setConnectionStatus } from "../Common/FileUploadValidation";
-import { CONNECTION_STATE_CONNECTING } from "../../../Helpers/Chat/Constant";
+import { CONNECTION_STATE_CONNECTING, SERVER_LOGOUT } from "../../../Helpers/Chat/Constant";
 import { WebChatConnectionState } from "../../../Actions/ConnectionState";
 import {
   getAllStarredMessages,
@@ -28,6 +28,7 @@ import { adminBlockStatusUpdate } from "../../../Actions/AdminBlockAction";
 import { toast } from 'react-toastify';
 import { ActiveChatResetAction } from "../../../Actions/RecentChatActions"
 import { hideModal } from '../../../Actions/PopUp';
+import { messageInfoAction } from "../../../Actions/MessageActions";
 
 const handleBlockMethods = async () => {
   const userIBlockedRes = await SDK.getUsersIBlocked();
@@ -60,7 +61,7 @@ const getAndUpdateChatMessages = async (chatId, chatType, rowId) => {
     if (chatId === getIdFromJid(chatMessageRes.userJid || chatMessageRes.groupJid)) {
       Store.dispatch(ChatMessageHistoryDataAction(chatMessageRes,true));
       const groupId = isGroupChat(chatType) ? chatId : "";
-      chatMessageRes.data.map((el) => {
+      chatMessageRes.data.forEach((el) => {
         if (!isLocalUser(el.publisherId) && el.rowId !== rowId) {
           if (isActiveConversationUserOrGroup(chatId)) {
             SDK.sendSeenStatus(formatUserIdToJid(el.publisherId), el.msgId, groupId);
@@ -95,7 +96,7 @@ const handleChatHistoryUpdate = (recentChatArr, oldRecentChatData) => {
       const isRefreshNeeded = checkIfConversationRefreshNeeded(newRecentChat, oldRecentChat);
 
       // If Message Status Changed - Refresh Conversation History
-      if (isRefreshNeeded) {
+      if (isRefreshNeeded || isAppOnline() ) {
         getAndUpdateChatMessages(chatId, chatType);
       }
 
@@ -120,7 +121,7 @@ const handleFavouriteMessages = async () => {
     const starredMessages = getAllStarredMessages();
     const addedFavs = favResult.data.filter(({ msgId: id1 }) => !starredMessages.some(({ msgId: id2 }) => id2 === id1));
     if (addedFavs.length) {
-      addedFavs.map((msg) => {
+      addedFavs.forEach((msg) => {
         const res = {
           fromUserId: msg.fromUserId,
           msgId: msg.msgId,
@@ -133,7 +134,7 @@ const handleFavouriteMessages = async () => {
       ({ msgId: id1 }) => !favResult.data.some(({ msgId: id2 }) => id2 === id1)
     );
     if (removedFavs.length) {
-      removedFavs.map((msg) => {
+      removedFavs.forEach((msg) => {
         const res = {
           fromUserId: msg.fromUserId,
           msgId: msg.msgId,
@@ -145,6 +146,12 @@ const handleFavouriteMessages = async () => {
     Store.dispatch(StarredMessagesList(favResult.data));
   }
 };
+
+const handleMentionedMessage = async () => {
+  const state = Store.getState();
+  Store.dispatch(messageInfoAction( state.selectedMessageInfoReducer.data.msgId , true));
+  SDK.getGroupMsgInfo(state.groupsMemberListData.data.groupJid,state.selectedMessageInfoReducer.data.msgId);
+}
 
 export async function login() {
   try {
@@ -161,14 +168,13 @@ export async function login() {
           Store.dispatch(GroupsDataAction(groupListRes.data));
         }
       const { data = [] } = groupListRes 
-        data.map(item=>{
+        data.forEach(item => {
           if( isActiveConversationUserOrGroup(item?.groupId) && item?.isAdminBlocked){
             Store.dispatch(ActiveChatResetAction());
             toast.info("This group is no longer available")
             Store.dispatch(hideModal())
           }  
-        }
-        )
+        });
         
         const oldRecentChatData = getRecentChatData();
         const recentChatsRes = await SDK.getRecentChats();
@@ -183,6 +189,7 @@ export async function login() {
         handleArchivedChats();
         handleBlockMethods();
         handleFavouriteMessages();
+        handleMentionedMessage();
       } else if (loginResult.statusCode === 403) {
         Store.dispatch(adminBlockStatusUpdate({
           toUserId: decryptResponse.username,
@@ -190,6 +197,10 @@ export async function login() {
         }));
         logout("block");
         return
+      } else if (loginResult.statusCode === 500){
+        logout(SERVER_LOGOUT);
+      } else if (loginResult.statusCode === 599){
+         login() && isAppOnline()
       }
     }
   } catch (error) {

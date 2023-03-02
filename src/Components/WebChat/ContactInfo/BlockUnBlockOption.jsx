@@ -10,7 +10,13 @@ import ChatMuteOption from "./ChatMuteOption";
 
 const BlockUnBlockOption = (props = {}) => {
   const { isBlocked, ClearPopupAction, popUpToggleAction, deletePopupAction, handleChatMuteAction,
-    reportSingleChatAction = () => { } } = props;
+    reportSingleChatAction = () => { }, featureStateData = {} } = props;
+    const {
+      isClearChatEnabled = true,
+      isDeleteChatEnabled = true,
+      isBlockEnabled = true,
+      isReportEnabled = true
+    } = featureStateData;
   const isPermanentArchvie = getArchiveSetting();
   const { data: { chatId = "", recent: { muteStatus = 0, archiveStatus = 0 } = {} } = {} } =
     useSelector((store) => store.activeChatData) || {};
@@ -23,7 +29,7 @@ const BlockUnBlockOption = (props = {}) => {
         <div className="text-disbaled"><BlockedInfo /> <span>Archived chats are muted</span></div>
       }
 
-      {isBlocked && (
+      {isBlockEnabled && isBlocked && (
         <div data-jest-id={"jestpopUpToggleAction"} className="about-no" onClick={popUpToggleAction}>
           <i className="UnBlockIcon">
             <UnBlock />
@@ -32,7 +38,7 @@ const BlockUnBlockOption = (props = {}) => {
         </div>
       )}
 
-      {!isBlocked && (
+      {isBlockEnabled && !isBlocked && (
         <div data-jest-id={"jestpopUpToggleAction"} className="about-no" onClick={popUpToggleAction}>
           <i className="BlockedIcon">
             <Blocked />
@@ -41,25 +47,32 @@ const BlockUnBlockOption = (props = {}) => {
         </div>
       )}
 
-      <div className="about-no" data-jest-id={"jestClearPopupAction"} onClick={ClearPopupAction}>
-        <i className="deleteIcon">
-          <ClearChat />
-        </i>
-        <span className="delete">{"Clear Chat"}</span>
-      </div>
+      {isClearChatEnabled &&
+        <div className="about-no" data-jest-id={"jestClearPopupAction"} onClick={ClearPopupAction}>
+          <i className="deleteIcon">
+            <ClearChat />
+          </i>
+          <span className="delete">{"Clear Chat"}</span>
+        </div>
+      }
 
-      <div data-jest-id={"jestdeletePopupAction"} className="about-no" onClick={deletePopupAction}>
-        <i className="deleteIcon">
-          <Delete />
-        </i>
-        <span className="delete">{"Delete Chat"}</span>
-      </div>
-      <div data-jest-id={"jestSingleReportAction"} className="about-no" onClick={reportSingleChatAction}>
-        <i className="reportIcon">
-          <IconSingleReport />
-        </i>
-        <span className="report">{"Report"}</span>
-      </div>
+      {isDeleteChatEnabled &&
+        <div data-jest-id={"jestdeletePopupAction"} className="about-no" onClick={deletePopupAction}>
+          <i className="deleteIcon">
+            <Delete />
+          </i>
+          <span className="delete">{"Delete Chat"}</span>
+        </div>
+      }
+
+      {isReportEnabled &&
+        <div data-jest-id={"jestSingleReportAction"} className="about-no" onClick={reportSingleChatAction}>
+          <i className="reportIcon">
+            <IconSingleReport />
+          </i>
+          <span className="report">{"Report"}</span>
+        </div>
+      }
     </div>
   );
 };

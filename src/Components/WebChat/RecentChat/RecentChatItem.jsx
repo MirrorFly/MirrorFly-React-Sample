@@ -45,6 +45,7 @@ import {
   formatUserIdToJid,
   getContactNameFromRoster,
   getDataFromRoster,
+  handleMentionedUser,
   initialNameHandle,
   isLocalUser
 } from "../../../Helpers/Chat/User";
@@ -72,6 +73,7 @@ import OutsideClickHandler from "react-outside-click-handler";
 import Modal from "../Common/Modal";
 import browserNotify from "../../../Helpers/Browser/BrowserNotify";
 import {getFromLocalStorageAndDecrypt} from "../WebChatEncryptDecrypt";
+
 
 const allowedIds = ["recent-menu", "recent-menu-archive", "recent-menu-archive-icon", "recent-menu-archive-text"];
 class RecentChatItem extends Component {
@@ -169,8 +171,8 @@ class RecentChatItem extends Component {
           {icons[msgType] || ""} {message}
         </>
       );
-    }
-    return renderHTML(getFormattedRecentChatText(message));
+      }
+    return renderHTML(handleMentionedUser(getFormattedRecentChatText(message), msgBody.mentionedUsersIds, false));
   };
 
   getDeletedText = (publisherId) =>

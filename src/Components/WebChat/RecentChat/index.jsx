@@ -210,7 +210,6 @@ class RecentChatSection extends Component {
 
   recentChatSearchFilter = (searchWith) => {
     const { recentChatItems } = this.state;
-
     this.chatExist = false;
     return recentChatItems.map((item) => {
       const { roster } = item;

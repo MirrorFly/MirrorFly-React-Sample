@@ -20,7 +20,8 @@ import {
   MESSAGE_INFO_UPDATE,
   UPDATE_STARRED_MESSAGE_LIST,
   UPDATE_STARRED_MESSAGE_STATUS,
-  CLEAR_ALL_CHAT
+  CLEAR_ALL_CHAT,
+  SELECTED_MESSAGE_INFO
 } from "./Constants";
 import { getFormatPhoneNumber } from "../Helpers/Utility";
 import { deleteChatSeenPendingMsg } from "./SingleChatMessageActions";
@@ -306,3 +307,12 @@ export const messageForwardReset = () => {
     payload: {}
   };
 };
+
+export const selectedMessageInfo = (data) => {
+  return (dispatch) => {
+        dispatch({
+            type: SELECTED_MESSAGE_INFO,
+            payload: data
+        });
+  }
+}

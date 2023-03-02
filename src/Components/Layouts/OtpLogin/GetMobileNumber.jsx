@@ -95,7 +95,7 @@ function GetMobileNumber(props = {}) {
           )}
         </div>
       </div>
-      <button id="GetOtp" onClick={handleValidate} type="button">
+      <button id="GetOtp" className="btn_lg_rounded" onClick={handleValidate} type="button">
         Continue
       </button>
       <div className="privary_policy_wrapper">

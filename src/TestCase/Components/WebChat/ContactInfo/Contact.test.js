@@ -22,7 +22,8 @@ describe(">>> TakeCameraPicture Test case <<<", () => {
         };
         const store = mockStore({
             CusPage: {},
-            cusTeams: {}
+            cusTeams: {},
+            featureStateData: {}
         });
         wrapper = mount(
             <Provider store={store}>
@@ -47,7 +48,8 @@ describe(">>> TakeCameraPicture Test case <<<", () => {
         };
         const store = mockStore({
             CusPage: {},
-            cusTeams: {}
+            cusTeams: {},
+            featureStateData: {}
         });
         wrapper = mount(
             <Provider store={store}>
@@ -73,7 +75,8 @@ describe(">>> TakeCameraPicture Test case <<<", () => {
         };
         const store = mockStore({
             CusPage: {},
-            cusTeams: {}
+            cusTeams: {},
+            featureStateData: {}
         });
         wrapper = mount(
             <Provider store={store}>

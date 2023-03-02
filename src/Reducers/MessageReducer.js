@@ -1,7 +1,8 @@
 import {
     MESSAGE_DATA, REPLY_MESSAGE_DATA, REPLY_MESSAGE_RESET,
     MESSAGE_INFO_DATA, MESSAGE_INFO_UPDATE, MESSAGE_FORWARD_ADD, MESSAGE_FORWARD_REMOVE,
-    MESSAGE_FORWARD_RESET
+    MESSAGE_FORWARD_RESET,
+    SELECTED_MESSAGE_INFO
 } from '../Actions/Constants';
 import { changeTimeFormat } from '../Helpers/Chat/RecentChat'
 import { getMsgStatusInOrder } from '../Helpers/Chat/ChatHelper';
@@ -118,4 +119,14 @@ export function messageForwardReducer(state = initialState, action = {}) {
         default:
             return state;
     }
+}
+
+export function selectedMessageInfoReducer(state = [], action = {}) {
+        if (action.type === SELECTED_MESSAGE_INFO) {
+            return {
+                ...state,
+               data: action.payload
+            }
+        }
+            return state;
 }

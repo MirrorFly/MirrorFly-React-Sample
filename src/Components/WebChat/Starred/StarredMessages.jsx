@@ -42,7 +42,7 @@ const StarredMessages = (props = {}) => {
  const [unstarDrop, setUnstarDrop] = useState(false);
  const [unstarConfirm, setUnstarConfirm] = useState(false);
  const [dropDownStatus, setDropDown] = useState(-1);
- const { handleBackToSetting } = props;
+ const { handleBackToSetting, featureStateData : { isStarMessageEnabled = false } = {} } = props;
  const { data: starData = [] } = useSelector((state) => state.starredMessages);
  const chatConversation = useSelector((state) => state.chatConversationHistory) || {};
  const { data: chatHistoreData = {} } = chatConversation;
@@ -330,28 +330,29 @@ const StarredMessages = (props = {}) => {
                </i>
                <span>Starred Messages</span>
              </div>
- 
-             <div className="starMenu">
-               <IconStaredMenu onClick={() => setUnstarDrop(!unstarDrop)} />
-               {unstarDrop && (
-                 <OutsideClickHandler onOutsideClick={() => setUnstarDrop(false)}>
-                   <ul className="menu-dropdown" style={{ padding: 0 }}>
-                     <li
-                       title="Starred Messages"
-                       onClick={starredMessages.length > 0 ? handleUnStarall : noUnstarMessages}
-                     >
-                       <i>
-                         <UnStar />
-                       </i>
-                       <span>Unstar all</span>
-                     </li>
-                   </ul>
-                 </OutsideClickHandler>
-               )}
-             </div>
+             { isStarMessageEnabled &&
+                <div className="starMenu">
+                  <IconStaredMenu onClick={() => setUnstarDrop(!unstarDrop)} />
+                  {unstarDrop && (
+                    <OutsideClickHandler onOutsideClick={() => setUnstarDrop(false)}>
+                      <ul className="menu-dropdown" style={{ padding: 0 }}>
+                        <li
+                          title="Starred Messages"
+                          onClick={starredMessages.length > 0 ? handleUnStarall : noUnstarMessages}
+                        >
+                          <i>
+                            <UnStar />
+                          </i>
+                          <span>Unstar all</span>
+                        </li>
+                      </ul>
+                    </OutsideClickHandler>
+                  )}
+                </div>
+              }
            </div>
  
-           {starredMessages.length > 0 && (
+           {isStarMessageEnabled && starredMessages.length > 0 && (
              <ul className="staredContainer">
                {starredMessages.map(
                  (el, i) =>

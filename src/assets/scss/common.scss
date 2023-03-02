@@ -2206,6 +2206,8 @@ i{
         .contactinfo-media {
           padding: 0em 1.250em;
           margin: 1.313em 0 0;
+          display: inline-block;
+          width: 100%;
 
           h5 {
             font-size: $font14;
@@ -2327,8 +2329,6 @@ i{
 
         .contactinfo-about-no {
           padding: 0 1.250em;
-          margin-bottom: 1.250em;
-
           h5 {
             font-size: $font14;
             font-family: $semibold;
@@ -2341,6 +2341,7 @@ i{
             border-bottom: 0.050em solid $mediacontactinfoborder;
             @include flexbox();
             @include align-items(center);
+            margin-top: -1px;
               &.active{
                 color: #36BB0E;
                 span{
@@ -4752,7 +4753,7 @@ width: calc(100% - 3.875em);
 
     .sender-sends {
 
-      i {
+      .send-attac-icon {
         display: flex;
         margin-right: 0.313em;
         width: 1em;
@@ -6938,6 +6939,69 @@ body > iframe {
 }
 }
 
+.mentioned{
+  display: inline-flex;
+  background-color: transparent;
+  outline: 0;
+  border: 0;
+  font: normal normal 14px/17px var(--medium);
+  letter-spacing: 0.2px;
+  padding: 0;
+  color: #B5B5B5;
+  text-transform: capitalize;
+  cursor: default;
+  i{
+    cursor: default;
+  }
+    div {
+      display: inline-block;
+    }
+    b{
+      color: #DBDBDB;
+    }
+    &.tagged{
+      padding: 0 4px;
+      border-radius: 2px;
+      background:#D2E3FC;
+      b{
+        color: #174EA5;
+      }
+    }
+    &.blue{
+      color: #174EA5;
+      b{
+        color: #174EA5;
+      }
+    }
+    &.with_space{
+      margin-right: 2px;
+    }
+    &.inactive{
+      color:inherit;
+      b{
+      color:inherit;
+      }
+    }
+}
+.sender .mentioned{
+  color: #174EA5;
+}
+.receiver .mentioned{
+  color: #fff;
+}
+.recentText{
+  .mentioned{
+  &:not(.tagged){
+    color:#73777E;
+    b{
+    color:#73777E;
+    }
+  }
+  &.tagged{
+    color:#174EA5;
+  }
+}
+}
 
 @import 'media-in-details.scss';
 @import 'single-group-chat.scss';

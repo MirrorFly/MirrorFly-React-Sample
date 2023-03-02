@@ -23,7 +23,8 @@ import { get as _get } from "lodash";
 import Store from "../../../Store";
 import { UpdateTypedMessage } from "../../../Actions/ChatHistory";
 import { encryptAndStoreInLocalStorage } from "../WebChatEncryptDecrypt";
-
+import MentionUserList from "./Templates/Common/MentionUserList";
+import { getUserDetails } from "../../../Helpers/Chat/User";
 function debounce(func, wait, immediate) {
   var timeout;
   return function () {
@@ -48,6 +49,7 @@ class WebChatMessagesComposing extends Component {
     this.state = {
       showEmoji: false,
       typingMessage: "",
+      typingMessageOriginal: "",
       showPreview: false,
       selectedSlide: 0,
       seletedFiles: {},
@@ -55,7 +57,9 @@ class WebChatMessagesComposing extends Component {
       recordingStatus: true,
       showCamera: false,
       cameraPermission: 0,
-      featuresAvailable: {}
+      featuresAvailable: {},
+      mentionedData: {},
+      mentionedUsersIds: []
     };
     this.position = 0;
     this.timeout = 0;
@@ -150,6 +154,13 @@ class WebChatMessagesComposing extends Component {
 
   handleMessage = (event = {}) => {
     const { value = "" } = _get(event, "target", {});
+    let temp = document.createElement("div");
+    temp.innerHTML = value;
+    let mentionedUiElements = temp.getElementsByClassName("mentioned");
+    Array.from(mentionedUiElements).forEach((e) => {
+      e.innerHTML = "@[?]"
+    });
+    let typingMessageOriginal = temp.textContent || temp.innerText;
     // Here '\n' compare with string length 1 instead of 2
     // Because when we use shift+enter to go next line, this '\n'
     // consider as single text not two chars. That's when value length 1 &
@@ -161,7 +172,8 @@ class WebChatMessagesComposing extends Component {
           (this.state.typingMessage.length === 0 && (value.trim().length === 0 || value === "&nbsp;")) ||
             (value.length === 1 && value === "\n")
             ? ""
-            : value
+            : value,
+        typingMessageOriginal: typingMessageOriginal
       },
       () => {
         Store.dispatch(UpdateTypedMessage({ chatId: this.props.jid, message: this.state.typingMessage }));
@@ -170,6 +182,7 @@ class WebChatMessagesComposing extends Component {
   };
 
   handleEmojiText = (emojiObject) => {
+    
     const messageContent = document.getElementById("typingContainer");
     let position = this.position;
     let text = "";
@@ -181,8 +194,8 @@ class WebChatMessagesComposing extends Component {
       text = emojiObject;
       position = emojiObject.length;
     } else {
-      const start = messageContent?.textContent?.substring(0, this.position);
-      const end = messageContent?.textContent?.substring(this.position);
+      const start = messageContent?.innerHTML?.substring(0, this.position);
+      const end = messageContent?.innerHTML?.substring(this.position);
       text = start + emojiObject + end;
       position = this.position + _get(emojiObject, "length", 0);
     }
@@ -208,35 +221,38 @@ class WebChatMessagesComposing extends Component {
     this.selectedText = selectedText;
   };
 
-  handleEmptyContent = () =>{
+  handleEmptyContent = () => {
     this.setState({
-      typingMessage:""
+      typingMessage: "",
+      typingMessageOriginal: ""
     })
   }
-  
-  handleSendMsg = (messageType, messageContent) => {
+
+  handleSendMsg = (messageType, messageContent) => {    
     let message;
     const { loaderStatus, handleSendMsg } = this.props;
     if (loaderStatus) return;
     if (messageType === "text") {
       message = {
         type: "text",
-        content: messageContent.toString().replace(/<br>/g, "\n").trim()
-      };
+        content: messageContent,
+      };  
     } else if (messageType === "media") {
       message = {
         type: "media",
         content: messageContent
       };
     }
+    message.mentionedUsersIds = this.state.mentionedUsersIds;
     const showEmoji = this.state.showEmoji;
     this.setState(
       {
-        // typingMessage: "",
+        typingMessage: "",
         showEmoji: false,
         showPreview: false,
         showAttachement: false,
-        seletedFiles: {}
+        seletedFiles: {},
+        mentionedUsersIds: []
       },
       () => {
         handleSendMsg(message);
@@ -249,7 +265,7 @@ class WebChatMessagesComposing extends Component {
   };
 
   handleSendTextMsg = () => {
-    this.handleSendMsg("text", this.state.typingMessage);
+    this.handleSendMsg("text", this.state.typingMessageOriginal, true,this.state.mentionedList);
   };
 
   handleSendMediaMsg = (Media) => {
@@ -437,6 +453,81 @@ class WebChatMessagesComposing extends Component {
     });
   };
 
+  handleMentionView = (view = false, Groupdata = {}) => {
+
+    this.setState({
+      showMention: view,
+      GroupParticiapantsList: Groupdata,
+    });
+  };
+
+   handleMentionedData = (userId) => {
+    let rosterData = getUserDetails(userId);
+    let displayName = rosterData.displayName;
+    let position = this.position;
+    let text = "";
+    const messageContent = document.getElementById("typingContainer");
+    let start = messageContent?.innerHTML?.substring(0, this.position);
+    start = start.substring(0, start.lastIndexOf("@"));
+    const end = messageContent?.innerHTML?.substring(this.position);
+    const uihtml = `<span data-mentioned="${userId}" class="mentioned blue">@${displayName}</span> `;
+    text = start + uihtml + end;
+    position = this.position + _get(uihtml, "length", 0);
+    let temp = document.createElement("div");
+    temp.innerHTML = text;
+    let mentionedUiElements = temp.getElementsByClassName("mentioned");
+    Array.from(mentionedUiElements).forEach((e) => {
+      e.innerHTML = "@[?]";
+    });
+    let typingMessageOriginal = temp.textContent || temp.innerText;
+    let mentionedUsersIds = [...this.state.mentionedUsersIds];
+    mentionedUsersIds.push(userId);
+    this.setState({
+      typingMessage: text ,
+      showMention: false,
+      typingMessageOriginal: typingMessageOriginal,
+      mentionedUsersIds: mentionedUsersIds
+    }, () => {
+      this.setCursorPosition(position);
+      setCaretPosition(messageContent, position);
+    });
+  };
+
+  removeMentionedUserId=(arr, value)=> {
+    var index = arr.indexOf(value);
+    if (index > -1) {
+      arr.splice(index, 1);
+    }
+    return arr;
+  }
+
+  handleDeleteMentionedUser = (ele) =>{
+      let mentionedId = ele.dataset.mentioned;
+      let mentionedUsersIds = [this.state.mentionedUsersIds];
+      this.setState({
+        mentionedUsersIds: this.removeMentionedUserId(mentionedUsersIds[0], mentionedId), 
+      })
+  }
+
+  groupMemberSearchList = (searchWith) => {
+    const { GroupParticiapantsList } = this.state;
+    const searchResult = GroupParticiapantsList.filter((ele) => ele.userProfile.nickName.toLowerCase().includes(searchWith.toLowerCase()))
+    return searchResult;
+  };
+
+  handleSearchView = (searchValue) => {
+    clearTimeout(this.timer);
+    this.timer = setTimeout(() => {
+      this.setState({
+        searchEnable: searchValue === "" ? false : true,
+        searchValue: searchValue,
+        GroupParticiapantsList: this.groupMemberSearchList(searchValue)
+
+      })
+
+    }, 0);
+  }
+
   findReply = (jid = "") => {
     const { userReplayDetails = [] } = this.props;
     const autoReplay = userReplayDetails.some(
@@ -486,6 +577,7 @@ class WebChatMessagesComposing extends Component {
 
   render() {
     const {
+      showMention,
       selectedSlide,
       showPreview,
       seletedFiles,
@@ -495,7 +587,8 @@ class WebChatMessagesComposing extends Component {
       recordingStatus,
       showCamera,
       cameraPermission,
-      featuresAvailable
+      featuresAvailable,
+      GroupParticiapantsList = {}
     } = this.state;
     let { 
       isAttachmentEnabled = false,
@@ -528,6 +621,12 @@ class WebChatMessagesComposing extends Component {
             />
           ) : null}
         </OutsideClickHandler>
+        {(GroupParticiapantsList.length > 0 && showMention) ?
+          <OutsideClickHandler onOutsideClick={() => this.handleMentionView(false)}>
+            <MentionUserList handleMentionedData={this.handleMentionedData} GroupParticiapantsList={GroupParticiapantsList} />
+          </OutsideClickHandler>
+          : null
+        }
 
         {recordingStatus && Config.attachement && showAttachement && (
           <Attachement
@@ -582,7 +681,7 @@ class WebChatMessagesComposing extends Component {
             />
           </Modal>
         )}
-        <form style={{visibility:this.props.forwardOption ? "hidden" : " "}} className="message-area-container">
+        <form style={{ visibility: this.props.forwardOption ? "hidden" : " " }} className="message-area-container">
           <div className="message-area">
             <i
               className="em em-slightly_smiling_face"
@@ -590,6 +689,8 @@ class WebChatMessagesComposing extends Component {
               onClick={this.handleShowEmojis}
             ></i>
             <ContentEditable
+              handleMentionView={this.handleMentionView}
+              handleSearchView={this.handleSearchView}
               loaderStatus={loaderStatus}
               html={typingMessage}
               id="typingContainer"
@@ -602,6 +703,7 @@ class WebChatMessagesComposing extends Component {
               setCursorPosition={this.setCursorPosition}
               setSelectedText={this.setSelectedText}
               handleEmptyContent={this.handleEmptyContent}
+              handleDeleteMentionedUser={this.handleDeleteMentionedUser}
             />
             <div className="intraction icon">
               {recordingStatus && Config.attachement && isAttachmentEnabled && (
@@ -644,7 +746,9 @@ const mapStateToProps = (state) => {
     featureStateData: state.featureStateData,
     conversationState: state.conversationState,
     chatConversationHistory: state.chatConversationHistory,
-    activeChatData: state.activeChatData
+    activeChatData: state.activeChatData,
+    groupsMemberListData: state.groupsMemberListData,
+
   };
 };
 

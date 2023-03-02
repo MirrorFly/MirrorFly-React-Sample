@@ -104,7 +104,7 @@
       .inputGroup select option {
         cursor: pointer;
       }
-      button {
+      .btn_lg_rounded {
         width: auto;
         height: 3.125em;
         min-height: 3.125em;
@@ -122,7 +122,7 @@
         transition: all linear 200ms;
         padding: 0 4em;
       }
-      button:hover {
+      .btn_lg_rounded:hover {
         transition: all linear 200ms;
         background: var(--PrimaryColor2);
       }
@@ -159,7 +159,7 @@
       }
       &.otpForm {
         margin: 0 auto;
-        button {
+        .btn_lg_rounded {
           margin-top: 2.5em;
         }
         .Links {
