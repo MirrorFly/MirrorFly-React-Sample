@@ -155,6 +155,7 @@ export const getDataFromSDK = async(userId) => {
                 isDeletedUser: true,
                 email: "",
                 image: "",
+                thumbImage: "",
                 isAdminBlocked: false,
                 isFriend: false,
                 mobileNumber: "",
@@ -206,9 +207,6 @@ export const getUserNickName = (userObj) => {
 }
 
 export const isDisplayNickName = (userObj) => {
-    if(userObj.nickName!==userObj.userId){
-        userObj.nickName="";
-    }
     return !isLocalUser(userObj.userId) && !userObj.isFriend && userObj.nickName;
 }
 
@@ -225,28 +223,32 @@ export const getUserDetails = (userJid = "") => {
         rosterData.displayName = "You";
         rosterData.isFriend = true;
         rosterData.image = vcardData.image;
+        rosterData.thumbImage = vcardData.thumbImage;
         rosterData.jid = user;
         rosterData.chatType = "chat";
         rosterData.initialName = vcardData.nickName;
     } else {
         let userDetails = getDataFromRoster(user);
+        let { isAdminBlocked, image, thumbImage } = userDetails;
         if (Object.keys(userDetails).length > 0) {
             rosterData = userDetails;
             rosterData.displayName = getContactNameFromRoster(userDetails);
-            rosterData.image = userDetails.isAdminBlocked ? "" : userDetails.image;
+            rosterData.image = isAdminBlocked ? "" : image;
+            rosterData.thumbImage = isAdminBlocked ? "" : thumbImage;
             rosterData.chatType = "chat";
-            rosterData.initialName = userDetails.isAdminBlocked ? "" : rosterData.displayName;
-            rosterData.isAdminBlocked = userDetails.isAdminBlocked
+            rosterData.initialName = isAdminBlocked ? "" : rosterData.displayName;
+            rosterData.isAdminBlocked = isAdminBlocked;
         } else {
             rosterData.displayName = getFormatPhoneNumber(user);
             rosterData.initialName = "";
             rosterData.image = "";
+            rosterData.thumbImage = "";
             rosterData.jid = user;
             rosterData.chatType = "chat";
             rosterData.userColor = "";
             rosterData.userId = user;
             rosterData.userJid = formatUserIdToJid(user);
-            rosterData.isAdminBlocked = userDetails.isAdminBlocked
+            rosterData.isAdminBlocked = isAdminBlocked;
         }
     }
     return rosterData;
@@ -262,7 +264,7 @@ export const handleMentionedUser = (text = "" ,mentionedUsersIds, mentionedMe) =
     let UserId = mentionedUsersIds;
     if (!text) return "";
   const pattern = /@(?:\W\D\W)/gi;
-  if (text !== "" && text.match(pattern) !== null && text.match(pattern).length > 0 && text.match(pattern) !== undefined) {
+  if (mentionedUsersIds !== undefined && text !== "" && text.match(pattern) !== null && text.match(pattern).length > 0 && text.match(pattern) !== undefined) {
     let content = text;
     let particiantData =[]
     particiantData = content.match(pattern);

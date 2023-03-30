@@ -67,7 +67,7 @@ export default React.memo(({ msgId, viewOriginalMessage, groupMemberDetails, cha
         return null
     }
 
-    const { replyMsgId, fromUserId: messageFrom, replyMsgContent: { message, message_type, media = { },mentionedUsersIds,
+    const { replyMsgId, fromUserId: messageFrom, replyMsgContent: { message, message_type, media = {}, mentionedUsersIds = [],
         location: { latitude, longitude } = {},
         contact: { name } = {} } } = replyMessageData 
     const { fileName, duration, caption, audioType,thumb_image } = media;

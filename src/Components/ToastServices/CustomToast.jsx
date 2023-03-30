@@ -6,11 +6,11 @@ import { toast } from "react-toastify";
 let userJoinedList = [],
   userLeftList = [];
 
-export const getToastElement = (msg, imageToken, initial) => (
+export const getToastElement = (msg, imageToken, imageTokenThumb, initial) => (
   <div className="customToastWrapper">
     <div className="customToast show">
       <div className="outertoast">
-        <ProfileImage chatType={"chat"} imageToken={imageToken} name={initial} />
+        <ProfileImage chatType={"chat"} imageToken={imageTokenThumb !== "" ? imageTokenThumb : imageToken} name={initial} />
       </div>
       <span>{msg}</span>
     </div>
@@ -42,12 +42,12 @@ export const getMessage = (userList = []) => {
   else return `${userList[0]} and ${userList.length - 1} more have `;
 };
 
-export const callLinkToast = (type, displayName, imageToken = "", initial = "", toastId = "") => {
+export const callLinkToast = (type, displayName, imageToken = "", imageTokenThumb = "", initial = "", toastId = "") => {
   updateUserList(type, displayName, "open");
   let msg = type === "join" ? `${getMessage(userJoinedList)} joined` : `${getMessage(userLeftList)} left`;
   if (toast.isActive(toastId)) {
-    toast.update(toastId, { render: getToastElement(msg, imageToken, initial) });
+    toast.update(toastId, { render: getToastElement(msg, imageToken, imageTokenThumb, initial) });
   }
 
-  ToastServices.ParticipantToast(getToastElement(msg, imageToken, initial), toastId, displayName, type);
+  ToastServices.ParticipantToast(getToastElement(msg, imageToken, imageTokenThumb, initial), toastId, displayName, type);
 };

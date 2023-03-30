@@ -567,6 +567,7 @@ class WebChatContactInfo extends React.Component {
         if (!this.props.contactPermission) {
             this.handleCloseAddNewParticipantsPopup();
         }
+        const {image = ""} = this.props.roster;
         return (
             <Fragment>
                 <div>
@@ -631,7 +632,7 @@ class WebChatContactInfo extends React.Component {
                                                             chatType={'chat'}
                                                             blocked={isUserWhoBlockedMe(chatJid)}
                                                             temporary={false}
-                                                            imageToken={this.props.rosterImage}
+                                                            imageToken={image}
                                                         />
                                                     }
                                                     <i className="preview-close" onClick={this.handleContactInfoImg}><ClosePopup /></i>
@@ -690,6 +691,7 @@ class WebChatContactInfo extends React.Component {
                                                 imageToken={this.props.rosterImage}
                                                 jid={chatJid}
                                                 groupName={this.props.rosterName}
+                                                roster={this.props.roster}
                                             />
                                             <div className="groupinfo-details">
                                                 {!viewEdit && <>

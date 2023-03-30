@@ -277,14 +277,21 @@ class ParticipantPopUp extends Component {
         let { participantToAdd } = this.state;
         let token = getFromLocalStorageAndDecrypt('token');
         return rosterDatas.map((contact, key) => {
-            const { displayName, name, username, userJid, image } = contact
+            const { displayName, name, username, userJid, image, thumbImage } = contact
             const contactName = displayName || name || username
             const updateJid = username || userJid
             if (!participantToAdd.includes(updateJid)) {
                 return false
             }
             return (
-                <ParticipantsBadge removeParticipant={this.removeParticipant} key={key} jid={updateJid} userToken={token} image={image} contactName={contactName} />
+                <ParticipantsBadge 
+                    removeParticipant={this.removeParticipant}
+                    key={key}
+                    jid={updateJid}
+                    userToken={token}
+                    image={image}
+                    thumbImage={thumbImage}
+                    contactName={contactName} />
             )
         })
     }
@@ -330,6 +337,7 @@ class ParticipantPopUp extends Component {
                         isChanged={isChanged}
                         statusMsg={status}
                         image={contact.image}
+                        thumbImage={contact.thumbImage}
                         emailId={contact.emailId}
                         membersCount={filteredContacts.length + participantToAdd.length}
                         errorMessageListner={this.errorMessageListner}

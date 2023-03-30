@@ -131,8 +131,9 @@ class WebRtcCall extends React.Component {
 
     handleInvitePeople = () => {
         const callStatus = this.getCallStatus();
-        const callConnectionData = JSON.parse(getFromLocalStorageAndDecrypt('call_connection_status'))
-        if(callConnectionData.callMode === "onetoone"){
+        const callConnectionData = JSON.parse(getFromLocalStorageAndDecrypt('call_connection_status'));
+        const {callMode, groupId} = callConnectionData;
+        if((!callConnectionData.hasOwnProperty('groupId') || groupId === null || "") && (callMode === "onetoone" || callMode === "onetomany")){
             userList.getUsersListFromSDK(1);
         }   
 
@@ -478,6 +479,7 @@ class WebRtcCall extends React.Component {
         let group = getGroupData(groupId);
         rosterData.displayName = group.groupName;
         rosterData.image = group.groupImage;
+        rosterData.thumbImage = group.thumbImage;
         rosterData.jid = group.groupId;
         rosterData.chatType = "groupchat";
         return rosterData;
@@ -581,7 +583,7 @@ class WebRtcCall extends React.Component {
                 userStatus={this.getCallStatus(rs.fromJid)}
                 name={rosterData.displayName}
                 initialName={rosterData.initialName}
-                imageUrl={rosterData.image}
+                imageUrl={rosterData.thumbImage !== "" ? rosterData.thumbImage : rosterData.image}
                 roster={rosterData}
                 audioMuted={audioMuted}
                 videoMuted={videoMuted}

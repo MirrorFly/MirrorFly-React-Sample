@@ -41,6 +41,7 @@ import AudioComponent from "./AudioComponent";
 import DocumentComponent from "./DocumentComponent";
 import LocationComponent from "./LocationComponent";
 import ContactComponent from "./ContactComponent";
+import { getExtension } from "../../../Common/FileUploadValidation";
 
 const ChatMessageTemplate = (props = {}) => {
   const dispatch = useDispatch();
@@ -242,10 +243,13 @@ const ChatMessageTemplate = (props = {}) => {
   const updatePhone = _isArray(phone_number) ? phone_number.join("\n") : phone_number;
 
   const getAudioFile = () => {
+    const fileExtension = getExtension(fileName);
+    const fileExtensionSlice = fileExtension.split(".")[1]
     localDb
       .getImageByKey(file_url, getDbInstanceName("audio"), file_key)
       .then((blob) => {
-        const blobUrl = window.URL.createObjectURL(blob);
+        const dbBlob = new Blob([blob],{type: message_type +"/"+ fileExtensionSlice});
+        const blobUrl = window.URL.createObjectURL(dbBlob) 
         setMediaUrl(blobUrl);
         setUploadStatus(2);
       })

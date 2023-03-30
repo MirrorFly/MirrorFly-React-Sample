@@ -161,8 +161,11 @@ class WebChatFields extends React.Component {
         }
         if (userName !== "") {
             let mobileno = vCardData.mobileNumber;
+            let profileImage = "";
+            if(vCardData.thumbImage !== "") profileImage = vCardData.thumbImage;
+            else profileImage = vCardData.image;
             const isUserNameChanged = this.state.lastUserName !== userName;
-            let response = isUserNameChanged ? await SDK.setUserProfile(userName, vCardData.image, vCardData.status, mobileno, vCardData.email) : {};
+            let response = isUserNameChanged ? await SDK.setUserProfile(userName, profileImage, vCardData.status, mobileno, vCardData.email) : {};
             if (response.statusCode === 200 || !isUserNameChanged) {
                 this.setState({
                     userNameChars: this.findNegativeValue(this.props.vCardData.data.nickName, REACT_APP_PROFILE_NAME_CHAR),
@@ -188,8 +191,11 @@ class WebChatFields extends React.Component {
         userStatus = userStatus.trim();
         if (userStatus !== "") {
             let mobileno = vCardData.mobileNumber;
+            let profileImage = "";
+            if(vCardData.thumbImage !== "") profileImage = vCardData.thumbImage;
+            else profileImage = vCardData.image;
             const isUserStatusChanged = this.state.lastUserStatus !== userStatus;
-            let response = isUserStatusChanged ? await SDK.setUserProfile(vCardData.nickName, vCardData.image, userStatus, mobileno, vCardData.email) : {};
+            let response = isUserStatusChanged ? await SDK.setUserProfile(vCardData.nickName, profileImage, userStatus, mobileno, vCardData.email) : {};
             if (response.statusCode === 200 || !isUserStatusChanged) {
                 this.setState({
                     statusChars: this.findNegativeValue(this.props.vCardData.data.status, REACT_APP_STATUS_CHAR),

@@ -4,14 +4,14 @@ import { showModal } from '../../../Actions/PopUp';
 import {  DropdownArrow } from '../../../assets/images';
 import Store from '../../../Store';
 import ProfileImage from '../Common/ProfileImage';
-import { formatUserIdToJid, isLocalUser, isDisplayNickName, getUserNickName, getContactNameFromRoster, getDataFromRoster } from '../../../Helpers/Chat/User';
+import { formatUserIdToJid, isLocalUser, getUserNickName, getContactNameFromRoster, getDataFromRoster } from '../../../Helpers/Chat/User';
 import UserStatus from '../Common/UserStatus';
 import { getFormatPhoneNumber } from '../../../Helpers/Utility';
 import { getFromLocalStorageAndDecrypt } from '../WebChatEncryptDecrypt';
 
 const Participants = (props) => {
 
-    const { isAdmin, groupuniqueId, members: { GroupUser, userId: fromuser, username, image, userId, emailId, status, statusMsg, userType } = {} } = props
+    const { isAdmin, groupuniqueId, members: { GroupUser, userId: fromuser, username, image, thumbImage, userId, emailId, status, statusMsg, userType } = {} } = props
     const displayName = isLocalUser(userId) ? "You" : getContactNameFromRoster(getDataFromRoster(userId)) || getFormatPhoneNumber(userId);
 
     const [menuDropDownStatus, setmenuDropDownStatus] = useState(false)
@@ -60,7 +60,7 @@ const Participants = (props) => {
     const localUser = isLocalUser(fromuser)
     const nickName = getUserNickName(props.members);
     const token = getFromLocalStorageAndDecrypt('token');
-    const displayNickname = isDisplayNickName(props.members);
+    const displayNickname = false;
 
     const getInitalName = () => {
         if (localUser) return nickName;
@@ -82,7 +82,7 @@ const Participants = (props) => {
                         chatType={'chat'}
                         userToken={token}
                         temporary={false}
-                        imageToken={image}
+                        imageToken={thumbImage !== "" ? thumbImage : image}
                         emailId={emailId}
                         userId={updateJid}
                         name={getInitalName()}

@@ -162,8 +162,11 @@ class WebChatVCard extends React.Component {
 
             if (response.statusCode === 200) {
                 const fileBlob = await fileToBlob(image);
+                let fileToken = "";
+                if(response.fileTokenThumb !== "") fileToken = response.fileTokenThumb;
+                else fileToken = response.fileToken;
                 this.setState({ profileImg: URL.createObjectURL(fileBlob) })
-                indexedDb.setImage(response.fileToken, fileBlob, "profileimages");
+                indexedDb.setImage(fileToken, fileBlob, "profileimages");
                 toastr.success(PROFILE_UPDATE_SUCCESS);
             }
 
@@ -395,6 +398,7 @@ class WebChatVCard extends React.Component {
             openCropy = false,
             onCameraPermissionDenied } = this.state;
         let { vCardData } = this.props;
+        let { data: { nickName = "", image = "", thumbImage = "" } = {} } = vCardData;
 
         return <Fragment>
             {vCardData && vCardData.data && <>
@@ -402,12 +406,12 @@ class WebChatVCard extends React.Component {
                     <div className="image">
                         <ProfileImage
                             chatType={'chat'}
-                            imageToken={vCardData.data.image}
+                            imageToken={thumbImage !== "" ? thumbImage : image}
                             temporary={true}
-                            name={vCardData.data.nickName}
+                            name={nickName}
                         />
                     </div>
-                    <span title={renderHTML(vCardData.data.nickName)}>{renderHTML(vCardData.data.nickName)}</span>
+                    <span title={renderHTML(nickName)}>{renderHTML(nickName)}</span>
                 </div>
                 {viewProfileStatus && <div className="userprofile">
                     <OutsideClickHandler
@@ -431,9 +435,9 @@ class WebChatVCard extends React.Component {
                                         {/* user image empty no perview button */}
                                         <ProfileImage
                                         chatType={'chat'}
-                                        imageToken={vCardData.data.image}
+                                        imageToken={thumbImage !== "" ? thumbImage : image}
                                         temporary={true}
-                                        name={vCardData.data.nickName}
+                                        name={nickName}
                                         profileImageView={(e) => profileImg !== SampleProfile ? this.handleProfileImageShow(e) : null}
                                         />
                                         <i className="camera-edit" onClick={(e) => this.handleProfileImgDropDownVcard(e)}>
@@ -477,6 +481,7 @@ class WebChatVCard extends React.Component {
                                                 </>
                                             }
                                         </React.Fragment>
+
                                         {showProfileImg && <div className="Viewphoto-container">
                                             <div className="Viewphoto-preview">
                                                 <img src={profileImg} alt="vcard-profile" />

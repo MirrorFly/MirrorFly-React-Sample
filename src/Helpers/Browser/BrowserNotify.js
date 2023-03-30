@@ -14,6 +14,7 @@ const getGroupDetails = (groupId) => {
     let group = getGroupData(groupId);
     rosterData.displayName = group.groupName;
     rosterData.image = group.groupImage;
+    rosterData.thumbImage = group.thumbImage;
     rosterData.jid = group.groupId;
     rosterData.chatType = "groupchat";
     return rosterData;
@@ -96,7 +97,7 @@ const browserNotify = {
         }
 
         if(rosterData.image){
-            let image = rosterData.image;
+            let image = rosterData.thumbImage !== "" ? rosterData.thumbImage : rosterData.image;
             const localDb = new IndexedDb();
             if(Array.isArray(image)){
                 image = image[0];

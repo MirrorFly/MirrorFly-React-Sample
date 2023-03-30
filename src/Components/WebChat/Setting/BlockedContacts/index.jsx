@@ -83,14 +83,14 @@ class BlockedContacts extends Component {
       if (contactDetails.length === 0) return null
       const token = getFromLocalStorageAndDecrypt('token');
       return contactDetails.map((contact, index) => {
-         const { chatType, image, emailId, statusMsg, status, userId, userJid } = contact
+         const { chatType, image, thumbImage, emailId, statusMsg, status, userId, userJid } = contact
          const nameToDisplay = getContactNameFromRoster(contact)
          return (
             <li key={index} className="chat-list-li">
                <ProfileImage
                   chatType={chatType || CHAT_TYPE_SINGLE}
                   userToken={token}
-                  imageToken={image}
+                  imageToken={thumbImage !== "" ? thumbImage : image}
                   emailId={emailId}
                   userId={userId}
                   name={nameToDisplay}

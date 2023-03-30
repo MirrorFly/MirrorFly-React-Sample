@@ -64,12 +64,14 @@ class WebChatMediaPreview extends React.Component {
     document.addEventListener("keydown", this.handleOnKeyPress, false);
   }
 
-  getFile = async (fileToken, type, thumbImage, fileKey) => {
+  getFile = async (fileToken, type, thumbImage, fileKey,fileExtensionSlice) => {
     if (!fileToken) return null;
     if (type === "video") {
       const mediaResponse = await SDK.getMediaURL(fileToken, fileKey);
       if (mediaResponse.statusCode === 200) {
-        return mediaResponse.data.blobUrl; 
+        const videoBlob = new Blob([mediaResponse.data.blob],{type: type +"/"+ fileExtensionSlice});
+        const blobUrl = window.URL.createObjectURL(videoBlob) 
+        return blobUrl
       } else {
         console.log("error in loading media file");
         return "";
@@ -78,7 +80,9 @@ class WebChatMediaPreview extends React.Component {
       return this.localDb
       .getImageByKey(fileToken, getDbInstanceName(type), fileKey)
       .then((blob) => {
-        return window.URL.createObjectURL(blob);
+        const dbBlob = new Blob([blob],{type: type +"/"+ fileExtensionSlice});
+        const blobUrl = window.URL.createObjectURL(dbBlob) 
+        return blobUrl
       })
       .catch(() => thumbImage);
     }
@@ -111,10 +115,12 @@ class WebChatMediaPreview extends React.Component {
         let mediaData = {};
         const fileExtension = getExtension(fileName);
         const placeholder = getFileFromType(null, fileExtension);
+        const fileExtensionSlice = fileExtension.split(".")[1]
+
 
         switch (message_type) {
           case "image":
-            const imageSrc = is_uploading === 1 ? file_url : await this.getFile(file_url, "image", thumb_image, file_key);
+            const imageSrc = is_uploading === 1 ? file_url : await this.getFile(file_url, "image", thumb_image, file_key,fileExtensionSlice);
             if (!imageSrc || imageSrc === "") {
               break;
             }
@@ -169,7 +175,7 @@ class WebChatMediaPreview extends React.Component {
             break;
 
           case "audio":
-            const audioSrc = is_uploading === 1 ? file_url : await this.getFile(file_url, "audio", {}, file_key);
+            const audioSrc = is_uploading === 1 ? file_url : await this.getFile(file_url, "audio", {}, file_key,fileExtensionSlice);
             if (!audioSrc || audioSrc === "") {
               break;
             }
@@ -192,7 +198,7 @@ class WebChatMediaPreview extends React.Component {
             break;
 
           case "video":
-            const videoSrc = is_uploading === 1 ? file_url : await this.getFile(file_url, "video", {}, file_key);
+            const videoSrc = is_uploading === 1 ? file_url : await this.getFile(file_url, "video", {}, file_key,fileExtensionSlice);
             if (!videoSrc || videoSrc === "") {
               break;
             }
@@ -619,7 +625,7 @@ class WebChatMediaPreview extends React.Component {
 
   handleStarMessage = async () => {
     const { starStatusCheck = false, seletedMsgId = "" } = this.state;
-    SDK.updateFavouriteStatus(formatUserIdToJid(this.props.jid), [seletedMsgId], !starStatusCheck);
+    SDK.updateFavouriteStatus(formatUserIdToJid(this.props.jid,this.props.chatType), [seletedMsgId], !starStatusCheck);
     this.setState({ starStatusCheck: !starStatusCheck })
   };
   

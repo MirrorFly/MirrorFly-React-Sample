@@ -25,6 +25,7 @@ import { FloatingCallActionSm, ArrowBack, EmptyCallLog } from '../../../assets/i
 import NewParticipants from '../../WebChat/NewGroup/NewParticipants';
 import { CHAT_TYPE_GROUP, NEW_CALL_CONTACT_PERMISSION_DENIED } from '../../../Helpers/Chat/Constant';
 import { startCallingTimer } from '../../../Helpers/Call/Call';
+import userList from '../../WebChat/RecentChat/userList';
 
 class WebChatCallLogs extends React.Component {
 
@@ -135,7 +136,7 @@ class WebChatCallLogs extends React.Component {
                                 initialName = initialNameHandle(roster, displayName);
                                 let blockedContactArr = this.props.contactsWhoBlockedMe.data;
                                  isAdminBlocked = blockedContactArr.indexOf(formatUserIdToJid(roster.userId)) > -1;                                
-                                image = userListLength > 1 ? null : roster.image;
+                                image = userListLength > 1 ? null : roster.thumbImage !== "" ? roster.thumbImage : roster.image;
                                 emailId = roster.emailId
                             } else {
                                 displayName = getFormatPhoneNumber(getUserIdFromJid(user));
@@ -152,7 +153,7 @@ class WebChatCallLogs extends React.Component {
                     const group = getGroupData(groupId);
                     if (group) {
                         displayName = group.groupName;
-                        image = group.groupImage;
+                        image = group.thumbImage !== "" ? group.thumbImage : group.groupImage;
                         isAdminBlocked = group.isAdminBlocked
                     }
                 }
@@ -501,6 +502,7 @@ class WebChatCallLogs extends React.Component {
             return;
         }
         this.setState({
+            userList: userList.getUsersListFromSDK(),
             newCall: true,
             newCallType: "audio"
         });
@@ -512,6 +514,7 @@ class WebChatCallLogs extends React.Component {
             return;
         }
         this.setState({
+            userList: userList.getUsersListFromSDK(),
             newCall: true,
             newCallType: "video"
         });
@@ -523,15 +526,15 @@ class WebChatCallLogs extends React.Component {
         })
     }
 
-    makeNewcall = (callType, userList) => {
+    makeNewcall = (callType, usersList) => {
         const { featureStateData: {isOneToOneCallEnabled = false, isGroupCallEnabled = false } = {} } =this.props;
         let callMode = "onetoone";
         let users = [];
-        if (userList.length > 1) {
+        if (usersList.length > 1) {
             callMode = "onetomany";
-            users = userList;
+            users = usersList;
         } else {
-            userList.map(participant => {
+            usersList.map(participant => {
                 const { userJid, username, GroupUser } = participant
                 let user = userJid || username || GroupUser;
                 user = user.split('@')[0];

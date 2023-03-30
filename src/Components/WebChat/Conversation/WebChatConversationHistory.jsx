@@ -520,8 +520,7 @@ class WebChatConversationHistory extends Component {
       }
       return el.msgId;
     });
-
-    await SDK.updateFavouriteStatus(formatUserIdToJid(this.props.activeChatId), msgIds, isFavourite);
+    await SDK.updateFavouriteStatus(this.props.activeChatData.data.chatJid, msgIds, isFavourite);
     toast.success(`${data.length} message${data.length > 1 ? "s" : ""} ${isFavourite ? "starred" : "unstarred"}`);
     this.setState({ forwardOption: false });
     this.props.forwardReset();

@@ -194,6 +194,7 @@ class CalleScreen extends Component {
         let group = getGroupData(groupId);
         rosterData.displayName = group.groupName;
         rosterData.image = group.groupImage;
+        rosterData.thumbImage = group.thumbImage;
         rosterData.jid = group.groupId;
         rosterData.chatType = "groupchat";
         return rosterData;
@@ -301,7 +302,7 @@ class CalleScreen extends Component {
                         <WebChatProfileImg
                         name={iniTail}
                         chatType={chatType}
-                        rostersnap={rosterData.image}
+                        rostersnap={rosterData.thumbImage !== "" ? rosterData.thumbImage : rosterData.image}
                         />
                         <div className="ripple-1"></div>
                         <div className="ripple-2"></div>
