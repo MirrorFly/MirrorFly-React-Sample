@@ -104,7 +104,7 @@ class SmallVideo extends React.Component {
                             chatType='chat'
                             userToken={token}
                             temporary={false}
-                            imageToken={rosterData.image}
+                            imageToken={rosterData.thumbImage !== "" ? rosterData.thumbImage : rosterData.image}
                         />
                     </>
                 }

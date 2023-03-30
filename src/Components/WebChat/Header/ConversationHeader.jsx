@@ -57,12 +57,12 @@ class ConversationHeader extends React.Component {
 
     setUserDetails = () => {
         const { userData: { data: { roster } } } = this.props
-        const { image, groupImage } = roster
+        const { image, groupImage, thumbImage } = roster
         const displayName = getContactNameFromRoster(roster)
         const isAdminBlocked = roster.isAdminBlocked
         this.setState({
             displayName,
-            image: image || groupImage,
+            image: thumbImage !== "" ? thumbImage : image || groupImage,
             userstatus: roster.status,
             emailId: roster.emailId,
             localRoster: roster,
@@ -86,10 +86,10 @@ class ConversationHeader extends React.Component {
             const updateGroupInfo = this.filterProfileFromGroup(chatId)
 
             if (updateGroupInfo) {
-                const { groupImage } = updateGroupInfo
+                const { groupImage, thumbImage } = updateGroupInfo
                 this.setState({
                     displayName: getContactNameFromRoster(updateGroupInfo),
-                    image: groupImage,
+                    image: thumbImage !== "" ? thumbImage : groupImage,
                     userstatus: null
                 })
             }
@@ -100,10 +100,10 @@ class ConversationHeader extends React.Component {
             let adminStatus = data.find(element => element?.userId === activeChatId)?.isAdminBlocked
 
             if (rosterInfo) {
-                const { image, isDeletedUser } = rosterInfo
+                const { image, isDeletedUser, thumbImage } = rosterInfo
                 this.setState({
                     displayName: getContactNameFromRoster(rosterInfo),
-                    image,
+                    image: thumbImage !== "" ? thumbImage : image,
                     userstatus: rosterInfo.status,
                     emailId: rosterInfo.emailId,
                     localRoster: rosterInfo,
@@ -153,7 +153,7 @@ class ConversationHeader extends React.Component {
             resetPinAndLargeVideoUser();
             let callMode = "onetoone";
             fromuser = fromuser + "@" + REACT_APP_XMPP_SOCKET_HOST;
-            const { image } = roster
+            const { image, thumbImage } = roster
             let callConnectionStatus = {
                 callMode: callMode,
                 callStatus: "CALLING",
@@ -161,7 +161,7 @@ class ConversationHeader extends React.Component {
                 to: activeChatId,
                 from: fromuser,
                 userList: activeChatId,
-                userAvatar: image
+                userAvatar: thumbImage ? thumbImage : image
             }
             console.log("make call callConnectionStatus", callConnectionStatus);
             encryptAndStoreInLocalStorage('call_connection_status', JSON.stringify(callConnectionStatus));
@@ -398,7 +398,7 @@ class ConversationHeader extends React.Component {
         const token = getFromLocalStorageAndDecrypt('token');
         const avatarIcon = chatType === 'chat' ? SampleChatProfile : SampleGroupProfile;
         let canSendMessage = this.canSendMessage();
-        const { mobileNumber } = this.state.localRoster
+        const { mobileNumber, thumbImage } = this.state.localRoster
         const { image, displayName, emailId } = this.state
         const iniTail = initialNameHandle(this.state.localRoster, displayName);
         groupName = displayName;
@@ -419,7 +419,7 @@ class ConversationHeader extends React.Component {
                             <ProfileImage
                                 chatType={chatType || 'chat'}
                                 userToken={token}
-                                imageToken={this.state.isAdminBlocked ? "" : image}
+                                imageToken={this.state.isAdminBlocked ? "" : thumbImage !== "" ? thumbImage : image}
                                 emailId={emailId}
                                 userId={getIdFromJid(activeChatId)}
                                 name={iniTail}

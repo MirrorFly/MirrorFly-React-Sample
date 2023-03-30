@@ -167,6 +167,7 @@ class WebCallingLayout extends Component {
         let group = getGroupData(groupId);
         rosterData.displayName = group.groupName;
         rosterData.image = group.groupImage;
+        rosterData.thumbImage = group.thumbImage;
         rosterData.jid = group.groupId;
         rosterData.chatType = "groupchat";
         rosterData.initialName = "";
@@ -284,7 +285,7 @@ class WebCallingLayout extends Component {
                                 <WebChatProfileImg
                                 name = {iniTail}
                                 chatType={chatType}
-                                rostersnap={rosterData.image}
+                                rostersnap={rosterData.thumbImage !== "" ? rosterData.thumbImage : rosterData.image}
                                 jid={(rosterData.username) ? rosterData.username : rosterData.jid} />
                                         <div className="ripple-1"></div>
                                         <div className="ripple-2"></div>

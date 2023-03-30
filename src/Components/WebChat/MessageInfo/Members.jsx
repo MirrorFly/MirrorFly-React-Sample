@@ -20,7 +20,7 @@ const Members = (props = {}) => {
         })
     }, [props.rosterData])
 
-    const { image, emailId } = getDetails
+    const { image, emailId, thumbImage } = getDetails
     const token = getFromLocalStorageAndDecrypt('token');
     let username = getContactNameFromRoster(getDetails);
     const updateTime = timeFormat(time);
@@ -31,7 +31,7 @@ const Members = (props = {}) => {
             <ProfileImage
                 chatType={'chat'}
                 userToken={token}
-                imageToken={image}
+                imageToken={thumbImage !== "" ? thumbImage : image}
                 emailId={emailId}
                 temporary={true}
                 name={iniTail}

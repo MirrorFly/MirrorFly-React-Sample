@@ -15,18 +15,18 @@ export default class ActionPopUp extends Component {
             blockOfflineAction()
             return
         }
-        const { modalProps: { displayName = "", groupuniqueId = "", userjid = "", action = "", checkAdmin = "" } = {} } = this.props || {};
+        const { modalProps: { displayName = "", groupuniqueId = "", userjid = "", action = "" } = {} } = this.props || {};
         if (action === 'groupMakeAdmin') {
             SDK && SDK.makeAsAdmin(groupuniqueId, userjid)
             const toastMessage = `${displayName} is now admin`;
             toast.success(toastMessage, "success");
         } else if (action === "ExitGroup") {
-            SDK && SDK.userExitGroup(groupuniqueId, userjid, checkAdmin);
+            SDK && SDK.userExitGroup(groupuniqueId, userjid);
             const toastMessage = `You were no longer from the group.`;
             toast.info(toastMessage);
         }
         else {
-            SDK && SDK.removeParticipant(groupuniqueId, userjid, !!checkAdmin)
+            SDK && SDK.removeParticipant(groupuniqueId, userjid)
             const toastMessage = `${displayName} is removed from group`
             toast.success(toastMessage);
         }

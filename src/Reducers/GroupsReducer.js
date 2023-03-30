@@ -15,6 +15,7 @@ const updateGroupDetails = (currentData, groupData = []) => {
       // the image of group, then the existing image will set from 'groupData'.
       // So when msgType is 'profileUpdated', use below condition to set updated/removed image
       groupData[index].groupImage = currentData.groupImage || currentData.groupProfile?.image || '';
+      groupData[index].thumbImage = currentData.thumbImage || currentData.groupProfile?.thumbImage || "";
     }
   }
   return groupData;

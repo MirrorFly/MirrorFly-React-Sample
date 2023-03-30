@@ -14,7 +14,7 @@ const { maximumAllowedUsersToForward } = Config
 
 export default function Users(props) {
 
-    const { contactName, image, groupImage, emailId, statusMsg, status,
+    const { contactName, image, groupImage, thumbImage, emailId, statusMsg, status,
         searchValue, updateJid, addContact, removeContact,
         temporary, chatType, selectedContact, isChanged = -1, isBlockedUser, roster } = props;
     const iniTail = initialNameHandle(roster, contactName);
@@ -74,7 +74,7 @@ export default function Users(props) {
                         chatType={chatType}
                         userToken={token}
                         temporary={temporary}
-                        imageToken={image || groupImage}
+                        imageToken={thumbImage !== "" ? thumbImage : image || groupImage}
                         emailId={emailId}
                         userId={getIdFromJid(updateJid)}
                         name={iniTail}

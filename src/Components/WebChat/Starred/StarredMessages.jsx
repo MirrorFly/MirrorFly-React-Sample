@@ -165,7 +165,7 @@ const StarredMessages = (props = {}) => {
          <span className="sender-image">
            <ProfileImage
              name={iniTail}
-             imageToken={userDetails.image}
+             imageToken={userDetails.thumbImage !== "" ? userDetails.thumbImage : userDetails.image}
              chatType="chat"
            />
          </span>

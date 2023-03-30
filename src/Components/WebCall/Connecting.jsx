@@ -77,6 +77,7 @@ class Connecting extends Component{
         let group = getGroupData(groupId);
         rosterData.displayName = group.groupName;
         rosterData.image = group.groupImage;
+        rosterData.thumbImage = group.thumbImage;
         rosterData.jid = group.groupId;
         rosterData.chatType = "groupchat";
         return rosterData;
@@ -136,7 +137,7 @@ class Connecting extends Component{
                             name = {initialName}
                             chatType={chatType}
                             temporary={false}
-                            imageToken={rosterData.image}
+                            imageToken={rosterData.thumbImage !== "" ? rosterData.thumbImage : rosterData.image}
                         />
                     </div>      
                     <CallControlButtons 

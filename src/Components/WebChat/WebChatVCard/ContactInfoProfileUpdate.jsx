@@ -144,8 +144,11 @@ class ContactInfoProfileUpdate extends React.Component {
             }
             if (response.statusCode === 200) {
                 const fileBlob = await fileToBlob(image);
-                indexedDb.setImage(response.fileToken, fileBlob, "profileimages");
-                this.setState({ imageToken: response.fileToken });
+                let fileToken = "";
+                if(response.fileTokenThumb !== "") fileToken = response.fileTokenThumb;
+                else fileToken = response.fileToken;
+                indexedDb.setImage(fileToken, fileBlob, "profileimages");
+                this.setState({ imageToken: fileToken });
                 toastr.success(PROFILE_UPDATE_SUCCESS);
             }
 
@@ -277,10 +280,25 @@ class ContactInfoProfileUpdate extends React.Component {
     handleProfileImageShow = (e) => {
         this.setState({ showProfileImg: true, showImgDropDown: false });
         Store.dispatch(modalActiveClassAction(true));
+
+        //to show the original Image in big screen instead of thumbImage
+        const { groupImage = "" } = this.props.roster;
+        indexedDb
+        .getImageByKey(groupImage, "profileimages", "")
+        .then((blob) => {
+            const blobUrl = window.URL.createObjectURL(blob);
+            this.setState({ profileImg: blobUrl });
+        })
+        .catch(() => {
+            this.setState({ profileImg: "" });
+        });
+       
     }
+
     getImageUrl = (url) => {
         this.setState({ profileImg: url });
     }
+
     /**
      * handleProfileImgClose() method to maintain state to close profile image.
      */

@@ -1010,12 +1010,14 @@ export const getPushNotificationData = async (data) => {
     
         if (isSingleChat(chatType)) {
             const roster = getUserDetails(fromUserId) || {};
-            title = roster.displayName || "";
-            imageToken = roster.image;
+            const {displayName, image, thumbImage} = roster;           
+            title = displayName || "";
+            imageToken = thumbImage !== "" ? thumbImage : image;
         } else {
             const groupData = getGroupData(fromUserId) || {};
-            title = groupData.groupName || "";
-            imageToken = groupData.groupImage;
+            const {groupName, groupImage, thumbImage } = groupData;
+            title = groupName || "";
+            imageToken = thumbImage !== "" ? thumbImage : groupImage;
             const senderName = getContactNameFromRoster(getDataFromRoster(publisherId)) || publisherId;
             updateMessage = `${senderName}: ${updateMessage}`;
         }

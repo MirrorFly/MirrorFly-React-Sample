@@ -18,7 +18,10 @@ function MentionUserList(props = {}) {
                             <button onClick={() => handleMentionedData(obj.userId)} className='user_card_action' type='button'>
                                 <div className='user_card'>
                                     <div className='user_image'>
-                                        <ImageComponent chatType={"chat"} imageToken={rosterData.image} name={displayName} />
+                                        <ImageComponent
+                                         chatType={"chat"}
+                                         imageToken={rosterData.thumbImage !== "" ? rosterData.thumbImage : rosterData.image}
+                                         name={displayName} />
                                     </div>
                                     <div className='user_name'>{displayName}</div>
                                 </div>

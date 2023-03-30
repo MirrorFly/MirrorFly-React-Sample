@@ -15,7 +15,8 @@ import { getFromLocalStorageAndDecrypt } from "../WebChatEncryptDecrypt";
 import ContactInfoCheckBox from "./ContactInfoCheckBox";
 
 export default function Contact(props) {
-    const { roster = {}, contactName, image, emailId, statusMsg, status, isChanged = -1, searchValue, userId, userJid, prepareContactToAdd, prepareContactToRemove, hideCheckbox, maxMemberReached, isBlocked } = props
+    const { roster = {}, contactName, image, thumbImage, emailId, statusMsg, status, isChanged = -1, searchValue,
+     userId, userJid, prepareContactToAdd, prepareContactToRemove, hideCheckbox, maxMemberReached, isBlocked } = props
     const [selectState, setSelectState] = useState(false);
     const [showModal, setshowModal] = useState(false);
     const [blockId, setBlockId] = useState(null);
@@ -91,6 +92,7 @@ export default function Contact(props) {
             </Modal>}
             <ContactInfoCheckBox
                 image={image}
+                thumbImage={thumbImage}
                 token={token}
                 userId={userId}
                 status={status}

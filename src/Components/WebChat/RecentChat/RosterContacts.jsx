@@ -14,7 +14,7 @@ class RosterContacts extends React.Component {
      * @param {object} roster
      */
     handleContacts(roster, index) {
-        const { image, status, statusMsg, emailId, chatType, userId } = roster
+        const { image, thumbImage, status, statusMsg, emailId, chatType, userId } = roster
         const contactName = getContactNameFromRoster(roster);
         const { searchTerm } = this.props
         const hightlightText = getHighlightedText(contactName, searchTerm)
@@ -23,7 +23,7 @@ class RosterContacts extends React.Component {
             <ProfileImage
                 chatType={chatType || 'chat'}
                 userToken={token}
-                imageToken={image}
+                imageToken={thumbImage !== "" ? thumbImage : image}
                 emailId={emailId}
                 userId={userId}
                 name={contactName}

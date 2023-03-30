@@ -101,7 +101,7 @@ class WebChatRoster extends React.Component {
                             chatType={'chat'}
                             blocked={isBlocked}
                             temporary={false}
-                            imageToken={roster.image}
+                            imageToken={roster.thumbImage !== "" ? roster.thumbImage : roster.image}
                             name={displayContactName}
                         />
                     </div>
@@ -148,7 +148,7 @@ class WebChatRoster extends React.Component {
                         chatType={'chat'}
                         blocked={isBlocked}
                         temporary={false}
-                        imageToken={roster.image}
+                        imageToken={roster.thumbImage !== "" ? roster.thumbImage : roster.image}
                         name={displayContactName}
                     />
                 </div>

@@ -43,7 +43,7 @@ const filterProfileFromRoster = (rosterData, messageFrom) => {
 
 const ReplyMessage = React.memo((props) => {
     const { rosterData, closeReplyAction, replyMessage, groupMemberDetails,jid="" } = props
-    const { fromUserId, msgBody: messageContent = {}, message: groupchatMessage = {}, publisherId, chatType, msgBody: mentionedUsersIds } = replyMessage;
+    const { fromUserId, msgBody: messageContent = {}, message: groupchatMessage = {}, publisherId, chatType, msgBody: mentionedUsersIds = [] } = replyMessage;
     let callRefSpan = React.createRef();
     let messageFrom = isSingleChat(chatType) ? fromUserId : publisherId;
     const { message="", message_type="", media = {},
@@ -93,7 +93,7 @@ const ReplyMessage = React.memo((props) => {
             <div className="reply-container">
                 <div className={`reply-text-message ${isTextMessage(message_type) ? "text-message" : "" }`}>
                     <span className="sender-name" >{getDisplayName() ? getDisplayName() : "You" }</span>
-                    {isTextMessage(message_type) && <span  ref={element => callRefSpan = element }  className="sender-sends"><span  dangerouslySetInnerHTML={{__html: handleMentionedUser(getReplyCaption(message),mentionedUsersIds.mentionedUsersIds,false) }} ></span></span> }{overflowActive ? "..." : ""}
+                    {isTextMessage(message_type) && <span  ref={element => callRefSpan = element }  className="sender-sends"><span  dangerouslySetInnerHTML={{__html: handleMentionedUser(getReplyCaption(message), mentionedUsersIds, false) }} ></span></span> }{overflowActive ? "..." : ""}
                     {message_type === 'image' && <span className="sender-sends"><span><i className="chat-camera send-attac-icon"><Camera /></i><span>{caption === '' ?  "Photo" : getReplyCaption(caption)}</span></span></span>}
                     {message_type === 'video' && <span className="sender-sends">
                             <span>

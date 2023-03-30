@@ -172,7 +172,7 @@ class RecentChatItem extends Component {
         </>
       );
       }
-    return renderHTML(handleMentionedUser(getFormattedRecentChatText(message), msgBody.mentionedUsersIds, false));
+    return renderHTML(handleMentionedUser(getFormattedRecentChatText(message), msgBody.mentionedUsersIds ? msgBody.mentionedUsersIds : [], false));
   };
 
   getDeletedText = (publisherId) =>
@@ -400,7 +400,7 @@ class RecentChatItem extends Component {
           publisherId,
           fromUserId
         },
-        roster: { image, groupImage }
+        roster: { image, groupImage, thumbImage }
       } = recentChat;
       const messageBody = isTextMessage(message_type) ? message : `${capitalizeTxt(message_type || "")}`;
       let updateMessage = message_type ? messageBody : this.handleMessageType(recentChat);
@@ -408,10 +408,10 @@ class RecentChatItem extends Component {
 
       if (chatType === "chat") {
         updateDisplayName = this.getsenderName(recentChat.roster);
-        imageToken = image;
+        imageToken = thumbImage !== "" ? thumbImage : image;
       } else {
         updateDisplayName = this.getContactName();
-        imageToken = groupImage;
+        imageToken = thumbImage !== "" ? thumbImage : groupImage;
         const senderName = getContactNameFromRoster(getDataFromRoster(publisherId)) || publisherId;
         if (message_type) updateMessage = `${senderName}: ${updateMessage}`;
       }
@@ -525,7 +525,7 @@ class RecentChatItem extends Component {
       isAdminBlocked = false
     } = this.props;
     const {
-      item: { roster: { image, groupImage } = {} } = {},
+      item: { roster: { image, groupImage, thumbImage } = {} } = {},
       callLogData: { callAudioMute = false } = {},
       pageType = ""
     } = this.props;
@@ -586,7 +586,7 @@ class RecentChatItem extends Component {
             userToken={token}
             userId={userId || groupId}
             temporary={false}
-            imageToken={isAdminBlocked ? "" : image || groupImage}
+            imageToken={isAdminBlocked ? "" : thumbImage !== "" ? thumbImage : image || groupImage}
             emailId={emailId}
             name={iniTail}
           />

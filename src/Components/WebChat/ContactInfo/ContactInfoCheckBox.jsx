@@ -6,6 +6,7 @@ import { initialNameHandle } from "../../../Helpers/Chat/User";
 const ContactInfoCheckBox = (props = {}) => {
     const {
         image = "",
+        thumbImage = "",
         token = "",
         userId = "",
         status = "",
@@ -33,7 +34,7 @@ const ContactInfoCheckBox = (props = {}) => {
                             chatType={'chat'}
                             userToken={token}
                             temporary={false}
-                            imageToken={image}
+                            imageToken={thumbImage !== "" ? thumbImage : image}
                             emailId={emailId}
                             userId={userId}
                             name={iniTail}

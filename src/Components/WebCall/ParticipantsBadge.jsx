@@ -1,8 +1,7 @@
 import React from 'react';
 import ImageComponent from '../WebChat/Common/ImageComponent'
 const ParticipantsBadge = (props) => {
-
-    const {jid} = props;
+    const {jid, userToken, image, thumbImage, contactName} = props;
 
     const handleRemoveParticipant = () =>{
         return  props.removeParticipant(jid);
@@ -13,13 +12,13 @@ const ParticipantsBadge = (props) => {
             <div>
                 <span className="badgeImg">
                     <ImageComponent
-                        userToken={props.userToken}
-                        imageToken={props.image}
+                        userToken={userToken}
+                        imageToken={thumbImage !== "" ? thumbImage : image}
                         temporary={true}
                         chatType="chat"
                     />
                     </span>
-                    <span title={props.contactName} className="badgeTitle">{props.contactName}</span>
+                    <span title={contactName} className="badgeTitle">{contactName}</span>
                     <i className="badgeAction" onClick={() => handleRemoveParticipant()} >X</i>
                 </div>
         </li>

@@ -339,6 +339,7 @@ export const getCallDisplayDetailsForOnetoManyCall = (userList, type) => {
         displayNames.push("You");
         participantsData.push({
             image: vcardData.image,
+            thumbImage: vcardData.thumbImage,
             userId: vcardData.fromUser,
             name: vcardData.nickName,
             initialName: getInitialsFromName(vcardData.nickName)
@@ -355,6 +356,7 @@ export const getCallDisplayDetailsForOnetoManyCall = (userList, type) => {
                 displayNames.push(roster.displayName);
                 participantsData.push({
                     image: roster.image,
+                    thumbImage: roster.thumbImage,
                     userId: getUserIdFromJid(us),
                     name: roster.displayName,
                     initialName: roster.initialName
@@ -363,6 +365,7 @@ export const getCallDisplayDetailsForOnetoManyCall = (userList, type) => {
                 displayNames.push(getFormatPhoneNumber(phoneNumber));
                 participantsData.push({
                     image: "",
+                    thumbImage: "",
                     userId: getUserIdFromJid(us),
                     name: "",
                     initialName: ""
@@ -422,10 +425,10 @@ export const clearMissedCallNotificationTimer = () => {
 export const handleCallParticipantToast = (userJid, type) => {
     const userDetails = getUserDetails(userJid);
     const {
-        displayName = getUserIdFromJid(userJid), image = "", initialName = ""
+        displayName = getUserIdFromJid(userJid), image = "", thumbImage = "", initialName = ""
     } = userDetails;
     const initial = initialNameHandle(userDetails, initialName);
-    callLinkToast(type, displayName, image, initial, "callParticipantList");
+    callLinkToast(type, displayName, image, thumbImage, initial, "callParticipantList");
 };
 
 export const handleAudioClasses = (volumeVdo = 0) => {
