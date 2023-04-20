@@ -31,14 +31,14 @@ const initialState = {
 };
 
 export function ChatConversationHistoryReducer(state = initialState, action = {}) {
-  const { id, data ,carbonClear} = action.payload || {};
+  const { id, data} = action.payload || {};
   switch (action.type) {
     case CHAT_MESSAGE_HISTORY:
       return {
         ...state,
         ...{
           id: id,
-          data: getChatHistoryData(data, state.data, carbonClear)
+          data: getChatHistoryData(data, state.data)
         }
       };
 

@@ -14,13 +14,12 @@ import {
   TRANSLATE_MESSAGE
 } from "./Constants";
 
-export const ChatMessageHistoryDataAction = (data,carbonClear) => {
+export const ChatMessageHistoryDataAction = (data) => {
   return {
     type: CHAT_MESSAGE_HISTORY,
     payload: {
       id: uuidv4(),
-      data,
-      carbonClear
+      data
     }
   };
 };
