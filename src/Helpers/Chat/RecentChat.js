@@ -36,10 +36,18 @@ export const isRenderMessageType = (messageType) => {
 };
 
 export const changeTimeFormat = (time) => {
-  if(!time) return '';
-  return moment((time / 1000000) * 1000)
+  if(!time){
+    return '';
+  }
+  else if(time.toString().length === 16) {
+    return moment((time / 1000000) * 1000)
     .utc()
     .format("YYYY-MM-DD HH:mm:ss");
+  } else {
+    return moment(time)
+    .utc()
+    .format("YYYY-MM-DD HH:mm:ss");
+  }
 };
 
 export const timeFormat = (time) => {

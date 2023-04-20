@@ -514,36 +514,9 @@ export const setTempMute = (name, stateData) => {
     }
 
 
-export const getChatHistoryData = (data, stateData, carbonClear) => {
+export const getChatHistoryData = (data, stateData) => {
     // To Avoid Unnecessary Looping, We are Using Key Value Pair for Chat and Messages
     // Eg: userId: {} or groupId: {} or msgId: {}
-if(carbonClear===true){
-    const chatId = getUserIdFromJid(data.userJid || data.groupJid);
-    const state = Object.keys(data).length > 0 ? data[chatId]?.messages || {} : {};
-    const sortedData = concatMessageArray(data.data, Object.values(state), "msgId", "timestamp");
-    const lastMessage = sortedData[sortedData.length - 1];
-    let newSortedData;
-    const localUserJid = getFromLocalStorageAndDecrypt('loggedInUserJidWithResource');
-    const userId = localUserJid ? getUserIdFromJid(localUserJid) : "";
-    if (userId === lastMessage?.publisherId) {
-        newSortedData = sortedData.map((msg => {
-            msg.msgStatus = getMsgStatusInOrder(msg.msgStatus, lastMessage?.msgStatus);
-            return msg;
-        }));
-    } else{
-        newSortedData = sortedData;
-    } 
-
-    let isScrollNeeded = true;
-    if (data.fetchLimit) {
-        isScrollNeeded = data.data.length === data.fetchLimit; // To Check If this is the Last Message in the Chat, So no Scroll Fetch is Needed
-    }
-    const finalData = { isScrollNeeded, messages: arrayToObject(newSortedData, "msgId") };
-    return {
-        ...data,
-        [chatId]: finalData
-    };
-}else{
     const chatId = getUserIdFromJid(data.userJid || data.groupJid);
     const state = Object.keys(stateData).length > 0 ? stateData[chatId]?.messages || {} : {};
     const sortedData = concatMessageArray(data.data, Object.values(state), "msgId", "timestamp");
@@ -568,7 +541,6 @@ if(carbonClear===true){
         ...stateData,
         [chatId]: finalData
     };
-}
 };
 
 export const getChatHistoryMessagesData = () => {
@@ -773,11 +745,11 @@ export const uploadFileToSDK = async (file, jid, msgId, media) => {
     if (response.statusCode === 200) {
         if (msgType === "image" || msgType === "audio") {
             const fileBlob = await fileToBlob(file);
-            indexedDb.setImage(response.fileToken, fileBlob, getDbInstanceName(msgType));
+            indexedDb.setImage(response.data.msgBody.media.fileToken, fileBlob, getDbInstanceName(msgType));
         }
-        updateObj.fileToken = response.fileToken;
-        updateObj.thumbImage = response.thumbImage;
-        updateObj.fileKey = response.fileKey;
+        updateObj.fileToken = response.data.msgBody.media.fileToken
+        updateObj.thumbImage = response.data.msgBody.media.thumbImage;
+        updateObj.fileKey = response.data.msgBody.media.file_key;
     } else if (response.statusCode === 500) {
         updateObj.uploadStatus = 3;
     }

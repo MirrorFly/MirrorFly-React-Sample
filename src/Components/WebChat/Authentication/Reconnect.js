@@ -59,7 +59,7 @@ const getAndUpdateChatMessages = async (chatId, chatType, rowId) => {
     delete chatMessageRes.statusCode;
     delete chatMessageRes.message;
     if (chatId === getIdFromJid(chatMessageRes.userJid || chatMessageRes.groupJid)) {
-      Store.dispatch(ChatMessageHistoryDataAction(chatMessageRes,true));
+      Store.dispatch(ChatMessageHistoryDataAction(chatMessageRes));
       const groupId = isGroupChat(chatType) ? chatId : "";
       chatMessageRes.data.forEach((el) => {
         if (!isLocalUser(el.publisherId) && el.rowId !== rowId) {
