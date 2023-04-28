@@ -201,7 +201,8 @@ class WebChatMessagesComposing extends Component {
     }
     this.setState(
       {
-        typingMessage: text
+        typingMessage: text,
+        typingMessageOriginal: text
       },
       () => {
         this.delay();
@@ -228,7 +229,7 @@ class WebChatMessagesComposing extends Component {
     })
   }
 
-  handleSendMsg = (messageType, messageContent) => {    
+  handleSendMsg = (messageType, messageContent ,mentionedUsersId) => {    
     let message;
     const { loaderStatus, handleSendMsg } = this.props;
     if (loaderStatus) return;
@@ -236,14 +237,15 @@ class WebChatMessagesComposing extends Component {
       message = {
         type: "text",
         content: messageContent,
-      };  
+        mentionedUsersIds : this.state.mentionedUsersIds
+  };  
     } else if (messageType === "media") {
       message = {
         type: "media",
-        content: messageContent
+        content: messageContent,
+        mentionedUsersIds: mentionedUsersId
       };
     }
-    message.mentionedUsersIds = this.state.mentionedUsersIds;
     const showEmoji = this.state.showEmoji;
     this.setState(
       {
@@ -252,7 +254,8 @@ class WebChatMessagesComposing extends Component {
         showPreview: false,
         showAttachement: false,
         seletedFiles: {},
-        mentionedUsersIds: []
+        mentionedUsersIds: [],
+        chatType: this.props.chatType,
       },
       () => {
         handleSendMsg(message);
@@ -269,7 +272,26 @@ class WebChatMessagesComposing extends Component {
   };
 
   handleSendMediaMsg = (Media) => {
-    this.handleSendMsg("media", Media);
+    const fileDetails = [...Media]
+
+    const [{ caption = ""}] = Media
+    let temp = document.createElement("div");
+    temp.innerHTML = caption;
+    let mentionedUiElements = temp.getElementsByClassName("mentioned");
+    Array.from(mentionedUiElements).forEach((e) => {
+      e.innerHTML = "@[?]"
+    });
+    let typingMessageOriginal = temp.textContent || temp.innerText;
+    
+    const fileDetail =  fileDetails.map((data,i)=>{
+      const object = {
+        caption : data.caption === "" ? "" : typingMessageOriginal,
+      }
+      return Object.assign(data,object)
+    })
+    const mentionUserId = fileDetails.map((data)=> data.mentionedUsersIds)
+
+    this.handleSendMsg("media", fileDetail,mentionUserId[0]);
   };
 
   toggleAttachement = () => {
@@ -299,12 +321,14 @@ class WebChatMessagesComposing extends Component {
   };
 
   selectFile = (event, mediaType) => {
+  
     this.setState({
       showPreview: true,
       seletedFiles: {
         filesId: uuidv4(),
         files: event.target.files,
-        mediaType
+        mediaType,
+        chatType: this.props.chatType
       }
     });
   };
@@ -571,6 +595,7 @@ class WebChatMessagesComposing extends Component {
         onClickClose={this.closeCamera}
         cropEnabled={false}
         onSuccess={this.handleCameraTakenFile}
+        chatType = {this.props.chatType}
       />
     );
   };

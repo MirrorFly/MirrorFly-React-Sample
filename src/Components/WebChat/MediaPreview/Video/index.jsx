@@ -113,6 +113,7 @@ export default class PreviewVideo extends Component {
             media={this.props.media}
             onClickSend={this.props.onClickSend}
             uniqueId={this.state.uniqueId}
+            chatType={this.props.chatType}
           />
         </div>
       </Fragment>

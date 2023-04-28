@@ -543,6 +543,41 @@ export const getChatHistoryData = (data, stateData) => {
     };
 };
 
+export const clearChatHistoryOffline = (data, stateData) => {
+    let chatData = stateData; 
+    const chatIds = Object.keys(chatData);
+    const userId = data.fromUserId;
+    const lastMessageId = data.lastMsgId;
+
+    if(chatIds.includes(userId)) {
+        let userOrGroupId = "";
+        for(const chatId in chatData){
+            if(chatId === userId){
+                userOrGroupId = chatId;
+            }
+        }
+        const chatMessages = chatData[userOrGroupId]?.messages;
+        if(chatMessages[lastMessageId] !== undefined || "") {
+            const timestamp = chatMessages[lastMessageId].timestamp;
+            for(let msg in chatMessages){
+                if(data.favourite === "1"){
+                    if(chatMessages[msg].timestamp <= timestamp){
+                        if(chatMessages[msg].favouriteStatus === 0 ){
+                            delete chatMessages[msg]
+                        }
+                    }
+                }else{
+                    if(chatMessages[msg].timestamp <= timestamp){
+                        delete chatMessages[msg]
+                    }
+                }
+                
+            }
+            return chatMessages;  
+        }
+    }
+}
+
 export const getChatHistoryMessagesData = () => {
     const { chatConversationHistory: { data } = {} } = Store.getState();
     return data;
@@ -575,7 +610,7 @@ export const getUpdatedHistoryData = (data, stateData) => {
                 const  message = currentChatData?.messages[msgIds[i]];
                 currentChatData.messages[msgIds[i]] = {
                     ...message, 
-                    ...(message.msgStatus !== 3 && {
+                    ...(message.msgStatus !== 3 && message.msgStatus !== 0 && {
                         msgStatus : getMsgStatusInOrder(message.msgStatus, msgStatus)
                     })
                 };
@@ -709,9 +744,8 @@ export const updateMediaUploadStatus = (data, stateData) => {
 };
 
 export const uploadFileToSDK = async (file, jid, msgId, media) => {
-    const { caption = "", fileDetails: { replyTo, duration = 0, imageUrl = "", audioType = "" } = {} } = file;
+    const { caption = "",  mentionedUsersIds =[],fileDetails: { replyTo, duration = 0, imageUrl = "", audioType = "" } = {} } = file;
     const msgType = getMessageType(file.type, file);
-
     let fileOptions = {
         msgId: msgId,
         caption: caption,
@@ -725,7 +759,6 @@ export const uploadFileToSDK = async (file, jid, msgId, media) => {
         ...(msgType === "video" && { thumbImage: imageUrl }),
         ...(msgType === "audio" && { audioType })
     };
-    let mentionedUsersIds =[]
 
     let response = {};
     if (msgType === "file") {

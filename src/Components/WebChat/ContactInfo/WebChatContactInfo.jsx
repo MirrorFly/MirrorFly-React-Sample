@@ -23,7 +23,7 @@ import WebChatcontactInfoMedia from './WebChatContactInfoMedia';
 import { toast } from 'react-toastify';
 import WebChatEmoji from '../WebChatEmoji';
 import { initialNameHandle, isLocalUser } from '../../../Helpers/Chat/User';
-import { isSingleChat, isGroupChat, getChatMessageHistoryById, getActiveConversationChatId, getActiveConversationChatJid, handleTempArchivedChats } from '../../../Helpers/Chat/ChatHelper';
+import { isSingleChat, isGroupChat, getChatMessageHistoryById, getActiveConversationChatId, getActiveConversationChatJid, handleTempArchivedChats, getLastMsgFromHistoryById, getActiveChatMessages } from '../../../Helpers/Chat/ChatHelper';
 import { updateBlockedContactAction } from '../../../Actions/BlockAction';
 import { ADD_PARTICIPANT_GROUP_CONTACT_PERMISSION_DENIED, CHAT_TYPE_SINGLE, REPORT_FROM_CONTACT_INFO, UNBLOCK_CONTACT_TYPE } from '../../../Helpers/Chat/Constant';
 import Store from '../../../Store';
@@ -37,9 +37,11 @@ import ClearDeleteOption from './ClearDeleteOption';
 import BlockUnBlockOption from './BlockUnBlockOption';
 import ContactInfoMediaGrid from './ContactInfoMediaGrid';
 import ShowMediaInDetailPopup from './ShowMediaInDetailPopup';
-import { updateMuteStatusRecentChat } from '../../../Actions/RecentChatActions';
+import { clearLastMessageinRecentChat, updateMuteStatusRecentChat } from '../../../Actions/RecentChatActions';
 import ActionInfoPopup from '../../ActionInfoPopup';
 import { getMessagesForReport } from "../../../Helpers/Chat/ChatHelper"
+import { ClearChatHistoryAction } from '../../../Actions/ChatHistory';
+import { RemoveStaredMessagesClearChat } from '../../../Actions/StarredAction';
 class WebChatContactInfo extends React.Component {
 
     /**
@@ -381,8 +383,22 @@ class WebChatContactInfo extends React.Component {
         return true;
     }
 
-    deleteOrClearAction = (data) => {
-        const { isclear } = data;
+    deleteOrClearAction = async (dataClear) => {
+         let lastMsgId = "", lastIndexItem;
+         const { chatConversationHistory: {data = {} } = {} } = this.props;
+         const userOrGroupJid = getActiveConversationChatJid();
+         const userId = getUserIdFromJid(userOrGroupJid);
+         const chatids = Object.keys(data);
+        if(chatids.includes(userId)) {
+            const { msgId = "", msgStatus } = getLastMsgFromHistoryById(userId);
+            const chatMessages = getActiveChatMessages();
+            const filteredMsg = chatMessages.filter((message) => message.msgStatus !== 3);
+            lastIndexItem = filteredMsg.length -1;
+            if(msgStatus !== 3) lastMsgId = msgId;
+            else lastMsgId = filteredMsg[lastIndexItem]?.msgId || "";
+        }
+         
+        const { isclear } = dataClear;
         const isChat = this.isChat();
         if (isChat) {
             const userJid = getActiveConversationChatJid();
@@ -391,7 +407,21 @@ class WebChatContactInfo extends React.Component {
                 showDeletePopup: false,
                 showClearPopup: false
             }, () => {
-                isclear ? SDK.clearChat(userJid) : SDK.deleteChat(userJid);
+                if(isclear){
+                    SDK.clearChat(userJid, true, lastMsgId)
+                    .then(async (res) => {
+                        if(res.statusCode === 200){
+                            const resId = { fromUserId: userId, lastMsgId: lastMsgId, msgType: "clearChat" }
+                            Store.dispatch(ClearChatHistoryAction(resId));
+                            Store.dispatch(clearLastMessageinRecentChat(resId.fromUserId));
+                            Store.dispatch(RemoveStaredMessagesClearChat(resId));
+                        }
+                    }).catch((error) => {
+                        console.log("clearChat error",error)
+                    })
+                }else{
+                    SDK.deleteChat(userJid);
+                }
                 this.props.onInfoClose();
             })
         } else {
@@ -401,7 +431,21 @@ class WebChatContactInfo extends React.Component {
                 showClearPopup: false
             }, () => {
                 const groupJid = getActiveConversationChatJid();
-                isclear ? SDK.clearChat(groupJid) : SDK.userDeleteGroup(groupJid);
+                if(isclear){
+                    SDK.clearChat(groupJid, true, lastMsgId)
+                    .then(async (res) => {
+                        if(res.statusCode === 200){
+                            const resId = { fromUserId: userId, lastMsgId: lastMsgId, msgType: "clearChat" }
+                            Store.dispatch(ClearChatHistoryAction(resId));
+                            Store.dispatch(clearLastMessageinRecentChat(resId.fromUserId));
+                            Store.dispatch(RemoveStaredMessagesClearChat(resId));
+                        }
+                    }).catch((error) => {
+                        console.log("clearChat error",error)
+                    })
+                }else{
+                    SDK.userDeleteGroup(groupJid);
+                }
                 this.props.onInfoClose();
             })
         }
@@ -829,6 +873,7 @@ class WebChatContactInfo extends React.Component {
 const mapStateToProps = state => {
     return {
         featureStateData: state.featureStateData,
+        chatConversationHistory: state.chatConversationHistory,
         activeChatData: state.activeChatData,
         rosterData: state.rosterData,
         blockedContact: state.blockedContact,

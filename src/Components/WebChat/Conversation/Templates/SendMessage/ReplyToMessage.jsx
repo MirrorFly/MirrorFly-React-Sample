@@ -51,6 +51,7 @@ const ReplyMessage = React.memo((props) => {
             contact:{ name } = { } } = messageContent || groupchatMessage
 
     const { fileName, duration, caption , audioType , thumb_image} = media;
+
     const [overflowActive , setOverflowActive] = useState(false)
     useEffect(()=>{
         props.popUpState({
@@ -80,7 +81,7 @@ const ReplyMessage = React.memo((props) => {
     }
 
     const getReplyCaption = (mediaCaption) => mediaCaption.length > maximumCaptionLimit ? mediaCaption.substring(0, maximumCaptionLimit).concat('...') : mediaCaption;
-
+    
     const isEllipsisActive = (e) => {
         return e.offsetHeight < e.scrollHeight || e.offsetWidth < e.scrollWidth;
       }
@@ -93,14 +94,14 @@ const ReplyMessage = React.memo((props) => {
             <div className="reply-container">
                 <div className={`reply-text-message ${isTextMessage(message_type) ? "text-message" : "" }`}>
                     <span className="sender-name" >{getDisplayName() ? getDisplayName() : "You" }</span>
-                    {isTextMessage(message_type) && <span  ref={element => callRefSpan = element }  className="sender-sends"><span  dangerouslySetInnerHTML={{__html: handleMentionedUser(getReplyCaption(message), mentionedUsersIds, false) }} ></span></span> }{overflowActive ? "..." : ""}
-                    {message_type === 'image' && <span className="sender-sends"><span><i className="chat-camera send-attac-icon"><Camera /></i><span>{caption === '' ?  "Photo" : getReplyCaption(caption)}</span></span></span>}
+                    {isTextMessage(message_type) && <span  ref={element => callRefSpan = element }  className="sender-sends"><span className="reply_mention" dangerouslySetInnerHTML={{__html: handleMentionedUser(getReplyCaption(message), mentionedUsersIds.mentionedUsersIds, false,"blue") }} ></span></span> }{overflowActive ? "..." : ""}
+                    {message_type === 'image' && <span className="sender-sends"><span><i className="chat-camera send-attac-icon"><Camera /></i><span className="reply_mention" dangerouslySetInnerHTML={{ __html: handleMentionedUser(caption === '' ?  "Photo" : getReplyCaption(caption), mentionedUsersIds.mentionedUsersIds, false,"blue") }}></span></span></span>}
                     {message_type === 'video' && <span className="sender-sends">
                             <span>
                                 <i className="chat-video send-attac-icon">
                                     <VideoIcon2 />
                                 </i>
-                                {caption === '' ? `${millisToMinutesAndSeconds(duration)} Video` : getReplyCaption(caption)}
+                                <span className="reply_mention" dangerouslySetInnerHTML={{ __html: caption === '' ? `${millisToMinutesAndSeconds(duration)} Video` : handleMentionedUser(getReplyCaption(caption), mentionedUsersIds.mentionedUsersIds, false,"blue") }}></span>
                             </span> </span>
                         }
                     {message_type === 'audio' && < span className="sender-sends">

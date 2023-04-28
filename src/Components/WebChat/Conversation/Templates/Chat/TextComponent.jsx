@@ -29,7 +29,7 @@ const TextComponent = (props = {}) => {
     pageType === "conversation" &&
     msgBody?.translatedMessage &&
     Object.keys(msgBody.translatedMessage).length;
-  const renderMessageBody = () => (msgBody ? renderHTML(handleMentionedUser(getFormattedText(messageLink), msgBody.mentionedUsersIds, !isSender && data.userId)) : null);
+  const renderMessageBody = () => (msgBody ? renderHTML(handleMentionedUser(getFormattedText(messageLink), msgBody.mentionedUsersIds ? msgBody.mentionedUsersIds : [], !isSender && data.userId)) : null);
 
   const subscribeToCall = async () => {
     if (blockOfflineAction()) return "";

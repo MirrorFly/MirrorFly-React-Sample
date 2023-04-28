@@ -20,7 +20,8 @@ const VideoComponent = (props = {}) => {
     msgId = "",
     msgBody: {
       translatedMessage = "",
-      media: { caption = "", file_url = "", duration, thumb_image = "", webWidth, webHeight } = {}
+      media: { caption = "", file_url = "", duration, thumb_image = "", webWidth, webHeight } = {},
+      mentionedUsersIds = []
     } = {}
   } = messageObject;
 
@@ -73,7 +74,7 @@ const VideoComponent = (props = {}) => {
       <div className="image-caption">
         {caption !== "" && (
           <span>
-            <span>{captionLink(caption)}</span>
+            <span>{captionLink(caption,mentionedUsersIds)}</span>
             {isTranslated() && <Translate tMessage={translatedMessage} />}
           </span>
         )}

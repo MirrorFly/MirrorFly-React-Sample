@@ -6,3 +6,4 @@ export function FeatureStateReducer(state = {data: null}, action = {}){
     }
     return state;
 }
+

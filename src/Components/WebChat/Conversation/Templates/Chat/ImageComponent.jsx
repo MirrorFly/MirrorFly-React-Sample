@@ -21,10 +21,10 @@ const ImageComponent = (props = {}) => {
     msgBody: {
       translatedMessage = "",
       message_type = "",
-      media: { caption = "", file_url = "", thumb_image = "", webWidth, webHeight, file_key } = {}
+      media: { caption = "", file_url = "", thumb_image = "", webWidth, webHeight, file_key   } = {},
+      mentionedUsersIds = []
     } = {}
   } = messageObject;
-
   const localDb = useMemo(() => new IndexedDb(), []);
   const [imageSource, setImageSource] = useState(imgSrc || getThumbBase64URL(thumb_image));
   const [dimension, setDimension] = useState({
@@ -78,7 +78,7 @@ const ImageComponent = (props = {}) => {
       <div className="image-caption">
         {caption !== "" && (
           <span>
-            <span>{captionLink(caption)}</span>
+            <span>{captionLink(caption,mentionedUsersIds)}</span>
             {isTranslated() && <Translate tMessage={translatedMessage} />}
           </span>
         )}

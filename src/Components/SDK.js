@@ -2,7 +2,7 @@
  * SDK
  * Export the SDK from window.SDK
  */
-const SDK = window.SDK;
+import * as SDK from "mirrorfly-sdk";
 export default SDK;
 
 // SDK CALLBACK RESPONSE STATUS

@@ -42,6 +42,7 @@ const TakeCameraPicture = (props = {}) => {
                 onCameraCheck={onCameraCheck}
                 setWebcamImage={setWebcamImage}
                 handleCropImage={handleCropImage}
+                chatType ={props.chatType}
             />
         </div>
     )

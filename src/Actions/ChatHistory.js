@@ -11,7 +11,8 @@ import {
   UPDATE_UPLOAD_STATUS,
   UPDATE_FAVOURITE_STATUS,
   REMOVE_ALL_FAVOURITE_STATUS,
-  TRANSLATE_MESSAGE
+  TRANSLATE_MESSAGE,
+  CLEAR_CHAT_HISTORY_ACTION_COMMON
 } from "./Constants";
 
 export const ChatMessageHistoryDataAction = (data) => {
@@ -24,9 +25,20 @@ export const ChatMessageHistoryDataAction = (data) => {
   };
 };
 
+
 export const ClearChatHistoryAction = (data) => {
   return {
     type: CLEAR_CHAT_HISTORY,
+    payload: {
+      id: uuidv4(),
+      data
+    }
+  };
+};
+
+export const ClearChatHistoryActionCommon = (data) => {
+  return {
+    type: CLEAR_CHAT_HISTORY_ACTION_COMMON,
     payload: {
       id: uuidv4(),
       data

@@ -8,7 +8,9 @@ import { getCaretPosition, getSelectedText } from '../../../../../Helpers/Chat/C
 class ContentEditable extends Component {
     constructor(props = {}) {
         super(props)
-        this.lastHtml = '';
+        this.state = {
+            lastHtml: ''
+        }
     }
 
 
@@ -30,8 +32,13 @@ class ContentEditable extends Component {
 
 
     emitChange = (event ) => {
-        var html = this.typingContainner.innerHTML;        
-      if (this.props.handleMessage) {
+         var html = this.typingContainner.innerHTML;     
+        if (!html && html.replace(/^\s+/, "") === html || this.typingContainner.innerHTML === "<br>") {
+            this.props.handleEmptyContent();
+            this.setState({lastHtml:"" });
+            return
+        }
+        if (this.props.handleMessage) {
             this.props.onInputListener()
             this.props.handleMessage({
                 target: {
@@ -39,9 +46,7 @@ class ContentEditable extends Component {
                 }
             });
         }
-        if (!html && html.replace(/^\s+/, "") === html) {
-            return
-        }
+
         this.lastHtml = html;
         const pattern = /\B@\w+/g;
                 if( html.match(pattern)){
@@ -55,6 +60,10 @@ class ContentEditable extends Component {
         this.props.onKeyDownListner && this.props.onKeyDownListner(e)
         if (e.which === 13 && e.shiftKey === false) {
             e.preventDefault()
+            if(this.typingContainner.innerHTML.replace(/^\s+/, "") === "" || 
+            this.typingContainner.innerHTML.includes("<div><br></div>")){
+                return false;
+            }
             this.props.handleSendTextMsg()
             this.props.handleEmptyContent()
             return false;
@@ -78,7 +87,8 @@ class ContentEditable extends Component {
                     // prevent the default delete behavior
                     e.preventDefault();
                     el.remove();  
-                    this.props.handleDeleteMentionedUser(el)
+                    this.emitChange()
+                    this.props.handleDeleteMentionedUser(el);
                     return;
                 }
             }
@@ -106,8 +116,8 @@ class ContentEditable extends Component {
     }
 
     render() {
-        const { placeholder = "", id = "" } = this.props;
-    
+        const { id = "" } = this.props;
+        let { lastHtml = ""} = this.state;
         return (
             <div
                 id={id}
@@ -120,7 +130,7 @@ class ContentEditable extends Component {
                     this.onKeyDownListner(e);
                 }}
                 data-jest-id={"jestContentEditable"}
-                data-text={placeholder ? placeholder : "Start typing..."}
+                data-text={ lastHtml === "" ? "Start Typing..." : ""}
                 ref={el => this.typingContainner = ReactDOM.findDOMNode(el)}
                 onKeyUp={() => {
                     this.currentPosition();
