@@ -2,15 +2,12 @@ import Store from "../Store";
 import { appOnlineStatusAction } from '../Actions/BrowserAction';
 import { WebChatConnectionState } from "../Actions/ConnectionState";
 import { CONNECTION_STATE_DISCONNECTED } from "./Chat/Constant";
-import { reconnect } from "../Components/WebChat/Authentication/Reconnect";
 import { setConnectionStatus } from "../Components/WebChat/Common/FileUploadValidation";
-import { isSameSession } from "./Chat/ChatHelper";
-import { encryptAndStoreInLocalStorage, getFromSessionStorageAndDecrypt} from "../Components/WebChat/WebChatEncryptDecrypt";
+import { encryptAndStoreInLocalStorage } from "../Components/WebChat/WebChatEncryptDecrypt";
 
 const isOnline = () => {
     setTimeout(() => {
         Store.dispatch(appOnlineStatusAction(true));
-        isSameSession() && getFromSessionStorageAndDecrypt("isLogout") === null && reconnect();
     }, 1500);
 }
 const isOffline = () => {

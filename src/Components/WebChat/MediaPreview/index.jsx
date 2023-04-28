@@ -258,11 +258,11 @@ export default class MediaPreview extends Component {
     );
   };
 
-  onChangeCaption = (updateThis = {}, caption = "") => {
+  onChangeCaption = (updateThis = {}, caption = "",mentionedUsersIds = []) => {
     let temp = document.createElement("div");
     temp.innerHTML = caption;
-    let sanitized = temp.textContent || temp.innerText;
-    updateThis.caption = sanitized.trim()
+    updateThis.caption = temp.innerHTML;
+    updateThis.mentionedUsersIds = mentionedUsersIds
     return true;
   };
 
@@ -352,6 +352,7 @@ export default class MediaPreview extends Component {
 
   handleDisplayMedia = () => {
     const { selectedFiles } = this.state;
+    const { seletedFiles: { chatType } = {} } = this.props;
     if (selectedFiles.length === 0) return this.closePreview();
     return selectedFiles.map((res, index) => {
       let fileType = res.type;
@@ -366,6 +367,7 @@ export default class MediaPreview extends Component {
               thumb={"image"}
               key={fileId}
               onClickSend={this.sendMediaFile}
+              chatType={chatType}
               media={res}
               caption={caption}
               onClickCloseSelectedItem={this.props.onClickCloseSelectedItem}
@@ -379,6 +381,7 @@ export default class MediaPreview extends Component {
               thumb={"video"}
               key={fileId}
               onClickSend={this.sendMediaFile}
+              chatType={chatType}
               media={res}
               caption={caption}
               onClickCloseSelectedItem={this.props.onClickCloseSelectedItem}

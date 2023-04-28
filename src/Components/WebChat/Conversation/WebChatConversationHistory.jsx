@@ -131,7 +131,7 @@ class WebChatConversationHistory extends Component {
 
   componentDidUpdate(prevProps, prevState) {
     const { activeChatId } = this.props;
-
+    
     if(prevProps.rosterData.id !== this.props.rosterData.id){
         const { data = [] } = this.props.rosterData
         let selectedUser = data.find(ele=> ele.userId === activeChatId)
@@ -206,7 +206,7 @@ class WebChatConversationHistory extends Component {
       let chatJid = getActiveConversationUserJid(),
         activeConversationId = getActiveConversationChatId();
       if (!chatJid) return true;
-
+      
       const chatMessageRes = await SDK.getChatMessages(chatJid, direction, rowId, limit);
       // User may switch another user chat conversation screen when clicked user chat request is in process
       // That's why we check condition(compare userJid from response) here to avoid load the previous user chat history to current users.
@@ -365,7 +365,7 @@ class WebChatConversationHistory extends Component {
         this.loadMoreUpdate(true);
         const firstMessageId = Object.keys(currentChatHistory)[0];
         const firstMessageData = currentChatHistory[firstMessageId];
-        await this.requestChatMessages(chatType, "up", firstMessageId, CHAT_HISTORY_LIMIT, firstMessageData.rowId);
+        await this.requestChatMessages(chatType, "up", firstMessageId, CHAT_HISTORY_LIMIT, firstMessageData?.rowId);
         this.loadMoreUpdate(false);
       }
     }
@@ -729,7 +729,7 @@ class WebChatConversationHistory extends Component {
       for (let i = 0; i < files.length; i++) {
         const file = files[i],
           msgId = uuidv4();
-        const { caption = "", fileDetails: { replyTo, duration = 0, imageUrl = "", audioType = "" } = {} } = file;
+        const { caption = "",mentionedUsersIds =[], fileDetails: { replyTo, duration = 0, imageUrl = "", audioType = "" } = {} } = file;
         let fileOptions = {
           fileName: file.name,
           fileSize: file.size,
@@ -753,7 +753,8 @@ class WebChatConversationHistory extends Component {
           file,
           fileOptions,
           replyTo,
-          fileDetails: file.fileDetails
+          fileDetails: file.fileDetails,
+          mentionedUsersIds: mentionedUsersIds
         };
 
         const conversationChatObj = await getMessageObjSender(dataObj, i);
@@ -811,7 +812,7 @@ class WebChatConversationHistory extends Component {
       let jid = this.prepareJid();
       const jids = getIdFromJid(jid);
       let msgId = uuidv4();
-      if (chatType === CHAT_TYPE_SINGLE || chatType === CHAT_TYPE_GROUP) {         
+      if (chatType === CHAT_TYPE_SINGLE || chatType === CHAT_TYPE_GROUP) {      
         const dataObj = {
           jid,
           msgType: "text",

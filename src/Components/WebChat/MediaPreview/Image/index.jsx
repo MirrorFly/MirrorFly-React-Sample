@@ -23,6 +23,7 @@ export default class Image extends Component {
   }
 
   render() {
+    
     return (
       <div className="type-image" id="preview">
         <div className={`imageZoomWrapper`}>
@@ -41,7 +42,7 @@ export default class Image extends Component {
                   </button>
                 </div>
                 <TransformComponent>
-                  <img src={this.state.imgSrc} alt="" />
+                  <img className="sliderImage" src={this.state.imgSrc} alt="" />
                 </TransformComponent>
               </React.Fragment>
             )}
@@ -51,6 +52,7 @@ export default class Image extends Component {
           onChangeCaption={this.props.onChangeCaption}
           media={this.props.media}
           onClickSend={this.props.onClickSend}
+          chatType={this.props.chatType}
         />
       </div>
     );

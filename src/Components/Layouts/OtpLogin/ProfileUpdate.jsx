@@ -214,7 +214,7 @@ function ProfileUpdate(props = {}) {
         <span className="text-info">{VIEW_PROFILE_INFO}</span>
       </div>
 
-      <button onClick={submitProfileDetails} id="ProfileUpdate" type="button">
+      <button onClick={submitProfileDetails} className="btn_lg_rounded" id="ProfileUpdate" type="button">
         Save
       </button>
     </form>

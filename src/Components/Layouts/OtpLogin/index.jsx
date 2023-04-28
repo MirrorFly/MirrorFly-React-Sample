@@ -11,6 +11,9 @@ import firebase from "./firebaseConfig";
 import { DEFAULT_USER_STATUS } from "../../../Helpers/Chat/Constant";
 import OutsideClickHandler from "react-outside-click-handler";
 import BlockedFromApplication from "../../BlockedFromApplication";
+import SDK from "../../SDK";
+import { formatUserIdToJid } from "../../../Helpers/Chat/User";
+import { encryptAndStoreInLocalStorage, getFromLocalStorageAndDecrypt } from "../../WebChat/WebChatEncryptDecrypt";
 
 const { helpUrl } = config;
 const otpInitialState = {
@@ -24,7 +27,7 @@ const otpInitialState = {
 let unmounted = false;
 
 function OtpLogin(props = {}) {
-  const { handleLoginSuccess, qrCode = "", handleSDKIntialize } = props;
+  const { handleLoginSuccess, qrCode = "", handleSDKIntialize, showProfileView = false } = props;
   const [resultData, setResultData] = useState({});
   const [pageLoader, setPageLoader] = useState(false);
   const [errorHide, setErrorHide] = useState(false);
@@ -112,8 +115,10 @@ function OtpLogin(props = {}) {
   };
 
   const handleOtpverify = async (mobileNo, register, login) => {
+    encryptAndStoreInLocalStorage("username",register.username);
     setResultData({ register, login });
-    if (!register?.isProfileUpdated) {
+    const getUserProfile = await SDK.getUserProfile(formatUserIdToJid(register.username));
+    if (getUserProfile.data.nickName === "" || !register.isProfileUpdated) {
       setProfileDetails({
         ...profileDetails,
         mobileNo: mobileNo,
@@ -160,8 +165,9 @@ function OtpLogin(props = {}) {
     // }
     // if (profileDetails && profileDetails.registerData && !profileDetails.registerData.isProfileUpdated) {
     //   SDK.sendRegisterUpdate();
-    // }
-    handleLoginSuccess(resultData.register, resultData.login);
+    // } 
+   const registerData = getFromLocalStorageAndDecrypt("auth_user")
+    handleLoginSuccess(registerData, resultData.login, true)
   };
 
   const handleChangesProfile = (param, value) => {
@@ -195,7 +201,7 @@ function OtpLogin(props = {}) {
     const phoneValue = regMobileNo.mobileNumber;
     const phoneNumber = `${countryCode}${phoneValue}`;
     setOtpverify(otpInitialState);
-
+   
     firebase
       .auth()
       .signInWithPhoneNumber(phoneNumber, window.recaptchaVerifier)
@@ -228,6 +234,21 @@ function OtpLogin(props = {}) {
     }
   };
 
+  useEffect(() => {
+    if(showProfileView === true){
+      const getRegisterNo = getFromLocalStorageAndDecrypt('username');
+      //when refresh profileScreen shows,but user number not displayed, so used localstorage value
+     setProfileDetails({
+      ...profileDetails,
+      mobileNo: getRegisterNo
+     })
+      setValidate({
+        getMobileNo: false,
+        getOtpVerfied: false,
+        getProfileDetails: true
+      });
+    }
+  },[showProfileView])
   return (
     <Fragment>
       <div className="mirrorfly newLoginScreen">

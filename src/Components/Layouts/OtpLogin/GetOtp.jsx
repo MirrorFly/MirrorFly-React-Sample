@@ -111,18 +111,18 @@ function GetOtp(props = {}) {
     const userIdentifier = `${regMobileNo.countryCode.replace(regexPattern, "")}${regMobileNo.mobileNumber}`;
     const registerResult = await SDK.register(userIdentifier, forceLogin);
     if(registerResult.statusCode === 200){
-      const { data: { username = "", password = "", token = "", isProfileUpdated = false } = {} } =
+      const { data: { username = "", password = "", token = ""} = {} } =
       registerResult;
       if (username && password) {
+        const loginData = {
+          username,
+          password,
+          type: "web"
+        };
+        encryptAndStoreInLocalStorage("auth_user", loginData);
         const loginResult = await SDK.connect(username, password);
 
         if (loginResult.statusCode === 200) {
-          const loginData = {
-            username,
-            password,
-            type: "web"
-          };
-          isProfileUpdated && encryptAndStoreInLocalStorage("auth_user", loginData);
           encryptAndStoreInLocalStorage("token", token);
           SDK.setUserToken(token);
           handleOtpverify(userIdentifier, registerResult.data, loginData);
@@ -195,7 +195,7 @@ function GetOtp(props = {}) {
           <div className="userprofile logout">
             <div className="logout-popup">
               <div className="logout-label">
-                <label>You have reached the maximum device limit. If you want to continue,one of your device
+                <label>You have reached the maximum device limit. If you want to continue, one of your device
                    will logged out. Do you want to continue?</label>
               </div>
               <div className="logout-noteinfo">

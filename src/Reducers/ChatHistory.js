@@ -12,9 +12,11 @@ import {
   UPDATE_FAVOURITE_STATUS,
   REMOVE_ALL_FAVOURITE_STATUS,
   TRANSLATE_MESSAGE,
-  CLEAR_ALL_CHAT
+  CLEAR_ALL_CHAT,
+  CLEAR_CHAT_HISTORY_ACTION_COMMON
 } from "../Actions/Constants";
 import {
+  clearChatHistoryOffline,
   getChatHistoryData,
   getUpdatedHistoryData,
   getUpdatedHistoryDataUpload,
@@ -41,6 +43,23 @@ export function ChatConversationHistoryReducer(state = initialState, action = {}
           data: getChatHistoryData(data, state.data)
         }
       };
+
+    
+
+    case CLEAR_CHAT_HISTORY_ACTION_COMMON:
+      let msg = clearChatHistoryOffline(data, state.data);
+      return {
+        ...state,
+        ...{
+          id: id,
+          data: {
+            ...state.data,
+            [data.id]: {
+              messages: msg
+            }
+         }
+        }
+      }  
 
     case UPDATE_MESSAGE_STATUS:
       return {

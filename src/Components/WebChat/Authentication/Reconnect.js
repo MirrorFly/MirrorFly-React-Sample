@@ -1,13 +1,11 @@
 import SDK from "../../SDK";
-import { getFromLocalStorageAndDecrypt, encryptAndStoreInLocalStorage} from "../../WebChat/WebChatEncryptDecrypt";
-import { ReconnectRecentChatAction } from "../../../Actions/RecentChatActions";
+import { encryptAndStoreInLocalStorage, getFromLocalStorageAndDecrypt } from "../../WebChat/WebChatEncryptDecrypt";
 import Store from "../../../Store";
 import { formatToArrayofJid, setContactWhoBleckedMe } from "../../../Helpers/Chat/BlockContact";
 import { blockedContactAction } from "../../../Actions/BlockAction";
-import { GroupsDataAction } from "../../../Actions/GroupsAction";
-import { isAppOnline, logout } from "../../../Helpers/Utility";
+import { isAppOnline } from "../../../Helpers/Utility";
 import { setConnectionStatus } from "../Common/FileUploadValidation";
-import { CONNECTION_STATE_CONNECTING, SERVER_LOGOUT } from "../../../Helpers/Chat/Constant";
+import { CHAT_TYPE_GROUP, CONNECTION_STATE_CONNECTING } from "../../../Helpers/Chat/Constant";
 import { WebChatConnectionState } from "../../../Actions/ConnectionState";
 import {
   getAllStarredMessages,
@@ -24,11 +22,14 @@ import { RECONNECT_GET_CHAT_LIMIT } from "../../../Helpers/Constants";
 import { ChatMessageHistoryDataAction, UpdateFavouriteStatus } from "../../../Actions/ChatHistory";
 import { StarredMessagesList } from "../../../Actions/StarredAction";
 import { chatSeenPendingMsg } from "../../../Actions/SingleChatMessageActions";
-import { adminBlockStatusUpdate } from "../../../Actions/AdminBlockAction";
 import { toast } from 'react-toastify';
-import { ActiveChatResetAction } from "../../../Actions/RecentChatActions"
+import { ActiveChatResetAction, RecentChatAction } from "../../../Actions/RecentChatActions"
 import { hideModal } from '../../../Actions/PopUp';
 import { messageInfoAction } from "../../../Actions/MessageActions";
+import { GroupsDataAction } from "../../../Actions/GroupsAction";
+import { setGroupParticipantsByGroupId } from "../../../Helpers/Chat/Group";
+import { RosterDataAction, RosterPermissionAction } from "../../../Actions/RosterActions";
+import { FeatureEnableState } from "../../../Actions/FeatureAction";
 
 const handleBlockMethods = async () => {
   const userIBlockedRes = await SDK.getUsersIBlocked();
@@ -149,59 +150,71 @@ const handleFavouriteMessages = async () => {
 
 const handleMentionedMessage = async () => {
   const state = Store.getState();
-  Store.dispatch(messageInfoAction( state.selectedMessageInfoReducer.data.msgId , true));
-  SDK.getGroupMsgInfo(state.groupsMemberListData.data.groupJid,state.selectedMessageInfoReducer.data.msgId);
+  if(state.selectedMessageInfoReducer?.data?.msgId){
+    Store.dispatch(messageInfoAction(state.selectedMessageInfoReducer?.data?.msgId, true));
+    SDK.getGroupMsgInfo(state.groupsMemberListData.data.groupJid, state.selectedMessageInfoReducer.data.msgId);
+  }
 }
 
 export async function login() {
   try {
+    let featureData = {};
     if (getFromLocalStorageAndDecrypt("auth_user")) {
       let decryptResponse = getFromLocalStorageAndDecrypt("auth_user");
+      const tokenResult = await SDK.getUserToken(decryptResponse.username, decryptResponse.password);
+    if (tokenResult.statusCode === 200) {
+      encryptAndStoreInLocalStorage("token", tokenResult.userToken);
+    }
 
-      const loginResult = await SDK.connect(decryptResponse.username, decryptResponse.password, true);
-      console.log("Reconnect loginResult :>> ", loginResult);
-      if (loginResult.statusCode === 200) {
-        await SDK.getUserProfile(formatUserIdToJid(decryptResponse.username));
-        // await SDK.getFriendsList();
+      await SDK.getUserProfile(formatUserIdToJid(decryptResponse.username));
+      // await SDK.getFriendsList();
+      const featureResponse = SDK.getAvailableFeatures();
+      if (featureResponse.statusCode === 200) {
+        featureData = featureResponse.data;
+        Store.dispatch(FeatureEnableState(featureData));
+        encryptAndStoreInLocalStorage("featureRestrictionFlags", featureData);
+      }
+
+      Store.dispatch(RosterPermissionAction(true));
+      Store.dispatch(RosterDataAction([]));
+
+      if (featureData.isGroupChatEnabled) {
         const groupListRes = await SDK.getGroupsList();
         if (groupListRes && groupListRes.statusCode === 200) {
+          groupListRes.data.map(async (group) => {
+            const groupJid = formatUserIdToJid(group.groupId, CHAT_TYPE_GROUP);
+            const groupPartRes = await SDK.getGroupParticipants(groupJid);
+            if (groupPartRes && groupPartRes.statusCode === 200) {
+              setGroupParticipantsByGroupId(groupJid, groupPartRes.data.participants);
+            }
+          });
           Store.dispatch(GroupsDataAction(groupListRes.data));
-        }
-      const { data = [] } = groupListRes 
-        data.forEach(item => {
-          if( isActiveConversationUserOrGroup(item?.groupId) && item?.isAdminBlocked){
-            Store.dispatch(ActiveChatResetAction());
-            toast.info("This group is no longer available")
-            Store.dispatch(hideModal())
-          }  
-        });
-        
-        const oldRecentChatData = getRecentChatData();
-        const recentChatsRes = await SDK.getRecentChats();
-        let recentChatArr = [];
-        if (recentChatsRes && recentChatsRes.statusCode === 200) {
-          recentChatArr = recentChatsRes.data;
-          Store.dispatch(ReconnectRecentChatAction(recentChatsRes.data, true));
-        }
 
-        handleUserSettings();
-        handleChatHistoryUpdate(recentChatArr, oldRecentChatData);
-        handleArchivedChats();
-        handleBlockMethods();
-        handleFavouriteMessages();
-        handleMentionedMessage();
-      } else if (loginResult.statusCode === 403) {
-        Store.dispatch(adminBlockStatusUpdate({
-          toUserId: decryptResponse.username,
-          isAdminBlocked: true
-        }));
-        logout("block");
-        return
-      } else if (loginResult.statusCode === 500){
-        logout(SERVER_LOGOUT);
-      } else if (loginResult.statusCode === 599){
-         login() && isAppOnline()
+          const { data = [] } = groupListRes
+          data.forEach(item => {
+            if (isActiveConversationUserOrGroup(item?.groupId) && item?.isAdminBlocked) {
+              Store.dispatch(ActiveChatResetAction());
+              toast.info("This group is no longer available")
+              Store.dispatch(hideModal())
+            }
+          });
+        }
       }
+
+      const oldRecentChatData = getRecentChatData();
+      const recentChatsRes = await SDK.getRecentChats();
+      let recentChatArr = [];
+      if (recentChatsRes && recentChatsRes.statusCode === 200) {
+        recentChatArr = recentChatsRes.data;
+        Store.dispatch(RecentChatAction(recentChatArr));
+      }
+      handleUserSettings();
+      handleChatHistoryUpdate(recentChatArr, oldRecentChatData);
+      handleArchivedChats();
+      handleBlockMethods();
+      handleFavouriteMessages();
+      handleMentionedMessage();
+
     }
   } catch (error) {
     console.log("reconnect error :>> ", error);
@@ -213,5 +226,4 @@ export function reconnect() {
   encryptAndStoreInLocalStorage("connection_status", CONNECTION_STATE_CONNECTING);
   setConnectionStatus(CONNECTION_STATE_CONNECTING);
   Store.dispatch(WebChatConnectionState(CONNECTION_STATE_CONNECTING));
-  isAppOnline() && login();
 }

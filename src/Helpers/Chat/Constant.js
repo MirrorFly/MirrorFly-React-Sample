@@ -44,6 +44,7 @@ export const MSG_CLEAR_CHAT = 'clearChat';
 export const MSG_CLEAR_CHAT_CARBON = 'carbonClearChat';
 export const MSG_DELETE_CHAT = 'deleteChat';
 export const MSG_DELETE_CHAT_CARBON = 'carbonDeleteChat';
+export const DELETE_CALL_LOG = 'deleteCallLog';
 export const DEFAULT_TITLE_NAME = "MirrorFly";
 export const AUDIO_ACC_WINDOWS = "audio/vnd.dlna.adts";
 export const THIS_MESSAGE_WAS_DELETED = "This message was deleted";

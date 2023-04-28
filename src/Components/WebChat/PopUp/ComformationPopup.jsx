@@ -1,19 +1,17 @@
 import React from 'react'
 import "./BlockPopUp.scss";
-import { dispatchErrorMessage } from '../Common/FileUploadValidation';
-import { blockOfflineAction, isAppOnline } from '../../../Helpers/Utility';
 
 export const ConformationPopup = (props) => {
     const { popUpToggleAction, dispatchAction, headerLabel,
         closeLabel, actionLabel ,label} = props
 
         const actionDispatch = () => {
-            if(!isAppOnline()){
-                blockOfflineAction()
-             return
-            }
+            // if(!isAppOnline()){
+            //     blockOfflineAction()
+            //  return
+            // }
 
-            if (dispatchErrorMessage()) {
+            // if (dispatchErrorMessage()) {
                if(label ==='ClearAction'){
                     dispatchAction({
                         isclear:true
@@ -23,7 +21,7 @@ export const ConformationPopup = (props) => {
                         isclear:false
                     });
                 }
-            }
+            // }
         }
 
     return(

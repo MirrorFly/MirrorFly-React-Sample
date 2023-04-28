@@ -171,7 +171,8 @@ class ForwardPopUp extends Component {
     adminUnBlockedUserName.map((item, key) => {
       if (allContactList.includes(item) && !adminContactsToDisplay.includes(item)) {
         adminContactsToDisplay.push(item)
-        adminContactsToForward.push(adminJidArray[key])
+        const adminJid = adminJidArray[key].includes('@')? adminJidArray[key] : adminJidArray[key] + "@" + REACT_APP_XMPP_SOCKET_HOST;
+        adminContactsToForward.push(adminJid);
       }
     })
 

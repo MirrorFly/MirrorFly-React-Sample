@@ -165,7 +165,7 @@ class RecentChatItem extends Component {
       };
       message = msgBody && typeof msgBody === "object" && msgBody.media ? msgBody.media.caption : undefined;
       message = message || (msgType === "image" ? "Photo" : capitalizeFirstLetter(msgType));
-      message = renderHTML(getFormattedRecentChatText(message));
+      message = renderHTML(handleMentionedUser(getFormattedRecentChatText(message),msgBody.mentionedUsersIds ? msgBody.mentionedUsersIds : [],false));
       return (
         <>
           {icons[msgType] || ""} {message}

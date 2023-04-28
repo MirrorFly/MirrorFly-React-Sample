@@ -35,7 +35,6 @@ export default class Camera extends Component {
         });
         this.props.onClickClose();
     }
-
     componentWillUnmount() {
         this.props.stopCameraPermissionTracks && this.props.stopCameraPermissionTracks();
     }
@@ -111,15 +110,15 @@ export default class Camera extends Component {
     /**
      * handleCropImage() to load the loader for croppie.
      */
-    handleCropImage = (caption) => {
+    handleCropImage = (caption , mentionedUsersIds =[]) => {
         if (blockOfflineMsgAction()) return;
-        this.setState({ loader: true }, () => this.cropImage(caption));
+        this.setState({ loader: true }, () => this.cropImage(caption,mentionedUsersIds));
     }
 
     /**
      * cropImage() to crop the selected image.
      */
-    cropImage = (caption = "") => {
+    cropImage = (caption = "",mentionedUsersIds = []) => {
         if (this.props.cropEnabled) {
             cropme.result({
                 type: "base64",
@@ -128,16 +127,17 @@ export default class Camera extends Component {
                 let imageFile = dataURLtoFile(base64, this.state.filename);
                 this.setState({
                     loader: true
-                }, () => this.aftercropedImage(imageFile, caption))
+                }, () => this.aftercropedImage(imageFile, caption, mentionedUsersIds))
             })
         } else {
-            this.aftercropedImage(this.state.camImage, caption);
+            this.aftercropedImage(this.state.camImage, caption, mentionedUsersIds);
         }
     }
 
-    aftercropedImage = (file = {}, caption = "") => {
+    aftercropedImage = (file = {}, caption = "", mentionedUsersIds = []) => {
         file = new File([file], file['name'], { type: "image/png" });
         file.caption = caption;
+        file.mentionedUsersIds = mentionedUsersIds;
         this.props.onSuccess(file);
     }
 
@@ -176,6 +176,7 @@ export default class Camera extends Component {
                                 handleCropImage={this.handleCropImage}
                                 handleCameraShow={this.handleCameraShow}
                                 handleCameraPopupClose={this.handleCameraPopupClose}
+                                chatType = {this.props.chatType}
                             />
                         }
                     </div>

@@ -260,7 +260,7 @@ export const getLocalUserId = () => {
     return "";
 }
 
-export const handleMentionedUser = (text = "" ,mentionedUsersIds, mentionedMe) => {
+export const handleMentionedUser = (text = "" ,mentionedUsersIds, mentionedMe, mentionedClass = "") => {
     let UserId = mentionedUsersIds;
     if (!text) return "";
   const pattern = /@(?:\W\D\W)/gi;
@@ -274,7 +274,7 @@ export const handleMentionedUser = (text = "" ,mentionedUsersIds, mentionedMe) =
       const mentionedUserId = UserId[i];
       let rosterData = getUserDetails(mentionedUserId);
       let displayName = rosterData.displayName;
-      content = `${content.replace(uid, `<button data-mentioned="${mentionedUserId}" class='${mentionedMe === mentionedUserId ?" tagged  ":" "} mentioned'><b>@</b> <i>${displayName}</i> </button> `)}`;
+      content = `${content.replace(uid, `<button data-mentioned="${mentionedUserId}" class='${mentionedClass} ${mentionedMe === mentionedUserId ?" tagged  ":" "} mentioned'><b>@</b> <i>${displayName !== undefined ? displayName : [] }</i> </button> `)}`;
       }
     });
     return content;

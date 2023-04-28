@@ -38,6 +38,7 @@ class WebChatCallLogs extends React.Component {
             newCall: false,
             newCallType: "video",
             currentGroupID: "",
+            isShow: true
         }
         this.handleOnBack = this.handleOnBack.bind(this);
         this.preventMultipleClick = false;
@@ -91,6 +92,13 @@ class WebChatCallLogs extends React.Component {
                 if(currentGroupData?.isAdminBlocked){
                     this.closePopup()
                 }
+        }
+
+        // hide the search component if callLogs is empty
+        if (Object.keys(prevProps.callLogData.callLogs).length !== Object.keys(this.props.callLogData.callLogs).length){
+            if(Object.keys(this.props.callLogData.callLogs).length < 1){
+                this.setState({isShow: false, searchterm: ""});
+            }
         }
     }
 
@@ -565,7 +573,7 @@ class WebChatCallLogs extends React.Component {
         const loaderStyle = {
             width: 80, height: 80
         }
-        const { searchterm, newCall } = this.state;
+        const { searchterm, newCall, isShow } = this.state;
         const callLogArr = this.handleCallLogs();
         return (
             <Fragment>
@@ -580,8 +588,8 @@ class WebChatCallLogs extends React.Component {
                                     <span>{"Call Logs"}</span>
                                 </div>
                             </div>
-                            {((callLogArr.length > 0 && !searchterm) ||
-                                searchterm) &&
+                            {((isShow === true && callLogArr.length > 0 ) ||
+                                searchterm !== "") &&
                                 <Search searchIn={this.state.searchIn} handleSearchFilterList={this.handleFilterCallLogsList} />
                             }
                             {this.state.loaderStatus && <div className="loader-container">

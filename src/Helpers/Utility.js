@@ -32,7 +32,7 @@ import {
 import { getExtension } from "../Components/WebChat/Common/FileUploadValidation";
 import { REACT_APP_API_URL, REACT_APP_LICENSE_KEY, REACT_APP_SANDBOX_MODE,REACT_APP_SITE_DOMAIN, REACT_APP_AUTOMATION_CHROME_USER, REACT_APP_AUTOMATION_CHROME_PASS, REACT_APP_AUTOMATION_EDGE_USER, REACT_APP_AUTOMATION_FIREFOX_USER, REACT_APP_AUTOMATION_FIREFOX_PASS, REACT_APP_AUTOMATION_EDGE_PASS, REACT_APP_HIDE_NOTIFICATION_CONTENT, REACT_APP_XMPP_SOCKET_HOST } from "../Components/processENV";
 import Store from "../Store";
-import { getContactNameFromRoster, formatUserIdToJid, isSingleChatJID, getLocalUserDetails } from "./Chat/User";
+import { getContactNameFromRoster, formatUserIdToJid, isSingleChatJID, getLocalUserDetails, handleMentionedUser } from "./Chat/User";
 import { MSG_PROCESSING_STATUS, GROUP_CHAT_PROFILE_UPDATED_NOTIFY, MSG_SENT_STATUS_CARBON, CHAT_TYPE_SINGLE, CHAT_TYPE_GROUP, COMMON_ERROR_MESSAGE, SERVER_LOGOUT } from "./Chat/Constant";
 import toastr from "toastr";
 import { isGroupChat } from "./Chat/ChatHelper";
@@ -482,9 +482,9 @@ export const getFormattedRecentChatText = (text) => {
 
 export const convertTextToURL = (inputText = "") => linkify(inputText);
 
-export const captionLink = (text) => {
+export const captionLink = (text,mentionedUserId) => {
   if (!text) return "";
-  return renderHTML(convertTextToURL(text.replace(/&nbsp;/g, "").replace(/&amp;/g, "&")));
+  return renderHTML(handleMentionedUser(convertTextToURL(text.replace(/&nbsp;/g, "").replace(/&amp;/g, "&")),mentionedUserId,false));
 };
 
 /**
@@ -492,7 +492,6 @@ export const captionLink = (text) => {
  * Window.location.reload() function performed.
  */
 export const logout = async(type = "") => {
-
   if(isAppOnline()){
     const logoutResult = SDK && await SDK.logout();
     if(logoutResult.statusCode === 200){
@@ -500,6 +499,7 @@ export const logout = async(type = "") => {
       await deleteAllIndexedDb();
       if (type === "accountDeleted") {
         encryptAndStoreInLocalStorage("deleteAccount", true);
+        // deleteItemFromLocalStorage("getuserprofile")
       }
       if(type === SERVER_LOGOUT){
         encryptAndStoreInLocalStorage("serverLogout",type);
@@ -721,7 +721,6 @@ export const stripTags = (dirtyString) => {
 
 export const getMessageObjSender = async (dataObj, idx) => {
   const { jid, msgType, userProfile, msgId, chatType, message = "", file, fileOptions = {}, replyTo, fileDetails, mentionedUsersIds} = dataObj;
-
   const timestamp = Date.now() * 1000;
   const senderId = userProfile.data.fromUser;
   const msgBody = {

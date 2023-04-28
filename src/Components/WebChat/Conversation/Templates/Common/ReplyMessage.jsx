@@ -80,7 +80,6 @@ export default React.memo(({ msgId, viewOriginalMessage, groupMemberDetails, cha
         const { nameToDisplay } = getDisplayNameFromGroup(messageFrom, groupMemberDetails);
         return nameToDisplay;
     }
-  
     const fileExtension = getExtension(fileName);
     const placeholder = getFileFromType(null, fileExtension);
 
@@ -97,8 +96,8 @@ export default React.memo(({ msgId, viewOriginalMessage, groupMemberDetails, cha
                 className="sender-sends">
                 <span dangerouslySetInnerHTML={{__html: handleMentionedUser(getReplyCaption(message),mentionedUsersIds,false )}} ></span> </span> }
                 {overflowActive ? <span className="sender-sends">...</span> : ""}
-                {message_type === 'image' && <span className="sender-sends ReplyCamera">{caption === '' ?  "Photo" : getReplyCaption(caption)}</span>}
-                {message_type === 'video' && <span className="sender-sends ReplyVideo">{caption === '' ? "Video" :  getReplyCaption(caption)}</span>}
+                {message_type === 'image' && <span className="sender-sends ReplyCamera"> <span dangerouslySetInnerHTML={{__html: caption === '' ?  "Photo" : handleMentionedUser(getReplyCaption(caption),mentionedUsersIds,false)}}></span></span>}
+                {message_type === 'video' && <span className="sender-sends ReplyVideo"> <span dangerouslySetInnerHTML={{__html: caption === '' ? "Video" :  handleMentionedUser(getReplyCaption(caption),mentionedUsersIds,false)}}></span></span>}
                 {message_type === 'audio' && < span className="sender-sends AudioMessage Recorded">{millisToMinutesAndSeconds(duration)}</span>}
                 {message_type === 'file' && <span className="sender-sends filename">{fileName}</span>}
                 {message_type === 'contact' && <span className="sender-sends ReplyContact">{name}</span>}

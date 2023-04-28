@@ -4,7 +4,7 @@ import { REACT_APP_SOCKETIO_SERVER_HOST, CHECK_INTERENT_CONNECTIVITY, REACT_APP_
 import "react-toastify/dist/ReactToastify.css";
 import { callIntermediateScreen, showConfrence } from "../../Actions/CallAction";
 import { GroupChatSelectedMediaReset } from "../../Actions/GroupChatMessageActions";
-import { ActiveChatAction, RecentChatAction } from "../../Actions/RecentChatActions";
+import { ActiveChatAction } from "../../Actions/RecentChatActions";
 import { SingleChatSelectedMediaReset } from "../../Actions/SingleChatMessageActions";
 import { loader, ScanQRLogo } from "../../assets/images";
 import "./Login.scss";
@@ -19,37 +19,30 @@ import CalleScreen from "../WebCall/calleeScreen";
 import Connecting from "../WebCall/Connecting";
 import WebCallingLayout from "../WebCall/WebCallingLayout";
 import ConversationSection from "../WebChat/ConversationSection";
-import { getFromLocalStorageAndDecrypt, encryptAndStoreInLocalStorage, getFromSessionStorageAndDecrypt, deleteItemFromSessionStorage, deleteItemFromLocalStorage} from "../WebChat/WebChatEncryptDecrypt";
+import { getFromLocalStorageAndDecrypt, encryptAndStoreInLocalStorage, getFromSessionStorageAndDecrypt, deleteItemFromSessionStorage, deleteItemFromLocalStorage } from "../WebChat/WebChatEncryptDecrypt";
 import Sidebar from "./Sidebar";
 import WebRtcCall from "../WebCall/WebRtcCall";
 import { toast, ToastContainer } from "react-toastify";
 import browserNotify from "../../Helpers/Browser/BrowserNotify";
 import browserTab from "../../Helpers/Browser/BrowserTab";
-import { GroupsDataAction } from "../../Actions/GroupsAction";
-import { blockedContactAction } from "../../Actions/BlockAction";
-import { formatToArrayofJid, setContactWhoBleckedMe } from "../../Helpers/Chat/BlockContact";
 import { registerWindowEvent } from "../../Helpers/windowEvent";
 import {
-  handleUserSettings,
   isCurrentSessionActive,
   resetStoreData,
   updateFavicon,
   updateSessionId,
   updateSessionIdInLocalStorage
 } from "../../Helpers/Chat/ChatHelper";
-import { CHAT_TYPE_GROUP, DEFAULT_TITLE_NAME, NEW_CHAT_CONTACT_PERMISSION_DENIED, SERVER_LOGOUT, SESSION_LOGOUT } from "../../Helpers/Chat/Constant";
+import { DEFAULT_TITLE_NAME, NEW_CHAT_CONTACT_PERMISSION_DENIED, SERVER_LOGOUT, SESSION_LOGOUT } from "../../Helpers/Chat/Constant";
 import { NO_INTERNET_TOAST } from "../../Helpers/Constants";
 import { formatUserIdToJid } from "../../Helpers/Chat/User";
-import { setGroupParticipantsByGroupId } from "../../Helpers/Chat/Group";
-import { StarredMessagesList } from "../../Actions/StarredAction";
 import OtpLogin from "./OtpLogin/index";
 import MeetingScreenJoin from "../WebCall/MeetingScreenJoin/";
 import { resetCallData } from "../callbacks";
 import ActionInfoPopup from '../ActionInfoPopup';
 import BlockedFromApplication from "../BlockedFromApplication";
 import { adminBlockStatusUpdate } from "../../Actions/AdminBlockAction";
-import { RosterDataAction, RosterPermissionAction } from "../../Actions/RosterActions";
-import { FeatureEnableState } from "../../Actions/FeatureAction";
+import PageLoader from "./PageLoader";
 
 const createHistory = require("history").createBrowserHistory;
 export const history = createHistory();
@@ -77,9 +70,11 @@ class Login extends React.Component {
       newSession: false,
       openStatus: true,
       showMessageinfo: false,
+      showProfileScreen: false,
       joinCallPopup: false,
       contactPermissionPopup: false,
       contactPermissionPopupText: "",
+      hideRecentChat: false,
       accountDeletedToast: getFromLocalStorageAndDecrypt("deleteAccount")
     };
     this.handleQRCode = this.handleQRCode.bind(this);
@@ -135,15 +130,23 @@ class Login extends React.Component {
 
   componentDidMount() {
     updateSessionIdInLocalStorage();
-    this.handleSDKIntialize();
+    const isRegisterData = getFromLocalStorageAndDecrypt('username');
+    this.handleSDKIntialize(isRegisterData);
     window.addEventListener("message", this.handleIframeTask);
     window.addEventListener("storage", this.handleOnStorageChange, false);
     browserTab.init();
     browserNotify.init();
-    const checkServerLogout=getFromLocalStorageAndDecrypt("serverLogout");
-    if(checkServerLogout === SERVER_LOGOUT){
+    const checkServerLogout = getFromLocalStorageAndDecrypt("serverLogout");
+    if (checkServerLogout === SERVER_LOGOUT) {
       toast.info(SESSION_LOGOUT);
       deleteItemFromLocalStorage("serverLogout");
+    }
+    const getUserNickname = getFromLocalStorageAndDecrypt("getuserprofile")
+    if (getUserNickname === "") {
+      this.setState({
+        showProfileScreen: true
+      });
+      return;
     }
   }
 
@@ -161,6 +164,7 @@ class Login extends React.Component {
   };
 
   componentDidUpdate(prevProps, prevState) {
+    
     if (prevProps.ConnectionStateData && prevProps.ConnectionStateData.id !== this.props.ConnectionStateData.id) {
       if (this.props.ConnectionStateData.data === "CONNECTED") {
         this.setState({
@@ -222,7 +226,7 @@ class Login extends React.Component {
     window.removeEventListener("storage", this.handleOnStorageChange);
   }
 
-  handleSDKIntialize = async () => {
+  handleSDKIntialize = async (registerData) => {
     const initializeObj = getInitializeObj();
     const response = await SDK.initializeSDK(initializeObj);
     let responseCall = { statusCode: 200 };
@@ -231,7 +235,6 @@ class Login extends React.Component {
       SDK.setMediaEncryption(true); //Enable the media encryption
       if (window.location.hostname === REACT_APP_AUTOMATION_URL) {
         const staticCredential = getAutomationLoginCredentials();
-        console.log("staticCredential :>> ", staticCredential);
         this.setState({ webChatStatus: true }, () => {
           this.handleLogin(staticCredential);
         });
@@ -243,7 +246,7 @@ class Login extends React.Component {
 
         if (isCurrentSessionActive())
           this.setState({ webChatStatus: true }, () => {
-            this.handleLogin(decryptResponse);
+            this.handleLogin(decryptResponse, registerData);
           });
         else {
           this.setState({ loaderStatus: false }, () => {
@@ -287,79 +290,46 @@ class Login extends React.Component {
     }
   }
 
-  handleLoginSuccess = async (data) => {
+  handleLoginSuccess = async (data, data1 = null, profileSuccess = false) => {
+    encryptAndStoreInLocalStorage("auth_user", data);
+    if (profileSuccess === true) {
+      this.setState({
+        showProfileScreen: false
+      });
+    }
+
+    const getUserProfile = await SDK.getUserProfile(formatUserIdToJid(data.username));
+    this.setState({
+      hideRecentChat: getUserProfile.data?.nickName !== ''
+    });
+    encryptAndStoreInLocalStorage("getuserprofile", getUserProfile?.data?.nickName === null ? "" : getUserProfile?.data?.nickName);
+
+    if (getUserProfile?.data?.nickName === "") {
+      this.setState({
+        showProfileScreen: true
+      });
+      return;
+    }
 
     let resource = SDK.getCurrentUserJid();
     if (resource.statusCode === 200) encryptAndStoreInLocalStorage("loggedInUserJidWithResource", resource.userJid);
     
-    const tokenResult = await SDK.getUserToken(data.username, data.password);
-    if (tokenResult.statusCode === 200) {
-      encryptAndStoreInLocalStorage("token", tokenResult.userToken);
-    }
 
     deleteItemFromSessionStorage("isLogout");
     encryptAndStoreInLocalStorage("recordingStatus", true);
-    encryptAndStoreInLocalStorage("auth_user", data);
 
     if (isBoxedLayoutEnabled()) {
       document.getElementById("root").classList.add("boxLayout");
     }
 
-    await SDK.getUserProfile(formatUserIdToJid(data.username));
-    const userIBlockedRes = await SDK.getUsersIBlocked();
-    if (userIBlockedRes && userIBlockedRes.statusCode === 200) {
-      const jidArr = formatToArrayofJid(userIBlockedRes.data);
-      Store.dispatch(blockedContactAction(jidArr));
-    }
-
-    const userBlockedMeRes = await SDK.getUsersWhoBlockedMe();
-    if (userBlockedMeRes && userBlockedMeRes.statusCode === 200) {
-      const jidArr = formatToArrayofJid(userBlockedMeRes.data);
-      setContactWhoBleckedMe(jidArr);
-    }
-
-    const featureResponse = SDK.getAvailableFeatures();
-    if(featureResponse.statusCode === 200) {
-      const featureData = featureResponse.data;
-      Store.dispatch(FeatureEnableState(featureData));
-      encryptAndStoreInLocalStorage("featureRestrictionFlags",featureData);
-    }
-
-    //await SDK.getFriendsList();
-    Store.dispatch(RosterPermissionAction(true));
-    Store.dispatch(RosterDataAction([]));
-    const { featureStateData: { isGroupChatEnabled = false } } = this.props;
-    if(isGroupChatEnabled) {
-      const groupListRes = await SDK.getGroupsList();
-
-      if (groupListRes && groupListRes.statusCode === 200) {
-        groupListRes.data.map(async (group) => {
-          const groupJid = formatUserIdToJid(group.groupId, CHAT_TYPE_GROUP);
-          const groupPartRes = await SDK.getGroupParticipants(groupJid);
-          if (groupPartRes && groupPartRes.statusCode === 200) {
-            setGroupParticipantsByGroupId(groupJid, groupPartRes.data.participants);
-          }
-        });
-        Store.dispatch(GroupsDataAction(groupListRes.data));
-      }
-    }
-
-    handleUserSettings();
     setTimeout(() => {
       this.setState({ webChatStatus: true }, async () => {
-        const recentChatsRes = await SDK.getRecentChats();
-        if (recentChatsRes && recentChatsRes.statusCode === 200) {
-          Store.dispatch(RecentChatAction(recentChatsRes.data));
-        }
 
         const urlPath = this.props.location?.pathname ? this.props.location?.pathname.split("/") : [];
         if (urlPath.length > 1 && urlPath[1]) {
           Store.dispatch(callIntermediateScreen({ show: true, link: urlPath[1] }));
           this.props.history.replace({ pathname: `/` });
         }
-
-        const favResult = await SDK.getAllFavouriteMessages();
-        Store.dispatch(StarredMessagesList(favResult.data));
       });
     }, 100);
   };
@@ -385,6 +355,7 @@ class Login extends React.Component {
       type: "web"
     };
     let tabId = Date.now();
+    encryptAndStoreInLocalStorage("auth_user", loginResponse);
     SDK.connect(response.username, response.password)
       .then(async (res) => {
         if (res.statusCode === 200) {
@@ -406,6 +377,7 @@ class Login extends React.Component {
       })
       .catch((error) => {
         console.log("handleLogin error, ", error);
+        deleteItemFromLocalStorage('username');
         deleteItemFromLocalStorage("auth_user");
         this.setState({ webChatStatus: false, loaderStatus: false });
         window.location.reload();
@@ -519,11 +491,12 @@ class Login extends React.Component {
     }
     return (
       <OtpLogin
+        showProfileView={this.state.showProfileScreen}
         qrCode={this.renderQRTemplate()}
         handleLoginSuccess={this.handleLoginSuccess}
         handleSDKIntialize={this.handleSDKIntialize}
       />
-    );
+    )
   };
 
   handleMediaClose = (e) => {
@@ -543,7 +516,7 @@ class Login extends React.Component {
    * handleWebChatConnect() method to handle properly connectted with socket.
    */
   handleWebChatConnect = () => {
-    let { webChatStatus, hideCallScreen, isShowPreviewMedia } = this.state;
+    let { webChatStatus, hideCallScreen, isShowPreviewMedia, showProfileScreen } = this.state;
     const {
       SingleChatSelectedMediaData: { data: singleChatSelectedMedia = {} } = {},
       GroupChatSelectedMediaData: { data: groupChatSelectedMedia = {} } = {}
@@ -590,19 +563,27 @@ class Login extends React.Component {
         });
       }, 3000)
     }
-
     return !webChatStatus ? (
       <div className="container">
         <div className="login-container" id="login-container">
           {this.renderLoginTemplate()}
-          { accountDeletedToast && 
+          {accountDeletedToast &&
             <div className='toast_container'>
-                <span>Your MirrorFly account has been deleted.</span>
+              <span>Your MirrorFly account has been deleted.</span>
             </div>
           }
         </div>
       </div>
-    ) : (
+    ) : showProfileScreen === true ? (
+      <div>
+        <OtpLogin
+          showProfileView={this.state.showProfileScreen}
+          qrCode={this.renderQRTemplate()}
+          handleLoginSuccess={this.handleLoginSuccess}
+          handleSDKIntialize={this.handleSDKIntialize}
+        />
+      </div>
+    ) : this.state.hideRecentChat ? (
       <div className="container containerLayout" id="container">
         {this.props.showConfrenceData &&
           this.props.showConfrenceData.data &&
@@ -632,6 +613,7 @@ class Login extends React.Component {
               />
             </div>
           )}
+
         <Sidebar
           handleConversationSectionDisplay={this.handleConversationSectionDisplay}
           callUserJID={anotherUser}
@@ -706,7 +688,8 @@ class Login extends React.Component {
           />
         }
       </div>
-    );
+    ) :
+      <PageLoader />
   };
 
   /**
@@ -737,6 +720,8 @@ class Login extends React.Component {
 
   handleUseHere = () => {
     if (this.props.isAppOnline) {
+      //
+      deleteItemFromLocalStorage('username');
       let currentTabId = getFromSessionStorageAndDecrypt("sessionId");
       encryptAndStoreInLocalStorage("sessionId", currentTabId);
       updateFavicon("");
@@ -777,7 +762,7 @@ class Login extends React.Component {
                 </div>
               </div>
             </div>
-            <ToastContainer />            
+            <ToastContainer />
           </>
         )}
       </>

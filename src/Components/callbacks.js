@@ -61,6 +61,7 @@ import {
 } from './processENV';
 import SDK from './SDK';
 import {
+    login,
     reconnect
 } from './WebChat/Authentication/Reconnect'
 import Store from '../Store';
@@ -115,7 +116,8 @@ import {
     MSG_CLEAR_CHAT_CARBON,
     MSG_DELETE_CHAT,
     MSG_DELETE_CHAT_CARBON,
-    CONNECTION_STATE_CONNECTING
+    CONNECTION_STATE_CONNECTING,
+    DELETE_CALL_LOG
 } from '../Helpers/Chat/Constant';
 import {
     setGroupParticipants,
@@ -139,6 +141,7 @@ import {
 } from '../Helpers/Chat/User';
 import {
     ClearChatHistoryAction,
+    ClearChatHistoryActionCommon,
     DeleteChatHistoryAction,
     UpdateFavouriteStatus
 } from '../Actions/ChatHistory';
@@ -158,6 +161,7 @@ import {
 } from '../Actions/BrowserAction';
 import { adminBlockStatusUpdate } from '../Actions/AdminBlockAction';
 import { disconnectCallConnection } from  '../Helpers/Call/Call'
+import { deleteAllCallLog } from '../Actions/CallLogAction';
 export var strophe = false;
 let localStream = null,
     localVideoMuted = false,
@@ -166,14 +170,6 @@ let localStream = null,
 let remoteVideoMuted = [],
     remoteStream = [],
     remoteAudioMuted = [];
-
-/**
- * To check the isLogin status
- */
-export const isLoginLogin = () => {
-    if (getFromLocalStorageAndDecrypt("token")) return true;
-    return false;
-}
 
 export const resetCallData = () => {
     onCall = false;
@@ -389,7 +385,10 @@ const connected = (res) => {
             showStreamingComponent,
             remoteStream,
             status: res.callStatus,
-            callStatusText: CALL_STATUS_CONNECTED
+            localVideoMuted: localVideoMuted,
+            localAudioMuted: localAudioMuted,
+            remoteVideoMuted: remoteVideoMuted,
+            remoteAudioMuted: remoteAudioMuted
         }));
     }
 }
@@ -664,8 +663,7 @@ const callStatus = (res) => {
     } else if (res.status === "connecting") {
         connecting(res);
     } else if (res.status === "connected") {
-        connected(res);
-        handleCallParticipantToast(res.userJid, "join");
+        connected(res);        
     } else if (res.status === "busy") {
         handleEngagedOrBusyStatus(res);
     } else if (res.status === "disconnected") {
@@ -692,6 +690,7 @@ export var callbacks = {
             encryptAndStoreInLocalStorage("connection_status", connStatus);
             setConnectionStatus(connStatus)
             Store.dispatch(WebChatConnectionState(connStatus));
+            login();
         } else if (connStatus === "ERROROCCURED") {
             encryptAndStoreInLocalStorage("connection_status", connStatus);
             logout(SERVER_LOGOUT);
@@ -1033,9 +1032,12 @@ export var callbacks = {
             encryptAndStoreInSessionStorage("isLogout", true);
             setTimeout(() => {
                 if (isSameSession()) {
+                    deleteItemFromLocalStorage('username');
                     deleteItemFromLocalStorage("auth_user");
+                    deleteItemFromLocalStorage('getuserprofile');
                     window.location.reload();
                 }
+
             }, 2000);
             return;
         }
@@ -1048,10 +1050,22 @@ export var callbacks = {
         }
 
         if (res.msgType === MSG_CLEAR_CHAT || res.msgType === MSG_CLEAR_CHAT_CARBON) {
-            // Clear last message in recent chat list
-            Store.dispatch(clearLastMessageinRecentChat(res.fromUserId));
-            Store.dispatch(ClearChatHistoryAction(res));
-            Store.dispatch(RemoveStaredMessagesClearChat(res));
+            const { chatConversationHistory: {data= {} } = {} } = Store.getState();
+            const chatMessages = data[res.fromUserId]?.messages;
+            if(chatMessages[res.lastMsgId] === undefined || chatMessages[res.lastMsgId] === null || "") {
+                Store.dispatch(ClearChatHistoryAction(res));
+                Store.dispatch(ClearChatHistoryActionCommon(res));
+                Store.dispatch(clearLastMessageinRecentChat(res.fromUserId));
+                Store.dispatch(RemoveStaredMessagesClearChat(res));
+                return;
+            }
+            Store.dispatch(ClearChatHistoryActionCommon(res));                    
+            if(Object.keys(chatMessages).length === 0) {
+                Store.dispatch(clearLastMessageinRecentChat(res.fromUserId));
+            }
+            if(res.favourite === "0"){
+                Store.dispatch(RemoveStaredMessagesClearChat(res)); 
+            }                      
         }
 
         if (res.msgType === MSG_DELETE_CHAT || res.msgType === MSG_DELETE_CHAT_CARBON) {
@@ -1072,7 +1086,11 @@ export var callbacks = {
             return;
         }
 
-        Store.dispatch(MessageAction(res));
+        if(res.msgType === DELETE_CALL_LOG) {
+            Store.dispatch(deleteAllCallLog(res));
+        }else{
+            Store.dispatch(MessageAction(res));
+        }
     },
     groupProfileListener: async function (res) {
         if (res && res.groupJid) {
@@ -1204,6 +1222,7 @@ export var callbacks = {
     callUserJoinedListener: function (res) {
         if (res.userJid && !res.localUser) {
             updateStoreRemoteStream();
+            handleCallParticipantToast(res.userJid, "join");
         }
     },
     callUserLeftListener: function (res) {

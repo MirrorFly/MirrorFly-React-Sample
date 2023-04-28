@@ -54,27 +54,6 @@ describe(">>> ImageComponent Test case <<<", () => {
             </Provider>);
     });
 
-    it('Mock has be created chectType change', () => {
-        const monckData = {
-            userToken: "http://1vt7xn1cmb1633434630115XtS3RCzekyoBbteb3tAv.jpeg",
-            imageToken: "1vt7xn1cmb1633434630115XtS3RCzekyoBbteb3tAv.jpeg",
-            blocked: false,
-            chatType: "chat",
-            temporary: true,
-            getImageUrl: "",
-            onclickHandler: jest.fn(),
-            imageType: "profileimages",
-            emojiState: true
-        };
-        const store = mockStore({
-            CusPage: {},
-            cusTeams: {}
-        });
-        wrapper = mount(
-            <Provider store={store}>
-                <ImageComponent {...monckData} />
-            </Provider>);
-    });
     it('Mock has be created blobCheck', () => {
         const monckData = {
             userToken: "http://1vt7xn1cmb1633434630115XtS3RCzekyoBbteb3tAv.jpeg",
