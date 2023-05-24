@@ -11,7 +11,7 @@ import { getUserDetails } from "../../../Helpers/Chat/User";
 import { useSelector } from "react-redux";
 
 const Caption = (props = {}) => {
-  const { onChangeCaption, media = {}, onClickSend, chatType } = props;
+  const { onChangeCaption, media = {}, onClickSend, chatType, uniqueId } = props;
   const { caption = "" } = media;
   const [typingMessage, setTypingMessage] = useState({
     value: ""
@@ -21,14 +21,20 @@ const Caption = (props = {}) => {
   const setCursorPosition = (pos) => setPosition(pos);
   const [GroupMemberList, setGroupMemberlist ] = useState({});
   const [MentionView,setMentionView] = useState(false)
+  const [MentionViewClicked,setMentionViewClicked] = useState(false)
+  const [emojiSelected, setEmojiSelected] = useState(false);
+  const [showEmojiState, setShowEmojiState] = useState(false);
   const [mentionedUsersIds,setMentionedUsersId] = useState([])
   const groupList = useSelector((state)=>state.groupsMemberListData);
   const vcardData = useSelector((state)=>state.vCardData)
+  const groupMembers = useSelector((state)=>state.groupsMemberListData)
 
-  const handleEmojiText = (emojiObject) => {
+  const handleEmojiText = (emojiObject, isClicked = false) => {
+    setEmojiSelected(isClicked)
     const { value: typeVal } = typingMessage;
     let positionToUpdate = position;
     let text = "";
+    const msgContent = document.getElementById(`image-preview-typingContainer-${uniqueId}`)
     // When user select all the text & choose emoji means,
     // Need to replace the emoji with existing content.
     // That's why below we check condition, selectedText & current state typingMessage is equal
@@ -43,10 +49,17 @@ const Caption = (props = {}) => {
       text = start + emojiObject + end;
       positionToUpdate = position + emojiObject.length;
     }
+    let filteredHtml = text.toString().includes('@') && text.substr(text.lastIndexOf('@') + 1).split(' ')[0];
+    var regex = /^[a-zA-Z0-9\s!@#$%^&*(),.?":{}|<>]+$/;
     if (_toArray(text).length <= CAPTION_CHARACTER_LIMIT) {
       setTypingMessage((prevState) => {
         setCursorPosition(positionToUpdate);
-        setCaretPosition(document.getElementById("image-preview-typingContainer"), positionToUpdate);
+        setCaretPosition(msgContent, positionToUpdate);
+        if (msgContent.innerHTML.slice(-1) === '@' && msgContent.innerHTML.slice(-2,-1).length < 1 ||
+        (msgContent.innerHTML.slice(-1) === '@' && msgContent.innerHTML.slice(-2,-1) === ' ') ||
+        (msgContent.innerHTML.slice(-3,-2) === '@' && regex.test(msgContent.innerHTML.slice(-2,-1)) === false)) {
+          handleSearchList(filteredHtml)
+        }
         return {
           ...prevState,
           value: text
@@ -56,12 +69,13 @@ const Caption = (props = {}) => {
     }
   };
   
-  const handleMentionedUser = (userId) => {      
+  const handleMentionedUser = (userId, chatName = "",isClicked = false) => {   
+    setMentionViewClicked(isClicked)
     let rosterDataValue = getUserDetails(userId);
     let displayName = rosterDataValue.displayName;
     let positionToUpdate = position;
     let text = "";
-    const messageDocContent = document.getElementById("image-preview-typingContainer");
+    let messageDocContent = document.getElementById(`image-preview-typingContainer-${uniqueId}`);
     let startCursor = messageDocContent?.innerHTML?.substring(0, position);
     startCursor = startCursor.substring(0, startCursor.lastIndexOf("@"));
     const end = messageDocContent?.innerHTML?.substring(position);
@@ -78,7 +92,7 @@ const Caption = (props = {}) => {
     if (_toArray(text).length <= CAPTION_CHARACTER_LIMIT) {
       setTypingMessage((prevState) => {
         setCursorPosition(positionToUpdate);
-        setCaretPosition(document.getElementById("image-preview-typingContainer"), positionToUpdate);
+        setCaretPosition(document.getElementById(`image-preview-typingContainer-${uniqueId}`), positionToUpdate);
   
         return {
           ...prevState,
@@ -103,12 +117,14 @@ const Caption = (props = {}) => {
     }   
   }
 
-  const handleSearchList = (searchValue) => {         
-    const GroupParticiapants = groupList.data.participants   
-    const vCardUserId = vcardData.data.userId 
-    const groupMemberlist = GroupParticiapants.filter(participants=>participants.userId !== vCardUserId);
-    const searchResults = groupMemberlist.filter((ele) => ele.userProfile.nickName.toLowerCase().includes(searchValue.toLowerCase()))
+  const handleSearchList = (searchValue = "") => {       
+    try{
+    let GroupParticiapants = groupList.data.participants   
+    let vCardUserId = vcardData.data.userId 
+    let groupMemberlistsForSearch = GroupParticiapants.filter(participants=>participants.userId !== vCardUserId);
+    const searchResults = groupMemberlistsForSearch.filter((ele) => ele.userProfile.nickName.toLowerCase().includes(searchValue.toLowerCase()))
     setGroupMemberlist(searchResults)
+    }catch(e){}
   }
  
 
@@ -143,6 +159,23 @@ const handleEmptyContent = () =>{
    setTypingMessage({ value : ""})
 }
 
+const placeCaretAtEnd = (el) => {
+  el.focus();
+  if (typeof window.getSelection != "undefined" && typeof document.createRange != "undefined") {
+    var range = document.createRange();
+    range.selectNodeContents(el);
+    range.collapse(false);
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  } else if (typeof document.body.createTextRange != "undefined") {
+    var textRange = document.body.createTextRange();
+    textRange.moveToElementText(el);
+    textRange.collapse(false);
+    textRange.select();
+  }
+};
+
   const remainingLenthCall = (typingMessageLength = 0) => {
     if (typingMessageLength >= 975) {
       const balanceCount = CAPTION_CHARACTER_LIMIT - typingMessageLength;
@@ -156,23 +189,54 @@ const handleEmptyContent = () =>{
   const setSelectedText = (selectText) => setSelectedTextState(selectText);
 
   useEffect(() => {
+    const msgContent = document.getElementById(`image-preview-typingContainer-${uniqueId}`);
+    if (MentionViewClicked === true || emojiSelected === true) {
+      placeCaretAtEnd(msgContent)
+      setMentionViewClicked(false)
+      setEmojiSelected(false)
+    }
     handleMessage({ target: { value: caption } }); //captionValue has been set
   }, [caption]);
 
   const { value = "" } = typingMessage;
 
+  const handleshowEmoji = (isClicked = false) => {
+    setShowEmojiState(isClicked) 
+    if(showEmojiState === true && isClicked === true){
+      const messageContent = document.getElementById(`image-preview-typingContainer-${uniqueId}`);
+      if(chatType === "groupchat"){
+        let groupMemberList = groupMembers.data.participants;
+        let groupLists = groupMemberList?.filter(participants => participants.userId !== vcardData.data.userId);
+        groupLists = groupLists.map((obj) => {
+          obj.rosterData = getUserDetails(obj.userId)
+          return obj;
+        });
+
+        if (messageContent.innerHTML.slice(-1) === '@' && messageContent.innerHTML.slice(-2,-1).length < 1 ||
+        (messageContent.innerHTML.slice(-1) === '@' && messageContent.innerHTML.slice(-2,-1) === ' ')) {
+          setMentionView(true)
+          setGroupMemberlist(groupLists)
+        } else {
+          setMentionView(false)
+        }
+      }
+    }
+  }
   return (
     <div className="uploadImageCaption">
       <div className="message-area-container">
         <div className="message-area" id={`video-caption-${props?.uniqueId}`}>
-          <WebChatEmoji onEmojiClick={handleEmojiText} />
+          <WebChatEmoji
+           emojiState={handleshowEmoji}
+           onEmojiClick={handleEmojiText}
+           mentionView={setMentionView} />
           <ContentEditable
             handleMentionView={handleMentionList}
             captionCount={true}
             captionLength={value}
             chatType={chatType}
             handleSearchView={handleSearchList}
-            id="image-preview-typingContainer"
+            id={`image-preview-typingContainer-${uniqueId}`}
             handleMessage={handleMessage}
             handleSendTextMsg={onClickSend}
             onInputListener={inputListenerHandler}
@@ -185,10 +249,12 @@ const handleEmptyContent = () =>{
             handleEmptyContent={handleEmptyContent}
             html={removeMoreNumberChar(CAPTION_CHARACTER_LIMIT, value)}
           />
-            {(GroupMemberList.length > 0 && MentionView) ?
+            {(GroupMemberList.length > 0 && MentionView && showEmojiState === false) ?
           <OutsideClickHandler onOutsideClick={() => handleMentionList(false , {})}>
             <MentionUserList handleMentionedData={handleMentionedUser} GroupParticiapantsList={GroupMemberList} />
           </OutsideClickHandler>
+          :(GroupMemberList.length > 0 && MentionView && showEmojiState === true) ?
+          <MentionUserList handleMentionedData={handleMentionedUser} GroupParticiapantsList={GroupMemberList} />
           : null
         }
           {remainingLenthCall(_toArray(_get(typingMessage, "value", "")).length)}

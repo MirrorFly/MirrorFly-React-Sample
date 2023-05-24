@@ -366,6 +366,7 @@ export default class MediaPreview extends Component {
             <Image
               thumb={"image"}
               key={fileId}
+              uniqueId={fileId}
               onClickSend={this.sendMediaFile}
               chatType={chatType}
               media={res}

@@ -691,9 +691,6 @@ export var callbacks = {
             setConnectionStatus(connStatus)
             Store.dispatch(WebChatConnectionState(connStatus));
             login();
-        } else if (connStatus === "ERROROCCURED") {
-            encryptAndStoreInLocalStorage("connection_status", connStatus);
-            logout(SERVER_LOGOUT);
         } else if (connStatus === "DISCONNECTED") {
             if (isSameSession() && getFromSessionStorageAndDecrypt("isLogout") === null) {
                 reconnect()
@@ -702,11 +699,14 @@ export var callbacks = {
             setConnectionStatus(connStatus)
             Store.dispatch(WebChatConnectionState(connStatus));
         } else if (connStatus === "CONNECTIONFAILED") {
+            if (res.statusCode === 401) {
+                logout();
+                return;
+            }
             encryptAndStoreInLocalStorage("connection_status", connStatus);
             setConnectionStatus(connStatus)
             Store.dispatch(WebChatConnectionState(connStatus));
-        } else if (connStatus === "AUTHENTICATIONFAILED") {
-            logout();
+            logout(SERVER_LOGOUT);
         }
     },
     incomingCallListener: (res) => {

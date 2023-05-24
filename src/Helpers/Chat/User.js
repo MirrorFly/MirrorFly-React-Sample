@@ -214,6 +214,17 @@ export const getFriendsFromRosters = (rosters) => {
     if (!rosters || !Array.isArray(rosters)) return rosters;
     return rosters.filter((user) => user.isFriend);
 }
+export const getUserDetailsForMention = (userJid = "") => {
+    let rosterData = {};
+    let user = userJid.includes("@") ? userJid.split('@')[0] : userJid;
+        let userDetails = getDataFromRoster(user);
+        if (Object.keys(userDetails).length > 0) {
+            rosterData.displayName = getContactNameFromRoster(userDetails);
+        }else{
+            rosterData.displayName = getFormatPhoneNumber(user);
+        }
+    return rosterData;
+}
 
 export const getUserDetails = (userJid = "") => {
     let rosterData = {};
@@ -263,7 +274,7 @@ export const getLocalUserId = () => {
 export const handleMentionedUser = (text = "" ,mentionedUsersIds, mentionedMe, mentionedClass = "") => {
     let UserId = mentionedUsersIds;
     if (!text) return "";
-  const pattern = /@(?:\W\D\W)/gi;
+  const pattern = /@\[\?\]/gi;
   if (mentionedUsersIds !== undefined && text !== "" && text.match(pattern) !== null && text.match(pattern).length > 0 && text.match(pattern) !== undefined) {
     let content = text;
     let particiantData =[]
@@ -272,7 +283,7 @@ export const handleMentionedUser = (text = "" ,mentionedUsersIds, mentionedMe, m
       const uid = uidPattern
      for (let i = 0;i < UserId.length;  i++) {
       const mentionedUserId = UserId[i];
-      let rosterData = getUserDetails(mentionedUserId);
+      let rosterData = getUserDetailsForMention(mentionedUserId);
       let displayName = rosterData.displayName;
       content = `${content.replace(uid, `<button data-mentioned="${mentionedUserId}" class='${mentionedClass} ${mentionedMe === mentionedUserId ?" tagged  ":" "} mentioned'><b>@</b> <i>${displayName !== undefined ? displayName : [] }</i> </button> `)}`;
       }
