@@ -32,6 +32,7 @@ class WebChatEmoji extends React.Component {
         showEmojis: true
       },
       () => {
+        this.props.emojiState && this.props.emojiState(this.state.showEmojis)
         closeParentMenu && closeParentMenu();
         document.addEventListener("click", this.closeMenu)
       }
@@ -41,13 +42,16 @@ class WebChatEmoji extends React.Component {
   /**
    * closeMenu() method to close emoji picker.
    */
-  closeMenu = e => {
-    if (this.emojiPicker !== null && !this.emojiPicker.contains(e.target)) {
+  closeMenu = (e, isClose = false) => {
+    if (this.emojiPicker !== null && !this.emojiPicker.contains(e.target) || isClose === true) {
       this.setState(
         {
           showEmojis: false
         },
-        () => document.removeEventListener("click", this.closeMenu)
+        () =>{
+          document.removeEventListener("click", this.closeMenu)
+          this.props.emojiState && this.props.emojiState(this.state.showEmojis)
+        }
       );
     }
   };
@@ -57,7 +61,10 @@ class WebChatEmoji extends React.Component {
    */
   addEmoji = e => {
     let emoji = e.native;
-    this.props.onEmojiClick(emoji);
+    this.closeMenu("", true)
+    this.props.onEmojiClick(emoji, true);
+    this.props.mentionView && this.props.mentionView(true)
+
   };
 
   /**

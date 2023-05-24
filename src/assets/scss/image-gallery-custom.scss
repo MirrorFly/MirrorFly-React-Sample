@@ -1087,6 +1087,26 @@
     cursor: zoom-in;
   }
 }
+
+.previewContainer{
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.previewContainerImg{
+  height: 650px;
+  width: 1000px;
+  -webkit-filter: blur(4px);
+  filter: blur(4px);
+}
+
+.previewVideoThumbnail{
+  -webkit-filter: blur(4px);
+  filter: blur(4px);
+}
+
 @media(max-width:767px){
   .carousel-root .carousel.carousel-slider .carousel-status{
     right: 50%;

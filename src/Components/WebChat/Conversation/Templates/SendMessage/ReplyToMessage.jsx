@@ -42,7 +42,7 @@ const filterProfileFromRoster = (rosterData, messageFrom) => {
 }
 
 const ReplyMessage = React.memo((props) => {
-    const { rosterData, closeReplyAction, replyMessage, groupMemberDetails,jid="" } = props
+    const { rosterData, closeReplyAction, replyMessage, groupMemberDetails, jid="", showMention } = props
     const { fromUserId, msgBody: messageContent = {}, message: groupchatMessage = {}, publisherId, chatType, msgBody: mentionedUsersIds = [] } = replyMessage;
     let callRefSpan = React.createRef();
     let messageFrom = isSingleChat(chatType) ? fromUserId : publisherId;
@@ -90,7 +90,7 @@ const ReplyMessage = React.memo((props) => {
     },[callRefSpan]);
     return (
         <Fragment>
-        <div id="reply-block-bottom" className="reply-block-bottom">
+        {(showMention === false || showMention === undefined) && <div id="reply-block-bottom" className="reply-block-bottom">
             <div className="reply-container">
                 <div className={`reply-text-message ${isTextMessage(message_type) ? "text-message" : "" }`}>
                     <span className="sender-name" >{getDisplayName() ? getDisplayName() : "You" }</span>
@@ -133,9 +133,9 @@ const ReplyMessage = React.memo((props) => {
                 }
             </div>
             <div className="RemoveReplay">
-            <i><CloseReply onClick={() =>closeReplyAction(jid)} /></i>
-        </div>
-        </div>
+                <i><CloseReply onClick={() =>closeReplyAction(jid)} /></i>
+            </div>
+        </div>}
 
         </Fragment>
     )

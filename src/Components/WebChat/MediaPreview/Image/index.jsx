@@ -51,6 +51,7 @@ export default class Image extends Component {
         <Caption
           onChangeCaption={this.props.onChangeCaption}
           media={this.props.media}
+          uniqueId={this.props.uniqueId}
           onClickSend={this.props.onClickSend}
           chatType={this.props.chatType}
         />

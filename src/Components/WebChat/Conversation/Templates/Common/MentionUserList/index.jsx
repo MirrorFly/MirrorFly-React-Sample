@@ -1,21 +1,27 @@
 import React from 'react';
 import "./MentionUserList.scss";
 import ImageComponent from '../../../../Common/ImageComponent';
-import { getUserDetails } from '../../../../../../Helpers/Chat/User';
+import { useEffect, useState } from 'react';
 
 function MentionUserList(props = {}) {
+    const { GroupParticiapantsList = [], handleMentionedData = () => { }, chatScreenName="" } = props;
+    const[sortedGroupList, setSortedGroupList] = useState([]);
 
-    const { GroupParticiapantsList = {}, handleMentionedData = () => { } } = props;
+    useEffect(() => {
+        GroupParticiapantsList.sort((b, c) => isNaN(parseInt(c.rosterData.displayName)) - isNaN(parseInt(b.rosterData.displayName)) || 
+        String(b.rosterData.displayName).localeCompare(String(c.rosterData.displayName)))
+        setSortedGroupList(GroupParticiapantsList)
+      },[GroupParticiapantsList]);
 
     return (
         <div className='mention_wraper'>
             <ul>
-                {GroupParticiapantsList.map((obj) => {
-                    let rosterData = getUserDetails(obj.userId);
-                    let displayName = rosterData.displayName;
+                {sortedGroupList.map((obj) => {
+                    let rosterData = obj.rosterData;
+                    let displayName = rosterData.displayName !== "" ? rosterData.displayName : rosterData.userId;
                     return (
-                        <li key={obj.userId}>
-                            <button onClick={() => handleMentionedData(obj.userId)} className='user_card_action' type='button'>
+                         <li key={obj.userId}>
+                            <button onClick={() =>obj.isAdminBlocked === false && handleMentionedData(obj.userId, chatScreenName, true)} className='user_card_action' type='button'>
                                 <div className='user_card'>
                                     <div className='user_image'>
                                         <ImageComponent

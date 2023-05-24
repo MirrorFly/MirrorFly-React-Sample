@@ -396,13 +396,13 @@ class RecentChatItem extends Component {
       const {
         recent: {
           chatType,
-          msgBody: { message_type, message },
+          msgBody: { message_type, message, mentionedUsersIds },
           publisherId,
           fromUserId
         },
         roster: { image, groupImage, thumbImage }
       } = recentChat;
-      const messageBody = isTextMessage(message_type) ? message : `${capitalizeTxt(message_type || "")}`;
+      const messageBody = isTextMessage(message_type) ? handleMentionedUser(message, mentionedUsersIds) : `${capitalizeTxt(message_type || "")}`;
       let updateMessage = message_type ? messageBody : this.handleMessageType(recentChat);
       let updateDisplayName, imageToken;
 

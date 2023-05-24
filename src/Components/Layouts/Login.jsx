@@ -43,6 +43,7 @@ import ActionInfoPopup from '../ActionInfoPopup';
 import BlockedFromApplication from "../BlockedFromApplication";
 import { adminBlockStatusUpdate } from "../../Actions/AdminBlockAction";
 import PageLoader from "./PageLoader";
+import { login } from "../WebChat/Authentication/Reconnect";
 
 const createHistory = require("history").createBrowserHistory;
 export const history = createHistory();
@@ -279,6 +280,8 @@ class Login extends React.Component {
                 password: response.password,
                 type: "web"
               };
+              encryptAndStoreInLocalStorage("auth_user", loginResponse);
+              login();
               return this.handleLoginToken(loginResponse);
             }
             return true;
