@@ -50,7 +50,7 @@ const ReplyMessage = React.memo((props) => {
             location: { latitude, longitude } = {},
             contact:{ name } = { } } = messageContent || groupchatMessage
 
-    const { fileName, duration, caption , audioType , thumb_image} = media;
+    const { fileName, duration, caption = "" , audioType , thumb_image} = media;
 
     const [overflowActive , setOverflowActive] = useState(false)
     useEffect(()=>{

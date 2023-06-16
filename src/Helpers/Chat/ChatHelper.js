@@ -744,31 +744,50 @@ export const updateMediaUploadStatus = (data, stateData) => {
 };
 
 export const uploadFileToSDK = async (file, jid, msgId, media) => {
-    const { caption = "",  mentionedUsersIds =[],fileDetails: { replyTo, duration = 0, imageUrl = "", audioType = "" } = {} } = file;
+    const { caption = "",  mentionedUsersIds =[],fileDetails: { replyTo, audioType = "" } = {} } = file;
     const msgType = getMessageType(file.type, file);
     let fileOptions = {
+        file: file,
         msgId: msgId,
-        caption: caption,
-        duration: duration,
-        webWidth: media.webWidth || 0,
-        webHeight: media.webHeight || 0,
-        androidWidth: media.androidWidth || 0,
-        androidHeight: media.androidHeight || 0,
-        originalWidth: media.originalWidth || 0,
-        originalHeight: media.originalHeight || 0,
-        ...(msgType === "video" && { thumbImage: imageUrl }),
-        ...(msgType === "audio" && { audioType })
+        caption: caption
     };
-
     let response = {};
     if (msgType === "file") {
-        response = await SDK.sendDocumentMessage(jid, file, fileOptions, replyTo, mentionedUsersIds);
+        // response = await SDK.sendDocumentMessage(jid, file, fileOptions, replyTo, mentionedUsersIds);
+        response = await SDK.sendFileMessage({
+            toJid: jid,
+            messageType: "file",
+            fileMessageParams: fileOptions,
+            mentionedUsersIds: mentionedUsersIds,
+            replyMessageId: replyTo
+        });
     } else if (msgType === "image") {
-        response = await SDK.sendImageMessage(jid, file, fileOptions, replyTo, mentionedUsersIds);
+        // response = await SDK.sendImageMessage(jid, file, fileOptions, replyTo, mentionedUsersIds);
+        response = await SDK.sendFileMessage({
+            toJid: jid,
+            messageType: "image",
+            fileMessageParams: fileOptions,
+            mentionedUsersIds: mentionedUsersIds,
+            replyMessageId: replyTo
+        });
     } else if (msgType === "video") {
-        response = await SDK.sendVideoMessage(jid, file, fileOptions, replyTo, mentionedUsersIds);
+        //response = await SDK.sendVideoMessage(jid, file, fileOptions, replyTo, mentionedUsersIds);
+        response = await SDK.sendFileMessage({
+            toJid: jid,
+            messageType: "video",
+            fileMessageParams: fileOptions,
+            mentionedUsersIds: mentionedUsersIds,
+            replyMessageId: replyTo
+        });
     } else if (msgType === "audio") {
-        response = await SDK.sendAudioMessage(jid, file, fileOptions, replyTo, mentionedUsersIds);
+        // response = await SDK.sendAudioMessage(jid, file, fileOptions, replyTo, mentionedUsersIds);
+        response = await SDK.sendFileMessage({
+            toJid: jid,
+            messageType: audioType === "recording" ? "audio_recorded" : "audio",
+            fileMessageParams: fileOptions,
+            mentionedUsersIds: mentionedUsersIds,
+            replyMessageId: replyTo
+        });
     }
     let updateObj = {
         msgId,
