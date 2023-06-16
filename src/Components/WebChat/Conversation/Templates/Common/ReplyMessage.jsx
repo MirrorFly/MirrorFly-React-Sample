@@ -70,7 +70,7 @@ export default React.memo(({ msgId, viewOriginalMessage, groupMemberDetails, cha
     const { replyMsgId, fromUserId: messageFrom, replyMsgContent: { message, message_type, media = {}, mentionedUsersIds = [],
         location: { latitude, longitude } = {},
         contact: { name } = {} } } = replyMessageData 
-    const { fileName, duration, caption, audioType,thumb_image } = media;
+    const { fileName, duration, caption = "", audioType,thumb_image } = media;
     const getDisplayName = () => {
         if (isLocalUser(messageFrom)) return 'You';
         if (isSingleChat(chatType)) {

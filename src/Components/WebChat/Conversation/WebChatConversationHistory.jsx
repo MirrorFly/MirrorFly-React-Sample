@@ -811,7 +811,13 @@ class WebChatConversationHistory extends Component {
     if (message.content !== "") {
       let jid = this.prepareJid();
       const jids = getIdFromJid(jid);
-      let msgId = uuidv4();
+      let sendMessageResponse = await SDK.sendTextMessage({
+        toJid: jid,
+        messageText: handleMessageParseHtml(message.content),
+        replyMessageId: replyTo,
+        mentionedUsersIds: message?.mentionedUsersIds
+      });
+      let msgId = sendMessageResponse.data.msgId;
       if (chatType === CHAT_TYPE_SINGLE || chatType === CHAT_TYPE_GROUP) {      
         const dataObj = {
           jid,
@@ -825,7 +831,7 @@ class WebChatConversationHistory extends Component {
         };
         const conversationChatObj = await getMessageObjSender(dataObj);
         const recentChatObj = getRecentChatMsgObj(dataObj);
-        SDK.sendTextMessage(jid, handleMessageParseHtml(message.content), msgId, replyTo, message?.mentionedUsersIds);
+        //SDK.sendTextMessage(jid, handleMessageParseHtml(message.content), msgId, replyTo, message?.mentionedUsersIds);
         SDK.sendTypingGoneStatus(jid);
         Store.dispatch(MessageAction(conversationChatObj));
         const dispatchData = {
