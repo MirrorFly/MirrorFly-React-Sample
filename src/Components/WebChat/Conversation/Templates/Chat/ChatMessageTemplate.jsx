@@ -46,6 +46,8 @@ import { getExtension } from "../../../Common/FileUploadValidation";
 const ChatMessageTemplate = (props = {}) => {
   const dispatch = useDispatch();
   const globalState = useSelector((state) => state.webLocalStorageSetting);
+  const downloadReduxState = useSelector((state) => state.mediaDownloadData);
+
   const { isTranslationEnabled = false } = useSelector((state) => state.featureStateData);
   let isEnableTranslate = false;
   if (isTranslationEnabled) {
@@ -118,7 +120,7 @@ const ChatMessageTemplate = (props = {}) => {
 
   const imgFileDownload = () => {
     localDb
-      .getImageByKey(file_url, getDbInstanceName("image"), file_key)
+      .getImageByKey(file_url, getDbInstanceName("image"), file_key, msgId)
       .then((blob) => {
         const blobUrl = window.URL.createObjectURL(blob);
         if (isSubscribed) {
@@ -246,7 +248,7 @@ const ChatMessageTemplate = (props = {}) => {
     const fileExtension = getExtension(fileName);
     const fileExtensionSlice = fileExtension.split(".")[1]
     localDb
-      .getImageByKey(file_url, getDbInstanceName("audio"), file_key)
+      .getImageByKey(file_url, getDbInstanceName("audio"), file_key, msgId)
       .then((blob) => {
         const dbBlob = new Blob([blob],{type: message_type +"/"+ fileExtensionSlice});
         const blobUrl = window.URL.createObjectURL(dbBlob) 
@@ -277,6 +279,8 @@ const ChatMessageTemplate = (props = {}) => {
       }
     }
   }, [msgId]);
+
+  
 
   useEffect(() => {
     is_uploading === 8 && setUploadStatus(is_uploading);
@@ -318,7 +322,7 @@ const ChatMessageTemplate = (props = {}) => {
 
   const downloadAction = async (event) => {
     if (uploadStatus !== 2) return;
-    downloadMediaFile(file_url, "file", fileName, file_key, event);
+    downloadMediaFile(msgId, file_url, "file", fileName, file_key, event);
   };
 
   const toggleContactPopup = () => {
@@ -367,7 +371,9 @@ const ChatMessageTemplate = (props = {}) => {
 
         <div
           style={{ width: isImageMessage() || isVideoMessage() ? webWidth : "" }}
-          className={`${getMessageElementRootClass()} ${
+          className={`${getMessageElementRootClass()}${(messageObject?.msgId === downloadReduxState?.downloadingStatus[messageObject?.msgId]?.downloadMediaMsgId 
+            && downloadReduxState?.downloadingStatus[messageObject?.msgId].downloading === true
+            && (downloadReduxState?.downloadingStatus[msgId]?.downloadingMediaType === 'video' || downloadReduxState?.downloadingStatus[msgId]?.downloadingMediaType === 'image')) ? " fileProgress" : ""}${
             isTextMessage(message_type) && isCallLink(messageText) ? "meetinglink" : ""
           }`}
         >

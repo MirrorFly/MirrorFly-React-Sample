@@ -1,4 +1,5 @@
 import React from "react";
+import { useSelector } from "react-redux";
 import ProgressLoader from "../../ProgressLoader";
 import getFileFromType from "../Common/getFileFromType";
 import { DocumentDownload } from "../../../../../assets/images";
@@ -12,6 +13,7 @@ const DocumentComponent = (props = {}) => {
     msgBody: { media: { fileName, file_size, file_url, file_key } = {} } = {}
   } = messageObject;
 
+  const {mediaDownloadData} = useSelector((state) => state);
   const fileExtension = getExtension(fileName);
   const placeholder = getFileFromType(null, fileExtension);
   const fileSize = formatBytes(file_size);
@@ -20,8 +22,9 @@ const DocumentComponent = (props = {}) => {
   return (
     <>
       <div
-        className={`document-message-block ${uploadStatus !== 2 ? "fileProgress" : ""} ${Extension === "pdf" || Extension === "ppt" ? "fileThumb" : ""
-          }`}
+        className={`document-message-block ${uploadStatus !== 2 || 
+          (msgId === mediaDownloadData?.downloadingStatus[msgId]?.downloadMediaMsgId && mediaDownloadData?.downloadingStatus[msgId]?.downloading === true) ? "fileProgress" : ""} 
+          ${Extension === "pdf" || Extension === "ppt" ? "fileThumb" : ""}`}
         onClick={(e) => downloadAction(e, file_url, fileName, file_key)}
       >
         <>

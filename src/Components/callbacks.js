@@ -146,6 +146,7 @@ import {
     UpdateFavouriteStatus
 } from '../Actions/ChatHistory';
 import {
+    MediaDownloadDataAction,
     MediaUploadDataAction
 } from '../Actions/Media';
 import {
@@ -1177,6 +1178,11 @@ export var callbacks = {
     },
     mediaUploadListener: function (res) {
         Store.dispatch(MediaUploadDataAction(res));
+    },
+    mediaDownloadListener: function (res) {
+        if(res?.msgId != null){
+            Store.dispatch(MediaDownloadDataAction(res));   
+        }
     },
     /**
      * This listener will be called, when a same user logged in another device

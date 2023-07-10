@@ -12,7 +12,8 @@ import {
   UPDATE_FAVOURITE_STATUS,
   REMOVE_ALL_FAVOURITE_STATUS,
   TRANSLATE_MESSAGE,
-  CLEAR_CHAT_HISTORY_ACTION_COMMON
+  CLEAR_CHAT_HISTORY_ACTION_COMMON,
+  CANCEL_MEDIA_DOWNLOAD
 } from "./Constants";
 
 export const ChatMessageHistoryDataAction = (data) => {
@@ -89,6 +90,16 @@ export const UpdateMediaUploadStatus = (data) => {
 export const CancelMediaUpload = (data) => {
   return {
     type: CANCEL_MEDIA_UPLOAD,
+    payload: {
+      id: uuidv4(),
+      data
+    }
+  };
+};
+
+export const CancelMediaDownload = (data) => {
+  return {
+    type: CANCEL_MEDIA_DOWNLOAD,
     payload: {
       id: uuidv4(),
       data

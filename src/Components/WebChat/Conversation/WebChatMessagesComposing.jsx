@@ -219,6 +219,13 @@ class WebChatMessagesComposing extends Component {
     );
     if (messageContent) messageContent.selectionEnd = position;
 
+    const regex = new RegExp("&amp;", "gi");
+    const duplicateHtml = regex.test(messageContent?.innerHTML);
+    if (duplicateHtml) {
+      setTimeout(() => {
+        this.placeCaretAtEnd(messageContent);
+      }, 100)
+    }
   };
 
   setCursorPosition = (pos) => {

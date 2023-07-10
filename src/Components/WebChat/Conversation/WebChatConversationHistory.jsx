@@ -660,7 +660,7 @@ class WebChatConversationHistory extends Component {
     if (optionType === "Download") {
       const { msgBody: { media: { file_url, fileName: file_name, file_key } = {}, message_type = "" } = {} } = selectedMessage;
       const fileName = message_type === "file" ? file_name : "";
-      downloadMediaFile(file_url, message_type, fileName, file_key);
+      downloadMediaFile(msgId , file_url, message_type, fileName, file_key);
       return;
     }
     this.setState({
