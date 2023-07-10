@@ -28,6 +28,8 @@ const Caption = (props = {}) => {
   const groupList = useSelector((state)=>state.groupsMemberListData);
   const vcardData = useSelector((state)=>state.vCardData)
   const groupMembers = useSelector((state)=>state.groupsMemberListData)
+  const [prevPosition, setPrePosition] = useState(0);
+  const [emojiaddedPrev, setEmojiaddedPrev] = useState(false);
 
   const handleEmojiText = (emojiObject, isClicked = false) => {
     setEmojiSelected(isClicked)
@@ -58,7 +60,10 @@ const Caption = (props = {}) => {
         if (msgContent.innerHTML.slice(-1) === '@' && msgContent.innerHTML.slice(-2,-1).length < 1 ||
         (msgContent.innerHTML.slice(-1) === '@' && msgContent.innerHTML.slice(-2,-1) === ' ') ||
         (msgContent.innerHTML.slice(-3,-2) === '@' && regex.test(msgContent.innerHTML.slice(-2,-1)) === false)) {
-          handleSearchList(filteredHtml)
+          handleSearchList(filteredHtml);
+          if(chatType === "groupchat" && GroupMemberList.length > 0){
+            setShowEmojiState(false)
+          }
         }
         return {
           ...prevState,
@@ -190,10 +195,25 @@ const placeCaretAtEnd = (el) => {
 
   useEffect(() => {
     const msgContent = document.getElementById(`image-preview-typingContainer-${uniqueId}`);
+    let cursorPosition = 0;
+    const regex = new RegExp("&amp;", 'gi');
+    const duplicateHtml = regex.test(msgContent?.innerHTML);
+    const matches = msgContent?.innerHTML.match(regex);
+    const countDuplicatehtml = matches ? matches.length : 0;
+    if(position < prevPosition){
+      setEmojiaddedPrev(true);
+    }
+    else if(emojiaddedPrev && position > prevPosition){
+     setEmojiaddedPrev(false)
+    }
+    duplicateHtml && !emojiaddedPrev ? cursorPosition = position - countDuplicatehtml*4 : cursorPosition = position
     if (MentionViewClicked === true || emojiSelected === true) {
-      placeCaretAtEnd(msgContent)
-      setMentionViewClicked(false)
-      setEmojiSelected(false)
+      msgContent.innerHTML && setCursorFocusPosition(msgContent, cursorPosition);
+      setMentionViewClicked(false);
+      setEmojiSelected(false);
+    }
+    if(chatType === "groupchat" && GroupMemberList.length && GroupMemberList.length > 0){
+      setShowEmojiState(false)
     }
     handleMessage({ target: { value: caption } }); //captionValue has been set
   }, [caption]);
@@ -222,6 +242,39 @@ const placeCaretAtEnd = (el) => {
       }
     }
   }
+
+  const setCursorFocusPosition = (element, cursorPosition) => {
+    element.focus();
+    if (cursorPosition < 0) {
+      return placeCaretAtEnd(element);
+    }
+    if (!emojiaddedPrev) {
+      setPrePosition(cursorPosition);
+    }
+ 
+      const selection = window.getSelection();
+      const range = document.createRange();
+      const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null, false);
+      let currentNode = walker.nextNode();
+      let currentPosition = 0;
+      while (currentNode) {
+        const nodeLength = currentNode.textContent.length;
+    
+        if (currentPosition + nodeLength >= cursorPosition) {
+          range.setStart(currentNode, cursorPosition - currentPosition);
+          range.collapse(true);
+          break;
+        }
+    
+        currentPosition += nodeLength;
+        currentNode = walker.nextNode();
+      }
+      
+      selection.removeAllRanges();
+      selection.addRange(range);
+  };
+
+
   return (
     <div className="uploadImageCaption">
       <div className="message-area-container">
@@ -229,7 +282,9 @@ const placeCaretAtEnd = (el) => {
           <WebChatEmoji
            emojiState={handleshowEmoji}
            onEmojiClick={handleEmojiText}
-           mentionView={setMentionView} />
+           mentionView={setMentionView}
+           showEmoji={showEmojiState}
+           />
           <ContentEditable
             handleMentionView={handleMentionList}
             captionCount={true}
@@ -249,11 +304,11 @@ const placeCaretAtEnd = (el) => {
             handleEmptyContent={handleEmptyContent}
             html={removeMoreNumberChar(CAPTION_CHARACTER_LIMIT, value)}
           />
-            {(GroupMemberList.length > 0 && MentionView && showEmojiState === false) ?
+            {(chatType === "groupchat" && GroupMemberList.length > 0 && MentionView && showEmojiState === false) ?
           <OutsideClickHandler onOutsideClick={() => handleMentionList(false , {})}>
             <MentionUserList handleMentionedData={handleMentionedUser} GroupParticiapantsList={GroupMemberList} />
           </OutsideClickHandler>
-          :(GroupMemberList.length > 0 && MentionView && showEmojiState === true) ?
+          :(chatType === "groupchat" && GroupMemberList.length > 0 && MentionView && showEmojiState === true) ?
           <MentionUserList handleMentionedData={handleMentionedUser} GroupParticiapantsList={GroupMemberList} />
           : null
         }

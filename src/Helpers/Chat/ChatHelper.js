@@ -27,6 +27,7 @@ import { getGroupData } from './Group';
 import { getAvatarImage, groupAvatar } from '../../Components/WebChat/Common/Avatarbase64';
 import { webSettingLocalAction } from '../../Actions/BrowserAction';
 import Config from "../../config";
+import { DownloadingChatMedia } from '../../Actions/Media';
  
 const indexedDb = new IndexedDb();
 
@@ -898,9 +899,10 @@ export const getDownloadFileName = (file_url, msgType) => {
     return `${BRAND_NAME} ${capitalizeFirstLetter(fileType)} ${time}${extension}`;
 };
 
-export const downloadMediaFile = async (file_url, msgType, file_name, fileKey, event) => {
+export const downloadMediaFile = async (msgId, file_url, msgType, file_name, fileKey, event) => {
     if (blockOfflineAction()) return;
 
+    Store.dispatch(DownloadingChatMedia({ downloadMediaMsgId: msgId, downloadingFile: file_url, downloading: true, downloadingMediaType: msgType }));
     if (file_url) {
         const fileName = msgType === "file" ? file_name : getDownloadFileName(file_url, msgType);
         let fileUrl = file_url;
@@ -912,6 +914,7 @@ export const downloadMediaFile = async (file_url, msgType, file_name, fileKey, e
             }
             const mediaResponse = await SDK.getMediaURL(file_url, fileKey);
             if (mediaResponse.statusCode === 200) {
+                Store.dispatch(DownloadingChatMedia({ downloadMediaMsgId: msgId, downloadingFile: file_url, downloading: false, downloadingMediaType: msgType }));
                 fileUrl = mediaResponse.data.blobUrl; 
             } else {
                 console.log("error in downloading media file");

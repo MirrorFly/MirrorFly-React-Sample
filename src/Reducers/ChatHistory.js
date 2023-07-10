@@ -13,7 +13,8 @@ import {
   REMOVE_ALL_FAVOURITE_STATUS,
   TRANSLATE_MESSAGE,
   CLEAR_ALL_CHAT,
-  CLEAR_CHAT_HISTORY_ACTION_COMMON
+  CLEAR_CHAT_HISTORY_ACTION_COMMON,
+  CANCEL_MEDIA_DOWNLOAD
 } from "../Actions/Constants";
 import {
   clearChatHistoryOffline,
@@ -80,6 +81,7 @@ export function ChatConversationHistoryReducer(state = initialState, action = {}
       };
 
     case CANCEL_MEDIA_UPLOAD:
+    case CANCEL_MEDIA_DOWNLOAD:
     case RETRY_MEDIA_UPLOAD:
       return {
         ...state,

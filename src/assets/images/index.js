@@ -101,6 +101,7 @@ export { default as ChatContactImg }from './avatar.png';
 export { ReactComponent as DocumentReceiver } from './doc.svg';
 export { ReactComponent as DocumentSender } from './docrecei.svg';
 export { ReactComponent as DocumentDownload } from './download-doc.svg';
+export { ReactComponent as DocumentDownloadDark } from './download-doc-dark.svg';
 export { ReactComponent as SingleForward } from './singleForward.svg';
 export { ReactComponent as SingleForward2 } from './forward-new.svg';
 export { ReactComponent as Playbtn } from './playbtn.svg';

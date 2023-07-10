@@ -2,9 +2,9 @@ import React from "react";
 import Store from "../../../Store";
 import { useSelector } from "react-redux";
 import SendingFailed from "./SendingFailed";
-import { FileLoaderCircle, Upload3 } from "../../../../src/assets/images";
+import { DocumentDownload, DocumentDownloadDark, FileLoaderCircle, Upload3 } from "../../../../src/assets/images";
 import { getActiveConversationChatId } from "../../../Helpers/Chat/ChatHelper";
-import { CancelMediaUpload, RetryMediaUpload } from "../../../Actions/ChatHistory";
+import { CancelMediaDownload, CancelMediaUpload, RetryMediaUpload } from "../../../Actions/ChatHistory";
 
 // Upload Status
 // 0 - Before Upload
@@ -16,6 +16,7 @@ import { CancelMediaUpload, RetryMediaUpload } from "../../../Actions/ChatHistor
 // 6 - Receiver Download Failed
 // 7 - Sender - User Cancelled
 // 8 - Forward Uploading
+// 9 - User Cancelled Downloading
 
 function ProgressLoader(props = {}) {
   const {
@@ -29,10 +30,15 @@ function ProgressLoader(props = {}) {
   const globalStore = useSelector((state) => state);
   const {
     appOnlineStatus: { isOnline = true } = {},
-    mediaUploadData: { data = {} } = {}
+    mediaUploadData: { data = {} } = {},
+    mediaDownloadingData,
+    mediaDownloadData,
+    
   } = globalStore || {};
 
-  const getAnimateClass = () => ((data[msgId]?.progress === 100 || uploadStatus === 0 )? "progress-animate" : "");
+  const getAnimateClass = () => (data[msgId]?.progress === 100 || uploadStatus === 0 )? "progress-animate" : "";
+
+  const getDownloadAnimateClass = () => (mediaDownloadingData?.downloadingData[msgId]?.progress > 0) ? "progress-animate active-progress" : "";
 
   const getActiveProgressClass = () => (uploadStatus === 1 && data[msgId]?.progress < 100 ? "active-progress" : "");
 
@@ -41,15 +47,24 @@ function ProgressLoader(props = {}) {
 
     if (data[msgId]) {
       data[msgId].source.cancel("User Cancelled!");
-    }
-
-    if (uploadStatus === 0 || uploadStatus === 1) {
-      const cancelObj = {
+      if (uploadStatus === 0 || uploadStatus === 1) {
+        const cancelObj = {
+          msgId,
+          fromUserId: getActiveConversationChatId(),
+          uploadStatus: 7
+        };
+        Store.dispatch(CancelMediaUpload(cancelObj));
+      }
+    } else if (
+      mediaDownloadingData?.downloadingData[msgId]?.msgId === msgId &&
+      mediaDownloadingData?.downloadingData[msgId]?.uploadStatus !== 9
+    ) {
+      mediaDownloadingData.downloadingData[msgId].source.cancel("User Cancelled Downloading Item!")
+      const cancelDownloadingObj = {
         msgId,
-        fromUserId: getActiveConversationChatId(),
-        uploadStatus: 7
+        uploadStatus: 9
       };
-      Store.dispatch(CancelMediaUpload(cancelObj));
+      Store.dispatch(CancelMediaDownload(cancelDownloadingObj));
     }
     return false;
   };
@@ -97,27 +112,55 @@ function ProgressLoader(props = {}) {
   const progressViewdiffer=()=> {
     progressView();
   };
+
+
+
   return (
     <React.Fragment>
       <div className="progressOverlay">
-        {isOnline && (uploadStatus === 1 || uploadStatus === 0 || uploadStatus === 8) ? (
+        {isOnline && (uploadStatus === 1 || uploadStatus === 0 || uploadStatus === 8 || uploadStatus === 9) ? (
           <>
-            <div
-              data-jest-id={"jestcancelMediaUpload"}
-              className="fileInprogess" onClick={cancelMediaUpload}>
+            <div data-jest-id={"jestcancelMediaUpload"} className="fileInprogess" onClick={cancelMediaUpload}>
               <FileLoaderCircle />
             </div>
             <div className="loadingProgress" onClick={cancelMediaUpload}>
               <span
-                className={`progressBar ${getAnimateClass()} ${getActiveProgressClass()}`}
+                className={`progressBar ${getDownloadAnimateClass()} ${getAnimateClass()} ${getActiveProgressClass()}`}
                 style={{ width: `${data[msgId]?.progress}%` }}
               ></span>
             </div>
           </>
         ) : null}
+
+        {(msgId === mediaDownloadData?.downloadingStatus[msgId]?.downloadMediaMsgId &&
+          mediaDownloadData?.downloadingStatus[msgId]?.downloading === true) ||
+        (msgId === mediaDownloadingData?.downloadingData[msgId]?.msgId &&
+          mediaDownloadingData?.downloadingData[msgId]?.uploadStatus === 9) ? (
+          <>
+            <div className="fileInprogess">
+              {(mediaDownloadData?.downloadingStatus[msgId]?.downloadingMediaType === "audio" ||
+                mediaDownloadData?.downloadingStatus[msgId]?.downloadingMediaType === "file" ||
+                mediaDownloadingData?.downloadingData[msgId]?.uploadStatus === 9) &&
+              isSender === true ? (
+                <DocumentDownloadDark />
+              ) : (
+                <DocumentDownload />
+              )}
+            </div>
+            <div className="loadingProgress" onClick={cancelMediaUpload}>
+              <span
+                className={
+                  mediaDownloadingData?.downloadingData[msgId]?.uploadStatus !== 9
+                    ? "progressBar progress-animate active-progress"
+                    : ""
+                }
+              ></span>
+            </div>
+          </>
+        ) : null}
+
         {uploadStatus === 3 && commonRetryAction()}
-        {uploadStatus === 4 && isOnline ? progressViewdiffer()
-         : null}
+        {uploadStatus === 4 && isOnline ? progressViewdiffer() : null}
 
         {uploadStatus === 5 && (
           <div className="reLoadFile failed">

@@ -115,7 +115,7 @@ class IndexedDb {
 
     async makeHttpRequet(key, storeName, fileKey, options = {}) {
         const uniqueKey = substringBetween(key,mediaUrl,'?mf');
-        const response = await SDK.getMediaURL(uniqueKey, fileKey);
+        const response = await SDK.getMediaURL(uniqueKey, fileKey, options);
         if (response.statusCode === 200) {
             return this.setImage(uniqueKey, response.data.blob, storeName).then(()=>{
                 return this.getImageByKey(uniqueKey, storeName, options)
