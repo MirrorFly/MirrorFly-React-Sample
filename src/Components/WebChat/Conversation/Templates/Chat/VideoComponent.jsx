@@ -76,16 +76,16 @@ const VideoComponent = (props = {}) => {
         <ProgressLoader
           msgId={msgId}
           isSender={isSender}
-          file_url={file_url}
           uploadStatus={uploadStatus}
           imgFileDownloadOnclick={imgFileDownloadOnclick}
+          file_url={file_url}
         />
       </div>
       <div className="image-caption">
         {caption !== "" && (
           <span>
             <span>{captionLink(caption, mentionedUsersIds)}</span>
-            {isTranslated() && <Translate tMessage={translatedMessage} />}
+            {!!isTranslated() && <Translate tMessage={translatedMessage} />}
           </span>
         )}
       </div>

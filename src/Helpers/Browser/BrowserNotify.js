@@ -97,7 +97,7 @@ const browserNotify = {
         }
 
         if(rosterData.image){
-            let image = rosterData.thumbImage !== "" ? rosterData.thumbImage : rosterData.image;
+            let image = (rosterData.thumbImage && rosterData.thumbImage !== "") ? rosterData.thumbImage : rosterData.image;
             const localDb = new IndexedDb();
             if(Array.isArray(image)){
                 image = image[0];

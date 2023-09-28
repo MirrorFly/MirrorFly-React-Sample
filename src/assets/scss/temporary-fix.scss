@@ -1,0 +1,7 @@
+.document-message , .audio-message, .location-message, .contact-message {
+  .SingleForward {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none;
+  }
+}

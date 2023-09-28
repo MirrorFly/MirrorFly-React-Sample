@@ -43,10 +43,10 @@ export function formatBytes(a, b = 2) {
     return parseFloat((a / Math.pow(1024, d)).toFixed(c)) + " " + ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"][d]
 }
 export function convertTime(sec) {
-    var hours = Math.floor(sec / 3600);
+    let hours = Math.floor(sec / 3600);
     if (hours >= 1) sec = sec - (hours * 3600) 
     else hours = 0;
-    var min = Math.floor(sec / 60);
+    let min = Math.floor(sec / 60);
     if (min >= 1) sec = sec - (min * 60)
     else min = '00';
     if (sec < 1) sec = '00' 
@@ -168,10 +168,13 @@ export const groupByTime = (message, callback) => {
         .reduce((messageGroup, singleImage, currentIndex, messageArray) => {
             const time = callback(singleImage)
             if (!messageGroup.currentTime || (messageGroup.currentTime - time > 60000 || (singleImage.msgtype !== messageGroup.messageType || singleImage.fromUser !== messageGroup.fromUser))) {
+                let newArray = [];
                 messageGroup.res = [
-                    ...messageGroup.res,
-                    messageGroup.currentArray = []
-                ]
+                ...messageGroup.res,
+                newArray
+                ];
+                messageGroup.currentArray = newArray;
+
                 messageGroup.fromUser = singleImage.fromUser
                 messageGroup.messageType = singleImage.msgtype
                 messageGroup.currentTime = time
@@ -221,16 +224,13 @@ export const deliveryStatus = {
 };
 
 export const isValidDeleteEveryOne = (msgdate) => {
-    const date = new Date(msgdate.replace(/ /g, "T"))
+    const date = new Date(msgdate.replace(/ /g, "T"));
     const newDate = new Date(date.getTime() - date.getTimezoneOffset() * 60 * 1000);
     const now = new Date();
     const validTime = 30 * 1000;
-    if ((now - newDate) > validTime) {
-        return false
-    }
-    return true;
-}
-
+    return ((now - newDate) <= validTime);
+  };
+  
 export const getUniqueListBy = (arr, key) => {
     return [...new Map(arr.map(item => [item[key], item])).values()]
 }
@@ -248,7 +248,12 @@ export const concatMessageArray = (activeData, stateData, uniqueId, sortId) => {
         ...stateData,
         ...activeData,
     ]
-    return getUniqueListBy(updateMessage, uniqueId).sort((a, b) => a[sortId] > b[sortId] ? 1 : a[sortId] < b[sortId] ? -1 : 0);
+    return getUniqueListBy(updateMessage, uniqueId).sort((a, b) => 
+    {
+         if (a[sortId] > b[sortId]) { return 1 } 
+         else if (a[sortId] < b[sortId]) { return -1 }
+         else { return 0 }
+    });
 }
 
 export const isSingleChat = (chatType) => chatType === CHAT_TYPE_SINGLE;
@@ -687,12 +692,11 @@ export const updateDeletedMessageInHistory = (actionType, data, stateData) => {
             data.msgIds.forEach((msgId) => delete currentChatData.messages[msgId]);
         } else if (actionType === DELETE_MESSAGE_FOR_EVERYONE) {
             const messageIds = data.msgId.split(",");
-            for (let i = 0; i < messageIds.length; i++) {
-                const msgId = messageIds[i];
-                if (currentChatData.messages[msgId]){
-                    currentChatData.messages[msgId].deleteStatus = 2;
+            for (const msgId of messageIds) {
+                if (currentChatData.messages[msgId]) {
+                  currentChatData.messages[msgId].deleteStatus = 2;
                 }
-            }
+              }              
         }
 
         return {
@@ -744,7 +748,7 @@ export const updateMediaUploadStatus = (data, stateData) => {
     });
 };
 
-export const uploadFileToSDK = async (file, jid, msgId, media) => {
+export const uploadFileToSDK = async (file, jid, msgId) => {
     const { caption = "",  mentionedUsersIds =[],fileDetails: { replyTo, audioType = "" } = {} } = file;
     const msgType = getMessageType(file.type, file);
     let fileOptions = {
@@ -754,7 +758,6 @@ export const uploadFileToSDK = async (file, jid, msgId, media) => {
     };
     let response = {};
     if (msgType === "file") {
-        // response = await SDK.sendDocumentMessage(jid, file, fileOptions, replyTo, mentionedUsersIds);
         response = await SDK.sendFileMessage({
             toJid: jid,
             messageType: "file",
@@ -763,7 +766,6 @@ export const uploadFileToSDK = async (file, jid, msgId, media) => {
             replyMessageId: replyTo
         });
     } else if (msgType === "image") {
-        // response = await SDK.sendImageMessage(jid, file, fileOptions, replyTo, mentionedUsersIds);
         response = await SDK.sendFileMessage({
             toJid: jid,
             messageType: "image",
@@ -772,7 +774,6 @@ export const uploadFileToSDK = async (file, jid, msgId, media) => {
             replyMessageId: replyTo
         });
     } else if (msgType === "video") {
-        //response = await SDK.sendVideoMessage(jid, file, fileOptions, replyTo, mentionedUsersIds);
         response = await SDK.sendFileMessage({
             toJid: jid,
             messageType: "video",
@@ -781,7 +782,6 @@ export const uploadFileToSDK = async (file, jid, msgId, media) => {
             replyMessageId: replyTo
         });
     } else if (msgType === "audio") {
-        // response = await SDK.sendAudioMessage(jid, file, fileOptions, replyTo, mentionedUsersIds);
         response = await SDK.sendFileMessage({
             toJid: jid,
             messageType: audioType === "recording" ? "audio_recorded" : "audio",
@@ -838,10 +838,10 @@ export const updateFavouriteStatusHistory = (data, stateData) => {
             const  message = currentChatData?.messages[data.msgId];
             currentChatData.messages[data.msgId] = {...message, favouriteStatus: data.favouriteStatus }; 
         } else if (data.msgIds && data.msgIds.length) {
-            for (let i = 0; i < data.msgIds.length; i++) {
-                const  message = currentChatData?.messages[data.msgIds[i]];
-                currentChatData.messages[data.msgIds[i]] = {...message, favouriteStatus: data.favouriteStatus }; 
-            }
+            for (const msgId of data.msgIds) {
+                const message = currentChatData?.messages[msgId];
+                currentChatData.messages[msgId] = { ...message, favouriteStatus: data.favouriteStatus };
+              }              
         }
         return {
             ...stateData,
@@ -860,23 +860,21 @@ export const removeFavouriteStatusHistory = (data, stateData) => {
     const duplicateState = JSON.parse(JSON.stringify(stateData));
     const groupByResult = _groupBy(data, "fromUserId");
     const chatIds = Object.keys(groupByResult);
-    for (let i = 0; i < chatIds.length; i++) {
-      const currentChat = stateData[chatIds[i]];
-      if (currentChat) {
-        const unStarredMessages = groupByResult[chatIds[i]];
-        const msgIds = unStarredMessages.map((msg) => msg.msgId);
-        for (let j = 0; j < msgIds.length; j++) {
-          const currentMsg = currentChat.messages[msgIds[j]];
-          if (currentMsg) {
-            duplicateState[chatIds[i]].messages[msgIds[j]] = { ...currentMsg, favouriteStatus: 0 };
-          }
+    for (let chatId of chatIds) {
+        const currentChat = stateData[chatId];
+        if (currentChat) {
+            const unStarredMessages = groupByResult[chatId];
+            const msgIds = unStarredMessages.map((msg) => msg.msgId);
+            for (const msgId of msgIds) {
+                const currentMsg = currentChat.messages[msgId];
+                if (currentMsg) duplicateState[chatId].messages[msgId] = { ...currentMsg, favouriteStatus: 0 };
+            }
         }
-      }
-    }
+    }      
     return {
       ...duplicateState
     };
-  };
+};
 
 export const offlineReplyHandle = (newObj = {}, replyTo = "") => {
     const dataObj = {
@@ -901,7 +899,6 @@ export const getDownloadFileName = (file_url, msgType) => {
 
 export const downloadMediaFile = async (msgId, file_url, msgType, file_name, fileKey, event) => {
     if (blockOfflineAction()) return;
-
     Store.dispatch(DownloadingChatMedia({ downloadMediaMsgId: msgId, downloadingFile: file_url, downloading: true, downloadingMediaType: msgType }));
     if (file_url) {
         const fileName = msgType === "file" ? file_name : getDownloadFileName(file_url, msgType);
@@ -912,14 +909,14 @@ export const downloadMediaFile = async (msgId, file_url, msgType, file_name, fil
                 event.preventDefault();
                 event.stopPropagation();
             }
-            const mediaResponse = await SDK.getMediaURL(file_url, fileKey);
+            const mediaResponse = await SDK.getMediaURL(file_url, fileKey, msgId);
             if (mediaResponse.statusCode === 200) {
                 Store.dispatch(DownloadingChatMedia({ downloadMediaMsgId: msgId, downloadingFile: file_url, downloading: false, downloadingMediaType: msgType }));
                 fileUrl = mediaResponse.data.blobUrl; 
             } else {
                 console.log("error in downloading media file");
                 return;
-            }            
+            }
         }
         const anchor = document.createElement("a");
         anchor.style.display = "none";
@@ -1039,12 +1036,12 @@ export const getPushNotificationData = async (data) => {
             const roster = getUserDetails(fromUserId) || {};
             const {displayName, image, thumbImage} = roster;           
             title = displayName || "";
-            imageToken = thumbImage !== "" ? thumbImage : image;
+            imageToken = (thumbImage && thumbImage !== "") ? thumbImage : image;
         } else {
             const groupData = getGroupData(fromUserId) || {};
             const {groupName, groupImage, thumbImage } = groupData;
             title = groupName || "";
-            imageToken = thumbImage !== "" ? thumbImage : groupImage;
+            imageToken = (thumbImage && thumbImage !== "") ? thumbImage : groupImage;
             const senderName = getContactNameFromRoster(getDataFromRoster(publisherId)) || publisherId;
             updateMessage = `${senderName}: ${updateMessage}`;
         }
@@ -1124,11 +1121,11 @@ export const handleUserSettings = async () => {
 export const handleArchivedChats = async () => {
     const archivedChats = await SDK.getAllArchivedChats();
     if (archivedChats.statusCode === 200 && archivedChats.data.length) {
-        for (let i = 0; i < archivedChats.data.length; i++) {
+        for (let i in archivedChats.data) {
             const element = archivedChats.data[i];
             element.isArchived = true;
             Store.dispatch(updateArchiveStatusRecentChat(element));
-        }
+        }  
     }
 };
 

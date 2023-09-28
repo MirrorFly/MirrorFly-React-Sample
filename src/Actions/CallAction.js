@@ -91,7 +91,7 @@ export const selectLargeVideoUser = (userJid, volumelevel) => {
             } = {}
         } = showConfrenceData || {};
 
-        let volumeLevelClassName = 0.50;
+        let volumeLevelClassName;
         let volumeLevelVideo = 0;
         if (userJid) {
             if (!volumeLevelsBasedOnUserJid[userJid]) {

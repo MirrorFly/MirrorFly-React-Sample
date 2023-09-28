@@ -1,13 +1,13 @@
 import React, { Component, Fragment } from 'react';
 import { connect } from 'react-redux';
 import { ArrowBack, CreateGroup, Info, EventWaiting, FloatingCallVideo, FloatingCallAudio, loaderSVG } from '../../../assets/images';
-import { NO_SEARCH_CHAT_CONTACT_FOUND, REACT_APP_XMPP_SOCKET_HOST } from '../../processENV';
+import { NO_SEARCH_CHAT_CONTACT_FOUND, REACT_APP_CONTACT_SYNC, REACT_APP_XMPP_SOCKET_HOST } from '../../processENV';
 import SDK from '../../SDK';
 import Contact from '../ContactInfo/Contact';
 import RecentSearch from '../RecentChat/RecentSearch';
 import Badge from './Badge';
-import { getValidSearchVal, handleFilterBlockedContact, isAppOnline } from '../../../Helpers/Utility';
-import { getContactNameFromRoster, getUserInfoForSearch, formatUserIdToJid, getFriendsFromRosters } from '../../../Helpers/Chat/User';
+import { fetchMoreParticipantsData, getValidSearchVal, handleFilterBlockedContact, isAppOnline } from '../../../Helpers/Utility';
+import { getContactNameFromRoster, getUserInfoForSearch, getFriendsFromRosters, formatUserIdToJid } from '../../../Helpers/Chat/User';
 import { toast } from 'react-toastify';
 import { NO_INTERNET } from '../../../Helpers/Constants';
 import { getMaxUsersInCall } from '../../../Helpers/Call/Call';
@@ -33,10 +33,17 @@ class NewParticipants extends Component {
     }
 
     componentDidMount() {
-        this.setState({
-            userList : [],
-            loaderStatus: this.props?.rosterData?.isFetchingUserList,
-        })
+        const { rosterData: { data = [] } = {} } = this.props
+        if (!REACT_APP_CONTACT_SYNC) {
+            this.setState({
+                userList : [],
+                loaderStatus: this.props?.rosterData?.isFetchingUserList,
+            })
+        } else {
+            this.setState({
+                filteredContacts: getFriendsFromRosters(handleFilterBlockedContact(data))
+            })
+        }
     }
 
     errorMessageListner = (errorMesage) => {
@@ -103,13 +110,21 @@ class NewParticipants extends Component {
         searchValue = getValidSearchVal(searchValue);
         let searchWith = searchValue;
         const filteredContacts = this.contactsSearch(searchWith)
-        this.setState({
-            searchValue: searchValue,
-            errorMesage: '',
-            filteredContacts: filteredContacts,
-            userList: filteredContacts
-        });
-        userList.getUsersListFromSDK(1, searchWith);
+        if (!REACT_APP_CONTACT_SYNC) {
+            this.setState({
+                searchValue: searchValue,
+                errorMesage: '',
+                filteredContacts: filteredContacts,
+                userList: filteredContacts
+            });
+            userList.getUsersListFromSDK(1, searchWith);
+        } else {
+            this.setState({
+                searchValue: searchValue,
+                errorMesage: '',
+                filteredContacts: filteredContacts
+            });
+        }
     }
 
     getBlobfromUrl = () => {
@@ -158,12 +173,21 @@ class NewParticipants extends Component {
             newSelectedParticipant = newSelectedParticipant.filter(function (element) {
                 return element !== undefined;
             });
-            this.setState({
-                participantToAdd: newSelectedParticipant,
-                loaderStatus: this.props?.rosterData?.isFetchingUserList,
-                filteredContacts: getFriendsFromRosters(handleFilterBlockedContact(this.props.rosterData?.data)),
-                userList:  getFriendsFromRosters(handleFilterBlockedContact(this.props.rosterData?.data))
-            });
+            if (!REACT_APP_CONTACT_SYNC) {
+                this.setState({
+                    participantToAdd: newSelectedParticipant,
+                    loaderStatus: this.props?.rosterData?.isFetchingUserList,
+                    filteredContacts: getFriendsFromRosters(handleFilterBlockedContact(this.props.rosterData?.data)),
+                    userList:  getFriendsFromRosters(handleFilterBlockedContact(this.props.rosterData?.data))
+                });
+            } else {
+                this.searchFilterList(this.state.searchValue);
+                const filteredContacts = this.contactsSearch(this.state.searchValue)
+                this.setState({
+                    participantToAdd: newSelectedParticipant,
+                    filteredContacts: filteredContacts
+                });
+            }
         }
     }
 
@@ -189,11 +213,10 @@ class NewParticipants extends Component {
         }, async () => {
             const { typingMessage } = this.props
             const participantJid = [];
-            participantToAdd.map(el => participantJid.push(el.userJid));
+            participantToAdd.forEach(el => participantJid.push(el.userJid));
 
             const groupImgBlob = await this.getBlobfromUrl();
             const result = await SDK.createGroup(typingMessage, participantJid, groupImgBlob || "");
-            console.log('createGroup result :>> ', result);
 
             if (result.statusCode === 200) {
                 this.setState({
@@ -222,44 +245,43 @@ class NewParticipants extends Component {
         const { newCall = false } = this.props
         const maxMemberReached = Boolean(participantToAdd.length >= (getMaxUsersInCall() - 1));
         if (this.state.userList.length > 0) {
-            this.state.userList.map((contact) => {
-                const { username, userId } = contact
-                const contactName = getContactNameFromRoster(contact);
-                const updateJid = username || userId
-                const isChanged = participantToAdd.findIndex(participant => participant.userId === updateJid)
-                let blockedContactArr = this.props.blockedContact.data;
-                const jid = formatUserIdToJid(updateJid);
-                const isBlocked = blockedContactArr.indexOf(jid) > -1;
-                dataArr.push(
-                    <Contact
-                        isBlocked={isBlocked}
-                        searchValue={searchValue}
-                        contactName={contactName}
-                        isChanged={isChanged}
-                        maxMemberReached={newCall ? maxMemberReached : ""}
-                        errorMessageListner={this.errorMessageListner}
-                        prepareContactToAdd={this.prepareContactToAdd}
-                        prepareContactToRemove={this.prepareContactToRemove}
-                        key={updateJid}
-                        roster={contact}
-                        {...contact}
-                    />
-                )
+            this.state.userList.forEach((contact) => {
+              const { username, userId } = contact;
+              const contactName = getContactNameFromRoster(contact);
+              const updateJid = username || userId;
+              const isChanged = participantToAdd.findIndex(participant => participant.userId === updateJid);
+              let blockedContactArr = this.props.blockedContact.data;
+              const jid = formatUserIdToJid(updateJid);
+              const isBlocked = blockedContactArr.indexOf(jid) > -1;
+              dataArr.push(
+                <Contact
+                  isBlocked={isBlocked}
+                  searchValue={searchValue}
+                  contactName={contactName}
+                  isChanged={isChanged}
+                  maxMemberReached={newCall ? maxMemberReached : ""}
+                  errorMessageListner={this.errorMessageListner}
+                  key={updateJid}
+                  prepareContactToAdd={this.prepareContactToAdd}
+                  roster={contact}
+                  {...contact}
+                  prepareContactToRemove={this.prepareContactToRemove}
+                />
+              );
             });
-        }
+          }
         return dataArr;
     }
 
     fetchMoreData = () => {
-        let userListArr = this.state.userList;
-        let searchWith = getValidSearchVal(this.state.searchValue);
-        userList.getUsersListFromSDK(Math.ceil((userListArr.length / 20) + 1), searchWith);
+        fetchMoreParticipantsData(this.state.userList, this.state.searchValue);
     }
 
     render() {
         const { participantToAdd, inProgress, filteredContacts, searchValue, errorMesage } = this.state
         const { handleBackToGroup, newCall = false, handleBackToCallLog } = this.props
         const userListArr = this.handleUserListData();
+        const maxMemberReached = Boolean(participantToAdd.length >= (getMaxUsersInCall() - 1));
         return (
             <Fragment>
                 <div>
@@ -278,13 +300,58 @@ class NewParticipants extends Component {
                                     </i>}
                             </div>
                         </div>
-
+                        
                         <RecentSearch search={this.searchFilterList} />
-                        {filteredContacts.length === 0 && searchValue &&
-                            <span className="searchErrorMsg"><Info /> {NO_SEARCH_CHAT_CONTACT_FOUND}</span>
+                        { REACT_APP_CONTACT_SYNC &&
+                        <ul className={`chat-list-ul newGroup ${participantToAdd.length > 0 && "adjustHeight"}`}>
+                            {filteredContacts.length === 0 && searchValue &&
+                                <span className="searchErrorMsg"><Info /> {NO_SEARCH_CHAT_CONTACT_FOUND}</span>
+                            }
+                            {errorMesage && <div className="errorMesage"><Info /><span>{errorMesage}</span></div>}
+                            <li className="chat-list-li BadgeContainer">
+                                <div className="selectedBadge">
+                                    <ul>
+                                        {participantToAdd.map(participant => {
+                                            const { userId } = participant
+                                            let blockedContactArr = this.props.blockedContact.data;
+                                            const jid = formatUserIdToJid(userId);
+                                            const isBlocked = blockedContactArr.indexOf(jid) > -1;
+                                            return <Badge
+                                                key={userId}
+                                                {...participant}
+                                                isBlocked={isBlocked}
+                                                removeParticipant={this.removeParticipant}
+                                            />
+                                        })}
+                                    </ul>
+                                </div>
+                            </li>
+
+                            {filteredContacts.map(contact => {
+                                const { username, userId } = contact
+                                const contactName = getContactNameFromRoster(contact);
+                                const updateJid = username || userId
+                                const isChanged = participantToAdd.findIndex(participant => participant.userId === updateJid)
+                                let blockedContactArr = this.props.blockedContact.data;
+                                const jid = formatUserIdToJid(updateJid);
+                                const isBlocked = blockedContactArr.indexOf(jid) > -1;
+                                return <Contact
+                                    isBlocked={isBlocked}
+                                    searchValue={searchValue}
+                                    contactName={contactName}
+                                    isChanged={isChanged}
+                                    maxMemberReached={newCall ? maxMemberReached : ""}
+                                    errorMessageListner={this.errorMessageListner}
+                                    prepareContactToAdd={this.prepareContactToAdd}
+                                    prepareContactToRemove={this.prepareContactToRemove}
+                                    key={updateJid}
+                                    roster={contact}
+                                    {...contact}
+                                />
+                            })}
+                        </ul>
                         }
-                        {errorMesage && <div className="errorMesage"><Info /><span>{errorMesage}</span></div>}
-                        {userListArr.length > 0 &&
+                        { !REACT_APP_CONTACT_SYNC && 
                             <ul className={`chat-list-ul newGroup ${(newCall && participantToAdd.length > 0) ? "adjustHeight" : "" }`} id="scrollableUl-group">
                                 <li className="chat-list-li BadgeContainer">
                                     <div className="selectedBadge">
@@ -304,6 +371,9 @@ class NewParticipants extends Component {
                                         </ul>
                                     </div>
                                 </li>
+                                {this.state.loaderStatus && <div className="loader-container style-2">
+                                    <img src={loaderSVG} alt="loader" />
+                                </div>}
                                 { this.props.isAppOnline ?
                                 <InfiniteScroll
                                     dataLength={userListArr.length}
@@ -313,14 +383,10 @@ class NewParticipants extends Component {
                                 >
                                     {this.handleUserListData()}
                                 </InfiniteScroll>
-                                : this.handleUserListData()
-
-                                }
+                                : this.handleUserListData() }
                             </ul>
                         }
-                        {this.state.loaderStatus && <div className="loader-container style-2">
-                            <img src={loaderSVG} alt="loader" />
-                        </div>}
+                        
                         {newCall && participantToAdd.length > 0 &&
                             <div onClick={this.handleMakeNewCall} className="callButton">
                                 <i> {this.props.newCallType === "video" ? <FloatingCallVideo /> : <FloatingCallAudio />}</i> Call now ({participantToAdd.length})

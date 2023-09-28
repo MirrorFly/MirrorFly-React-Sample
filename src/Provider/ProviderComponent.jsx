@@ -1,6 +1,6 @@
 import React from "react";
 import { Provider } from "react-redux";
-import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
+import { Router, Switch, Route } from "react-router-dom";
 import Store from "../Store";
 import Login from "../Components/Layouts/Login";
 import "../assets/scss/common.scss";

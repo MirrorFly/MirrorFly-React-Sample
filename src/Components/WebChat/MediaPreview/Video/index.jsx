@@ -1,5 +1,4 @@
 import React, { Component, Fragment } from "react";
-import "react-videoplayer/lib/index.css";
 import "video.js/dist/video-js.css";
 import VideoPlayer from "../../Conversation/VideoPlayer";
 import Caption from "../Caption";
@@ -114,6 +113,8 @@ export default class PreviewVideo extends Component {
             onClickSend={this.props.onClickSend}
             uniqueId={this.state.uniqueId}
             chatType={this.props.chatType}
+            chatId={this.props.chatId}
+            newFile={this.props.type}
           />
         </div>
       </Fragment>

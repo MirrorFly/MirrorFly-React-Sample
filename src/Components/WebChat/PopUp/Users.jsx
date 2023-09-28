@@ -74,7 +74,7 @@ export default function Users(props) {
                         chatType={chatType}
                         userToken={token}
                         temporary={temporary}
-                        imageToken={thumbImage !== "" ? thumbImage : image || groupImage}
+                        imageToken={(thumbImage && thumbImage !== "") ? thumbImage : image || groupImage}
                         emailId={emailId}
                         userId={getIdFromJid(updateJid)}
                         name={iniTail}

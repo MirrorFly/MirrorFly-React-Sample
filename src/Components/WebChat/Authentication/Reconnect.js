@@ -28,8 +28,9 @@ import { hideModal } from '../../../Actions/PopUp';
 import { messageInfoAction } from "../../../Actions/MessageActions";
 import { GroupsDataAction } from "../../../Actions/GroupsAction";
 import { setGroupParticipantsByGroupId } from "../../../Helpers/Chat/Group";
-import { RosterDataAction, RosterPermissionAction } from "../../../Actions/RosterActions";
+import { RosterData, RosterPermissionAction } from "../../../Actions/RosterActions";
 import { FeatureEnableState } from "../../../Actions/FeatureAction";
+import { REACT_APP_CONTACT_SYNC } from "../../processENV";
 
 const handleBlockMethods = async () => {
   const userIBlockedRes = await SDK.getUsersIBlocked();
@@ -87,8 +88,7 @@ const handleChatHistoryUpdate = (recentChatArr, oldRecentChatData) => {
   const recentChatArrNew = recentChatArr.reverse();
   const oldRecentChatObj = arrayToObject(oldRecentChatData, "fromUserId");
 
-  for (let i = 0; i < recentChatArrNew.length; i++) {
-    const newRecentChat = recentChatArrNew[i];
+  for (const newRecentChat of recentChatArrNew) {
     const { fromUserId: chatId, msgId: recentMsgId, chatType } = newRecentChat;
     const oldRecentChat = oldRecentChatObj[chatId];
 
@@ -97,7 +97,7 @@ const handleChatHistoryUpdate = (recentChatArr, oldRecentChatData) => {
       const isRefreshNeeded = checkIfConversationRefreshNeeded(newRecentChat, oldRecentChat);
 
       // If Message Status Changed - Refresh Conversation History
-      if (isRefreshNeeded || isAppOnline() ) {
+      if (isRefreshNeeded || isAppOnline()) {
         getAndUpdateChatMessages(chatId, chatType);
       }
 
@@ -167,16 +167,18 @@ export async function login() {
     }
 
       await SDK.getUserProfile(formatUserIdToJid(decryptResponse.username));
-      // await SDK.getFriendsList();
+      if (REACT_APP_CONTACT_SYNC) {
+        await SDK.getFriendsList();
+      } else {
+        Store.dispatch(RosterPermissionAction(1));
+      }
       const featureResponse = SDK.getAvailableFeatures();
       if (featureResponse.statusCode === 200) {
         featureData = featureResponse.data;
         Store.dispatch(FeatureEnableState(featureData));
         encryptAndStoreInLocalStorage("featureRestrictionFlags", featureData);
       }
-
-      Store.dispatch(RosterPermissionAction(true));
-      Store.dispatch(RosterDataAction([]));
+      Store.dispatch(RosterData([]));
 
       if (featureData.isGroupChatEnabled) {
         const groupListRes = await SDK.getGroupsList();

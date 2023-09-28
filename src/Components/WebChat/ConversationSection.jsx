@@ -2,7 +2,6 @@ import React, { Component, Fragment } from 'react';
 import { connect } from 'react-redux';
 import ConversationHeader from './Header/ConversationHeader';
 import "../../assets/scss/chatBanner.scss";
-import renderHTML from 'react-render-html';
 import { Chat, Video, Call } from '../../assets/images';
 import "../../assets/scss/common.scss";
 import { getBroadCastUser, handleParticipantList, isBroadcastChat, isGroupChat } from '../../Helpers/Chat/ChatHelper';
@@ -65,7 +64,7 @@ class ConversationSection extends Component {
         const { vCardData } = this.props
         let response = userType ? this.mapUsers('o').concat(this.mapUsers('n')) : this.mapUsers()
 
-        var index = response.findIndex((o) => isLocalUser(o.userId))
+        let index = response.findIndex((o) => isLocalUser(o.userId))
 
         if (index !== -1) {
             let activeUser = response.splice(index, 1)[0];
@@ -160,7 +159,7 @@ class ConversationSection extends Component {
                     <div className="mf-section">
                         <div className="start-chart">
                             <div className="content">
-                                <h3>Hi {renderHTML(nickname)}{nickname && '!'}</h3>
+                                <h3>Hi {nickname}{nickname && '!'}</h3>
                                 <p>Try the wholesome experience of MirrorFly</p>
                                 <div className="start-chat">
                                     <span><i className="iconChating"><Chat /></i>Chatting</span>

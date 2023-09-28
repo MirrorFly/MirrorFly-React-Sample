@@ -36,10 +36,8 @@ function ProgressLoader(props = {}) {
     
   } = globalStore || {};
 
-  const getAnimateClass = () => (data[msgId]?.progress === 100 || uploadStatus === 0 )? "progress-animate" : "";
-
+  const getAnimateClass = () => ((data[msgId]?.progress === 100 || uploadStatus === 0 || uploadStatus === 1)? "progress-animate" : "");
   const getDownloadAnimateClass = () => (mediaDownloadingData?.downloadingData[msgId]?.progress > 0) ? "progress-animate active-progress" : "";
-
   const getActiveProgressClass = () => (uploadStatus === 1 && data[msgId]?.progress < 100 ? "active-progress" : "");
 
   const cancelMediaUpload = () => {

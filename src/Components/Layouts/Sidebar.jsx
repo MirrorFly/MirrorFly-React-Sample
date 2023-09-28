@@ -29,6 +29,7 @@ import { callIntermediateScreen, resetConferencePopup } from '../../Actions/Call
 import { NEW_CHAT_CONTACT_PERMISSION_DENIED, NEW_GROUP_CONTACT_PERMISSION_DENIED } from '../../Helpers/Chat/Constant';
 import { encryptAndStoreInLocalStorage} from '../WebChat/WebChatEncryptDecrypt';
 import userList from '../WebChat/RecentChat/userList';
+import { REACT_APP_CONTACT_SYNC } from '../processENV';
 
 class Sidebar extends React.Component {
 
@@ -74,12 +75,10 @@ class Sidebar extends React.Component {
             this.props.handleContactPermissionPopup(true, NEW_CHAT_CONTACT_PERMISSION_DENIED);
             return;
         }
-        userList.getUsersListFromSDK(1);
+        if (!REACT_APP_CONTACT_SYNC) {
+            userList.getUsersListFromSDK(1);
+        }
         this.setState({ newChatStatus: false });
-    }
-
-    handleOnBack() {
-        this.setState({ chatLogs: false });
     }
 
     handleCallLogs = () => {
@@ -111,7 +110,9 @@ class Sidebar extends React.Component {
             this.props.handleContactPermissionPopup(true, NEW_GROUP_CONTACT_PERMISSION_DENIED);
             return;
         }
-        userList.getUsersListFromSDK(1);
+        if (!REACT_APP_CONTACT_SYNC) {
+            userList.getUsersListFromSDK(1);
+        }
         this.setState({ newGroupParticipants: true }, () => {
             this.setState({ menuDropDownStatus: false })
         });
@@ -135,18 +136,6 @@ class Sidebar extends React.Component {
 
     }
 
-    handleBackToArchivedList = () => {
-        this.setState({
-            archivedSetting: false,
-            archivedChatList: true
-        });
-    }
-    handleBackToGroupParticipants = () => {
-        this.setState({
-            newGroupParticipants: true
-        });
-    }
-
     handleSetting = () => {
         this.setState({
             settingStatus: true,
@@ -160,23 +149,6 @@ class Sidebar extends React.Component {
     handleBackFromCallLogs = (status) => {
         this.setState({ newChatStatus: status });
         this.setState({ callLogs: false });
-    }
-
-    _sideMenuPop = () => {
-        return (
-            <>
-                <OutsideClickHandler onOutsideClick={() => this.outsidePopupClick()} >
-                    {this.state.menuDropDownStatus &&
-                        <ul className="menu-dropdown">
-                            <li title="New Group" onClick={this.handleCreateNewGroup}><i><NewGroup /></i><span>New Group</span></li>
-                            {/* <li title="Starred Messages" onClick={this.handleStarred} ><i><Starred/></i><span>Starred</span></li>  */}
-                            <li title="Settings" onClick={this.handleSetting}><i><Settings /></i><span>Settings</span></li>
-                            <WebChatLogout history={this.props.history} logoutStatus={this.handleLogutStatus} handleDropdownStatus={this.handleDropdownStatus} />
-                        </ul>
-                    }
-                </OutsideClickHandler>
-            </>
-        )
     }
 
     browserNotifyRedirect = (prevProps) => {
@@ -331,15 +303,20 @@ class Sidebar extends React.Component {
                             {this.renderRecentChat("archive")}
                         </div>
                     }
-                    {
-                        callLogs && <WebChatCallLogs handleBackStatus={this.handleBackFromCallLogs} handleContactPermissionPopup={this.props.handleContactPermissionPopup}/>
-                    }
+                   {callLogs && (
+                      <WebChatCallLogs
+                        handleBackStatus={this.handleBackFromCallLogs}
+                        handleShowCallScreen={this.props.handleShowCallScreen}
+                        handleContactPermissionPopup={this.props.handleContactPermissionPopup}
+                      />
+                    )}
 
                     {settingStatus &&
                         <Setting
                             handleBackFromSetting={this.handleBackFromSetting}
                             logoutStatus={this.handleLogutStatus}
                             featureStateData={featureStateData}
+                            handleShowCallScreen={this.props.handleShowCallScreen}
                         />
                     }
                 </div>

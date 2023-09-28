@@ -1,6 +1,6 @@
-import { Picker } from "emoji-mart";
+import Picker from '@emoji-mart/react'
+import data from '@emoji-mart/data'
 import React, { Fragment } from 'react';
-import "emoji-mart/css/emoji-mart.css";
 import "../../../assets/scss/emoji.scss";
 import { getEmojiStyle } from "../../../Helpers/Utility";
 
@@ -30,7 +30,7 @@ export const Emoji = (props = {}) => {
     return (
         <Fragment>
             { emojiState && <span className="emojiPicker-container" style={getEmojiStyle()}>
-                <Picker enableFrequentEmojiSort={false} onSelect={addEmoji} />
+            <Picker className="emoji_picker" style={{width : "100%"}} dynamicWidth={true} data={data} previewEmoji={false} enableFrequentEmojiSort={false} onEmojiSelect={addEmoji} />
             </span>}
         </Fragment>
     )

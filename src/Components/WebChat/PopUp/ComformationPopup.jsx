@@ -6,12 +6,6 @@ export const ConformationPopup = (props) => {
         closeLabel, actionLabel ,label} = props
 
         const actionDispatch = () => {
-            // if(!isAppOnline()){
-            //     blockOfflineAction()
-            //  return
-            // }
-
-            // if (dispatchErrorMessage()) {
                if(label ==='ClearAction'){
                     dispatchAction({
                         isclear:true
@@ -21,7 +15,6 @@ export const ConformationPopup = (props) => {
                         isclear:false
                     });
                 }
-            // }
         }
 
     return(

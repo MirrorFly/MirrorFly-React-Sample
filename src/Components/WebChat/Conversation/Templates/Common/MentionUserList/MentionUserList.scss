@@ -5,10 +5,9 @@
     position: absolute;
     left: 1.5625em;
     right: 0;
-    bottom: 2.5em;
+    bottom: 2.5em; //calc(100% - 1.6em);
     background-color: #fff;
     display: inline-block;
-    min-height: 200px;
     max-width: calc(100% - calc(2 * 1.5625em + 3.1em));
     overflow-y: auto;
     padding-bottom: 1.6em;

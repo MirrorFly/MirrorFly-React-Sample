@@ -1,7 +1,7 @@
 import ReactDOM from 'react-dom';
 import { connect } from "react-redux";
 import React, { Component } from 'react';
-import { stripTags } from '../../../../../Helpers/Utility';
+import { placeCaretAtEnd } from '../../../../../Helpers/Utility';
 import { getCaretPosition, getSelectedText } from '../../../../../Helpers/Chat/ContentEditableEle';
 import { getUserDetails } from '../../../../../Helpers/Chat/User';
 
@@ -12,13 +12,13 @@ class ContentEditable extends Component {
         this.state = {
             lastHtml: ''
         }
+        this.searchView = true
+        this.searchValue = ''
+        this.searchPos = 0
     }
 
 
     shouldComponentUpdate(nextProps) {
-        if (this.props.chatScreenName && this.props.chatScreenName === "conversationScreen") {
-            this.onFocusText();
-        }
         return nextProps.html !== this.typingContainner.innerHTML;
     }
 
@@ -29,22 +29,38 @@ class ContentEditable extends Component {
     }
 
     pasteAsPlainText = (event = {}) => {
-        event.preventDefault()
-        const text = event?.clipboardData?.getData('text/plain')
-        document && document.execCommand('insertHTML', false, stripTags(text))
-    }
+        event.preventDefault();
+        const msgContent = document.getElementById("typingContainer");
+        if (document && document.activeElement instanceof HTMLElement) {
+            const remainingText = event?.clipboardData?.getData('text/plain').substring(0)
+            const selection = window.getSelection();
+            const range = selection.getRangeAt(0);
+            range.deleteContents();
+            range.insertNode(document.createTextNode(remainingText));
+            placeCaretAtEnd(msgContent);
+            this.emitChange();
+          }
+        };            
 
-
-    emitChange = (event) => {
+    emitChange = (event, isBack = false, isShow = false) => {
         let html = this.typingContainner.innerHTML;
-
-        if (!html && html.replace(/^\s+/, "") === html || this.typingContainner.innerHTML === "<br>") {
+        let newStr = html.replace(/<br>/g, "");
+        let selection = window.getSelection();
+    
+        if (!html && html.replace(/^\s+/, "") === html || this.typingContainner.innerHTML === "<br>" || 
+         (selection.toString().length === this.typingContainner.innerHTML.length)) {
+            this.props.handleMessage({
+                target: {
+                    value: ""
+                }
+            });
             this.props.handleEmptyContent();
             this.setState({ lastHtml: "" });
             return
         }
         if (this.props.handleMessage) {
             this.props.onInputListener()
+            this.currentPosition();
             this.props.handleMessage({
                 target: {
                     value: html
@@ -52,104 +68,155 @@ class ContentEditable extends Component {
             });
         }
 
-        this.lastHtml = html;
-        const lastElement = html.slice(-1);
-        const secondLastElement = html.slice(-2, -1);
-        const thirdLastElement = html.slice(-3, -2);
+        this.lastHtml = newStr;
+        const lastElement = newStr.slice(-1);
+        const secondLastElement = newStr.slice(-2, -1);
+        const thirdLastElement = newStr.slice(-3, -2);
+        const position =  getCaretPosition(this.typingContainner);
+        let midPosLast = position - 1;
+        let midPosSecondLast = newStr.charAt(position-2);
+        let midLastEle = newStr.charAt(position);
+        let midSecondLastEle = newStr.charAt(midPosLast);
         if (this.props.chatType === "groupchat") {
-            if (html.length > 1) {
-                if ((lastElement === '@' && secondLastElement === '@')
-                    || (lastElement === '@' && secondLastElement !== ' ')
-                    || (lastElement === ' ' && secondLastElement === '@' && thirdLastElement === '@')) {
-                    this.props.handleMentionView(false, [])
-                    return
-                }
-                else if (lastElement === '@' && secondLastElement === ' ' && thirdLastElement === '@') {
-                    this.props.handleMentionView(true, this.groupMentionUsersList())
-                }
-            }
+            if (newStr.length > 1) {  
+                this.handleMentionEnableDisable(isBack, lastElement, secondLastElement, thirdLastElement,
+                    midLastEle, midSecondLastEle, midPosSecondLast);
 
-            //Handles the search in mention Popup
-            const pattern = /\B@\.*/g;
-            if (html.match(pattern)) {
-                const filteredHtml = html.includes('@') && html.substr(html.lastIndexOf('@') + 1).split(' ')[0];
-                this.props.handleSearchView(filteredHtml);
+                //Handles the search in mention Popup
+                const pattern = /\B@\.*/g;
+                if (newStr.match(pattern)) {
+                    this.handleMentionTextSearch(position, newStr, isBack, midLastEle, midSecondLastEle, isShow);
+                }
             }
         }
     }
 
-    groupMentionUsersList = () => {
+    handleMentionTextSearch = (position, newStr, isBack, midLastEle, midSecondLastEle, isShow) => {
+        let filteredHtml;
+        let midPosLastEleFromInitCursor = position - 1;
+        let midSecondLastEleFromInitCursor = newStr.charAt(position-1);
+        let midthirdLastEleFromInitCursor = newStr.charAt(position-2);
+        let getText = newStr.substring(0, position);
+        let findAtIndex = getText.lastIndexOf('@');
+        let findCharBeforeAtSymbol = newStr.charAt(findAtIndex - 1);
+
+        if (position === newStr.length || isShow) {
+            filteredHtml = newStr.includes('@') && newStr.substr(newStr.lastIndexOf('@') + 1);
+            if (this.typingContainner.innerHTML.includes("&amp;") === true &&
+                this.typingContainner.innerHTML.toString().endsWith("@&amp;") === true && isBack === true) {
+                    this.props.handleMentionView(true, this.groupMentionUsersList())
+            } else {
+                if((findCharBeforeAtSymbol === "" || findCharBeforeAtSymbol === " ") &&
+                this.searchView === true && this.lastHtml.length > 0) {
+                    this.groupMentionUsersList(filteredHtml, true)
+                } 
+            }
+        } else {
+            if (midSecondLastEleFromInitCursor.includes('@') && 
+            (midthirdLastEleFromInitCursor.includes(' ') || midthirdLastEleFromInitCursor.includes('')))  {
+                this.searchValue = midSecondLastEleFromInitCursor;
+                this.searchPos = midPosLastEleFromInitCursor;
+            }
+            let searchData;
+            if (this.searchPos !== position) {
+                searchData = newStr.substring(this.searchPos, position);
+            } else searchData = newStr.substring(this.searchPos-1,position);
+
+            let newSearchData = searchData.replace('@',"")
+            filteredHtml = newSearchData;
+            if ((midLastEle === '@' && midSecondLastEle === '@') || (midLastEle === '@' && midSecondLastEle === ' ') || 
+            ((midthirdLastEleFromInitCursor === '@')
+            && midSecondLastEle === '@') || (this.searchValue === '@' && midLastEle === '@')) {
+                this.searchView = false;
+                this.groupMentionUsersList(filteredHtml, false)
+            } else {
+                if(this.searchView === true) {
+                    this.groupMentionUsersList(filteredHtml, true)
+                }
+            }
+        }     
+    }
+
+    handleMentionEnableDisable = (isBack, lastElement, secondLastElement, thirdLastElement,
+         midLastEle, midSecondLastEle, midPosSecondLast) => {
+        let newStr = this.typingContainner.innerHTML.replace(/<br>/g, "");
+        const position =  getCaretPosition(this.typingContainner);
+        let regex = /^ +$/;
+
+        if (position === newStr.length) { 
+            if (( lastElement === '@' && secondLastElement === ' ' && thirdLastElement === '@') || 
+            (lastElement === '@' && secondLastElement.length > 0 && regex.test(secondLastElement) === true && isBack === false )) {
+                    this.props.handleMentionView(true, this.groupMentionUsersList())
+                    this.searchView = true
+            }
+           else if((lastElement === '@' && secondLastElement === '@') || (lastElement === '@' && secondLastElement !== ' ')
+            || (lastElement === ' ' && secondLastElement === '@' && thirdLastElement === '@')) {
+                    this.props.handleMentionView(false, [])
+                    this.searchView = false
+                    return                         
+            }
+        } 
+                
+        if (position !== newStr.length) {
+            if (midSecondLastEle.length > 0 && midSecondLastEle === '@' &&
+                (regex.test(midPosSecondLast) === true || midPosSecondLast === "") &&
+                 (midLastEle === ' ' || midLastEle === '' || midLastEle !== " ") && midLastEle !== '@') {
+                this.props.handleMentionView(true, this.groupMentionUsersList())
+                this.searchView = true;
+            } else {
+                this.props.handleMentionView(false, [])
+            }
+        } 
+    }
+
+    groupMentionUsersList = (filteredHtml = "", searchEnable = false) => {
         const groupMemberList = this.props.groupsMemberListData?.data?.participants;
         let grouplist = groupMemberList.filter(participants => participants.userId !== this.props.vCardData.data.userId);
         grouplist = grouplist.map((obj) => {
             obj.rosterData = getUserDetails(obj.userId)
             return obj;
         });
+        if(searchEnable === true){
+            if(filteredHtml.length < 1){
+                return;
+            } 
+            let replaceText = filteredHtml.includes("&amp;") === true ? filteredHtml.replace("&amp;", "&") : filteredHtml;
+            filteredHtml = replaceText;
+            const searchResult = grouplist.filter((ele) => ele.userProfile.nickName.toLowerCase().includes(filteredHtml.toLowerCase()))
+            if(searchResult.length > 0){
+                this.props.handleMentionView(true, searchResult)
+            }else{
+                this.props.handleMentionView(false, [])
+            } 
+        }
+        this.props.handleSearchView && this.props.handleSearchView(filteredHtml);
         return grouplist;
     }
 
 
     onKeyDownListner = (e = {}) => {
         this.props.onKeyDownListner && this.props.onKeyDownListner(e)
-        const lastElement = this.typingContainner.innerHTML.slice(-1);
-        const secondLastElement = this.typingContainner.innerHTML.slice(-2, -1);
-        const thirdLastElement = this.typingContainner.innerHTML.slice(-3, -2);
-        var regex = /^[a-zA-Z0-9\s!@#$%^&*(),.?":{}|<>]+$/;
+        const newStr = this.typingContainner.innerHTML.replace(/<br>/g, "");        
+        const lastElement = newStr.slice(-1);
+        const secondLastElement = newStr.slice(-2, -1);
+        const thirdLastElement = newStr.slice(-3, -2);
+        const position = getCaretPosition(this.typingContainner);
+
         if (e.which === 37) {
-            if (this.props.chatType === "groupchat") {
-                if (secondLastElement !== "@" && thirdLastElement.length < 1 ||
-                    (secondLastElement !== "@" && thirdLastElement !== " ")) {
-                    this.props.handleMentionView(false, []);
-                }
-            }
+           this.handleLeftArrowKey(secondLastElement, thirdLastElement);
         }
         if (e.which === 13 && e.shiftKey === false) {
-            e.preventDefault()
-            if (this.typingContainner.innerHTML.replace(/^\s+/, "") === "" ||
-                this.typingContainner.innerHTML.includes("<div><br></div>")) {
-                return false;
-            }
-            this.props.handleSendTextMsg()
-            this.props.handleEmptyContent()
-            this.props.handleMentionView && this.props.handleMentionView(false, []);
-            this.setState({ lastHtml: "" })
-            return false;
+            this.handleEnterKey(e);
         }
-        if (e.which === 50 && e.shiftKey === true) {
+        if (e.which === 50 && e.shiftKey === true) { 
+            this.handle_AtSymbolKey(newStr, lastElement, secondLastElement, thirdLastElement);
+        }
+        if (e.which === 32) {
+            this.handleSpaceBarKey(position, newStr, secondLastElement, thirdLastElement);
+        }
+        if (e.which ===  8 || e.which === 46) {
             if (this.props.chatType === "groupchat") {
-                const groupList = this.groupMentionUsersList();
-                if (lastElement === '' || secondLastElement === '@' ||
-                    (secondLastElement === '@' && thirdLastElement === '@') ||
-                    (lastElement === ' ' && secondLastElement === ' ') || (lastElement === ' ' && secondLastElement !== ' ')) {
-                    this.props.handleMentionView(true, groupList);
-                    this.emitChange();
-                }
-            }
-        }
-        if (e.which ===  8 || e.which === 46 || e.which === 32) {
-            if(this.props.chatType === "groupchat"){
-                const groupList = this.groupMentionUsersList();
-                if (e.which === 8 || e.which === 46) {
-                    if ((lastElement === '@' && secondLastElement === '@') || (lastElement === ' ' && secondLastElement === '@') ||
-                        (secondLastElement === "@" && (thirdLastElement === '@' || thirdLastElement === ' ' || thirdLastElement === ''))
-                        || (thirdLastElement === '@' && regex.test(secondLastElement) === false)) {
-                        this.props.handleMentionView(true, groupList);
-                    }
-                    else if ((lastElement === '@' && lastElement.length > 0 && secondLastElement.length < 1 && thirdLastElement.length < 1)
-                        || (lastElement === '@' && secondLastElement === ' ' && (thirdLastElement.length > 0 || thirdLastElement === ""))) {
-                        this.props.handleMentionView(false, []);
-                    }
-                    else{
-                        this.emitChange();
-                    }
-                }
-                else if(e.which === 32){
-                  if((secondLastElement !== ' ' || thirdLastElement === ' ') ||
-                   (secondLastElement=== ' ' && thirdLastElement !== '') || (secondLastElement=== ' ' && thirdLastElement === '')){
-                    this.props.handleMentionView(false, []);
-                    return
-                  }
-                }       
+                this.handleBackspaceAndDeleteKey(position, newStr, lastElement, secondLastElement, thirdLastElement);
 
                 let s = window.getSelection();
                 let r = s.getRangeAt(0);
@@ -157,15 +224,15 @@ class ContentEditable extends Component {
                 // Check if the current element is the .label
                 if (el.classList.contains('mentioned')) {
                     // Check if we are exactly at the end of the .label element
-                    if ((r.startOffset === r.endOffset && r.endOffset === el.textContent.length) || s.toString() ){
+                    if ((r.startOffset === r.endOffset && r.endOffset === el.textContent.length) || s.toString()) {
                         // prevent the default delete behavior
                         e.preventDefault();
                         el.remove();  
-                        this.emitChange()
+                        this.emitChange();
                         this.props.handleDeleteMentionedUser(el);
 
                         // Handling the content selection with mentioned when backspace triggers
-                        if(s.toString()){
+                        if(s.toString() && (position === this.typingContainner.innerHTML.length)){
                             this.setState({isSelected: false})
                             this.props.handleEmptyContent()
                             this.setState({lastHtml: ""})
@@ -175,8 +242,7 @@ class ContentEditable extends Component {
                     }
                 }
             }  
-            const position = getCaretPosition(this.typingContainner);
-            if (position === this.typingContainner.textContent.length) {
+            if (position === this.typingContainner.innerHTML.length) {
                 if (this.typingContainner.innerHTML.length <= 1) {
                     this.props.handleMessage({
                         target: {
@@ -189,13 +255,114 @@ class ContentEditable extends Component {
         }
 
         if (e.ctrlKey || e.metaKey) {
-            let charCode = String.fromCharCode(e.which).toLowerCase();
-            if (e.ctrlKey && charCode === 'v' || e.metaKey && charCode === 'v') {
-                this.props.handleImagePaste()
-            }
+          this.handleCtrlOrMetaKey(e);
         }
+
         return true;
     }
+      
+    handleLeftArrowKey = (secondLastElement, thirdLastElement) => {
+        if (this.props.chatType === "groupchat") {
+            if (secondLastElement !== "@" && thirdLastElement.length < 1 ||
+                (secondLastElement !== "@" && thirdLastElement !== " ")|| secondLastElement === ' ' || thirdLastElement === ' ') {
+                this.props.handleMentionView(false, []);
+            }     
+        }
+    }
+      
+    handleEnterKey = (e) => {
+        e.preventDefault()
+        if (this.typingContainner.innerHTML.replace(/^\s+/, "") === "" ||
+            this.typingContainner.innerHTML.includes("<div><br></div>")) {
+            return false;
+        }
+        this.props.handleSendTextMsg();
+        this.props.handleEmptyContent();
+        this.props.handleMentionView && this.props.handleMentionView(false, []);
+        this.setState({ lastHtml: "" })
+    }
+      
+    handle_AtSymbolKey = (newStr, lastElement, secondLastElement, thirdLastElement) => {
+        if (this.props.chatType === "groupchat") {
+            const groupList = this.groupMentionUsersList();
+            const position = getCaretPosition(this.typingContainner);
+            if (position === newStr.length) {
+                if (lastElement === '' || secondLastElement === '@' ||
+                    (secondLastElement === '@' && thirdLastElement === '@') ||
+                    (lastElement === ' ' && secondLastElement === ' ') ||
+                    (lastElement === ' ' && secondLastElement !== ' ')) {
+                    this.props.handleMentionView(true, groupList);
+                    this.searchView = true
+                    this.emitChange();
+                }
+            } else {
+                let midPos = position - 1;
+                let midLastEle = newStr.charAt(position);
+                let midSecondLastEle = newStr.charAt(midPos);
+                let regex1 = /^ +$/;
+                if ((midSecondLastEle.length > 0 && (midSecondLastEle.includes(' ')===true || regex1.test(midSecondLastEle) === true)
+                  && (midLastEle.includes(' ') === true || regex1.test(midLastEle) === true || midLastEle.includes(' ') === false))
+                  && midLastEle !== '@' || ((midSecondLastEle.length < 1 || midSecondLastEle === ' ') && midLastEle === ' ')) {
+                    this.props.handleMentionView(true, groupList);
+                    this.searchView = true
+                }
+                else {
+                    this.searchView = false
+                    this.props.handleMentionView(false, []);
+                }
+            }
+        }
+    }
+
+    handleSpaceBarKey = (position, newStr, secondLastElement, thirdLastElement) => {
+        if (this.props.chatType === "groupchat") {
+            if ((secondLastElement !== ' ' || thirdLastElement === ' ') || (secondLastElement=== ' ' && thirdLastElement !== '')
+            || (secondLastElement=== ' ' && thirdLastElement === '')) {
+                    this.props.handleMentionView(false, []);
+                    if(position !== newStr.length) {
+                        this.searchView = false;
+                    }
+                    return
+            }
+        }
+    }
+      
+    handleBackspaceAndDeleteKey = (position, newStr, lastElement, secondLastElement, thirdLastElement) => {
+        let selection = window.getSelection();
+        let regex = /^[a-zA-Z0-9\s!@#$%^&*(),.?":{}|<>]+$/;
+        const groupList = this.groupMentionUsersList();
+
+        if (position === newStr.length) {
+            if ((lastElement === '@' && secondLastElement === '@') || (lastElement === ' ' && secondLastElement === '@') ||
+                (secondLastElement === "@" && (thirdLastElement === '@' || thirdLastElement === ' ' || thirdLastElement === ''))
+                || (thirdLastElement === '@' && regex.test(secondLastElement) === false)) {
+                    if (selection.toString().length < 1) {
+                        this.props.handleMentionView(true, groupList);
+                        this.searchView = true
+                    }
+            }
+            else if ((lastElement === '@' && lastElement.length > 0 && secondLastElement.length < 1 && thirdLastElement.length < 1)
+                || (lastElement === '@' && secondLastElement === ' ' && (thirdLastElement.length > 0 || thirdLastElement === ""))) {
+                this.props.handleMentionView(false, []);
+            }
+            else {
+                if (selection.toString().length > 1) {
+                    this.searchView = false
+                }
+                this.emitChange("", true);
+            }
+        } else {
+            this.searchView = true;
+        }
+    }
+      
+    handleCtrlOrMetaKey = (e) => {
+        let charCode = String.fromCharCode(e.which).toLowerCase();
+        if ((e.ctrlKey && charCode === 'v') || (e.metaKey && charCode === 'v')) {
+            this.props.handleImagePaste && this.props.handleImagePaste();
+        }
+    }
+      
 
     currentPosition = () => {
         const position = getCaretPosition(this.typingContainner);
@@ -212,20 +379,28 @@ class ContentEditable extends Component {
     };
 
     componentDidMount() {
-        this.onFocusText();//getAutoFocus on textBox
-
+        this.onFocusText(); //getAutoFocus on textBox
     }
 
     handleInputFieldClickable = (e) => {
         const lastElement = this.typingContainner.innerHTML.slice(-1);
         const secondLastElement = this.typingContainner.innerHTML.slice(-2, -1);
-        const position = getCaretPosition(this.typingContainner);
+        let regex = /^ +$/;
+        let position = getCaretPosition(this.typingContainner);
         if (this.props.chatType === "groupchat") {
             const groupList = this.groupMentionUsersList();
-            if (position === this.typingContainner.textContent.length) {
+            let s = window.getSelection();
+            if (position === this.typingContainner.innerHTML.length) {
                 if (lastElement === '@' && secondLastElement.length < 1 ||
-                    (lastElement === '@' && secondLastElement === ' ')) {
-                    this.props.handleMentionView(true, groupList);
+                    (lastElement === '@' && secondLastElement === ' ') || 
+                    lastElement === '@' && regex.test(secondLastElement) === true && secondLastElement.length > 0) {
+                    if (s.toString().length < 1) {
+                        this.props.handleMentionView(true, groupList);
+                    }
+                } else {
+                    if (s.toString().length < 1) {
+                        this.emitChange();
+                    }
                 }
             }
         }
@@ -234,6 +409,10 @@ class ContentEditable extends Component {
     render() {
         const { placeholder = "", id = "" } = this.props;
         let { lastHtml = "" } = this.state;
+        let textContent = "";
+        if(lastHtml === "") {
+            textContent = placeholder ? placeholder : "Start Typing...";
+        }
         return (
             <div
                 id={id}
@@ -246,7 +425,7 @@ class ContentEditable extends Component {
                     this.onKeyDownListner(e);
                 }}
                 data-jest-id={"jestContentEditable"}
-                data-text={lastHtml === "" ? (placeholder ? placeholder : "Start Typing...") : ""}
+                data-text={textContent}
                 ref={el => this.typingContainner = ReactDOM.findDOMNode(el)}
                 onKeyUp={() => {
                     this.currentPosition();

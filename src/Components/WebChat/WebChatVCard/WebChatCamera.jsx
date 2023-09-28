@@ -20,7 +20,7 @@ class WebChatCamera extends React.Component {
     // If dataUri is empty, block the further process
     if (!dataUri || dataUri === 'data:' || dataUri === 'data:,') return;
     this.stopCameraStream()
-    var file = dataURLtoFile(dataUri, 'image.png');
+    const file = dataURLtoFile(dataUri, 'image.png');
     this.props.sendFile(file);
   }
 
@@ -29,14 +29,6 @@ class WebChatCamera extends React.Component {
   */
   onCameraError(error) {
     this.props.onCameraCheck(error);
-  }
-
-  /**
-  * onCameraStart() to get the activity of webcam.
-  */
-  onCameraStart(stream) {
-    this.props.onCameraCheck(false);
-    this.setState({ cameraLoader: false });
   }
 
   stopCameraStream = () => {

@@ -49,7 +49,7 @@ const getTypingUserDetails = (newChatFrom) => {
   return rosterDetail ? getContactNameFromRoster(rosterDetail) : getFormatPhoneNumber(newChatFrom.split("@")[0]);
 };
 
-var typingTime = {};
+const typingTime = {};
 export const MessageAction = (data) => (dispatch, getState) => {
   const { timestamp = Date.now(), msgType, type, msgId: currentMsgId = null, fromUserId = null } = data;
   if (!msgType || msgType === "carbonReceiveAcknowledge" || msgType === "carbonSentAcknowledge") {
@@ -145,13 +145,13 @@ export const MessageAction = (data) => (dispatch, getState) => {
     
     // Removing All Starred Messages
     if (msgType === MSG_DELETE_STATUS || msgType === MSG_DELETE_STATUS_CARBON) {
-      for (let i = 0; i < data.msgIds.length; i++) {
+      for (const msgId in data.msgIds) {
         dispatch({
           type: UPDATE_STARRED_MESSAGE_LIST,
           payload: {
             id: uuidv4(),
             data: {
-              msgId: data.msgIds[i],
+              msgId: data.msgIds[msgId],
               favouriteStatus: 0
             }
           }

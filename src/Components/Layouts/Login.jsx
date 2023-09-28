@@ -12,7 +12,7 @@ import "./NewLoginScreen.scss";
 import "../../assets/scss/common.scss";
 import "./popup.scss";
 import WebChatMediaPreview from "../../Components/WebChat/Conversation/WebChatMediaPreview";
-import { getAutomationLoginCredentials, getInitializeObj, isBoxedLayoutEnabled, isSandboxMode, logout } from "../../Helpers/Utility";
+import { getAutomationLoginCredentials, getInitializeObj, isBoxedLayoutEnabled, logout } from "../../Helpers/Utility";
 import Store from "../../Store";
 import SDK from "../SDK";
 import CalleScreen from "../WebCall/calleeScreen";
@@ -60,7 +60,7 @@ class Login extends React.Component {
     super(props);
     this.state = {
       loaderStatus: true,
-      webChatStatus: false,
+      webChatStatus: true,
       onLineStatus: true,
       connectionStatusLoader: false,
       conversationSectionDisplay: { display: "none" },
@@ -147,7 +147,6 @@ class Login extends React.Component {
       this.setState({
         showProfileScreen: true
       });
-      return;
     }
   }
 
@@ -255,44 +254,55 @@ class Login extends React.Component {
           });
         }
       } else {
-        this.setState({ loaderStatus: false }, () => {
+        this.setState({ loaderStatus: false, webChatStatus: false }, () => {
           this.handleQRCode();
         });
       }
     } else {
-      console.log("Intialize error, ", response);
+      console.error("Intialize error, ", response);
+      toast.error("Invalid License Key");
+      this.setState({ loaderStatus: false, webChatStatus: false }, () => {
+        this.handleQRCode();
+      });
     }
   };
 
-  handleQRCode() {
+  async handleQRCode() {
     try {
       updateSessionId(Date.now());
-
+  
       if (REACT_APP_SKIP_OTP_LOGIN !== "true") {
-        SDK.generateQrCode(
-          document.getElementById("divQRCode"),
-          document.getElementById("qr-logo"),
-          REACT_APP_SOCKETIO_SERVER_HOST,
-          (response) => {
-            if (response && response.statusCode === 200) {
-              let loginResponse = {
-                username: response.username,
-                password: response.password,
-                type: "web"
-              };
-              encryptAndStoreInLocalStorage("auth_user", loginResponse);
-              login();
-              return this.handleLoginToken(loginResponse);
+        const response = await new Promise((resolve, reject) => {
+          SDK.generateQrCode(
+            document.getElementById("divQRCode"),
+            document.getElementById("qr-logo"),
+            REACT_APP_SOCKETIO_SERVER_HOST,
+            (response) => {
+              if (response && response.statusCode === 200) {
+                resolve(response);
+              } else {
+                reject(new Error("QR code generation failed."));
+              }
             }
-            return true;
-          }
-        );
+          );
+        });
+  
+        let loginResponse = {
+          username: response.username,
+          password: response.password,
+          type: "web"
+        };
+        encryptAndStoreInLocalStorage("auth_user", loginResponse);
+        login();
+        return this.handleLoginToken(loginResponse);
       }
     } catch (error) {
       console.log("handleQRCode error: ", error);
     }
+  
+    return true;
   }
-
+  
   handleLoginSuccess = async (data, data1 = null, profileSuccess = false) => {
     encryptAndStoreInLocalStorage("auth_user", data);
     if (profileSuccess === true) {
@@ -341,17 +351,11 @@ class Login extends React.Component {
     this.handleLoginSuccess(data);
   }
 
-  handleSandboxProfileUpdate = async (response) => {
-    if (response.isProfileUpdated === false) {
-      await SDK.setUserProfile(response.username, ``, ``, ``, ``);
-    }
-  };
-
   /**
    * handleLogin()
    * To call the SDK.connect() method with user name and password.
    */
-  handleLogin(response) {
+  handleLogin(response, forceLogin = false) {
     let loginResponse = {
       username: response.username,
       password: response.password,
@@ -359,12 +363,10 @@ class Login extends React.Component {
     };
     let tabId = Date.now();
     encryptAndStoreInLocalStorage("auth_user", loginResponse);
-    SDK.connect(response.username, response.password)
+    SDK.connect(response.username, response.password, forceLogin)
       .then(async (res) => {
+        console.log("handleLogin success",res);
         if (res.statusCode === 200) {
-          // if (isSandboxMode() && response.isProfileUpdated === false) {
-          //   this.handleSandboxProfileUpdate(response);
-          // }
           updateSessionId(tabId);
           this.handleLoginToken(loginResponse);
           return;
@@ -438,18 +440,6 @@ class Login extends React.Component {
     );
   };
 
-  openJoinCallPopup = () => {
-    this.setState({
-      joinCallPopup: true
-    });
-  };
-
-  cancelJoinCallPopup = () => {
-    this.setState({
-      joinCallPopup: false
-    });
-  };
-
   renderUsernamePasswordTemplate = () => {
     return (
       <div className="mirrorfly newLoginScreen">
@@ -465,17 +455,15 @@ class Login extends React.Component {
                   onChange={this.handleInputChange}
                 />
               </div>
-              {!isSandboxMode() && (
-                <div className="form-control">
-                  <label>Password</label>
-                  <input
-                    name="password"
-                    className="login-input"
-                    value={this.state.password}
-                    onChange={this.handleInputChange}
-                  />
-                </div>
-              )}
+              <div className="form-control">
+                <label>Password</label>
+                <input
+                  name="password"
+                  className="login-input"
+                  value={this.state.password}
+                  onChange={this.handleInputChange}
+                />
+              </div>
               <div className="form-control">
                 <button type="button" className="login-btn" onClick={this.submitLogin}>
                   Login
@@ -533,7 +521,7 @@ class Login extends React.Component {
     }
     hideCallScreen = hideCallScreen && getFromLocalStorageAndDecrypt("hideCallScreen") === true ? true : false;
     let anotherUser = "";
-    if (callConnectionDate && callConnectionDate.from && this.props.showConfrenceData?.data) { // TODO
+    if (callConnectionDate && callConnectionDate.from && this.props.showConfrenceData?.data) {
       if (this.props.showConfrenceData?.data?.callStatusText) {
         callStatus = this.props.showConfrenceData.data.callStatusText;
       }
@@ -566,8 +554,10 @@ class Login extends React.Component {
         });
       }, 3000)
     }
-    return !webChatStatus ? (
-      <div className="container">
+    let returnContent;
+    if (!webChatStatus) {
+      returnContent = (
+        <div className="container">
         <div className="login-container" id="login-container">
           {this.renderLoginTemplate()}
           {accountDeletedToast &&
@@ -577,17 +567,22 @@ class Login extends React.Component {
           }
         </div>
       </div>
-    ) : showProfileScreen === true ? (
-      <div>
-        <OtpLogin
-          showProfileView={this.state.showProfileScreen}
-          qrCode={this.renderQRTemplate()}
-          handleLoginSuccess={this.handleLoginSuccess}
-          handleSDKIntialize={this.handleSDKIntialize}
-        />
-      </div>
-    ) : this.state.hideRecentChat ? (
-      <div className="container containerLayout" id="container">
+      )
+      
+    } else if(showProfileScreen === true) {
+      returnContent = (
+        <div>
+          <OtpLogin
+            showProfileView={this.state.showProfileScreen}
+            qrCode={this.renderQRTemplate()}
+            handleLoginSuccess={this.handleLoginSuccess}
+            handleSDKIntialize={this.handleSDKIntialize}
+          />
+        </div>
+      )
+    } else if(this.state.hideRecentChat) {
+      returnContent = (
+        <div className="container containerLayout" id="container">
         {this.props.showConfrenceData &&
           this.props.showConfrenceData.data &&
           this.props.showConfrenceData.data.showCalleComponent && (
@@ -601,7 +596,7 @@ class Login extends React.Component {
           )}
 
         {this.props.callIntermediateScreen?.data?.show && (
-          <MeetingScreenJoin callData={this.props.callIntermediateScreen?.data} />
+          <MeetingScreenJoin callData={this.props.callIntermediateScreen?.data} connectionStatus={this.props.ConnectionStateData.data} />
         )}
 
         {this.props.showConfrenceData &&
@@ -691,8 +686,14 @@ class Login extends React.Component {
           />
         }
       </div>
-    ) :
-      <PageLoader />
+      )
+    } else {
+      returnContent = (
+        <PageLoader />
+      )
+    }
+    return returnContent
+      
   };
 
   /**
@@ -728,11 +729,13 @@ class Login extends React.Component {
       let currentTabId = getFromSessionStorageAndDecrypt("sessionId");
       encryptAndStoreInLocalStorage("sessionId", currentTabId);
       updateFavicon("");
+      console.log("getFromLocalStorageAndDecrypt", getFromLocalStorageAndDecrypt("auth_user"))
       if (getFromLocalStorageAndDecrypt("auth_user") !== null) {
         let decryptResponse = getFromLocalStorageAndDecrypt("auth_user");
+        console.log("decryptResponse", decryptResponse);
         this.setState({ webChatStatus: true, newSession: false }, () => {
           resetStoreData();
-          this.handleLogin(decryptResponse);
+          this.handleLogin(decryptResponse, true);
         });
       } else {
         this.setState(

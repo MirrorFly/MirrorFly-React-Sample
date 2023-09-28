@@ -96,7 +96,7 @@ class ChatTemplate extends Component {
 
   constructMessageTemplate = () => {
     const { chatmessages } = this.props;
-    const updatedMessage = groupBy(chatmessages, (date) => (convertUTCDateToLocalDate(date.createdAt) || "").split(/[\s]/)[0]);
+    const updatedMessage = groupBy(chatmessages, (date) => (convertUTCDateToLocalDate(date.createdAt) || "").split(" ")[0]);
     return Object.keys(updatedMessage).map((messageInDate) => {
       const { [messageInDate]: splitBlockByDate } = updatedMessage;
       return this.dateBlock(splitBlockByDate, messageInDate);

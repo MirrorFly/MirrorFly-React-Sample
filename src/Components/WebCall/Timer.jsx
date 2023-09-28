@@ -57,13 +57,6 @@ class Timer extends Component {
         clearInterval(this.timer);
     };
 
-    resetTimer = () => {
-        this.setState({
-            timerStart: 0,
-            timerTime: 0
-        });
-    };
-
     render(){
         let content = null;
         if( this.props.callStatus &&

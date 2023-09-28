@@ -1,5 +1,4 @@
 import React from 'react';
-import renderHTML from 'react-render-html';
 import { isUserWhoBlockedMe } from '../../../Helpers/Chat/BlockContact'
 import { DEFAULT_USER_STATUS } from '../../../Helpers/Chat/Constant';
 
@@ -15,7 +14,7 @@ const UserStatus = ({ status, blocked, userId }) => {
         className="status" title={userStatus}
     >
         <span className="status-text">
-            {renderHTML(userStatus)}
+            {(userStatus)}
         </span>
     </span>;
 }

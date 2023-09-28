@@ -9,7 +9,7 @@ import * as crop from '../CroppieImage/WebChatCropOption';
 import CameraPerMissionDenied from './CameraPerMissionDenied';
 import { blockOfflineMsgAction, dataURLtoFile } from '../../../Helpers/Utility';
 
-var cropme;
+let cropme;
 export default class Camera extends Component {
 
     constructor() {
@@ -21,7 +21,8 @@ export default class Camera extends Component {
             loader: false,
             photoTaken: false,
             imgSrc: loaderGIF,
-            caption: ""
+            caption: "",
+            retake: false
         }
     }
 
@@ -31,7 +32,8 @@ export default class Camera extends Component {
             photoTaken: true,
             cameraError: false,
             permissionDenied: false,
-            loader: false
+            loader: false,
+            retake: false
         });
         this.props.onClickClose();
     }
@@ -86,7 +88,7 @@ export default class Camera extends Component {
             }, () => {
                 const element = document.getElementById("CapturedContainer")
                 cropme = new Cropme(element, cropOptions);
-                var reader = new FileReader();
+                let reader = new FileReader();
                 reader.onload = (e) => {
                     if (cropEnabled) {
                         cropme.bind({
@@ -142,11 +144,11 @@ export default class Camera extends Component {
     }
 
     handleCameraShow = (e) => {
-        this.setState({ showCamera: true, photoTaken: false });
+        this.setState({ showCamera: true, photoTaken: false, retake: true });
     }
 
     render() {
-        const { cameraError, permissionDenied, photoTaken, showCamera } = this.state;
+        const { cameraError, permissionDenied, photoTaken, showCamera, retake } = this.state;
         return (
             <div>
                 {
@@ -168,6 +170,7 @@ export default class Camera extends Component {
                         {!cameraError && !permissionDenied && showCamera &&
                             <TakeCameraPic
                                 photoTaken={photoTaken}
+                                retake={retake}
                                 imgSrc={this.state.imgSrc}
                                 loader={this.state.loader}
                                 onCameraCheck={this.onCameraCheck}
@@ -177,6 +180,7 @@ export default class Camera extends Component {
                                 handleCameraShow={this.handleCameraShow}
                                 handleCameraPopupClose={this.handleCameraPopupClose}
                                 chatType = {this.props.chatType}
+                                chatId={this.props.chatId}
                             />
                         }
                     </div>

@@ -6,7 +6,7 @@ import { getFromLocalStorageAndDecrypt, encryptAndStoreInLocalStorage, deleteIte
 import Search from './Search';
 import "../../../assets/scss/minEmoji.scss";
 import loaderSVG from '../../../assets/images/loader.svg';
-import { PERMISSION_DENIED, REACT_APP_XMPP_SOCKET_HOST } from '../../processENV';
+import { PERMISSION_DENIED, REACT_APP_CONTACT_SYNC, REACT_APP_XMPP_SOCKET_HOST } from '../../processENV';
 import { displayNameFromRencentChat, handleParticipantList } from '../../../Helpers/Chat/ChatHelper'
 import { getFormatPhoneNumber, getPhoneNumberFromJid, getUserIdFromJid } from '../../../Helpers/Utility';
 import { toast } from 'react-toastify';
@@ -23,9 +23,10 @@ import { COMMON_ERROR_MESSAGE, FEATURE_RESTRICTION_ERROR_MESSAGE } from '../../.
 import FloatingCallOption from './FloatingCallOption/FloatingCallOption';
 import { FloatingCallActionSm, ArrowBack, EmptyCallLog } from '../../../assets/images';
 import NewParticipants from '../../WebChat/NewGroup/NewParticipants';
-import { CHAT_TYPE_GROUP, NEW_CALL_CONTACT_PERMISSION_DENIED } from '../../../Helpers/Chat/Constant';
+import { NEW_CALL_CONTACT_PERMISSION_DENIED } from '../../../Helpers/Chat/Constant';
 import { startCallingTimer } from '../../../Helpers/Call/Call';
 import userList from '../../WebChat/RecentChat/userList';
+import CreateNewmeeting from '../../Layouts/CreateNewmeeting';
 
 class WebChatCallLogs extends React.Component {
 
@@ -38,7 +39,8 @@ class WebChatCallLogs extends React.Component {
             newCall: false,
             newCallType: "video",
             currentGroupID: "",
-            isShow: true
+            isShow: true,
+            meetLinkPopUp: false
         }
         this.handleOnBack = this.handleOnBack.bind(this);
         this.preventMultipleClick = false;
@@ -116,77 +118,102 @@ class WebChatCallLogs extends React.Component {
     handleCallLogs = (callLogsNew) => {
         let callLogsArray = callLogsNew || this.state.callLogs;
         let dataArr = [];
+      
         if (callLogsArray.length > 0) {
-            let searchterm = this.state.searchterm;
-            let vcardData = getLocalUserDetails();
-            let currentUser = vcardData && vcardData.fromUser;
-            const roomId = getFromLocalStorageAndDecrypt('roomName');
-            callLogsArray.map((callLog, index) => {
-                let displayName = "";
-                let isAdminBlocked = "0";
-                let initialName = "";
-                let deletedUser = [];
-                let image = "",
-                    emailId = "";
-                // Prevent the current call calllog display.
-                if (roomId === callLog.roomId) return;
-                if (callLog) {
-                    let userListArr = (callLog.userList && callLog.userList.split(',')) || [];
-                    const userListLength = userListArr.length;
-                    userListArr = this.getUserListWithFromUser(callLog);
-                    userListArr.map((user) => {
-                        const phoneNumber = getUserIdFromJid(user);
-                        let roster = getUserDetails(phoneNumber);
-                        if (phoneNumber !== currentUser && currentUser) {
-                            if (roster) {
-                                let name = displayNameFromRencentChat(roster) || getFormatPhoneNumber(phoneNumber);
-                                displayName = displayName ? `${displayName}, ${name}` : name;
-                                initialName = initialNameHandle(roster, displayName);
-                                let blockedContactArr = this.props.contactsWhoBlockedMe.data;
-                                 isAdminBlocked = blockedContactArr.indexOf(formatUserIdToJid(roster.userId)) > -1;                                
-                                image = userListLength > 1 ? null : roster.thumbImage !== "" ? roster.thumbImage : roster.image;
-                                emailId = roster.emailId
-                            } else {
-                                displayName = getFormatPhoneNumber(getUserIdFromJid(user));
-                                image = "";
-                            }
-                        } else {
-                            deletedUser.push(true);
-                        }
-                    });
-                }
-                let isDeletedUser = !deletedUser.includes(false);
-                if (callLog && callLog.callMode === "onetomany" && callLog.groupId) {
-                    const groupId = callLog.groupId.split('@mix')[0];
-                    const group = getGroupData(groupId);
-                    if (group) {
-                        displayName = group.groupName;
-                        image = group.thumbImage !== "" ? group.thumbImage : group.groupImage;
-                        isAdminBlocked = group.isAdminBlocked
-                    }
-                }
+          const searchterm = this.state.searchterm;
+          const currentUser = getLocalUserDetails()?.fromUser;
+          const roomId = getFromLocalStorageAndDecrypt('roomName');
+      
+          callLogsArray.forEach((callLog, index) => {
+            if (roomId === callLog.roomId) return;
+            const {
+              displayName,
+              isAdminBlocked,
+              initialName,
+              image,
+              emailId,
+              isDeletedUser
+            } = this.getCallLogDetails(callLog, currentUser);
+      
+            if (displayName !== "" && displayName.toLowerCase().includes(searchterm)) {
+              dataArr.push(
+                <CallLogView
+                  key={`${callLog.roomId}-${displayName}-${searchterm}`}
+                  displayName={displayName}
+                  image={isAdminBlocked ? "" : image}
+                  searchterm={searchterm}
+                  callLog={callLog}
+                  makeCall={this.prepareForCall}
+                  emailId={emailId}
+                  initialName={isAdminBlocked ? "" : initialName}
+                  isAdminBlocked={isAdminBlocked}
+                  isDeletedUser={isDeletedUser}
+                />
+              );
+            }
+          });
+        }
+      
+        return dataArr;
+    }
+      
+    getCallLogDetails = (callLog, currentUser) => {
+        let displayName = "";
+        let isAdminBlocked = "0";
+        let initialName = "";
+        let image = "";
+        let emailId = "";
+        let deletedUser = [];
 
-                if (displayName !== "") {
-                    if (displayName.toLowerCase().includes(searchterm)) {
-                        dataArr.push(
-                            <CallLogView
-                                key={`${callLog.roomId}-${index}`}
-                                displayName={displayName}
-                                image={isAdminBlocked? "" : image}
-                                searchterm={searchterm}
-                                callLog={callLog}
-                                makeCall={this.prepareForCall}
-                                emailId={emailId}
-                                initialName={isAdminBlocked? "" : initialName}
-                                isAdminBlocked={isAdminBlocked}
-                                isDeletedUser={isDeletedUser}
-                            />
-                        )
+        if (callLog) { 
+            const userListArr = (callLog.userList && callLog.userList.split(',')) || [];
+            const userListLength = userListArr.length;
+            const userList = this.getUserListWithFromUser(callLog);
+            userList.forEach((user) => {
+                const phoneNumber = getUserIdFromJid(user);
+                let roster = getUserDetails(phoneNumber);
+                if (phoneNumber !== currentUser && currentUser) {
+                    if (roster) {
+                        let name = displayNameFromRencentChat(roster) || getFormatPhoneNumber(phoneNumber);
+                        displayName = displayName ? `${displayName}, ${name}` : name;
+                        initialName = initialNameHandle(roster, displayName);
+                        let blockedContactArr = this.props.contactsWhoBlockedMe.data;
+                        isAdminBlocked = blockedContactArr.indexOf(formatUserIdToJid(roster.userId)) > -1;
+                        emailId = roster.emailId;
+                        if (userListLength > 1) {
+                            image = null;
+                        } else {
+                            image = (roster.thumbImage && roster.thumbImage !== "") ? roster.thumbImage : roster.image;
+                        }
+                        if (roster.isDeletedUser) deletedUser.push(true);
+                        else deletedUser.push(false);
+                    } else {
+                        displayName = getFormatPhoneNumber(getUserIdFromJid(user));
+                        image = "";
+                        deletedUser.push(false);
                     }
-                }
+                } 
             });
         }
-        return dataArr;
+        let isDeletedUser = !deletedUser.includes(false);
+        if (callLog && callLog.callMode === "onetomany" && callLog.groupId) {
+          const groupId = callLog.groupId.split('@mix')[0];
+          const group = getGroupData(groupId);
+          if (group) {
+            displayName = group.groupName;
+            image = (group.thumbImage && group.thumbImage !== "") ? group.thumbImage : group.groupImage;
+            isAdminBlocked = group.isAdminBlocked;
+          }
+        }
+      
+        return {
+          displayName,
+          isAdminBlocked,
+          initialName,
+          image,
+          emailId,
+          isDeletedUser
+        };
     }
 
     /**
@@ -330,11 +357,17 @@ class WebChatCallLogs extends React.Component {
 
     prepareForCall = async (callLog) => {
         const roomName = getFromLocalStorageAndDecrypt('roomName');
+        const behaviourResponse = SDK.getCallBehaviour();
         if (roomName) {
             toast.info("Can't place a new call while you're already in a call.");
             return;
         }
-        
+        if(behaviourResponse.data == "meet"){
+            return;
+        }
+        if(this.state.meetLinkPopUp){
+            return;
+        }
         if (this.preventMultipleClick) {
             return;
         }
@@ -356,14 +389,14 @@ class WebChatCallLogs extends React.Component {
             let groupId = '';
 
             if (callMode === 'onetoone' || callLog.groupId === "" || callLog.groupId === null) {
-                callUserNumberArr.map((user) => {
+                callUserNumberArr.forEach((user) => {
                     const phoneNumber = user.split('@')[0];
                     const userDetails = getUserDetails(phoneNumber);
                     if (phoneNumber !== currentUser && userDetails && !userDetails.isDeletedUser) {
-                        groupMembers.push(phoneNumber + "@" + REACT_APP_XMPP_SOCKET_HOST);
-                        groupMemberDetails.push({ ...userDetails });
+                      groupMembers.push(phoneNumber + "@" + REACT_APP_XMPP_SOCKET_HOST);
+                      groupMemberDetails.push({ ...userDetails });
                     }
-                })
+                });
             }
             else {
                 groupId = callLog.groupId;
@@ -423,56 +456,6 @@ class WebChatCallLogs extends React.Component {
         this.makeCall("onetoone", callType, users);
     }
 
-    showCallParticipants = async (groupId, callType) => {
-        const groupid = groupId + '@mix.' + REACT_APP_XMPP_SOCKET_HOST;
-        let connectionStatus = getFromLocalStorageAndDecrypt("connection_status")
-        if (connectionStatus === "CONNECTED") {
-            const { groupsMemberParticipantsListData: { groupParticipants = {} } = {} } = this.props || {}
-            let participants = groupParticipants[groupid];
-            let groupMemberDetails = this.getGroupMembers(participants)
-            groupMemberDetails = this.sortUsersDisplayName(groupMemberDetails);
-            let groupMembers = [];
-            let group = getGroupData(groupId);
-            let rosterData = {
-                displayName: group.groupName,
-                image: group.groupImage,
-                jid: groupId,
-            }
-            groupMemberDetails.map(participant => {
-                const { userJid, username, GroupUser } = participant
-                let user = userJid || username || GroupUser
-                let currentUser = this.props?.vCardData?.data?.fromuser;
-                if (user !== currentUser) {
-                    groupMembers.push(user)
-                }
-            });
-
-            if (groupMembers.length === 0) {
-                toast.error("You are only one member in the group")
-                this.preventMultipleClick = false;
-                return false
-            } else if (groupMembers.length === 1) {
-                this.makeGroupCall(callType, groupMembers);
-            } 
-            else {
-                this.props.callParticiapants({
-                    open: true,
-                    modelType: 'callparticipants',
-                    groupName: rosterData.displayName,
-                    groupMembers: groupMembers,
-                    groupuniqueId: formatUserIdToJid(groupId, CHAT_TYPE_GROUP),
-                    groupMemberDetails: groupMemberDetails,
-                    makeGroupCall: this.makeGroupCall,
-                    callType: callType
-                });
-            }
-            this.preventMultipleClick = false;
-        } else {
-            toast.error(NO_INTERNET)
-            this.preventMultipleClick = false;
-        }
-    }
-
     sortUsersDisplayName = (groupMemberDetails) => {
         return groupMemberDetails.map(member => {
             const { displayName, name, username, jid, GroupUser } = member
@@ -510,10 +493,14 @@ class WebChatCallLogs extends React.Component {
             return;
         }
         this.setState({
-            userList: userList.getUsersListFromSDK(),
             newCall: true,
             newCallType: "audio"
         });
+        if (!REACT_APP_CONTACT_SYNC) {
+            this.setState({
+                userList: userList.getUsersListFromSDK()
+            });
+        }
     }
 
     handleVideoCall = () => {
@@ -522,10 +509,14 @@ class WebChatCallLogs extends React.Component {
             return;
         }
         this.setState({
-            userList: userList.getUsersListFromSDK(),
             newCall: true,
             newCallType: "video"
         });
+        if (!REACT_APP_CONTACT_SYNC) {
+            this.setState({
+                userList: userList.getUsersListFromSDK()
+            });
+        }
     }
     
     handleBackCallLog = () => {
@@ -568,13 +559,17 @@ class WebChatCallLogs extends React.Component {
         let callLogsArr = this.state.callLogs;
         callLogs.getCallLogsFromServer(Math.ceil((callLogsArr.length / 20) + 1));
     }
+    handleMeetlinkPopup = (data) =>{
+        this.setState({meetLinkPopUp: data})
+    }
 
     render() {
         const loaderStyle = {
             width: 80, height: 80
         }
-        const { searchterm, newCall, isShow } = this.state;
+        const { searchterm, newCall, isShow, meetLinkPopUp } = this.state;
         const callLogArr = this.handleCallLogs();
+   
         return (
             <Fragment>
                 {!newCall ?
@@ -595,9 +590,9 @@ class WebChatCallLogs extends React.Component {
                             {this.state.loaderStatus && <div className="loader-container">
                                 <img src={loaderSVG} alt="loader" style={loaderStyle} />
                             </div>}
-
+                            <CreateNewmeeting meetLinkPopUp={this.handleMeetlinkPopup}  handleShowCallScreen={this.props.handleShowCallScreen} />
                             {callLogArr.length > 0 &&
-                                <ul className="chat-list-ul" id="scrollableUl-callLog">
+                                <ul className={`chat-list-ul padding-bottom-adjust ${meetLinkPopUp ? "active" : ""}`} id="scrollableUl-callLog">
                                     <InfiniteScroll
                                         dataLength={callLogArr.length}
                                         next={this.fetchMoreData}
@@ -614,7 +609,7 @@ class WebChatCallLogs extends React.Component {
                                     <i className="norecent-chat-img">
                                         <EmptyCallLog />
                                     </i>
-                                    <h4>{"Oh snap It seems like they’re no call history!"}</h4>
+                                    <h4>{"Oh snap! It seems like they’re no calls to display!"}</h4>
 
                                     <h3>Click on <i className="callAction"><FloatingCallActionSm /></i> or Search to start a Call!</h3>
                                 </div>

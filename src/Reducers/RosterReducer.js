@@ -24,14 +24,14 @@ const updateRoster = (rosterData = [], newData = {}) => {
 const upsertRoster = (rosterData = [], newData = [], pageNumber = 1) => {
 
   if (pageNumber === 1) {
-    for (var roster in rosterData) {
+    for (let roster in rosterData) {
       if (rosterData[roster].isFriend) {
         rosterData[roster].isFriend = false;
       }
     }
   }
 
-  for (var user in newData) {
+  for (let user in newData) {
     let key = userExists(rosterData, newData[user].userId)
     if (key > -1) {
       rosterData[key] = newData[user];
@@ -40,14 +40,15 @@ const upsertRoster = (rosterData = [], newData = [], pageNumber = 1) => {
     }
   }
  
-  let contacts = rosterData.sort(compare);
+  let contacts = [...rosterData];
+  contacts.sort(compare);
   return [...contacts];
 }
 
 const userExists = (rosterData, userId) => {
-  for (var user in rosterData) {
+  for (let user in rosterData) {
     if (rosterData[user].userId === userId) {
-      return user;
+      return Number(user);
     }
   }
   return -1;

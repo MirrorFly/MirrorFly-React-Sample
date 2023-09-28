@@ -3,7 +3,6 @@ import 'croppie/croppie.css';
 import React, { Fragment } from 'react';
 import OutsideClickHandler from 'react-outside-click-handler';
 import { connect } from 'react-redux';
-import renderHTML from 'react-render-html';
 import toastr from "toastr";
 import {
     CameraIcon, ClosePopup, EditCamera, loaderGIF, Remove, Reset, SampleProfile, Takephoto, Tick,
@@ -33,7 +32,7 @@ import { getFromLocalStorageAndDecrypt } from '../WebChatEncryptDecrypt';
 
 const indexedDb = new IndexedDb();
 
-var cropme;
+let cropme;
 class WebChatVCard extends React.Component {
     /**
      * Following the states used in WebChatVCard Component.
@@ -192,7 +191,7 @@ class WebChatVCard extends React.Component {
             }, () => {
                 const element = document.getElementById("CameraContainer")
                 cropme = new Cropme(element, WebChatCropOption);
-                var reader = new FileReader();
+                let reader = new FileReader();
                 reader.onload = function (e) {
                     cropme.bind({
                         url: e.target.result
@@ -356,9 +355,6 @@ class WebChatVCard extends React.Component {
         });
     }
 
-    checkNotFound = (event) => {
-        event.target.src = SampleProfile
-    }
     closeDropDown = () => {
         this.setState({
             showImgDropDown: false
@@ -406,12 +402,12 @@ class WebChatVCard extends React.Component {
                     <div className="image">
                         <ProfileImage
                             chatType={'chat'}
-                            imageToken={thumbImage !== "" ? thumbImage : image}
+                            imageToken={(thumbImage && thumbImage !== "") ? thumbImage : image}
                             temporary={true}
                             name={nickName}
                         />
                     </div>
-                    <span title={renderHTML(nickName)}>{renderHTML(nickName)}</span>
+                    <span title={nickName}>{nickName}</span>
                 </div>
                 {viewProfileStatus && <div className="userprofile">
                     <OutsideClickHandler
@@ -435,7 +431,7 @@ class WebChatVCard extends React.Component {
                                         {/* user image empty no perview button */}
                                         <ProfileImage
                                         chatType={'chat'}
-                                        imageToken={thumbImage !== "" ? thumbImage : image}
+                                        imageToken={(thumbImage && thumbImage !== "") ? thumbImage : image}
                                         temporary={true}
                                         name={nickName}
                                         profileImageView={(e) => profileImg !== SampleProfile ? this.handleProfileImageShow(e) : null}

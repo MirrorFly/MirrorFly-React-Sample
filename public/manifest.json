@@ -1,25 +1,32 @@
 {
-  "short_name": "MirrorFly",
-  "name": "MirrorFly Web",
-  "icons": [
-    {
-      "src": "favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
-    },
-    {
-      "src": "logo192.png",
-      "type": "image/png",
-      "sizes": "192x192"
-    },
-    {
-      "src": "logo512.png",
-      "type": "image/png",
-      "sizes": "512x512"
-    }
-  ],
-  "start_url": ".",
-  "display": "standalone",
-  "theme_color": "#4879F9",
-  "background_color": "#ffffff"
-}
+  "manifest_version": 3,
+  "name": "Mirrorfly Chat",
+  "description": "The powerful chat and calls for building interactive Chrome extensions",
+  "version": "0.3",
+  "permissions": [
+    "storage",
+    "tabs",
+    "https://web.mirrorfly.com/"
+ ],
+  "content_scripts": [{
+      "matches": [
+          "https://web.mirrorfly.com/"
+      ],
+      "js": ["content.js"]
+  }],
+  "action": {
+      "default_icon": "logo192.png",
+      "default_title": "Mirrorfly Chat"
+  },
+  "background": {
+      "service_worker": "background.js"
+  },
+  "icons": {
+      "16": "logo192.png",
+      "48": "logo192.png",
+      "128": "logo192.png"
+   }
+  }
+ 
+ 
+ 

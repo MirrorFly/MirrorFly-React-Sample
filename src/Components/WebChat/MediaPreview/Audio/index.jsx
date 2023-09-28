@@ -1,5 +1,4 @@
 import React, { Component, Fragment } from "react";
-import "react-videoplayer/lib/index.css";
 import "video.js/dist/video-js.css";
 import { ChatAudioSender2 } from "../../../../assets/images";
 import { AUDIO_ACC_WINDOWS } from "../../../../Helpers/Chat/Constant";

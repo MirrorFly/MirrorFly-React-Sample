@@ -111,6 +111,11 @@ const ChatMessageTemplate = (props = {}) => {
   const [mediaUrl, setMediaUrl] = useState("");
   const [popupStatus, setPopupStatus] = useState(false);
   const [dropRight, setDropRight] = useState(false);
+  const [callLinkMessageBody, setCallLinkMessageBody] = useState({
+    prevMeetText:null,
+    meetLink:null,
+    endMeetText:null
+  })
 
   const isTranslatable = () => {
     const { msgBody: { translatedMessage = "", message = "", media: mediMsg = {} } = {} } = messageObject;
@@ -136,6 +141,17 @@ const ChatMessageTemplate = (props = {}) => {
         if (isSubscribed) saveImage(getThumbBase64URL(thumb_image));
       });
   };
+
+  useEffect(() =>{
+    const urlRegex = /https?:\/\/\S+/g;
+    const ArrayOfLinkSplit = messageText && messageText.split(urlRegex) || [];
+    const meetLinkUrl = messageText && messageText.match(urlRegex) || [];
+    setCallLinkMessageBody({
+      prevMeetText:ArrayOfLinkSplit[0],
+      meetLink:meetLinkUrl[0],
+      endMeetText:ArrayOfLinkSplit[1]
+    })
+  },[])
 
   useEffect(() => {
     if (replyTo) {
@@ -374,7 +390,7 @@ const ChatMessageTemplate = (props = {}) => {
           className={`${getMessageElementRootClass()}${(messageObject?.msgId === downloadReduxState?.downloadingStatus[messageObject?.msgId]?.downloadMediaMsgId 
             && downloadReduxState?.downloadingStatus[messageObject?.msgId].downloading === true
             && (downloadReduxState?.downloadingStatus[msgId]?.downloadingMediaType === 'video' || downloadReduxState?.downloadingStatus[msgId]?.downloadingMediaType === 'image')) ? " fileProgress" : ""}${
-            isTextMessage(message_type) && isCallLink(messageText) ? "meetinglink" : ""
+            isTextMessage(message_type) && callLinkMessageBody.meetLink && isCallLink(callLinkMessageBody.meetLink) ? "meetinglink" : ""
           }`}
         >
           {isSameUser && isSender && nameToDisplay && (

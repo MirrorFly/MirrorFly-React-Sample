@@ -55,11 +55,17 @@ const ContactUs = (props = {}) => {
         text = stripTags(text);
         if (text.length >= maxDescriptionValue) {
             e.preventDefault();
-            text = text.substring(0, maxDescriptionValue)
+            text = text.substring(0, maxDescriptionValue);
             if (description.length < maxDescriptionValue) {
-                document && document.execCommand('insertText', false, e?.clipboardData?.getData('text/plain').substring(0, maxDescriptionValue - description.length));
+              const clipboardText = e?.clipboardData?.getData('text/plain').substring(0, maxDescriptionValue - description.length);
+              if (typeof e.target === 'object' && 'setSelectionRange' in e.target) {
+                const { selectionStart, selectionEnd } = e.target;
+                const newText = e.target.value.substring(0, selectionStart) + clipboardText + e.target.value.substring(selectionEnd);
+                e.target.value = newText;
+                e.target.setSelectionRange(selectionStart + clipboardText.length, selectionStart + clipboardText.length);
+              }
             }
-        }
+        }          
         setInputs({ ...inputs, "description": text });
         if (text && text.trim() !== "") {
             setDescriptionErrorMessage(null);
@@ -98,7 +104,6 @@ const ContactUs = (props = {}) => {
             setIsLoading(false);
             handlePopupClose();
         }
-        return;
     }
 
     return (

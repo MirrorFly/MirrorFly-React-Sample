@@ -34,7 +34,7 @@ const substringBetween = (s, a, b) => {
     if(s.indexOf(b) === -1) {
        return s;
     }
-    var p = s.indexOf(a) + a.length;
+    let p = s.indexOf(a) + a.length;
     return s.substring(p, s.indexOf(b, p));
 }
 

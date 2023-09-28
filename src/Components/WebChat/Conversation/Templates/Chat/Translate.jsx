@@ -1,10 +1,11 @@
 import React from "react";
-import renderHTML  from 'react-render-html';
+const HtmlToReactParser = require('html-to-react').Parser;
+const htmlToReactParser = new HtmlToReactParser();
 
 const Translate = ({ tMessage }) => {
   return (
     <div className="translated">
-      <span>{renderHTML(tMessage)} </span>
+      <span>{htmlToReactParser.parse(tMessage)} </span>
     </div>
   );
 };

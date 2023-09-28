@@ -91,10 +91,7 @@ const updateArchiveRecentChat = (data, stateData) => {
 };
 
 const updateReconnectRecentChat = (newRecentChat, oldRecentChat = []) => {
-  const pendingMsgChats = oldRecentChat.filter((chat) => {
-    if (chat.msgStatus === 3 && MEDIA_MESSAGE_TYPES.includes(chat.msgType)) return true;
-    return false;
-  });
+  const pendingMsgChats = oldRecentChat.filter((chat) => chat.msgStatus === 3 && MEDIA_MESSAGE_TYPES.includes(chat.msgType));
 
   return newRecentChat.map((recentItem) => {
     const pendingChat = pendingMsgChats.find((pending) => pending.fromUserId === recentItem.fromUserId);

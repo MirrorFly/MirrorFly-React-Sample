@@ -3,12 +3,11 @@ import SDK from "../../SDK";
 import Store from "../../../Store";
 import { connect } from "react-redux";
 import { MEDIA_AND_DOCS } from "../../processENV";
-import IndexedDb from "../../../Helpers/IndexedDb";
 import { getExtension } from "../Common/FileUploadValidation";
 import { MEDIA_MESSAGE_TYPES } from "../../../Helpers/Constants";
 import getFileFromType from "../Conversation/Templates/Common/getFileFromType.js";
 import { GroupChatMediaResetAction } from "../../../Actions/GroupChatMessageActions";
-import { getDbInstanceName, millisToMinutesAndSeconds } from "../../../Helpers/Utility";
+import { millisToMinutesAndSeconds } from "../../../Helpers/Utility";
 import { mediaVideo, Next, NoMedia, audioRecordImg, audioFileImg } from "../../../assets/images";
 import { getActiveChatMessages, getActiveConversationChatJid } from "../../../Helpers/Chat/ChatHelper";
 import { SingleChatMediaResetAction, SingleChatSelectedMediaAction } from "../../../Actions/SingleChatMessageActions";
@@ -26,7 +25,6 @@ class WebChatContactInfoMedia extends React.Component {
     this.state = {
       mediaList: ""
     };
-    this.localDb = new IndexedDb();
   }
 
   handleGetMedia = async () => {
@@ -128,18 +126,6 @@ class WebChatContactInfoMedia extends React.Component {
     Store.dispatch(SingleChatSelectedMediaAction(data));
   }
 
-  getImage = (imageToken) => {
-    if (!imageToken) return null;
-    return this.localDb
-      .getImageByKey(imageToken, getDbInstanceName("image"))
-      .then((blob) => {
-        return window.URL.createObjectURL(blob);
-      })
-      .catch((err) => {
-        return null;
-      });
-  };
-
   render() {
     let { mediaList = [] } = this.state || {};
     const { featureStateData: {isViewAllMediasEnabled = false} = {} } = this.props;
@@ -179,13 +165,13 @@ class WebChatContactInfoMedia extends React.Component {
 
                 if (message_type === "image") {
                   return (
-                    <li onClick={() => this.handleSelectedMediaAction(media)} key={index}>
+                    <li onClick={() => this.handleSelectedMediaAction(media)} key={media.timestamp}>
                       <img src={imageSrc} alt="" />
                     </li>
                   );
                 } else if (message_type === "video") {
                   return (
-                    <li onClick={() => this.handleSelectedMediaAction(media)} key={index} className="media-video">
+                    <li onClick={() => this.handleSelectedMediaAction(media)} key={media.timestamp} className="media-video">
                       <img src={imageSrc} alt="" />
                       <div className="overlay">
                         <img src={mediaVideo} className="video-icon" alt="" />
@@ -194,7 +180,7 @@ class WebChatContactInfoMedia extends React.Component {
                   );
                 } else if (message_type === "audio") {
                   return (
-                    <li key={index} className="media-audio">
+                    <li key={media.timestamp} className="media-audio">
                       <span className="media-inner">
                         <span className="media-text">
                           {millisToMinutesAndSeconds(duration)}
@@ -208,7 +194,7 @@ class WebChatContactInfoMedia extends React.Component {
                   );
                 } else if (message_type === "file") {
                   return (
-                    <li key={index} className="media-file">
+                    <li key={media.timestamp} className="media-file">
                       <span className="media-inner">
                         <span className="media-text">
                           {fileName}

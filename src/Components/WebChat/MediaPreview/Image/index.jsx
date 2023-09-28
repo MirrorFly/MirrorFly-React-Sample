@@ -54,6 +54,8 @@ export default class Image extends Component {
           uniqueId={this.props.uniqueId}
           onClickSend={this.props.onClickSend}
           chatType={this.props.chatType}
+          chatId={this.props.chatId}
+          newFile={this.props.type}
         />
       </div>
     );

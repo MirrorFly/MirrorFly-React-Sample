@@ -7,7 +7,7 @@ import SDK from '../../SDK.js';
 
 let totalPages = 0;
 
-var callLogs = {
+let callLogs = {
     getCallLogsFromServer: async function (pageNumber = 1) {
         if(pageNumber === 1  || pageNumber < totalPages){
             const logs = await SDK.getCallLogs(pageNumber);

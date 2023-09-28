@@ -1,6 +1,5 @@
 import React, { Fragment } from 'react';
 import { connect } from 'react-redux';
-import InfiniteScroll from "react-infinite-scroll-component";
 import { chatResetMessage } from '../../Actions/GroupChatMessageActions';
 import { ActiveChatAction } from '../../Actions/RecentChatActions';
 import { ArrowBack, loaderSVG, MailIcon, EmptySearch, EmptyContact, BlockedIcon } from '../../assets/images';
@@ -12,8 +11,9 @@ import WebChatSearch from "./WebChatSearch";
 import { isUserWhoBlockedMe } from '../../Helpers/Chat/BlockContact';
 import UserStatus from '../WebChat/Common/UserStatus';
 import { formatUserIdToJid, getContactNameFromRoster } from '../../Helpers/Chat/User';
-import { NO_SEARCH_CONTACT_FOUND } from '../processENV';
+import { NO_SEARCH_CONTACT_FOUND, REACT_APP_CONTACT_SYNC } from '../processENV';
 import {getFromLocalStorageAndDecrypt} from './WebChatEncryptDecrypt';
+import InfiniteScroll from "react-infinite-scroll-component";
 import userList from './RecentChat/userList';
 
 class WebChatRoster extends React.Component {
@@ -26,12 +26,22 @@ class WebChatRoster extends React.Component {
      */
     constructor(props) {
         super(props);
-        this.state = {
-            loaderStatus: !!props?.rosterData?.isFetchingUserList,
-            filterItem: [],
-            userList: [],
-            searchIn: "contacts",
-            searchWith: ""
+        if (!REACT_APP_CONTACT_SYNC) {
+            this.state = {
+                loaderStatus: !!props?.rosterData?.isFetchingUserList,
+                filterItem: [],
+                userList: [],
+                searchIn: "contacts",
+                searchWith: ""
+            }
+        } else {
+            this.state = {
+                loaderStatus: true,
+                filterItem: [],
+                userList: [],
+                searchIn: "contacts",
+                searchWith: ""
+            }
         }
         this.handleRosterData = this.handleRosterData.bind(this);
         this.handleEmailContacts = this.handleEmailContacts.bind(this);
@@ -46,8 +56,14 @@ class WebChatRoster extends React.Component {
      * In this method, get the roster data from localstorage and set the data into state.
      */
     componentDidMount() {
-        let data =  []
-        this.handleUpdateRoster(data, this.props?.rosterData?.isFetchingUserList);
+        let data = (this.props.rosterData && this.props.rosterData.data) || []
+        if (!REACT_APP_CONTACT_SYNC) {
+            data =  []
+            this.handleUpdateRoster(data, this.props?.rosterData?.isFetchingUserList);
+        } else {
+            this.setState({ loaderStatus: false });
+            this.handleUpdateRoster(data);
+        }
     }
 
     /**
@@ -101,7 +117,7 @@ class WebChatRoster extends React.Component {
                             chatType={'chat'}
                             blocked={isBlocked}
                             temporary={false}
-                            imageToken={roster.thumbImage !== "" ? roster.thumbImage : roster.image}
+                            imageToken={(roster.thumbImage && roster.thumbImage !== "") ? roster.thumbImage : roster.image}
                             name={displayContactName}
                         />
                     </div>
@@ -148,7 +164,7 @@ class WebChatRoster extends React.Component {
                         chatType={'chat'}
                         blocked={isBlocked}
                         temporary={false}
-                        imageToken={roster.thumbImage !== "" ? roster.thumbImage : roster.image}
+                        imageToken={(roster.thumbImage && roster.thumbImage !== "") ? roster.thumbImage : roster.image}
                         name={displayContactName}
                     />
                 </div>
@@ -180,12 +196,16 @@ class WebChatRoster extends React.Component {
      * handleUpdateRoster() method handles if roster dynamic update in search result.
      */
     handleUpdateRoster = (rosterData, isFetchingUserList = false) => {
-        let searchWith = this.state.searchWith;
+        let searchWith = getValidSearchVal(this.state.searchWith);
         let data = handleFilterBlockedContact(rosterData).filter(function (item) {
             let filterVariable = getContactNameFromRoster(item) || item.userId;
             return (item.isFriend) && filterVariable.toLowerCase().search(searchWith.toLowerCase()) !== -1;
         });
-        this.setState({ filterItem: data, userList: data, loaderStatus: isFetchingUserList });
+        if (!REACT_APP_CONTACT_SYNC) {
+            this.setState({ filterItem: data, userList: data, loaderStatus: isFetchingUserList });
+        } else {
+            this.setState({ filterItem: data });
+        }
     }
 
     /**
@@ -196,8 +216,14 @@ class WebChatRoster extends React.Component {
      * @param {object} prevState
      */
     componentDidUpdate(prevProps, prevState) {
-        if (prevProps.rosterData && ( prevProps.rosterData.id !== this.props.rosterData.id || prevProps?.rosterData?.isFetchingUserList !== this.props?.rosterData?.isFetchingUserList)) {
-            this.handleUpdateRoster(this.props.rosterData.data, this.props?.rosterData?.isFetchingUserList);
+        if (!REACT_APP_CONTACT_SYNC) {
+            if (prevProps.rosterData && ( prevProps.rosterData.id !== this.props.rosterData.id || prevProps?.rosterData?.isFetchingUserList !== this.props?.rosterData?.isFetchingUserList)) {
+                this.handleUpdateRoster(this.props.rosterData.data, this.props?.rosterData?.isFetchingUserList);
+            }
+        } else {
+            if (prevProps.rosterData && prevProps.rosterData.id !== this.props.rosterData.id) {
+                this.handleUpdateRoster(this.props.rosterData.data);
+            }
         }
     }
 
@@ -205,11 +231,11 @@ class WebChatRoster extends React.Component {
      * handleRosterData() method is perform to separate the email and mobile contacts.
      */
     handleRosterData() {
-
         if (this.state.filterItem.length > 0) {
             return this.state.filterItem.map((roster, index) => {
+                let key = index;
                 return (
-                    <React.Fragment key={index}>
+                    <React.Fragment key={key}>
                         {roster.emailId ? this.handleEmailContacts(roster) : this.handleMobileContacts(roster)}
                     </React.Fragment>
                 )
@@ -237,28 +263,31 @@ class WebChatRoster extends React.Component {
 
     /**
      * handleFilterContactsList() method is to handle the searched contacts from list
-     *
+     * @param {object} filterData
      * @param {string} searchWith
      */
-    handleFilterContactsList(searchWith) {
-        this.setState({ searchWith: searchWith });
+    handleFilterContactsList(filterData, searchWith) {
+        if (!REACT_APP_CONTACT_SYNC) {
+            this.setState({ searchWith: searchWith });
+        } else {
+            this.setState({ filterItem: filterData, searchWith: searchWith });
+        }
     }
 
     fetchMoreData = () => {
-        // if(this.props.isAppOnline)
         let userListArr = this.state.userList;
         userList.getUsersListFromSDK(Math.ceil((userListArr.length / 20) + 1), getValidSearchVal(this.state.searchWith));
     }
 
     handleUserListData() {
         let dataArr = [];
-        if (this.state.filterItem.length > 0 && this.state.userList.length > 0 ) {
-            this.state.userList.map((roster, index) => {
-                dataArr.push(
-                    <React.Fragment key={index}>
-                        {roster.emailId ? this.handleEmailContacts(roster) : this.handleMobileContacts(roster)}
-                    </React.Fragment>
-                )
+        if (this.state.filterItem.length > 0 && this.state.userList.length > 0) {
+            this.state.userList.forEach((roster, index) => {
+              dataArr.push(
+                <React.Fragment key={`user_${index + 1}`}>
+                  {roster.emailId ? this.handleEmailContacts(roster) : this.handleMobileContacts(roster)}
+                </React.Fragment>
+              );
             });
         } else if (this.state.filterItem.length === 0 && this.state.searchWith !== "") {
             dataArr.push(
@@ -276,6 +305,10 @@ class WebChatRoster extends React.Component {
     }
 
     render() {
+        const loaderStyle = {
+            width: 50,
+            height: 50
+        }
         const { newChatStatus } = this.props
         const userListArr = this.handleUserListData();
         return (
@@ -290,16 +323,22 @@ class WebChatRoster extends React.Component {
                         </div>
                     </div>
                     <WebChatSearch searchIn={this.state.searchIn} handleSearchFilterList={this.handleFilterContactsList} />
-                    {/* <ul className="chat-list-ul">
+                    { REACT_APP_CONTACT_SYNC &&
+                    <ul className="chat-list-ul">
+                        {
+                            this.state.loaderStatus &&
+                            <div className="response_loader style-2">
+                                <img src={loaderSVG} alt="loader" style={loaderStyle} />
+                            </div>
+                        }
                         {this.handleRosterData()}
-                    </ul> */}
-
-                    {this.state.loaderStatus && <div className="loader-container style-2">
-                        <img src={loaderSVG} alt="loader"  />
-                    </div>}
-
-                    {userListArr.length > 0  && 
+                    </ul>
+                    } 
+                    { !REACT_APP_CONTACT_SYNC &&  
                         <ul className="chat-list-ul" id="scrollableUl">
+                        {this.state.loaderStatus && <div className="loader-container style-2">
+                            <img src={loaderSVG} alt="loader"  />
+                        </div>}
                         { this.props.isAppOnline ?
                             <InfiniteScroll 
                                 dataLength={userListArr.length}
@@ -310,19 +349,16 @@ class WebChatRoster extends React.Component {
                                 {this.handleUserListData()}
                             </InfiniteScroll>
                             : this.handleUserListData()
-
                         }
                         </ul>
                     }
-
-
                 </div>
             </Fragment>
         );
     }
 }
 
-const mapStateToProps = (state, props) => {
+const mapStateToProps = (state) => {
     return ({
         rosterData: state.rosterData,
         vCardData: state.vCardData.data,

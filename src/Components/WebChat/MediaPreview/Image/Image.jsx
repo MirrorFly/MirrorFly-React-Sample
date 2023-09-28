@@ -15,7 +15,7 @@ export default class Image extends Component{
     }
 
     render(){
-        var reader = new FileReader();
+        let reader = new FileReader();
         reader&&reader.readAsDataURL(this.props.media);
         reader.onloadend = function (e) {
             this.setState({imgSrc: reader.result});

@@ -55,10 +55,6 @@ export default class Setting extends Component {
         });
     }
 
-    setNotificationSettings = (value) => {
-        return value;
-    }
-
     setSelectedLaun = () => {
         const globalData = Store.getState();
         const { TranslateLanguage: { translateLanguages: { translateLanguages = [] } } } = globalData || {}
@@ -77,7 +73,7 @@ export default class Setting extends Component {
     }
 
     render() {
-        const { handleBackFromSetting, featureStateData = {} } = this.props
+        const { handleBackFromSetting, featureStateData = {}, handleShowCallScreen } = this.props
         const {isStarMessageEnabled = false, isBlockEnabled = false} = featureStateData;
         if(!isStarMessageEnabled && !isBlockEnabled) {
             const filteredArray = optionsArray.filter(option => option.label !== "Starred" && option.label !== "Blocked");
@@ -132,6 +128,7 @@ export default class Setting extends Component {
                             <StarredMessages
                             handleBackToSetting={this.handleBackToSetting}
                             featureStateData={featureStateData}
+                            handleShowCallScreen={handleShowCallScreen}
                             />
                         }
                         {activeTab === 'blocked' && <Blocked handleBackToSetting={this.handleBackToSetting} />}

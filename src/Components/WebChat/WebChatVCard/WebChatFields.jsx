@@ -1,7 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import _toArray from "lodash/toArray";
-import renderHTML from 'react-render-html';
 import toastr from "toastr";
 import { Done, Edit, InfoIcon, Status } from '../../../assets/images';
 import "../../../assets/scss/minEmoji.scss";
@@ -162,7 +161,7 @@ class WebChatFields extends React.Component {
         if (userName !== "") {
             let mobileno = vCardData.mobileNumber;
             let profileImage = "";
-            if(vCardData.thumbImage !== "") profileImage = vCardData.thumbImage;
+            if(vCardData.thumbImage && vCardData.thumbImage !== "") profileImage = vCardData.thumbImage;
             else profileImage = vCardData.image;
             const isUserNameChanged = this.state.lastUserName !== userName;
             let response = isUserNameChanged ? await SDK.setUserProfile(userName, profileImage, vCardData.status, mobileno, vCardData.email) : {};
@@ -192,7 +191,7 @@ class WebChatFields extends React.Component {
         if (userStatus !== "") {
             let mobileno = vCardData.mobileNumber;
             let profileImage = "";
-            if(vCardData.thumbImage !== "") profileImage = vCardData.thumbImage;
+            if(vCardData.thumbImage && vCardData.thumbImage !== "") profileImage = vCardData.thumbImage;
             else profileImage = vCardData.image;
             const isUserStatusChanged = this.state.lastUserStatus !== userStatus;
             let response = isUserStatusChanged ? await SDK.setUserProfile(vCardData.nickName, profileImage, userStatus, mobileno, vCardData.email) : {};
@@ -218,7 +217,7 @@ class WebChatFields extends React.Component {
     handleWordCountStatus = event => {
         const user_statusLength = event.target.value;
         const charLeftStatus = this.findNegativeValue(user_statusLength, REACT_APP_STATUS_CHAR);
-        var user_Status = event.target.value;
+        let user_Status = event.target.value;
         this.setState({ statusChars: charLeftStatus, userStatus: user_Status });
         (charLeftStatus === REACT_APP_STATUS_CHAR) ? this.setState({ viewTickStatus: true }) : this.setState({ viewTickStatus: false })
         this.handleTrim("status", "viewTickStatus");
@@ -228,8 +227,8 @@ class WebChatFields extends React.Component {
      * handleTrim() method to restict the space value in the beginning of input field.
      */
     handleTrim(element, stateName) {
-        var valID = document.getElementById(element).id;
-        var valString = document.getElementById(element).value;
+        let valID = document.getElementById(element).id;
+        let valString = document.getElementById(element).value;
         if ((valID === element) && valString.trim() === "") {
             this.setState({ [stateName]: true });
         }
@@ -329,13 +328,6 @@ class WebChatFields extends React.Component {
     }
 
     /**
-     * handleEmoji(e) method to maintain state for emoji box to open/close.
-     */
-    handleEmoji(e) {
-        this.setState({ viewEmoji: !this.state.viewEmoji });
-    }
-
-    /**
      * render() method to render the WebChatFields Component into browser.
      */
     render() {
@@ -381,7 +373,7 @@ class WebChatFields extends React.Component {
                             {!viewEdit && <i className="emoji">
                                 <WebChatEmoji onEmojiClick={this.onEmojiClickUsername} />
                             </i>}{viewEdit && <h4>
-                                {renderHTML(userName)}
+                                {userName}
                             </h4>}
                         </div>
                         <div className="controls">
@@ -422,7 +414,7 @@ class WebChatFields extends React.Component {
                             {!viewEditStatus && <i className="emoji">
                                 <WebChatEmoji onEmojiClick={this.onEmojiClickStatus} />
                             </i>}{viewEditStatus && <h4>
-                                {renderHTML(userStatus)}
+                                {userStatus}
                             </h4>}
                         </div>
                         <div className="controls">

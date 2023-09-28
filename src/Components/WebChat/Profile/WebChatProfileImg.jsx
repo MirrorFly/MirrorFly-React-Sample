@@ -67,14 +67,6 @@ class WebChatProfileImg extends Component {
         this.mounted = false
     }
 
-    checkNotFound = (event) => {
-        let { avatar = SampleProfile } = this.props
-        const { chatType } = this.props;
-        if(chatType !== undefined && chatType === 'groupchat'){
-            avatar = GroupChatAvatarImg;
-        }
-        event.target.src = avatar
-    }
     /**
      * render() method is render the component into browser.
      */

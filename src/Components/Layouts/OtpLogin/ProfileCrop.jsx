@@ -37,7 +37,7 @@ import ImageComponent from "../../WebChat/Common/ImageComponent";
 import ProfileRemoveAlertPopUp from "../../WebChat/WebChatVCard/ProfileRemoveAlertPopUp";
 import { modalActiveClassAction } from "../../../Actions/RecentChatActions";
 
-var cropme;
+let cropme;
 class ProfileCrop extends React.Component {
   constructor(props) {
     super(props);
@@ -93,7 +93,7 @@ class ProfileCrop extends React.Component {
         () => {
           const elementContainer = document.getElementById("CameraContainer");
           cropme = new Cropme(elementContainer, WebChatCropOption);
-          var readerFile = new FileReader();
+          let readerFile = new FileReader();
           readerFile.onload = function (e) {
             cropme
               .bind({
