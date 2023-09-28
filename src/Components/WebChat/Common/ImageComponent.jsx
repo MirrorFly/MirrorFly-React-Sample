@@ -49,8 +49,10 @@ const ImageComponent = React.memo(
         return () => (isSubscribed = false);
       }
 
-      if (new RegExp("^(blob:http|blob:https)://", "i").test(imageToken)) return saveImage(imageToken);
-
+      if (/^(blob:http|blob:https):\/\//i.test(imageToken)) {
+        return saveImage(imageToken);
+      }
+      
       localDb
         .getImageByKey(imageToken, imageType, fileKey)
         .then((blob) => {
@@ -68,7 +70,6 @@ const ImageComponent = React.memo(
     const checkNotFound = (event) => (event.target.src = avatarIcon);
     const addclass = props.classProps ? classNames(props.classProps) : null;
     const updatedUrl = getImage ? getImage : avatarIcon;
-
     useEffect(() => {
       if (getImageUrl) {
         getImageUrl(updatedUrl);

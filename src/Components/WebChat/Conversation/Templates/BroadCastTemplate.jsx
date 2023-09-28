@@ -54,14 +54,14 @@ class BroadCastTemplate extends Component {
     }
 
     constructMessageTemplate = () => {
-        const { chatmessages: { id, data } } = this.props
-        if (!id) return null
-        const updatedMessage = groupBy(data, (date) => date.msgdate.split(/[\s]/)[0])
+        const { chatmessages: { id, data } } = this.props;
+        if (!id) return null;
+        const updatedMessage = groupBy(data, (date) => date.msgdate.split(" ")[0]);
         return Object.keys(updatedMessage).map((messageInDate) => {
-            const { [messageInDate]: splitBlockByDate } = updatedMessage;
-            return this.dateBlock(splitBlockByDate, messageInDate)
-        })
-    }
+          const { [messageInDate]: splitBlockByDate } = updatedMessage;
+          return this.dateBlock(splitBlockByDate, messageInDate);
+        });
+      }      
 
     render() {
         const templates = this.constructMessageTemplate()

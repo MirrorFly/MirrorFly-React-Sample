@@ -39,6 +39,10 @@
         &:focus{
             outline: none;
         }
+        .rhap_main.rhap_stacked{
+            flex-direction: row;
+            align-items: center;
+        }
         .rhap_progress-section {
             position: relative;
             display: block;

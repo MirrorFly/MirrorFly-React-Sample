@@ -38,11 +38,13 @@ const TakeCameraPicture = (props = {}) => {
                 loader={loader}
                 imgSrc={imgSrc}
                 photoTaken={photoTaken}
+                isRetake={props.retake}
                 cropEnabled={cropEnabled}
                 onCameraCheck={onCameraCheck}
                 setWebcamImage={setWebcamImage}
                 handleCropImage={handleCropImage}
                 chatType ={props.chatType}
+                chatId={props.chatId}
             />
         </div>
     )

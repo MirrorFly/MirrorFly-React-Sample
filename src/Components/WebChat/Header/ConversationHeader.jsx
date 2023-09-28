@@ -62,7 +62,7 @@ class ConversationHeader extends React.Component {
         const isAdminBlocked = roster.isAdminBlocked
         this.setState({
             displayName,
-            image: thumbImage !== "" ? thumbImage : image || groupImage,
+            image: (thumbImage && thumbImage !== "") ? thumbImage : image || groupImage,
             userstatus: roster.status,
             emailId: roster.emailId,
             localRoster: roster,
@@ -81,7 +81,6 @@ class ConversationHeader extends React.Component {
         const { groupsData: { id: groupnewId } = {} } = this.props;
         const { rosterData: { data } } = this.props
 
-
         if (prevProps?.groupsData?.id !== groupnewId && isGroupChat(chatType)) {
             const updateGroupInfo = this.filterProfileFromGroup(chatId)
 
@@ -89,7 +88,7 @@ class ConversationHeader extends React.Component {
                 const { groupImage, thumbImage } = updateGroupInfo
                 this.setState({
                     displayName: getContactNameFromRoster(updateGroupInfo),
-                    image: thumbImage !== "" ? thumbImage : groupImage,
+                    image: (thumbImage && thumbImage !== "") ? thumbImage : groupImage,
                     userstatus: null
                 })
             }
@@ -103,7 +102,7 @@ class ConversationHeader extends React.Component {
                 const { image, isDeletedUser, thumbImage } = rosterInfo
                 this.setState({
                     displayName: getContactNameFromRoster(rosterInfo),
-                    image: thumbImage !== "" ? thumbImage : image,
+                    image: (thumbImage && thumbImage !== "") ? thumbImage : image,
                     userstatus: rosterInfo.status,
                     emailId: rosterInfo.emailId,
                     localRoster: rosterInfo,
@@ -161,7 +160,7 @@ class ConversationHeader extends React.Component {
                 to: activeChatId,
                 from: fromuser,
                 userList: activeChatId,
-                userAvatar: thumbImage ? thumbImage : image
+                userAvatar: (thumbImage && thumbImage !== "") ? thumbImage : image
             }
             console.log("make call callConnectionStatus", callConnectionStatus);
             encryptAndStoreInLocalStorage('call_connection_status', JSON.stringify(callConnectionStatus));
@@ -227,6 +226,11 @@ class ConversationHeader extends React.Component {
         if (this.isRoomExist()) {
             return;
         }
+        const behaviourResponse = SDK.getCallBehaviour();
+        if(behaviourResponse.data == "meet"){
+            return;
+        }
+
         if (this.state.isAdminBlocked) return;
         let connectionStatus = getFromLocalStorageAndDecrypt("connection_status")
         if (connectionStatus === CONNECTED) {
@@ -242,7 +246,7 @@ class ConversationHeader extends React.Component {
             })
 
             if (groupMembers.length === 0) {
-                toast.error("You are only one member in the group")
+                behaviourResponse.data == "meet" ?  toast.error("You are already in meet"): toast.error("You are only one member in the group")
                 return false
             } else if (groupMembers.length === 1) {
                 this.makeGroupCall(callType, groupMembers);
@@ -385,10 +389,7 @@ class ConversationHeader extends React.Component {
 
     isRoomExist() {
         let room = getFromLocalStorageAndDecrypt('roomName');
-        if (room !== null) {
-            return true;
-        }
-        return false;
+        return room !== null;
     }
 
     render() {
@@ -399,13 +400,17 @@ class ConversationHeader extends React.Component {
         const avatarIcon = chatType === 'chat' ? SampleChatProfile : SampleGroupProfile;
         let canSendMessage = this.canSendMessage();
         const { mobileNumber, thumbImage } = this.state.localRoster
-        const { image, displayName, emailId } = this.state
+        const { image, displayName, emailId, isAdminBlocked } = this.state
         const iniTail = initialNameHandle(this.state.localRoster, displayName);
         groupName = displayName;
         let blockedContactArr = this.props.contactsWhoBlockedMe.data;
-        const isBlocked = blockedContactArr.indexOf(formatUserIdToJid(activeChatId)) > -1 || this.state.isAdminBlocked
+        const isBlocked = blockedContactArr.indexOf(formatUserIdToJid(activeChatId)) > -1 || isAdminBlocked
         if (isBlocked) {
             canSendMessage = false;
+        }
+        let imageToken = "";
+        if(!isAdminBlocked) {
+            imageToken = (thumbImage && thumbImage !== "") ? thumbImage : image;
         }
 
         return (
@@ -419,7 +424,7 @@ class ConversationHeader extends React.Component {
                             <ProfileImage
                                 chatType={chatType || 'chat'}
                                 userToken={token}
-                                imageToken={this.state.isAdminBlocked ? "" : thumbImage !== "" ? thumbImage : image}
+                                imageToken={imageToken}
                                 emailId={emailId}
                                 userId={getIdFromJid(activeChatId)}
                                 name={iniTail}
@@ -441,13 +446,13 @@ class ConversationHeader extends React.Component {
                     <div className="profile-options">
                         {canSendMessage && ((isOneToOneCallEnabled && chatType === "chat") || (isGroupCallEnabled && chatType === 'groupchat')) && <>
                             <i title={this.props.showonGoingcallDuration ? 'You are already in call' : "Audio call"}
-                                onClick={chatType === "chat" ? () => this.makeOne2OneCall('audio') : () => this.showCallParticipants('audio')}
+                                onClick={chatType === "chat"  && !this.props.showonGoingcallDuration ? () => this.makeOne2OneCall('audio') : () => this.showCallParticipants('audio')}
                                 className={`audioCall ${(this.props.showonGoingcallDuration || this.state.isAdminBlocked || this.state.isDeletedUser) ? 'calldisabled' : ''}`}>
                                 <span className="toggleAnimation"></span>
                                 <AudioCall />
                             </i>
                             <i title={this.props.showonGoingcallDuration ? 'You are already in call' : "Video call"}
-                                onClick={chatType === "chat" ? () => this.makeOne2OneCall('video') : () => this.showCallParticipants('video')}
+                                onClick={chatType === "chat" && !this.props.showonGoingcallDuration ? () => this.makeOne2OneCall('video') : () => this.showCallParticipants('video')}
                                 className={`videoCall ${(this.props.showonGoingcallDuration || this.state.isAdminBlocked || this.state.isDeletedUser) ? 'calldisabled' : ''}`}>
                                 <span className="toggleAnimation"></span><VideoCall />
                             </i>

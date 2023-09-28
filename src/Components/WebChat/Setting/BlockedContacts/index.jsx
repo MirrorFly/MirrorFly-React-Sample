@@ -86,11 +86,11 @@ class BlockedContacts extends Component {
          const { chatType, image, thumbImage, emailId, statusMsg, status, userId, userJid } = contact
          const nameToDisplay = getContactNameFromRoster(contact)
          return (
-            <li key={index} className="chat-list-li">
+            <li key={userId} className="chat-list-li">
                <ProfileImage
                   chatType={chatType || CHAT_TYPE_SINGLE}
                   userToken={token}
-                  imageToken={thumbImage !== "" ? thumbImage : image}
+                  imageToken={(thumbImage && thumbImage !== "") ? thumbImage : image}
                   emailId={emailId}
                   userId={userId}
                   name={nameToDisplay}

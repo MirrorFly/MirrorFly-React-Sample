@@ -87,18 +87,18 @@ export function getCallUsersDetails(callData, localUserData, {
         userListArr.push(callData.from);
         const userListNumberArr = userListArr.map((user) => user.split('@')[0]);
         let displayName = null;
-        localRoster.map((roster) => {
+        localRoster.forEach((roster) => {
             let rosterJid = roster.username || roster.jid;
             let currentUserIndex = userListNumberArr.indexOf(rosterJid);
             if (currentUser && currentUserIndex > -1 && currentUser !== rosterJid) {
-                userDetailObj = {
-                    ...roster
-                };
-                const name = userDetailObj.displayName || userDetailObj.name || getFormatPhoneNumber(userListNumberArr[currentUserIndex]);
-                displayName = displayName ? `${displayName}, ${name}` : name;
-                userDetailObj['image'] = userListLength > 1 ? null : userDetailObj.image;
+              userDetailObj = {
+                ...roster
+              };
+              const name = userDetailObj.displayName || userDetailObj.name || getFormatPhoneNumber(userListNumberArr[currentUserIndex]);
+              displayName = displayName ? `${displayName}, ${name}` : name;
+              userDetailObj['image'] = userListLength > 1 ? null : userDetailObj.image;
             }
-        });
+        }); 
         userDetailObj['displayName'] = displayName;
 
         if (!userDetailObj.displayName) {
@@ -218,7 +218,8 @@ export const disconnectCallConnection = (remoteStreams = []) => {
         Store.dispatch(showConfrence({
             showComponent: false,
             showCalleComponent: false,
-            callStatusText: null
+            callStatusText: null,
+            showStreamingComponent: false
         }))
     }, timeOut);
 }
@@ -299,20 +300,20 @@ export const startCallingTimer = () => {
             let remoteStreams = [...data.remoteStream];
             let remoteStreamsUpdated = [...data.remoteStream];
             if (remoteStreams) {
-                remoteStreams.map((stream) => {
+                remoteStreams.forEach((stream) => {
                     if (stream.status && (stream.status.toLowerCase() === CALL_STATUS_CALLING || stream.status.toLowerCase() === CALL_STATUS_RINGING)) {
-                        removeRemoteStream(stream.fromJid);
-                        remoteStreamsUpdated = remoteStreamsUpdated.map((ele) => {
-                            if (ele.fromJid !== stream.fromJid) {
-                                return ele;
-                            } else {
-                                return undefined;
-                            }
-                        }).filter(e => e !== undefined);
+                      removeRemoteStream(stream.fromJid);
+                      remoteStreamsUpdated = remoteStreamsUpdated.map((ele) => {
+                        if (ele.fromJid !== stream.fromJid) {
+                          return ele;
+                        } else {
+                          return undefined;
+                        }
+                      }).filter(e => e !== undefined);
                     } else {
-                        return undefined;
+                      return undefined;
                     }
-                });
+                  });                  
                 if (remoteStreamsUpdated.length > 1) {
                     dispatch(showConfrence({
                         ...(data || {}),
@@ -428,11 +429,14 @@ export const handleCallParticipantToast = (userJid, type) => {
         displayName = getUserIdFromJid(userJid), image = "", thumbImage = "", initialName = ""
     } = userDetails;
     const initial = initialNameHandle(userDetails, initialName);
-    callLinkToast(type, displayName, image, thumbImage, initial, "callParticipantList");
+    setTimeout(() =>{
+        callLinkToast(type, displayName, image, thumbImage, initial, "callParticipantList");
+    },100)
+   
 };
 
 export const handleAudioClasses = (volumeVdo = 0) => {
-    let volume = volumeVdo === 'NaN' ? 0 : volumeVdo;
+    let volume = volumeVdo == 'NaN' ? 0 : volumeVdo;
     if (volume > 5.5) {
         return "audio_vhigh";
     } else if (volume > 4.5) {

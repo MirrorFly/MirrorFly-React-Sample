@@ -1,7 +1,6 @@
 import React, { Fragment } from 'react';
 import { connect } from 'react-redux';
 import _toArray from "lodash/toArray";
-import renderHTML from 'react-render-html';
 import { showModal as showModalPopupAction, hideModal } from '../../../Actions/PopUp';
 import OutsideClickHandler from 'react-outside-click-handler';
 import {
@@ -23,7 +22,7 @@ import WebChatcontactInfoMedia from './WebChatContactInfoMedia';
 import { toast } from 'react-toastify';
 import WebChatEmoji from '../WebChatEmoji';
 import { initialNameHandle, isLocalUser } from '../../../Helpers/Chat/User';
-import { isSingleChat, isGroupChat, getChatMessageHistoryById, getActiveConversationChatId, getActiveConversationChatJid, handleTempArchivedChats, getLastMsgFromHistoryById, getActiveChatMessages } from '../../../Helpers/Chat/ChatHelper';
+import { isSingleChat, isGroupChat, getChatMessageHistoryById, getActiveConversationChatId, getActiveConversationChatJid, handleTempArchivedChats, getLastMsgFromHistoryById, getActiveChatMessages, getMessagesForReport } from '../../../Helpers/Chat/ChatHelper';
 import { updateBlockedContactAction } from '../../../Actions/BlockAction';
 import { ADD_PARTICIPANT_GROUP_CONTACT_PERMISSION_DENIED, CHAT_TYPE_SINGLE, REPORT_FROM_CONTACT_INFO, UNBLOCK_CONTACT_TYPE } from '../../../Helpers/Chat/Constant';
 import Store from '../../../Store';
@@ -39,7 +38,6 @@ import ContactInfoMediaGrid from './ContactInfoMediaGrid';
 import ShowMediaInDetailPopup from './ShowMediaInDetailPopup';
 import { clearLastMessageinRecentChat, updateMuteStatusRecentChat } from '../../../Actions/RecentChatActions';
 import ActionInfoPopup from '../../ActionInfoPopup';
-import { getMessagesForReport } from "../../../Helpers/Chat/ChatHelper"
 import { ClearChatHistoryAction } from '../../../Actions/ChatHistory';
 import { RemoveStaredMessagesClearChat } from '../../../Actions/StarredAction';
 class WebChatContactInfo extends React.Component {
@@ -82,8 +80,6 @@ class WebChatContactInfo extends React.Component {
         }
         this.userNameCursorPostion = 0;
         this.userNameSelectedText = '';
-        this.userStatusCursorPostion = 0;
-        this.userStatusSelectedText = '';
         this.addNewParticipantsPopOpen = false;
     }
     
@@ -118,11 +114,6 @@ class WebChatContactInfo extends React.Component {
                 }
             }
         });
-        // if (!localUser) {
-        //     this.setState({
-        //         exitGroup: true
-        //     })
-        // }
     }
 
     /**
@@ -451,13 +442,6 @@ class WebChatContactInfo extends React.Component {
         }
     }
 
-    toastNoInternet = () => {
-        if (!isAppOnline()) {
-            blockOfflineAction()
-            return
-        }
-    }
-
     popUpToggleAction = () => {
         const { showModal: showModalPopup } = this.state
         this.setState({
@@ -534,11 +518,6 @@ class WebChatContactInfo extends React.Component {
             exitGroup: false
         });
     };
-    handleMediaInDetail = () => {
-        this.setState({
-            showMediaInDetailPopup: true,
-        })
-    }
 
     /**
     * @param {string} message groupName
@@ -770,7 +749,7 @@ class WebChatContactInfo extends React.Component {
                                                 }
                                                 {viewEdit &&
                                                     <h4 title={this.state.groupName}>
-                                                        {renderHTML(this.state.groupName)}
+                                                        {this.state.groupName}
                                                     </h4>
                                                 }
                                             </div>
@@ -839,27 +818,6 @@ class WebChatContactInfo extends React.Component {
                                 "No one in this group will be notified." : ""}
                             `}
                     >
-                        {/* {this.state.reportPopup === 'group' &&
-                            <React.Fragment>
-                                <div className='check_option'>
-                                    <div className="checkbox-common">
-                                        <input
-                                            name="participants"
-                                            type="checkbox"
-                                            checked={confirmExitGroup}
-                                            onChange={() => this.setState({
-                                                confirmExitGroup: !confirmExitGroup
-                                            })}
-                                            value={"confirmExitGroup"}
-                                            id={"confirmExitGroup"}
-                                        />
-                                        <label htmlFor={"confirmExitGroup"}></label>
-                                    </div>
-                                    <label htmlFor={"confirmExitGroup"}>Exit group</label>
-                                </div>
-                            </React.Fragment>
-
-                        } */}
                     </ActionInfoPopup>
                 }
             </Fragment>
@@ -883,7 +841,6 @@ const mapStateToProps = state => {
         contactsWhoBlockedMe: state.contactsWhoBlockedMe,
         popUpData: state.popUpData,
         contactPermission: state?.contactPermission?.data,
-        popUpData: state.popUpData
     }
 }
 

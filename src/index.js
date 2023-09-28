@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import ReactDOM from 'react-dom';
+import ReactDOM from 'react-dom/client';
 import * as serviceWorker from './serviceWorker';
 import Loader from './Components/Layouts/Loader';
 import SDK from './Components/SDK'
@@ -33,7 +33,10 @@ window.onbeforeunload = function() {
   };
 
 let ProviderComponent = React.lazy(() => import('./Provider/ProviderComponent'));
-ReactDOM.render(<Suspense fallback={<Loader />}><ProviderComponent /></Suspense>, document.getElementById('root'));
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(
+  <Suspense fallback={<Loader />}><ProviderComponent /></Suspense>
+);
 
 // If you want your app to work offline and load faster, you can change
 // unregister() to register() below. Note this comes with some pitfalls.

@@ -83,8 +83,9 @@
               left: 0;
               z-index: -2;
               text-align: left;
-              .emoji-mart {
+              .emoji-mart, em-emoji-picker {
                 width: 100% !important;
+                height: 360px;
               }
               .emoji-mart-category-list {
                 padding-bottom: 20px;

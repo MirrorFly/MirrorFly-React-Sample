@@ -9,14 +9,13 @@ import {getFromLocalStorageAndDecrypt} from '../../WebChat/WebChatEncryptDecrypt
 class CallParticipantList extends React.Component  {
 
     shouldComponentUpdate(nextProps, nextState) {
-        if(nextProps.videoMuted !== this.props.videoMuted ||
+        return (
+            nextProps.videoMuted !== this.props.videoMuted ||
             nextProps.audioMuted !== this.props.audioMuted ||
             nextProps.name !== this.props.name ||
-            nextProps.imageUrl !== this.props.imageUrl||
-            nextProps.userStatus !== this.props.userStatus ){
-            return true;
-        }
-        return false;
+            nextProps.imageUrl !== this.props.imageUrl ||
+            nextProps.userStatus !== this.props.userStatus
+          );
     }
     
     render() {

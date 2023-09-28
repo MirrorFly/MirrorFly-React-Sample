@@ -6,7 +6,11 @@ import { formatUserIdToJid } from '../Helpers/Chat/User';
 import { compare, parsedContacts } from '../Helpers/Utility';
 import { FETCHING_USER_LIST, ROSTER_DATA, ROSTER_DATA_ADD, ROSTER_DATA_UPSERT, ROSTER_PERMISSION } from './Constants';
 
-const mapColorForTouser =  () => '#'+Math.floor(Math.random()*16777215).toString(16);
+const mapColorForTouser =  () => {
+    const randomValues = new Uint8Array(3);
+    window.crypto.getRandomValues(randomValues);
+    return '#' + Array.from(randomValues).map((v) => v.toString(16).padStart(2, '0')).join('');
+}
 
 const createUserMessageColor = ( data = []) =>{
     return data.map(contact=>{
@@ -32,20 +36,7 @@ export const RosterData = (data) => {
         })
         const rosterId = getcurrentState?.rosterData?.id
         if(rosterId) return
-        promise.then(async (res)=> {
-            // const userIBlockedRes = await SDK.getUsersIBlocked();
-            // console.log('userIBlockedRes -- ', userIBlockedRes);
-            // if(userIBlockedRes && userIBlockedRes.statusCode === 200){
-            //     const jidArr = formatToArrayofJid(userIBlockedRes.data);
-            //     Store.dispatch(blockedContactAction(jidArr));
-            // }
-            // const userBlockedMeRes = await SDK.getUsersWhoBlockedMe();
-            // console.log('userBlockedMeRes -- ', userBlockedMeRes);
-            // if(userBlockedMeRes && userBlockedMeRes.statusCode === 200){
-            //     const jidArr = formatToArrayofJid(userBlockedMeRes.data);
-            //     setContactWhoBleckedMe(jidArr);
-            // }
-        });
+        promise.then(async (res)=> {});
     };    
 }
 
@@ -65,20 +56,7 @@ export const RosterDataUpsert = (data, pageNumber) => {
         })
         const rosterId = getcurrentState?.rosterData?.id
         if(rosterId) return
-        promise.then(async (res)=> {
-            // const userIBlockedRes = await SDK.getUsersIBlocked();
-            // console.log('userIBlockedRes -- ', userIBlockedRes);
-            // if(userIBlockedRes && userIBlockedRes.statusCode === 200){
-            //     const jidArr = formatToArrayofJid(userIBlockedRes.data);
-            //     Store.dispatch(blockedContactAction(jidArr));
-            // }
-            // const userBlockedMeRes = await SDK.getUsersWhoBlockedMe();
-            // console.log('userBlockedMeRes -- ', userBlockedMeRes);
-            // if(userBlockedMeRes && userBlockedMeRes.statusCode === 200){
-            //     const jidArr = formatToArrayofJid(userBlockedMeRes.data);
-            //     setContactWhoBleckedMe(jidArr);
-            // }
-        });
+        promise.then(async (res)=> {});
     };    
 }
 
@@ -111,10 +89,9 @@ const fetchMailContacts = async(token, data, dispatch) => {
         })
     }).then(response => response.json())
         .then(async (res) => {
-            const isMailContactNeeded = false;
-            if (res.status === 200 && isMailContactNeeded) {
+            if (res.status === 200) {
                 let mailContacts = res.data.created;
-                // TODO - Need to Change these Params in API 
+                // Need to Change these Params in API 
                 mailContacts = mailContacts.map(contact => { 
                     const status = contact.statusMsg,
                         userId = contact.username,
@@ -154,7 +131,6 @@ const fetchMailContacts = async(token, data, dispatch) => {
 export const RosterDataAction = (data) => async dispatch => {
     let token = getFromLocalStorageAndDecrypt('token');
     if (token !== null) {
-        // Change it to SDK 
         fetchMailContacts(token, data, dispatch);
     }
 }

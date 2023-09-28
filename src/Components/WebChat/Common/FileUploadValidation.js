@@ -56,7 +56,7 @@ const durationValdation = (file, fileExtension) => {
 
   let promise = new Promise((resolve) => {
     htmlElement.addEventListener("loadedmetadata", () => {
-      var settings = JSON.parse(getFromLocalStorageAndDecrypt("settings"));
+      const settings = JSON.parse(getFromLocalStorageAndDecrypt("settings"));
       const { audioLimit = 300, videoLimit = 300 } = settings || {};
       const durationCheck = fileExtension === ".mp4" ? videoLimit : audioLimit;
       const fileType = fileExtension === ".mp4" ? "video" : "audio";

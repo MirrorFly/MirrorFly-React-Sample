@@ -34,7 +34,7 @@ import { isGroupChat } from '../../../Helpers/Chat/ChatHelper';
 
 const indexedDb = new IndexedDb();
 
-var cropme;
+let cropme;
 class ContactInfoProfileUpdate extends React.Component {
     /**
      * Following the states used in ContactInfoProfileUpdate Component.
@@ -54,6 +54,7 @@ class ContactInfoProfileUpdate extends React.Component {
         this.state = {
             profileBlopData: "",
             profileImg: "",
+            isLocalUserInGroup: false,
             showImgDropDown: false,
             showProfileImg: false,
             profileCamera: false,
@@ -78,6 +79,7 @@ class ContactInfoProfileUpdate extends React.Component {
      */
     componentDidMount() {
         this.handleProfileImg(this.state.imageURL);
+        this.hideProfileUpdateOptions()
     }
 
     componentDidUpdate(prevProps) {
@@ -125,6 +127,29 @@ class ContactInfoProfileUpdate extends React.Component {
             }, () => this.handleSaveImage(imageFileProfile))
         })
     }
+
+     /**
+     * HideProfileUpdateOPtions
+     */
+    
+     hideProfileUpdateOptions = async () => {
+        let myJid = await SDK.getCurrentUserJid();
+        let getGroupParticipants = await SDK.getGroupParticipants(formatGroupIdToJid(this.props.jid));
+        let datasArray = getGroupParticipants.data.participants
+        let newArray = []
+        datasArray.map(employee => {
+            newArray.push(employee.userJid)
+        }) 
+        if (newArray.includes(myJid.userJid)){
+            this.state.isLocalUserInGroup = true   
+        }
+        else{
+            this.state.isLocalUserInGroup = false
+        }
+        this.setState({
+            isLocalUserInGroup: this.state.isLocalUserInGroup,
+        }) 
+     }
 
     /**
      * handleSaveImage() to save the selected image.
@@ -175,7 +200,7 @@ class ContactInfoProfileUpdate extends React.Component {
             }, () => {
                 const elementData = document.getElementById("CameraContainer")
                 cropme = new Cropme(elementData, WebChatCropOption);
-                var readerFile = new FileReader();
+                let readerFile = new FileReader();
                 readerFile.onload = function (e) {
                     cropme.bind({
                         url: e.target.result
@@ -190,25 +215,6 @@ class ContactInfoProfileUpdate extends React.Component {
                 readerFile.readAsDataURL(Imgfile);
             })
         }
-    }
-
-
-    /**
-     * handleVCardClose() method to maintain state for view profile popup close window state.
-     */
-    handleVCardClose = () => {
-        this.setState({
-            viewEmojiUsername: false,
-            viewEmojiStatus: false,
-            viewEdit: true,
-            viewEditStatus: true,
-            viewTick: true,
-            viewTickStatus: true,
-            charCount: false,
-            charCountStatus: false,
-            showImgDropDown: false,
-            showProfilePhotoRemove: false
-        });
     }
 
     /**
@@ -353,9 +359,6 @@ class ContactInfoProfileUpdate extends React.Component {
         });
     }
 
-    checkNotFound = (event) => {
-        event.target.src = SampleProfile
-    }
     /**
      * render() method to render the ContactInfoProfileUpdate Component into browser.
      */
@@ -389,9 +392,9 @@ class ContactInfoProfileUpdate extends React.Component {
                             getImageUrl={this.getImageUrl}
                             onclickHandler={(e) => profileImg !== SampleGroupProfile ? this.handleProfileImageShow(e) : null}
                         />
-                        <i className="camera-edit" onClick={(e) => this.handleProfileImgDropDown(e)}>
+                        {this.state.isLocalUserInGroup ?   <i className="camera-edit" onClick={(e) => this.handleProfileImgDropDown(e)}>
                             <EditCamera />
-                        </i>
+                            </i> : null }
                         {showImgDropDown &&
                             <ul className="profile-dropdown">
                                 {profileImg && <>

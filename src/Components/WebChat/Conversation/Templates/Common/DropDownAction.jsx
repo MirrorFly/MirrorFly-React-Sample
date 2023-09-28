@@ -56,6 +56,7 @@ const DropDownComponent = (props = {}) => {
     isSender,
     msgType,
     favouriteStatus,
+    messageObject
   } = props;
   const featureStateData = useSelector((state) => state.featureStateData);
   const {
@@ -69,20 +70,20 @@ const DropDownComponent = (props = {}) => {
   const [dropposition, setDropPosition] = useState(false);
 
   React.useLayoutEffect(() => {
-    var messagenew = document.getElementById(`${msgId}`);
-    var dropDDOwn = document.querySelector(".menu-dropdown");
-    if (!messagenew) return;
-    if (ClientHeight - messagenew.getBoundingClientRect().top - 85 < dropDDOwn.getBoundingClientRect().height) {
+    const messageNew = document.getElementById(`${msgId}`);
+    const dropDown = document.querySelector(".menu-dropdown");
+    if (!messageNew) return;
+    if (ClientHeight - messageNew.getBoundingClientRect().top - 85 < dropDown.getBoundingClientRect().height) {
       setDropPosition(true);
-      let updateHeigth = dropDDOwn.getBoundingClientRect().height + 4;
+      let updateHeigth = dropDown.getBoundingClientRect().height + 4;
       let heigth = `-${updateHeigth}px`;
       if (dropposition) {
-        dropDDOwn.style.top = heigth;
+        dropDown.style.top = heigth;
       }
     } else {
       setDropPosition(false);
     }
-    dropDDOwn.style.display = "block";
+    dropDown.style.display = "block";
   }, [dropposition]);
 
 
@@ -163,7 +164,7 @@ const DropDownComponent = (props = {}) => {
             <span>Download</span>
           </li>
         )}
-        {isReportEnabled && isSender &&
+        {isReportEnabled && isSender && messageObject !== undefined &&
           <li className="Report" title="Report">
             <i>
               <IconReport />

@@ -69,16 +69,17 @@ const UserFeedbackForm = (props = {}) => {
         }
     }
 
-    const pasteAsPlainTextFeedback = (e) => {
+    const pasteAsPlainTextFeedback = (e = {}) => {
         let text = feedback + e?.clipboardData?.getData('text/plain');
         text = stripTags(text);
         if (text.length >= maxFeedbackValue) {
             e.preventDefault();
-            text = text.substring(0, maxFeedbackValue)
-            if (feedback.length < maxFeedbackValue) {
-                document && document.execCommand('insertText', false, e?.clipboardData?.getData('text/plain').substring(0, maxFeedbackValue - feedback.length));
-            }
-        }
+            text = text.substring(0, maxFeedbackValue);
+              if (document && document.activeElement instanceof HTMLElement) {
+                const remainingText = e?.clipboardData?.getData('text/plain').substring(0, maxFeedbackValue - feedback.length);
+                document.activeElement.textContent += remainingText;
+              }
+        }        
         setFeedback(text);
     }
 
@@ -135,7 +136,14 @@ const UserFeedbackForm = (props = {}) => {
                         </div>
                     </div>
                     <div className='form_group contentEditable_wraper'>
-                        <div data-text="Tell us how we can improve" className='contentEditable' contentEditable={true} onInput={handleFeedbackChange} onKeyPress={onKeyPress} onPaste={pasteAsPlainTextFeedback}>
+                        <div 
+                            id='typingContainer'
+                            data-text="Tell us how we can improve" 
+                            className='contentEditable' 
+                            contentEditable={true} 
+                            onInput={handleFeedbackChange} 
+                            onKeyPress={onKeyPress} 
+                            onPaste={pasteAsPlainTextFeedback}>
                         </div>
                     </div>
 

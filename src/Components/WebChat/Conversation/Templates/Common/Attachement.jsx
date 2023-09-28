@@ -31,28 +31,6 @@ export default class Attachement extends Component {
     }
   };
 
-  openCamera = () => {
-    this.setState({ openCamera: true });
-  };
-
-  closeCamera = () => {
-    this.setState(
-      {
-        openCamera: false,
-        showAvailableOptions: !this.state.showAvailableOptions
-      },
-      () => {
-        this.props.onclose();
-      }
-    );
-  };
-
-  handleCameraTakenFile = (file) => {
-    file.fileDetails = {};
-    this.props.handleSendMediaMsg([file]);
-    this.closeCamera();
-  };
-
   selectFile = (event, type) => {
     this.props.selectFile(event, type);
   };
@@ -119,7 +97,7 @@ export default class Attachement extends Component {
                   </li>
                 }
 
-                {isImageAttachmentEnabled && isVideoAttachmentEnabled ?
+{isImageAttachmentEnabled && isVideoAttachmentEnabled && (
                   <li>
                     {" "}
                     <div
@@ -135,7 +113,9 @@ export default class Attachement extends Component {
                       <span>Photo / Video</span>
                     </div>
                   </li>
-                   :(isImageAttachmentEnabled) ?
+                )}
+
+                { isImageAttachmentEnabled && !isVideoAttachmentEnabled && (
                     <li>
                       {" "}
                       <div
@@ -151,7 +131,8 @@ export default class Attachement extends Component {
                         <span>Photo </span>
                       </div>
                     </li>
-                    :(isVideoAttachmentEnabled) &&
+                )}    
+                { !isImageAttachmentEnabled && isVideoAttachmentEnabled && (
                   <li>
                     {" "}
                     <div
@@ -167,7 +148,8 @@ export default class Attachement extends Component {
                       <span>Video </span>
                     </div>
                   </li>
-                  }
+                )}
+                
                 {isImageAttachmentEnabled ?
                   <li>
                     {" "}

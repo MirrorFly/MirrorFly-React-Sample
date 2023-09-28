@@ -31,7 +31,7 @@ const Members = (props = {}) => {
             <ProfileImage
                 chatType={'chat'}
                 userToken={token}
-                imageToken={thumbImage !== "" ? thumbImage : image}
+                imageToken={(thumbImage && thumbImage !== "") ? thumbImage : image}
                 emailId={emailId}
                 temporary={true}
                 name={iniTail}

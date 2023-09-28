@@ -57,8 +57,13 @@ const refreshFetch = (configuration) => {
                             throw error
                         })
                         .then(() => {
-                            const responseURL = `${REACT_APP_API_URL}/media/${key}?mf=${retrieveToken()}`;  
-                            return fetch(responseURL).then(response => {
+                            const responseURL = `${REACT_APP_API_URL}/media/${key}}`;  
+                            const reqOptions = {
+                                headers: {
+                                    'Authorization': retrieveToken()
+                                }
+                            }
+                            return fetch(responseURL, reqOptions).then(response => {
                                 return handleFetchResponse(response);
                               })
                               .then(handleErrors)

@@ -63,8 +63,10 @@ export default class VideoPlayer extends React.Component {
   getStyle = () => {
     const { webWidth, webHeight, visibility } = this.state;
     return {
-      width: `${webWidth}px`,
-      height: `${webHeight}px`,
+      width:"100%",
+      height:"100%",
+      maxWidth: `${webWidth}px`,
+      maxHeight: `${webHeight}px`,
       visibility: visibility ? "visible" : "hidden"
     };
   };
@@ -92,7 +94,7 @@ export default class VideoPlayer extends React.Component {
   // so videojs won't create additional wrapper in the DOM
   // see https://github.com/videojs/video.js/pull/3856
   render() {
-    const { palyStatus = true } = this.state;
+    const { palyStatus = true, visibility = false } = this.state;
     const { deleteOption = false, msgId, autoPlay, fileType = "" } = this.props;
     return (
       <div data-jest-id={"jest_onClick"} onClick={fileType === "audio" ? () => this._onClick() : null}>
@@ -105,6 +107,7 @@ export default class VideoPlayer extends React.Component {
 
         {deleteOption && <div className="uploadImagePreview"></div>}
         <div style={this.props.fileType === "video" ? this.getStyle() : {}} data-vjs-player>
+        <img style={{visibility : visibility ? "hidden" : "visible"}} src={this.props.thumb_image} className="data" alt={this.props.fileName} />
           <video
             preload="auto"
             data-msgid={msgId}

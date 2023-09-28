@@ -18,7 +18,7 @@ import { setCaretPosition } from "../../../Helpers/Chat/ContentEditableEle";
 import Camera from "../Camera";
 import { getCameraPermission } from "./Templates/Common/Media";
 import { TYPE_DELAY_TIME } from "../../../Helpers/Constants";
-import { blockOfflineMsgAction, isBoxedLayoutEnabled } from "../../../Helpers/Utility";
+import { blockOfflineMsgAction, isBoxedLayoutEnabled, placeCaretAtEnd } from "../../../Helpers/Utility";
 import { get as _get } from "lodash";
 import Store from "../../../Store";
 import { UpdateTypedMessage } from "../../../Actions/ChatHistory";
@@ -26,22 +26,22 @@ import { encryptAndStoreInLocalStorage } from "../WebChatEncryptDecrypt";
 import MentionUserList from "./Templates/Common/MentionUserList";
 import { getUserDetails } from "../../../Helpers/Chat/User";
 function debounce(func, wait, immediate) {
-  var timeout;
+  let timeout;
   return function () {
-    var context = this,
+    let context = this,
       args = arguments;
-    var later = function () {
+    let later = function () {
       timeout = null;
       if (!immediate) func.apply(context, args);
     };
-    var callNow = immediate && !timeout;
+    let callNow = immediate && !timeout;
     clearTimeout(timeout);
     timeout = setTimeout(later, wait);
     if (callNow) func.apply(context, args);
   };
 }
 
-var typing = false,
+let typing = false,
   lastTypingTime = 0;
 class WebChatMessagesComposing extends Component {
   constructor(props) {
@@ -64,7 +64,6 @@ class WebChatMessagesComposing extends Component {
     };
     this.position = 0;
     this.timeout = 0;
-    this.gonetimeout = 0;
     this.selectedText = null;
     encryptAndStoreInLocalStorage("recordingStatus", true);
     this.cameraPermissionTracks = [];
@@ -86,28 +85,11 @@ class WebChatMessagesComposing extends Component {
         },
         () => {
           const msgContent = document.getElementById("typingContainer");
-          msgContent && this.placeCaretAtEnd(msgContent);
+          msgContent && placeCaretAtEnd(msgContent);
         }
       );
     }
   }
-
-  placeCaretAtEnd = (el) => {
-    el.focus();
-    if (typeof window.getSelection != "undefined" && typeof document.createRange != "undefined") {
-      var range = document.createRange();
-      range.selectNodeContents(el);
-      range.collapse(false);
-      var sel = window.getSelection();
-      sel.removeAllRanges();
-      sel.addRange(range);
-    } else if (typeof document.body.createTextRange != "undefined") {
-      var textRange = document.body.createTextRange();
-      textRange.moveToElementText(el);
-      textRange.collapse(false);
-      textRange.select();
-    }
-  };
 
   componentDidUpdate(prevProps = {}) {
     const { sendMessgeType, dragOnContainer: { draggedId = "" } = {} } = this.props;
@@ -119,7 +101,7 @@ class WebChatMessagesComposing extends Component {
     }
     const messageContent = document.getElementById("typingContainer");
     if (prevProps.sendMessgeType !== sendMessgeType) {
-      messageContent && this.placeCaretAtEnd(messageContent);
+      messageContent && placeCaretAtEnd(messageContent);
       return;
     }
 
@@ -144,10 +126,11 @@ class WebChatMessagesComposing extends Component {
           showCamera: false
         },
         () => {
-          messageContent && this.placeCaretAtEnd(messageContent);
+          messageContent && placeCaretAtEnd(messageContent);
         }
       );
     }
+
   }
 
   componentWillUnmount() {
@@ -157,7 +140,7 @@ class WebChatMessagesComposing extends Component {
   handleMessage = (event = {}) => {
     const { value = "" } = _get(event, "target", {});
     let temp = document.createElement("div");
-    temp.innerHTML = value;
+    temp.innerHTML = value.trim();
     let mentionedUiElements = temp.getElementsByClassName("mentioned");
     Array.from(mentionedUiElements).forEach((e) => {
       e.innerHTML = "@[?]"
@@ -175,7 +158,7 @@ class WebChatMessagesComposing extends Component {
             (value.length === 1 && value === "\n")
             ? ""
             : value,
-        typingMessageOriginal: typingMessageOriginal
+        typingMessageOriginal: typingMessageOriginal,
       },
       () => {
         Store.dispatch(UpdateTypedMessage({ chatId: this.props.jid, message: this.state.typingMessage }));
@@ -184,10 +167,9 @@ class WebChatMessagesComposing extends Component {
   };
 
   handleEmojiText = (emojiObject = "") => {
-
     const messageContent = document.getElementById("typingContainer");
-    let position = this.position;
-    let text = "";
+    let position;
+    let text;
     // When user select all the text & choose emoji means,
     // Need to replace the emoji with existing content.
     // That's why below we check condition, selectedText & current state typingMessage is equal
@@ -201,31 +183,50 @@ class WebChatMessagesComposing extends Component {
       text = start + emojiObject + end;
       position = this.position + _get(emojiObject, "length", 0);
     }
-    let filteredHtml = text.toString().includes('@') && text.substr(text.lastIndexOf('@') + 1).split(' ')[0];
+    let updatedText = text.replace("&amp;", "&");
+    let filteredHtml = "";
     this.setState(
       {
         typingMessage: text,
-        typingMessageOriginal: text,
-        showEmoji: this.state.showMention === true ? false : this.state.showEmoji,
-        searchEmoji: filteredHtml
+        typingMessageOriginal: text
       },
       () => {
-        this.delay();
-        Store.dispatch(UpdateTypedMessage({ chatId: this.props.jid, message: this.state.typingMessage }));
-        this.setCursorPosition(position);
-        setCaretPosition(messageContent, this.position);
-        this.state.showMention === true && this.handleSearchView(filteredHtml)
-      }
+          this.delay();
+          Store.dispatch(UpdateTypedMessage({ chatId: this.props.jid, message: this.state.typingMessage }));
+          if (this.state.typingMessage.includes("&amp;") === true) {
+            this.setCursorPosition(position);
+            setCaretPosition(messageContent, position);
+            placeCaretAtEnd(messageContent);
+          } else {
+            if (this.state.typingMessage.includes("span") === false) {
+              this.setCursorPosition(position);
+              setCaretPosition(messageContent, this.position);
+            } else {
+              this.setCursorPosition(position);
+              placeCaretAtEnd(messageContent)
+            }
+          }
+      
+          if(this.props.chatType === "groupchat") {
+            if ((this.state.typingMessage.length === this.position) && this.state.showMention === true) {              
+              filteredHtml = updatedText.toString().includes('@') && updatedText.substring(updatedText.lastIndexOf('@')+1, this.position);
+            } else if ((this.state.typingMessage.length !== this.position) && this.state.showMention === true) {
+              const atIndex = updatedText.lastIndexOf('@', this.position);
+              const checkBeforeAt = updatedText.charAt(atIndex-1)
+              const result = updatedText.substring(atIndex+1, this.position);
+              if (checkBeforeAt.includes(' ') === true || checkBeforeAt === "") {
+                filteredHtml = result
+              }
+            }
+            if (this.state.showMention === true) {
+              const usersList = this.handleSearchView(filteredHtml);
+              if (usersList.length < 1) this.setState({showEmoji: true})
+              else this.setState({showEmoji: false})
+            }
+          }
+       }
     );
     if (messageContent) messageContent.selectionEnd = position;
-
-    const regex = new RegExp("&amp;", "gi");
-    const duplicateHtml = regex.test(messageContent?.innerHTML);
-    if (duplicateHtml) {
-      setTimeout(() => {
-        this.placeCaretAtEnd(messageContent);
-      }, 100)
-    }
   };
 
   setCursorPosition = (pos) => {
@@ -337,33 +338,42 @@ class WebChatMessagesComposing extends Component {
 
   handleShowEmojis = () => {
     const messageContent = document.getElementById("typingContainer");
+    let replaceText = this.state.typingMessage.replace("&amp;", "&");
     this.setState(
       {
         showEmoji: !this.state.showEmoji,
-        showAttachement: false,
-        searchEmoji: ""
+        showAttachement: false
       },
       () => {
         this.updateEmojiPopUpState();
-        this.placeCaretAtEnd(messageContent)
+        if(this.state.typingMessage.includes("&amp;") === true) {
+          if(this.position === this.state.typingMessage.length) {
+          placeCaretAtEnd(messageContent)
+          }
+        } else {
+          this.setCursorPosition(this.position);
+          setCaretPosition(messageContent, this.position);
+        }
       }
     );
+    
     if (this.props.chatType === "groupchat") {
       const groupMemberList = this.props.groupsMemberListData?.data?.participants;
       let groupList = groupMemberList.filter(participants => participants.userId !== this.props.vCardData.data.userId);
       groupList = groupList.map((obj) => {
-        obj.rosterData = getUserDetails(obj.userId)
+        obj.rosterData = getUserDetails(obj.userId);
         return obj;
       });
-      var regex = /^[a-zA-Z0-9\s!@#$%^&*(),.?":{}|<>]+$/;
-      if (messageContent.innerHTML.slice(-1) === '@' && messageContent.innerHTML.slice(-2,-1).length < 1 ||
-        (messageContent.innerHTML.slice(-1) === '@' && messageContent.innerHTML.slice(-2,-1) === ' ') ||
-        (messageContent.innerHTML.slice(-3,-2) === '@' && regex.test(messageContent.innerHTML.slice(-2,-1)) === false)) {
-        this.setState({
-          showMention: true,
-          GroupParticiapantsList: this.state.searchEmoji !== "" ? this.handleSearchView(this.state.searchEmoji) : groupList
-        })
-      }
+
+        const lastIndex = replaceText.lastIndexOf('@');
+        const result = replaceText.substring(lastIndex-1, lastIndex);
+        if ((lastIndex < 0 === false) && result.length < 1 || result === ' ') {
+          this.setState({
+            showMention: true,
+            GroupParticiapantsList:
+              this.state.searchEmoji !== "" ? this.handleSearchView(this.state.searchEmoji) : groupList
+          });
+        }
     }
   };
 
@@ -496,21 +506,25 @@ class WebChatMessagesComposing extends Component {
     this.setState({
       showMention: view,
       GroupParticiapantsList: groupData,
-    });
+      },
+      () => {
+        if (this.state.showMention === true) this.setState({showEmoji: false})
+      }
+    );
   };
 
   handleMentionedData = (userId, chatName) => {
     let rosterData = getUserDetails(userId);
     let displayName = rosterData.displayName;
-    let position = this.position;
+    let position;
     let text = "";
     const messageContent = document.getElementById("typingContainer");
     let start = messageContent?.innerHTML?.substring(0, this.position);
     start = start.substring(0, start.lastIndexOf("@"));
     const end = messageContent?.innerHTML?.substring(this.position);
-    const uihtml = ` <span data-mentioned="${userId}" class="mentioned blue">@${displayName}</span> `;
+    const uihtml = `<span data-mentioned="${userId}" class="mentioned blue" contenteditable="false">@${displayName}</span> `;
     text = start + uihtml + end;
-    position = this.position + _get(uihtml, "length", 0);
+    position = this.position + _get(uihtml, "length", 0) -1;
     let temp = document.createElement("div");
     temp.innerHTML = text;
     let mentionedUiElements = temp.getElementsByClassName("mentioned");
@@ -528,13 +542,13 @@ class WebChatMessagesComposing extends Component {
     }, () => {
       this.setCursorPosition(position);
       setCaretPosition(messageContent, position);
-      chatName === this.chatScreenName && this.placeCaretAtEnd(messageContent)
+      chatName === this.chatScreenName && placeCaretAtEnd(messageContent)
       Store.dispatch(UpdateTypedMessage({ chatId: this.props.jid, message: this.state.typingMessage }));
     });
   };
 
   removeMentionedUserId = (arr, value) => {
-    var index = arr.indexOf(value);
+    const index = arr.indexOf(value);
     if (index > -1) {
       arr.splice(index, 1);
     }
@@ -556,21 +570,29 @@ class WebChatMessagesComposing extends Component {
       obj.rosterData = getUserDetails(obj.userId)
       return obj;
     });
-    const searchResult = groupList.filter((ele) => ele.userProfile.nickName.toLowerCase().toString().includes(searchWith.toLowerCase()))
+    if(searchWith.length < 1){
+      return [];
+    } 
+    const searchResult = groupList.filter((ele) => ele.userProfile.nickName.toLowerCase().toString().includes(searchWith))
     return searchResult;
   };
 
-  handleSearchView = (searchValue) => {
+  handleSearchView = (searchChar) => {
+    let searchValue = searchChar.includes("&amp;") === true ? searchChar.replace("&amp;", "&") : searchChar
     clearTimeout(this.timer);
     this.timer = setTimeout(() => {
       this.setState({
         searchEnable: searchValue === "" ? false : true,
         searchValue: searchValue,
+        searchEmoji: searchValue,
         GroupParticiapantsList: this.groupMemberSearchList(searchValue)
-
       })
-
     }, 0);
+    return this.groupMemberSearchList(searchValue);
+  }
+
+  handleSearchEmojiView = (searchValue = "") => {
+    this.setState({ searchEmoji: searchValue });
   }
 
   findReply = (jid = "") => {
@@ -609,7 +631,7 @@ class WebChatMessagesComposing extends Component {
     );
   };
 
-  renderCameraCapture = () => {
+  renderCameraCapture = (chatId) => {
     return (
       <Camera
         stopCameraPermissionTracks={this.stopCameraPermissionTracks}
@@ -617,6 +639,7 @@ class WebChatMessagesComposing extends Component {
         cropEnabled={false}
         onSuccess={this.handleCameraTakenFile}
         chatType={this.props.chatType}
+        chatId={chatId}
       />
     );
   };
@@ -659,13 +682,14 @@ class WebChatMessagesComposing extends Component {
       isAudioAttachmentEnabled = false,
       isDocumentAttachmentEnabled = false
     } = featuresAvailable;
+    let isAttachment = true;
     if (!isImageAttachmentEnabled && !isVideoAttachmentEnabled &&
       !isAudioAttachmentEnabled && !isDocumentAttachmentEnabled) {
-      isAttachmentEnabled = false;
+        isAttachment = false;
     }
     const { jid, loaderStatus, vCardData, rosterData, closeReplyAction, chatType, groupMemberDetails } = this.props;
     const { autoReplay = false, autoMsgfind = {} } = this.findReply(jid);
-
+    const { chatId = "" } = _get(this.props, "activeChatData.data", "");
     return (
       <footer className={`${loaderStatus ? "v-hidden" : ""} footer `}>
         <OutsideClickHandler onOutsideClick={this.outsideClick}>
@@ -683,20 +707,20 @@ class WebChatMessagesComposing extends Component {
             />
           ) : null}
         </OutsideClickHandler>
-        {(GroupParticiapantsList.length > 0 && showMention && showEmoji === false) ?
+        {GroupParticiapantsList.length > 0 && showMention && showEmoji === false && (
           <OutsideClickHandler onOutsideClick={() => this.handleMentionView(false)}>
             <MentionUserList
               handleMentionedData={this.handleMentionedData}
               GroupParticiapantsList={GroupParticiapantsList}
               chatScreenName={"conversationScreen"} />
-           </OutsideClickHandler>
-          : (showEmoji === true && GroupParticiapantsList.length > 0 && showMention === true) ? 
+          </OutsideClickHandler>
+        )}
+        {showEmoji === true && GroupParticiapantsList.length > 0 && showMention === true && (
             <MentionUserList
               handleMentionedData={this.handleMentionedData}
               GroupParticiapantsList={GroupParticiapantsList}
               chatScreenName={"conversationScreen"} />
-          : null
-        }
+        )}
 
         {recordingStatus && Config.attachement && showAttachement && (
           <Attachement
@@ -714,12 +738,12 @@ class WebChatMessagesComposing extends Component {
             {isBoxedLayoutEnabled() ?
               <>
                 <Modal containerId="container">
-                  {this.renderCameraCapture()}
+                  {this.renderCameraCapture(chatId)}
                 </Modal>
               </>
               :
               <>
-                {this.renderCameraCapture()}
+                {this.renderCameraCapture(chatId)}
               </>
             }
           </>
@@ -745,6 +769,7 @@ class WebChatMessagesComposing extends Component {
               attachment={featuresAvailable}
               seletedFiles={seletedFiles}
               jid={jid}
+              chatId={chatId}
               selectedSlide={selectedSlide}
               onClosePreview={this.handleShowHidePreview}
               onClickSend={this.handleSendMediaMsg}
@@ -761,7 +786,7 @@ class WebChatMessagesComposing extends Component {
               <ContentEditable
                 chatScreenName={"conversationScreen"}
                 handleMentionView={this.handleMentionView}
-                handleSearchView={this.handleSearchView}
+                handleSearchView={this.handleSearchEmojiView}
                 loaderStatus={loaderStatus}
                 html={typingMessage}
                 id="typingContainer"
@@ -778,7 +803,7 @@ class WebChatMessagesComposing extends Component {
                 handleImagePaste = {this.handleImgaePaste}
               />
             <div className="intraction icon">
-              {recordingStatus && Config.attachement && isAttachmentEnabled && (
+              {recordingStatus && Config.attachement && isAttachmentEnabled && isAttachment && (
                 <i
                   title="Attachment"
                   className={showAttachement ? "attachment open" : "attachment"}

@@ -6,7 +6,7 @@ export const CombineLocale = (locale) => {
         combineAll[key] = {};
     }
     for (let key in locale) {
-        for (var lang in locale[key]) {
+        for (let lang in locale[key]) {
             if(combineAll.hasOwnProperty(lang)) {
                 combineAll[lang][key] = locale[key][lang];
             }

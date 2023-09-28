@@ -33,10 +33,6 @@ class Connecting extends Component{
         this.startTimer();
     }
 
-    handleLangChange = (val) => {
-        this.props.showComponent(val);            
-    }
-
     startTimer(){
         timer = setTimeout(() => {
             this.setState({connectingIssue: true, loading: false});
@@ -137,10 +133,10 @@ class Connecting extends Component{
                             name = {initialName}
                             chatType={chatType}
                             temporary={false}
-                            imageToken={rosterData.thumbImage !== "" ? rosterData.thumbImage : rosterData.image}
+                            imageToken={(rosterData.thumbImage && rosterData.thumbImage !== "") ? rosterData.thumbImage : rosterData.image}
                         />
                     </div>      
-                    <CallControlButtons 
+                        <CallControlButtons 
                             handleEndCall={this.endCall} 
                             handleAudioMute={this.handleAudioMute}
                             handleVideoMute={this.handleVideoMute}

@@ -111,7 +111,8 @@ class InviteParticipants extends React.Component {
             callType:this.callConnectionData.callType,
             currentCallUsersLength: this.currentCallUsers.length,
             closePopup: this.props.closePopup,
-            currentCallUsers: this.currentCallUsersArray
+            currentCallUsers: this.currentCallUsersArray,
+            callBehaviour: this.props.callBehaviour
         });
     }
 

@@ -10,8 +10,11 @@ const CallerProfileList = (props) => {
         props.rosterData.participantsData.map(
           (el, i) =>
             i < MAX_PROFILE_LIMIT && (
-              <div className="calleeProfiles" key={i}>
-                <ImageComponent chatType={"chat"} imageToken={el.thumbImage !== "" ? el.thumbImage : el.image} name={el.initialName} />
+              <div className="calleeProfiles" key={el.initialName}>
+                <ImageComponent 
+                  chatType={"chat"} 
+                  imageToken={(el.thumbImage && el.thumbImage !== "") ? el.thumbImage : el.image} 
+                  name={el.initialName} />
               </div>
             )
         )}

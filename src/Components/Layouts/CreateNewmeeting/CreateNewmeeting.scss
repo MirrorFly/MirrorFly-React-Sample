@@ -1,0 +1,198 @@
+.create_new_meeting_wraper {
+    position: relative;
+
+    .create_new_meeting {
+        background-color: #F8F8F8;
+        display: flex;
+        align-items: center;
+        padding: 0.45em 1.125em 0.45em 1.25em;
+        border: 1px solid #F8F8F8;
+        font-size: 19px;
+        cursor: pointer;
+        width: 100%;
+
+        .links_icon {
+            width: 2.688em;
+            height: 2.688em;
+            background-color: #E3E9F9;
+            flex-shrink: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+
+            svg {
+                width: 0.75em;
+                height: 0.3125em;
+
+                path {
+                    fill: #3276E2;
+                    stroke: #3276E2;
+                }
+            }
+        }
+
+        .create_meeting_info {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            text-align: left;
+            padding-left: .938em;
+
+            strong {
+                font: normal normal 0.795rem/100% var(--medium);
+                letter-spacing: 0px;
+                color: #000000;
+                margin-bottom: 5px;
+                width: 100%;
+                display: inline-block;
+            }
+
+            span {
+                width: 100%;
+                display: inline-block;
+                font: normal normal 0.625rem/100% var(--regular);
+                letter-spacing: 0px;
+                color: #767676;
+            }
+        }
+    }
+
+    .Create_meeting_popup {
+        position: absolute;
+        width: 12.7em;
+        background: #FFFFFF;
+        box-shadow: 3px 3px 8px #98989840;
+        border: 1px solid #ECECEC;
+        border-radius: 0.5em;
+        left: 85%;
+        top: 1.25em;
+        z-index: 9;
+        padding: 0.75em;
+
+        h2 {
+            font: normal normal 0.75rem/100% var(--semibold);
+            letter-spacing: 0px;
+            color: #000000;
+            margin-bottom: 5px;
+        }
+
+        p {
+            font: normal normal 0.625rem/120% var(--regular);
+            letter-spacing: 0px;
+            color: #767676;
+            margin-bottom: 12px;
+        }
+
+        .input_wraper {
+            width: 100%;
+            height: 2.625em;
+            background: #F2F2F2;
+            display: flex;
+            padding: 0.875em 0.75em;
+            align-items: center;
+            margin-bottom: 0.75em;
+            border-radius: 0.375em;
+
+            .link {
+                border-radius: 0.375em;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+                overflow: hidden;
+                font: normal normal 0.75rem/100% var(--regular);
+                letter-spacing: 0px;
+                color: #6580CB;
+                flex: 1;
+                width: 100%;
+                padding-right: 0.625em;
+            }
+
+            .copy_btn {
+                width: 0.875em;
+                height: 1.0625em;
+                flex-shrink: 0;
+                padding: 0;
+                border: none;
+                cursor: pointer;
+
+                svg path {
+                    fill: #575757;
+                }
+
+                &:hover {
+                    transition: 150ms ease-in-out;
+
+                    svg {
+                        path {
+                            fill: #3276E2;
+                            transition: 150ms ease-in-out;
+                        }
+                    }
+                }
+            }
+        }
+
+        .invite_new_meeting {
+            cursor: pointer;
+            font: normal normal 0.75rem/100% var(--semibold);
+            letter-spacing: 0px;
+            width: 100%;
+            padding:9px 0;
+            color: #3276E2;
+            border: 1px solid #3276E2;
+            border-radius: 1.1875em;
+            background: #fff;
+            transition: 150ms ease-in-out;
+
+            &:hover {
+                background: #1c5fca;
+                color: #fff;
+                transition: 150ms ease-in-out;
+            }
+        }
+
+        .join_new_meeting {
+            cursor: pointer;
+            width: 100%;
+            padding:9px 0;
+            margin-top: 0.75em;
+            border: 1px solid #3276E2;
+            font: normal normal 0.75rem/100% var(--semibold);
+            letter-spacing: 0px;
+            color: #FFFFFF;
+            background: #3276E2;
+            border-radius: 1.1875em;
+            margin-bottom: 0.75em;
+
+            &:hover {
+                background: #1c5fca;
+                color: #fff;
+                transition: 150ms ease-in-out;
+            }
+        }
+    }
+
+    .border {
+        border-top: 1px solid #D8D8D8;
+    }
+
+    @media screen and (max-width:1024px) {
+        .Create_meeting_popup {
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+        &.open::before {
+            position: fixed;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+            background: #00000020;
+            content: '';
+        }
+    }
+}

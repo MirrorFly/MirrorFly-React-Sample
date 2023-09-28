@@ -71,8 +71,8 @@ export const messageDeliveryStatus = {
 export const msgStatusOrder = [MSG_PROCESSING_STATUS_ID,MSG_SENT_ACKNOWLEDGE_STATUS_ID,MSG_DELIVERED_STATUS_ID,MSG_SEEN_STATUS_ID];
 
 export const groupstatus = (publisherId, toUserId, status, roster, chatType = CHAT_TYPE_GROUP) => {
-  var publisherName = getContactNameFromRoster(getDataFromRoster(publisherId)) || getFormatPhoneNumber(publisherId);
-  var toUserName = getContactNameFromRoster(getDataFromRoster(toUserId)) || getFormatPhoneNumber(toUserId);
+  const publisherName = getContactNameFromRoster(getDataFromRoster(publisherId)) || getFormatPhoneNumber(publisherId);
+  const toUserName = getContactNameFromRoster(getDataFromRoster(toUserId)) || getFormatPhoneNumber(toUserId);
   const groupName = isGroupChat(chatType) ? "this group" : "broadcast";
   const isPublisherLocalUser = isLocalUser(publisherId);
   const isToUserLocalUser = isLocalUser(toUserId);

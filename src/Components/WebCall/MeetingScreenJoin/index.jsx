@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import {
@@ -15,7 +15,6 @@ import CallLinkStatus from "./CallLinkStatus";
 import MaxParticipants from "./MaxParticipants";
 import SDK from "../../SDK";
 import { getLocalUserDetails } from "../../../Helpers/Chat/User";
-import { CALL_STATUS_CONNECTED } from "../../../Helpers/Call/Constant";
 import Video from "../Video";
 import { muteLocalAudio, muteLocalVideo, resetCallData } from "../../callbacks";
 import { callIntermediateScreen, isMuteAudioAction, showConfrence } from "../../../Actions/CallAction";
@@ -24,14 +23,18 @@ import { getCallDisplayDetailsForOnetoManyCall } from "../../../Helpers/Call/Cal
 import { showModal } from "../../../Actions/PopUp";
 
 const MeetingScreenJoin = (props = {}) => {
+  const prevProps = useRef(props);
   const [audioMute, setAudioMute] = useState(false);
   const [videoMute, setVideoMute] = useState(false);
+  const [readyToJoinActive, setReadyToJoinActive] = useState(false)
+  const [callJoined, setCallJoined] = useState(false)
   const [activeScreen, setActiveScreen] = useState({
     loading: true,
     readyToJoin: false,
     callEnd: false,
     invalidLink: false,
-    maxParticipants: false
+    maxParticipants: false,
+    behavior: "call"
   });
   const [userCallDetails, setUserCallDetails] = useState({});
   const { data: conferenceData = {} } = useSelector((state) => state.showConfrenceData);
@@ -39,10 +42,10 @@ const MeetingScreenJoin = (props = {}) => {
   const { data: callData = {} } = useSelector((state) => state.callIntermediateScreen);
 
   useEffect(() => {
-    if (callData.usersList?.length) {
+    if (callData.usersList) {
       let updateArr = getCallDisplayDetailsForOnetoManyCall(callData.usersList || [], "subscribe");
       setUserCallDetails(updateArr);
-    } else if (callData.usersList?.length === 0 && activeScreen.readyToJoin) {
+    } else if (callData.usersList?.length === 0 && activeScreen.readyToJoin && activeScreen.behavior === "call") {
       SDK.unsubscribeCall();
       setActiveScreen({
         ...activeScreen,
@@ -64,6 +67,11 @@ const MeetingScreenJoin = (props = {}) => {
     if (roomLink && vcardData.nickName) {
       SDK.subscribeCall(roomLink, vcardData.nickName, (response, error) => {
         console.log("subscribeCall :>> ", response, error);
+        const behaviorResponse = SDK.getCallBehaviour();
+        let behavior = "call";
+        if (behaviorResponse.statusCode === 200) {
+          behavior = behaviorResponse.data;
+        }
         if (error) {
           if (error.statusCode === 100601) {
             updateObj.invalidLink = true;
@@ -76,6 +84,8 @@ const MeetingScreenJoin = (props = {}) => {
         } else {
           if (response.statusCode === 100500) {
             updateObj.readyToJoin = true;
+            updateObj.behavior = behavior;
+            setReadyToJoinActive(true)
           }
         }
         setActiveScreen(updateObj);
@@ -90,17 +100,12 @@ const MeetingScreenJoin = (props = {}) => {
   }, []);
 
   useEffect(() => {
-    const { callStatusText = "", status = "" } = conferenceData || {};
-    if (activeScreen.loading && callStatusText === CALL_STATUS_CONNECTED && status === "LOCALSTREAM") {
-      Store.dispatch(callIntermediateScreen({ show: false }));
+    if ((prevProps.current.connectionStatus == "DISCONNECTED" || prevProps.current.connectionStatus == "RECONNECTING") && !callJoined) {
+      setReadyToJoinActive(false)
     }
-  }, [conferenceData]);
+    prevProps.current = props;
+  }, [props.connectionStatus]);
 
-  useEffect(() => {
-    if (Object.keys(conferenceData).length && conferenceData.localVideoMuted !== videoMute) {
-      setVideoMute(conferenceData.localVideoMuted);
-    }
-  }, [conferenceData.localVideoMuted]);
 
   const handleAudioMute = async () => {
     const audioMuteResult = await SDK.muteAudio(!audioMute);
@@ -151,7 +156,9 @@ const MeetingScreenJoin = (props = {}) => {
   };
 
   const handleTryAgain = () => {
-    subscribeToCall();
+    if(isOnline){
+      subscribeToCall();
+    }
   };
 
   const handleBackButton = () => {
@@ -165,7 +172,7 @@ const MeetingScreenJoin = (props = {}) => {
   };
 
   const handleJoinCall = async () => {
-    if (isOnline) {
+    if (isOnline && !callJoined) {
       setActiveScreen({
         ...activeScreen,
         loading: true
@@ -188,11 +195,14 @@ const MeetingScreenJoin = (props = {}) => {
           }
           setActiveScreen(updateObj);
         }
+        else {
+          setCallJoined(true)
+        }
       });
     }
   };
 
-  const { loading, readyToJoin, callEnd, invalidLink, maxParticipants } = activeScreen;
+  const { loading, readyToJoin, callEnd, invalidLink, maxParticipants, behavior } = activeScreen;
 
   return (
     <div className="join_meeting_wrapper">
@@ -220,13 +230,13 @@ const MeetingScreenJoin = (props = {}) => {
               <div className="m_video_container">
                 <div className="video_container">
                   <div className="alert-badge">
-                    {conferenceData?.localAudioMuted && (
+                    {audioMute && (
                       <div className={`badge-list ${conferenceData?.localVideoMuted ? "" : "videoOn"}`}>
                         <AudioOff /> <span>Microphone off</span>
                       </div>
                     )}
                   </div>
-                  {conferenceData?.localVideoMuted ? (
+                  {videoMute ? (
                     <div className="CameraOffAlert">
                       <span>Camera off</span>
                     </div>
@@ -268,6 +278,8 @@ const MeetingScreenJoin = (props = {}) => {
               handleTryAgain={handleTryAgain}
               handleCancel={handleBackButton}
               handleJoinCall={handleJoinCall}
+              behavior={behavior}
+              readyToJoinActive={readyToJoinActive}
             />
           </>
         )}

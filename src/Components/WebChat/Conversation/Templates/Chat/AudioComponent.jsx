@@ -4,27 +4,27 @@ import AudioPlayer from "react-h5-audio-player";
 import { ChatAudioRecorder, ChatAudioSender2 } from "../../../../../assets/images";
 import "../../../../../assets/scss/audioplayer.scss";
 import "react-h5-audio-player/lib/styles.css";
-import { isBlobUrl } from "../../../../../Helpers/Utility";
+import { getDbInstanceName, isBlobUrl } from "../../../../../Helpers/Utility";
 import { useSelector } from "react-redux";
+import { getBlobUrlFromToken } from "../../../../../Helpers/Chat/ChatHelper";
 
 const AudioComponent = (props = {}) => {
   const { messageObject = {}, uploadStatus, isSender, audioFileDownloadOnclick, mediaUrl = ""} = props;
-  const { msgId = "", msgBody: { media: { file_url = "", audioType = "" } = {} } = {} } = messageObject;
+  const { msgId = "", msgBody: { media: { file_url = "", audioType = "", file_key } = {} } = {} } = messageObject;
   const {mediaDownloadData, mediaDownloadingData} = useSelector((state) => state) || {};
 
   const [isPlaying, setPlaying] = useState(false);
   const [audioUrl, setAudioUrl] = useState(mediaUrl);
 
-
-  // const getAudio = async () => {
-  //   const audioBlobUrl = await getBlobUrlFromToken(file_url, getDbInstanceName("audio"), file_key);
-  //   setAudioUrl(audioBlobUrl);
-  // };
+  const getAudio = async () => {
+   const audioBlobUrl = await getBlobUrlFromToken(file_url, getDbInstanceName("audio"), file_key);
+   setAudioUrl(audioBlobUrl);
+  };
 
   useEffect(() => {
     if (mediaUrl !== "") return setAudioUrl(mediaUrl);
     if (isBlobUrl(file_url)) return setAudioUrl(mediaUrl);
-    // if (mediaUrl === "" && audioUrl === "") getAudio();
+    if (mediaUrl === "" && audioUrl === "") getAudio();
   }, [mediaUrl, msgId]);
 
   const handleOnPlayEnd = (e) => {
@@ -79,6 +79,9 @@ const AudioComponent = (props = {}) => {
           showSkipControls={false}
           showJumpControls={false}
           showVolumeControl={false}
+          customVolumeControls={[]}
+          customAdditionalControls={[]}
+          loop={false}
           onPlayError={(e) => console.log("handleOnPlayError", e)}
           onEnded={(e) => handleOnPlayEnd(e)}
           onPause={() => setPlaying(false)}

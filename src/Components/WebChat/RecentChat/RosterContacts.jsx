@@ -23,7 +23,7 @@ class RosterContacts extends React.Component {
             <ProfileImage
                 chatType={chatType || 'chat'}
                 userToken={token}
-                imageToken={thumbImage !== "" ? thumbImage : image}
+                imageToken={(thumbImage && thumbImage !== "") ? thumbImage : image}
                 emailId={emailId}
                 userId={userId}
                 name={contactName}

@@ -1,5 +1,5 @@
 import { isSingleChat } from './ChatHelper';
-import { REACT_APP_XMPP_SOCKET_HOST } from '../../Components/processENV';
+import { REACT_APP_CONTACT_SYNC, REACT_APP_XMPP_SOCKET_HOST } from '../../Components/processENV';
 import { CHAT_TYPE_SINGLE, CHAT_TYPE_GROUP } from './Constant';
 import { getFormatPhoneNumber } from '../Utility';
 import Store from '../../Store';
@@ -20,8 +20,7 @@ export const formatGroupIdToJid = (groupId) => {
 }
 
 export const isSingleChatJID = (jid) => {
-    if (jid.includes(`mix`)) return false;
-    return true;
+    return !jid.includes("mix");
 }
 
 /**
@@ -55,10 +54,14 @@ export const getContactNameFromRoster = (roster) => {
     if (roster.groupId) {
         return getGroupNameFromRoster(roster);
     }
-    // if (!roster.isFriend) {
-    //     return getFormatPhoneNumber(roster.userId);
-    // }
-    return roster.nickName || getFormatPhoneNumber(roster.mobileNumber) || roster.name;
+    if (!REACT_APP_CONTACT_SYNC) {
+        return roster.nickName || getFormatPhoneNumber(roster.mobileNumber) || roster.name;
+    } else {
+        if (!roster.isFriend && !roster.isDeletedUser) {
+            return getFormatPhoneNumber(roster.userId);
+        }
+        return roster.name || getFormatPhoneNumber(roster.mobileNumber) || roster.nickName;
+    }
 }
 
 export const initialNameHandle = (roster = {}, name = "") => {
@@ -72,7 +75,7 @@ export const initialNameHandle = (roster = {}, name = "") => {
 }
 
 export const arrayRoasterinitialNameHandle = (roster = [], name = "") => {
-    roster.map((ele) => {
+    roster.forEach((ele) => {
         if (_get(ele, "isFriend", false) !== false || _get(ele, "image", "") !== "") {
             return name;
         }
@@ -82,12 +85,17 @@ export const arrayRoasterinitialNameHandle = (roster = [], name = "") => {
 
 export const getUserInfoForSearch = (roster) => {
     if (!roster || typeof roster != "object") return roster;
-    const fieldsForSearch = ['nickName', 'groupName'];
-    // if (!roster.isFriend) {
-    //     fieldsForSearch.push('userId');
-    // }
+    let fieldsForSearch = [];
+    if (!REACT_APP_CONTACT_SYNC) {
+        fieldsForSearch = ['nickName', 'groupName'];
+    } else {
+        fieldsForSearch = ['name', 'groupName'];
+        if (!roster.isFriend) {
+            fieldsForSearch.push('userId');
+        }
+    }
     const userInfo = [];
-    fieldsForSearch.map(field => roster[field] && userInfo.push(roster[field]))
+    fieldsForSearch.forEach(field => roster[field] && userInfo.push(roster[field]))
     return userInfo;
 }
 
@@ -137,7 +145,7 @@ export const getDataFromSDK = async(userId) => {
     if(!requestUserids.includes(userId)){
         requestUserids.push(userId);
         const profileDetailsResponse = await SDK.getUserProfile(formatUserIdToJid(userId));
-        var index = requestUserids.indexOf(userId);
+        let index = requestUserids.indexOf(userId);
         if (index !== -1) {
             requestUserids.splice(index, 1);
         }
@@ -271,25 +279,25 @@ export const getLocalUserId = () => {
     return "";
 }
 
-export const handleMentionedUser = (text = "" ,mentionedUsersIds, mentionedMe, mentionedClass = "") => {
-    let UserId = mentionedUsersIds;
+export const handleMentionedUser = (text, mentionedUsersIds, mentionedMe, mentionedClass = "") => {
+    let userId = mentionedUsersIds;
     if (!text) return "";
-  const pattern = /@\[\?\]/gi;
-  if (mentionedUsersIds !== undefined && text !== "" && text.match(pattern) !== null && text.match(pattern).length > 0 && text.match(pattern) !== undefined) {
-    let content = text;
-    let particiantData =[]
-    particiantData = content.match(pattern);
-    particiantData.map((uidPattern) => {
-      const uid = uidPattern
-     for (let i = 0;i < UserId.length;  i++) {
-      const mentionedUserId = UserId[i];
-      let rosterData = getUserDetailsForMention(mentionedUserId);
-      let displayName = rosterData.displayName;
-      content = `${content.replace(uid, `<button data-mentioned="${mentionedUserId}" class='${mentionedClass} ${mentionedMe === mentionedUserId ?" tagged  ":" "} mentioned'><b>@</b> <i>${displayName !== undefined ? displayName : [] }</i> </button> `)}`;
-      }
-    });
-    return content;
-  }
+    const pattern = /@\[\?\]/gi;
+    if (mentionedUsersIds !== undefined && text !== "" && text.match(pattern) !== null && text.match(pattern).length > 0 && text.match(pattern) !== undefined) {
+        let content = text;
+        let particiantData =[]
+        particiantData = content.match(pattern);
+        particiantData.forEach((uidPattern) => {
+            const uid = uidPattern
+            for (let [i] of userId.entries()) {
+                const mentionedUserId = userId[i];
+                let rosterData = getUserDetailsForMention(mentionedUserId);
+                let displayName = rosterData.displayName;
+                content = content.replace(uid, "<button data-mentioned=\"" + mentionedUserId + "\" class='" + mentionedClass + (mentionedMe === mentionedUserId ? " tagged " : " ") + " mentioned'><b>@</b> <i>" + (displayName !== undefined ? displayName : []) + "</i> </button>");
+            }
+            });
+        return content;
+    }
   else {
     return text;
   }

@@ -1,10 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import "./MentionUserList.scss";
 import ImageComponent from '../../../../Common/ImageComponent';
-import { useEffect, useState } from 'react';
 
 function MentionUserList(props = {}) {
-    const { GroupParticiapantsList = [], handleMentionedData = () => { }, chatScreenName="" } = props;
+    const { GroupParticiapantsList = [], handleMentionedData = () => { }, chatScreenName = "", screenName = "" } = props;
     const[sortedGroupList, setSortedGroupList] = useState([]);
 
     useEffect(() => {
@@ -14,7 +13,7 @@ function MentionUserList(props = {}) {
       },[GroupParticiapantsList]);
 
     return (
-        <div className='mention_wraper'>
+        <div className='mention_wraper' style={{ zIndex: screenName === "camera-preview" ? 0 : -1 }} >
             <ul>
                 {sortedGroupList.map((obj) => {
                     let rosterData = obj.rosterData;
@@ -26,7 +25,7 @@ function MentionUserList(props = {}) {
                                     <div className='user_image'>
                                         <ImageComponent
                                          chatType={"chat"}
-                                         imageToken={rosterData.thumbImage !== "" ? rosterData.thumbImage : rosterData.image}
+                                         imageToken={(rosterData.thumbImage && rosterData.thumbImage !== "") ? rosterData.thumbImage : rosterData.image}
                                          name={displayName} />
                                     </div>
                                     <div className='user_name'>{displayName}</div>

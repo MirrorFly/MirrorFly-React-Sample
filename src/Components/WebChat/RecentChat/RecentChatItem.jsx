@@ -1,5 +1,4 @@
 import React, { Component, Fragment } from "react";
-import renderHTML from "react-render-html";
 import { connect } from "react-redux";
 import _get from "lodash/get";
 import { chatResetMessage } from "../../../Actions/GroupChatMessageActions";
@@ -73,7 +72,8 @@ import OutsideClickHandler from "react-outside-click-handler";
 import Modal from "../Common/Modal";
 import browserNotify from "../../../Helpers/Browser/BrowserNotify";
 import {getFromLocalStorageAndDecrypt} from "../WebChatEncryptDecrypt";
-
+const HtmlToReactParser = require('html-to-react').Parser;
+const htmlToReactParser = new HtmlToReactParser();
 
 const allowedIds = ["recent-menu", "recent-menu-archive", "recent-menu-archive-icon", "recent-menu-archive-text"];
 class RecentChatItem extends Component {
@@ -165,14 +165,14 @@ class RecentChatItem extends Component {
       };
       message = msgBody && typeof msgBody === "object" && msgBody.media ? msgBody.media.caption : undefined;
       message = message || (msgType === "image" ? "Photo" : capitalizeFirstLetter(msgType));
-      message = renderHTML(handleMentionedUser(getFormattedRecentChatText(message),msgBody.mentionedUsersIds ? msgBody.mentionedUsersIds : [],false));
+      message = htmlToReactParser.parse(handleMentionedUser(getFormattedRecentChatText(message),msgBody.mentionedUsersIds ? msgBody.mentionedUsersIds : [],false));
       return (
         <>
           {icons[msgType] || ""} {message}
         </>
       );
       }
-    return renderHTML(handleMentionedUser(getFormattedRecentChatText(message), msgBody.mentionedUsersIds ? msgBody.mentionedUsersIds : [], false));
+    return htmlToReactParser.parse(handleMentionedUser(getFormattedRecentChatText(message), msgBody.mentionedUsersIds ? msgBody.mentionedUsersIds : [], false));
   };
 
   getDeletedText = (publisherId) =>
@@ -408,10 +408,10 @@ class RecentChatItem extends Component {
 
       if (chatType === "chat") {
         updateDisplayName = this.getsenderName(recentChat.roster);
-        imageToken = thumbImage !== "" ? thumbImage : image;
+        imageToken = (thumbImage && thumbImage !== "") ? thumbImage : image;
       } else {
         updateDisplayName = this.getContactName();
-        imageToken = thumbImage !== "" ? thumbImage : groupImage;
+        imageToken = (thumbImage && thumbImage !== "") ? thumbImage : groupImage;
         const senderName = getContactNameFromRoster(getDataFromRoster(publisherId)) || publisherId;
         if (message_type) updateMessage = `${senderName}: ${updateMessage}`;
       }
@@ -454,10 +454,7 @@ class RecentChatItem extends Component {
       unreadCountData: { id, activeUser },
       item: { recent: { msgfrom } = {} }
     } = this.props;
-    if (id && nextProps.unreadCountData.id !== id && msgfrom !== activeUser.msgfrom) {
-      return false;
-    }
-    return true;
+    return !(id && nextProps.unreadCountData.id !== id && msgfrom !== activeUser.msgfrom);
   }
 
   handleDrop = () => {
@@ -564,6 +561,10 @@ class RecentChatItem extends Component {
     const activeClass = userId ? userId : groupId;
     const { recentDrop, pinChat, archiveChat, showModal } = this.state;
     const isPermanentArchvie = getArchiveSetting();
+    let imageToken = "";
+    if(!isAdminBlocked) {
+        imageToken = (thumbImage && thumbImage !== "") ? thumbImage : image || groupImage;
+    }
 
     return (
       <Fragment>
@@ -575,7 +576,6 @@ class RecentChatItem extends Component {
           id="chat-list-id"
           data-name="list"
           data-chat-id={fromUserId}
-          ref={(event) => (this.listElement = event)}
           onClick={(e) => {
             if (allowedIds.includes(e.target.id)) return;
             this.handleRecentChatClick(e, item)
@@ -586,7 +586,7 @@ class RecentChatItem extends Component {
             userToken={token}
             userId={userId || groupId}
             temporary={false}
-            imageToken={isAdminBlocked ? "" : thumbImage !== "" ? thumbImage : image || groupImage}
+            imageToken={imageToken}
             emailId={emailId}
             name={iniTail}
           />

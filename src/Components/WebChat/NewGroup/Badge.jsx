@@ -13,7 +13,7 @@ export default function Badge(props) {
     const checkNotFound = (event) => (event.target.src = avatarIcon);
 
     useEffect(() => {
-        let fileImage = thumbImage !== "" ? thumbImage : image;
+        let fileImage = (thumbImage && thumbImage !== "") ? thumbImage : image;
         indexedDb
         .getImageByKey(fileImage, "profileimages", "")
         .then((blob) => {

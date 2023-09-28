@@ -11,7 +11,6 @@ export const {
   REACT_APP_MAX_USERS_CALL,
   REACT_APP_GOOGLE_TRANSLATE_API_KEY,
   REACT_APP_GOOGLE_LOCATION_API_KEY,
-  REACT_APP_SANDBOX_MODE,
   REACT_APP_SKIP_OTP_LOGIN,
   REACT_APP_SITE_DOMAIN,
   REACT_APP_AUTOMATION_URL,
@@ -24,7 +23,7 @@ export const {
   REACT_APP_TERMS_AND_CONDITIONS,
   REACT_APP_PRIVACY_POLICY,
   REACT_APP_CONTACT_EMAIL,
-  REACT_APP_HIDE_NOTIFICATION_CONTENT
+  REACT_APP_HIDE_NOTIFICATION_CONTENT,
 } = process.env
 
 export const REACT_APP_PROFILE_NAME_CHAR = 30
@@ -65,3 +64,5 @@ export const AUDIO_PERMISSION_DENIED = "Audio Microphone not authorized. Please 
 export const PERMISSION_DENIED = "Permission denied"
 export const RETAKE = "Retake"
 export const ENABLE_NOTIFICATIONS = "Please enable browser notifications"
+
+export const REACT_APP_CONTACT_SYNC = process.env.REACT_APP_CONTACT_SYNC === "true" ? true : false

@@ -1,6 +1,5 @@
 import React from "react";
 import uuidv4 from "uuid/v4";
-import renderHTML from "react-render-html";
 import lodashCamelCase from "lodash.camelcase";
 import _truncate from "lodash/truncate";
 import moment from "moment";
@@ -30,7 +29,7 @@ import {
   NO_INTERNET
 } from "./Constants";
 import { getExtension } from "../Components/WebChat/Common/FileUploadValidation";
-import { REACT_APP_LICENSE_KEY, REACT_APP_SANDBOX_MODE,REACT_APP_SITE_DOMAIN, REACT_APP_AUTOMATION_CHROME_USER, REACT_APP_AUTOMATION_CHROME_PASS, REACT_APP_AUTOMATION_EDGE_USER, REACT_APP_AUTOMATION_FIREFOX_USER, REACT_APP_AUTOMATION_FIREFOX_PASS, REACT_APP_AUTOMATION_EDGE_PASS, REACT_APP_HIDE_NOTIFICATION_CONTENT, REACT_APP_XMPP_SOCKET_HOST } from "../Components/processENV";
+import { REACT_APP_LICENSE_KEY, REACT_APP_SITE_DOMAIN, REACT_APP_AUTOMATION_CHROME_USER, REACT_APP_AUTOMATION_CHROME_PASS, REACT_APP_AUTOMATION_EDGE_USER, REACT_APP_AUTOMATION_FIREFOX_USER, REACT_APP_AUTOMATION_FIREFOX_PASS, REACT_APP_AUTOMATION_EDGE_PASS, REACT_APP_HIDE_NOTIFICATION_CONTENT } from "../Components/processENV";
 import Store from "../Store";
 import { getContactNameFromRoster, formatUserIdToJid, isSingleChatJID, getLocalUserDetails, handleMentionedUser } from "./Chat/User";
 import { MSG_PROCESSING_STATUS, GROUP_CHAT_PROFILE_UPDATED_NOTIFY, MSG_SENT_STATUS_CARBON, CHAT_TYPE_SINGLE, CHAT_TYPE_GROUP, COMMON_ERROR_MESSAGE, SERVER_LOGOUT } from "./Chat/Constant";
@@ -43,6 +42,8 @@ import { ActiveChatAction } from "../Actions/RecentChatActions";
 import { UnreadCountDelete } from "../Actions/UnreadCount"
 import { callIntermediateScreen } from "../Actions/CallAction";
 import { getFromLocalStorageAndDecrypt, encryptAndStoreInLocalStorage} from "../Components/WebChat/WebChatEncryptDecrypt";
+const HtmlToReactParser = require('html-to-react').Parser;
+const htmlToReactParser = new HtmlToReactParser();
 
 const PNF = require("google-libphonenumber").PhoneNumberFormat;
 const phoneUtil = require("google-libphonenumber").PhoneNumberUtil.getInstance();
@@ -318,7 +319,7 @@ export const getFormattedDateCallLogs = (datetime) => {
  * @return Object
  */
 export const ParseStringToItsDatatype = (inputObj) => {
-  var obj = Object.assign({}, inputObj);
+  let obj = Object.assign({}, inputObj);
   for (let i in obj) {
     switch (true) {
       case String(obj[i]).toLowerCase() === "true":
@@ -327,10 +328,10 @@ export const ParseStringToItsDatatype = (inputObj) => {
       case String(obj[i]).toLowerCase() === "false":
         obj[i] = false;
         break;
-      case String(obj[i]).match(/^[0-9]+$/) != null:
+      case String(obj[i]).match(/^\d+$/) != null:
         obj[i] = parseInt(obj[i], 10);
         break;
-      case String(obj[i]).match(/^[-+]?[0-9]+\.[0-9]+$/) != null:
+      case String(obj[i]).match(/^[-+]?\d+\.\d+$/) != null:
         obj[i] = parseFloat(obj[i]);
         break;
       default:
@@ -348,7 +349,7 @@ export const ParseStringToItsDatatype = (inputObj) => {
 export const TrimString = (string, length) => {
   return _truncate(string, {
     length, // maximum 30 characters
-    separator: /,?\.* +/ // separate by spaces, including preceding commas and periods
+    separator: /[\/,?.+]/ // separate by spaces, including preceding commas and periods
   });
 };
 
@@ -359,19 +360,23 @@ export const validURL = (str) => {
   if (str === "" || str === null || str === undefined) {
     return false;
   }
-  var pattern = new RegExp(
-    /^(?:(?:https?|ftp):\/\/)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:\/\S*)?$/
-    ); // fragment locator
-  return pattern.test(str);
+    const protocol = '(?:(?:https?|ftp):\\/\\/)?';
+    const ipV4 = '(?:(?!(?:10|127)(?:\\.\\d{1,3}){3})(?!(?:169\\.254|192\\.168)(?:\\.\\d{1,3}){2})(?!172\\.(?:1[6-9]|2\\d|3[0-1])(?:\\.\\d{1,3}){2})(?:[1-9]\\d?|1\\d\\d|2[01]\\d|22[0-3])(?:\\.(?:1?\\d{1,2}|2[0-4]\\d|25[0-5])){2}(?:\\.(?:[1-9]\\d?|1\\d\\d|2[0-4]\\d|25[0-4])))';
+    const domainName = '(?:(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)(?:\\.(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)*(?:\\.(?:[a-z\\u00a1-\\uffff]{2,}))';
+    const port = '(?::\\d{2,5})?';
+    const path = '(?:\\/\\S*)?';
+    const pattern = new RegExp(`${protocol}(?:${ipV4}|${domainName})${port}${path}$`);
+    // fragment locator
+    return pattern.test(str);
 };
 
 export const isUrl = (s) => {
-  var regexp = /(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/;
+  const regexp = /^(ftp|https?):\/\/[\w#!:.?+=&%@\-\/]+$/;
   return regexp.test(s);
 };
 
 export const validURLCheck = (str) => {
-  var regexp = /(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/;
+  const regexp = /^(ftp|https?):\/\/[\w#!:.?+=&%@\-\/]+$/;
   return regexp.test(str);
 };
 
@@ -396,8 +401,9 @@ export const getHighlightedText = (name, higlight) => {
   higlight = higlight.replace(/\\/g, "").trim();
   let parts = name.split(new RegExp(`(${escapeRegex(higlight)})`, "gi"));
   return parts.map((part, i) => {
+    let index = i;
     return (
-      <span key={i} style={part.toLowerCase() === higlight.toLowerCase() ? { color: "#4879F9" } : {}}>
+      <span key={index} style={part.toLowerCase() === higlight.toLowerCase() ? { color: "#4879F9" } : {}}>
         {part}
       </span>
     );
@@ -440,12 +446,8 @@ export const getIsBlockedUser = (jid) => {
   const contactsWhoBlockedMe = Store.getState().contactsWhoBlockedMe.data;
 
   if (contactsWhoBlockedMe.length > 0) {
-    if (contactsWhoBlockedMe.indexOf(jid) > -1) {
-      return false;
-    }
-    return true;
+    return contactsWhoBlockedMe.indexOf(jid) <= -1;
   }
-  return true;
 };
 
 /**
@@ -482,9 +484,29 @@ export const getFormattedRecentChatText = (text) => {
 
 export const convertTextToURL = (inputText = "") => linkify(inputText);
 
+export const placeCaretAtEnd = (el) => {
+  if (!el) {
+    return;
+  }
+  el.focus();
+  if (typeof window.getSelection != "undefined" && typeof document.createRange != "undefined") {
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    range.collapse(false);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  } else if (typeof document.body.createTextRange != "undefined") {
+    const textRange = document.body.createTextRange();
+    textRange.moveToElementText(el);
+    textRange.collapse(false);
+    textRange.select();
+  }
+};
+
 export const captionLink = (text,mentionedUserId) => {
   if (!text) return "";
-  return renderHTML(handleMentionedUser(convertTextToURL(text.replace(/&nbsp;/g, "").replace(/&amp;/g, "&")),mentionedUserId,false));
+  return htmlToReactParser.parse(handleMentionedUser(convertTextToURL(text.replace(/&nbsp;/g, "").replace(/&amp;/g, "&")),mentionedUserId,false));
 };
 
 /**
@@ -531,12 +553,12 @@ export const formatCallLogDate = (date) => {
 
 function daysBetween(first, second) {
   // Copy date parts of the timestamps, discarding the time parts.
-  var one = new Date(first.getFullYear(), first.getMonth(), first.getDate());
-  var two = new Date(second.getFullYear(), second.getMonth(), second.getDate());
+  let one = new Date(first.getFullYear(), first.getMonth(), first.getDate());
+  let two = new Date(second.getFullYear(), second.getMonth(), second.getDate());
   // Do the math.
-  var millisecondsPerDay = 1000 * 60 * 60 * 24;
-  var millisBetween = two.getTime() - one.getTime();
-  var days = millisBetween / millisecondsPerDay;
+  let millisecondsPerDay = 1000 * 60 * 60 * 24;
+  let millisBetween = two.getTime() - one.getTime();
+  let days = millisBetween / millisecondsPerDay;
   // Round down.
   return Math.floor(days);
 }
@@ -547,7 +569,7 @@ export const formatCallLogTime = (date) => {
 };
 
 export const durationCallLog = (startDate, endDate) => {
-  var ms = endDate / 1000 - startDate / 1000;
+  let ms = endDate / 1000 - startDate / 1000;
   let min = Math.floor((ms / 1000 / 60) << 0);
   let seconds = Math.floor((ms / 1000) % 60);
   return (min <= 9 ? "0" + min : min) + ":" + (seconds <= 9 ? "0" + seconds : seconds);
@@ -924,6 +946,12 @@ export const getValidSearchVal = (value) => {
   return value.trim();
 };
 
+export const fetchMoreParticipantsData = (userList, searchValue) => {
+  let userListArr = userList;
+  let searchWith = getValidSearchVal(searchValue);
+  userList.getUsersListFromSDK(Math.ceil((userListArr.length / 20) + 1), searchWith);
+}
+
 export const getGroupMsgStatus = (participants) => {
   const receiveToAll = participants.find((participant) => participant.msgStatus === 1);
   if (receiveToAll) return 1;
@@ -979,14 +1007,14 @@ export const capitalizeTxt = (txt) => txt.charAt(0).toUpperCase() + txt.slice(1)
  * dataURLtoFile() to convert base64 to file.
  */
 export const dataURLtoFile = (dataurl, filename) => {
-  var dataarr = dataurl.split(','), mime = dataarr[0].match(/:(.*?);/)[1],
+  let dataarr = dataurl.split(','), mime = dataarr[0].match(/^data:(.*?);/),
       bstr = atob(dataarr[1]), n = bstr.length, u8arr = new Uint8Array(n);
   //NOSONAR
   while (n--) {
       const charbuffer = bstr.charCodeAt(n);
       u8arr[n] = charbuffer;
   }
-  let blob = new Blob([u8arr], { type: mime });
+  let blob = new Blob([u8arr], { type: mime[1] });
   blob['lastModifiedDate'] = new Date();
   blob['name'] = filename;
   return blob;
@@ -1075,7 +1103,8 @@ export const getRecentChatMsgObjForward = (originalMsg, toJid, newMsgId) => {
 };
 
 export const getHashCode = (s) => {
-  for(var i = 0, h = 0; i < s.length; i++)
+  let h = 0;
+  for(let i = 0; i < s.length; i++)
       h = Math.imul(31, h) + s.charCodeAt(i) | 0;
   return h;
 }
@@ -1096,6 +1125,10 @@ export const getInitialsFromName = (name = "") => {
     matches = name.split("");
     acronym = [matches[0],matches[1]].join('');
   }
+  else if ( name.match(/\b(\w)/g) && name.includes("+")) {
+    matches = name.substring(1,3);
+    acronym = matches
+  }
   else {
     matches = name.match(/\b(\w)/g);
     acronym = matches ? [matches[0],matches[1]].join('') : "";
@@ -1103,7 +1136,7 @@ export const getInitialsFromName = (name = "") => {
   return acronym && acronym.toUpperCase();
 };
 
-export const isBlobUrl = (fileToken) => new RegExp("^(blob:http|blob:https)://", "i").test(fileToken);
+export const isBlobUrl = (fileToken) => /^(blob:http|blob:https):\/\//i.test(fileToken);
 
 export const getLocalWebsettings = () => {
   const webSettings = getFromLocalStorageAndDecrypt('websettings')
@@ -1185,13 +1218,14 @@ export const sendNotification = (displayName = "", imageUrl = "", messageBody = 
     });
 
 
-    if(os === 'windows'){
-      var windowisChrome = (!window.chrome.webstore || !window.chrome.runtime) && !window.chrome;
-      if(windowisChrome){
+    if (os === 'windows') {
+      const windowisChrome = (!window.chrome.webstore || !window.chrome.runtime) && !window.chrome;
+      if (windowisChrome) {
         return true;
       }
-    }else {
-      return sound.play();
+    } else {
+      sound.play();
+      return true;
     }
 
   } catch (error) {
@@ -1203,14 +1237,6 @@ export const validEmail = (email = "") => {
   const regex = /^\s*([\w+-]+\.)*[\w+]+@([\w+-]+\.)*([\w+-]+\.[a-zA-Z]{2,6})+\s*$/;
   return regex.test(email);
 }
-
-export const isSandboxMode = () => {
-  return (
-    REACT_APP_SANDBOX_MODE === "true" ||
-    REACT_APP_XMPP_SOCKET_HOST === "xmpp-preprod-sandbox.mirrorfly.com" ||
-    REACT_APP_XMPP_SOCKET_HOST === "xmpp-sandbox-dev.mirrorfly.com"
-  );
-};
 
 export const getInitializeObj = () => ({
   callbackListeners: callbacks,
@@ -1274,7 +1300,6 @@ export const getGridDimensions = (height, usersCount) => {
       break;
   }
 
-  // width = width - 4;
   height = height - 10;
   return { width, height };
 };

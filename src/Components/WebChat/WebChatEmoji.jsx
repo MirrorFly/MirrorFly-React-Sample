@@ -1,6 +1,6 @@
-import { Picker } from "emoji-mart";
+import Picker from '@emoji-mart/react'
+import data from '@emoji-mart/data'
 import React from 'react';
-import "emoji-mart/css/emoji-mart.css";
 import "../../assets/scss/emoji.scss";
 import { getEmojiStyle } from "../../Helpers/Utility";
 import OutsideClickHandler from "react-outside-click-handler";
@@ -27,7 +27,7 @@ class WebChatEmoji extends React.Component {
    * handleShowEmojis() method to show emoji picker.
    */
   handleShowEmojis = e => {
-    if(this.state.showEmojis === false) {
+      console.log("webchatemoji comp---showEmoji() triggers")
       const { closeParentMenu } = this.props
       this.setState(
         {
@@ -37,9 +37,7 @@ class WebChatEmoji extends React.Component {
           this.props.emojiState && this.props.emojiState(this.state.showEmojis)
           closeParentMenu && closeParentMenu();
         }
-      );
-     }
-    
+      );    
   };
 
   /**
@@ -67,8 +65,6 @@ class WebChatEmoji extends React.Component {
   addEmoji = e => {
     let emoji = e.native;
     this.props.onEmojiClick(emoji, true);
-    this.props.mentionView && this.props.mentionView(true)
-
   };
 
   /**
@@ -80,12 +76,12 @@ class WebChatEmoji extends React.Component {
         {this.state.showEmojis  &&
         <OutsideClickHandler onOutsideClick={() => setTimeout(()=>{ this.closeMenu("", true) },100)}> 
           <span className="emojiPicker-container" style={getEmojiStyle()} ref={el => (this.emojiPicker = el)}>
-            <Picker enableFrequentEmojiSort={false} onSelect={this.addEmoji}
+          <Picker style={{width : "100%"}} dynamicWidth={true} className="emoji_picker" data={data} previewEmoji={false} enableFrequentEmojiSort={false} onEmojiSelect={this.addEmoji}
             />
           </span>
         </OutsideClickHandler>
         }
-        <i className="em em-slightly_smiling_face" onClick={(e) => {this.handleShowEmojis()}}></i>
+        <i className="em em-slightly_smiling_face q" onClick={(e) => {this.handleShowEmojis()}}></i>
       </>
     );
   }

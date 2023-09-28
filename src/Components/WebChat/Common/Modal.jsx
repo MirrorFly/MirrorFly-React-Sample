@@ -1,13 +1,15 @@
 import { Component } from 'react';
 import { createPortal } from 'react-dom';
 export default class Modal extends Component {
-    constructor(props = {}) {
+     constructor(props = {}) {
         super(props);
-        const { containerId, divclass = null } = props
-        this.modalRoot = document && document.getElementById && document.getElementById(containerId);
-        this.element = document && document.createElement && document.createElement('div');
-        divclass && this.element.classList.add(divclass)
-    }
+        const { containerId, divclass = null } = props;
+        this.modalRoot = document.getElementById(containerId);
+        this.element = document.createElement('div');
+        if (divclass) {
+          this.element.classList.add(divclass);
+        }        
+    }     
     componentDidMount() {
         this.modalRoot && this.modalRoot.appendChild(this.element);
     }

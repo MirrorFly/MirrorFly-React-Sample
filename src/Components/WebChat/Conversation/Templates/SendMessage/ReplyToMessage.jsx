@@ -122,7 +122,7 @@ const ReplyMessage = React.memo((props) => {
                     {message_type === 'audio' && ""}
                     {message_type === 'video' && <img src={getThumbBase64URL(thumb_image)} className={`webchat-conver-image ${caption === "" ? "no-caption" : ""}`} alt="reply message" />}
                     {message_type === 'file' && ""
-                    // TODO - Need to implement for ppt and pdf
+                    // Need to implement for ppt and pdf
                     // <span className="webchat-conver-image"><i className="doc-icon"><img alt="file" src={placeholder} /></i></span>
                     }
                     {message_type === 'contact' &&

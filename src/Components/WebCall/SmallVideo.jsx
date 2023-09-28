@@ -26,7 +26,8 @@ class SmallVideo extends React.Component {
     }
 
     shouldComponentUpdate(nextProps, nextState) {
-        if (this.props.showConfrenceDataId !== nextProps.showConfrenceDataId ||
+        return (
+            this.props.showConfrenceDataId !== nextProps.showConfrenceDataId ||
             ((this.props.stream && nextProps.stream) && this.props.stream.id !== nextProps.stream.id) ||
             ((this.props.stream && nextProps.stream) && this.props.stream.video !== nextProps.stream.video) ||
             ((this.props.stream && nextProps.stream) && this.props.stream.audio !== nextProps.stream.audio) ||
@@ -42,10 +43,8 @@ class SmallVideo extends React.Component {
             nextProps.audioTrackId !== this.props.audioTrackId ||
             nextProps.pinUserJid !== this.props.pinUserJid ||
             nextProps.setPinUser !== this.props.setPinUser ||
-            nextProps.jid !== this.props.jid) {
-            return true;
-        }
-        return false;
+            nextProps.jid !== this.props.jid
+          );          
     }
 
     render() {
@@ -97,14 +96,14 @@ class SmallVideo extends React.Component {
                 style={this.props.tileViewStyle}
                 className={`${pinClass}${userStatus && userStatus.toLowerCase() !== CALL_STATUS_CONNECTED ? " user-connecting" : ""}`}
                 onClick={(e) => this.setPinUser(e, this.props.jid)}>
-                {(videoMuted || !stream.video || (this.props.callStatus && this.props.callStatus.toLowerCase() === CALL_STATUS_DISCONNECTED)) &&
+                {stream && (videoMuted || !stream.video || (this.props.callStatus && this.props.callStatus.toLowerCase() === CALL_STATUS_DISCONNECTED)) &&
                     <>
                         <ProfileImage
                             name={initialName}
                             chatType='chat'
                             userToken={token}
                             temporary={false}
-                            imageToken={rosterData.thumbImage !== "" ? rosterData.thumbImage : rosterData.image}
+                            imageToken={(rosterData.thumbImage && rosterData.thumbImage !== "") ? rosterData.thumbImage : rosterData.image}
                         />
                     </>
                 }
@@ -122,7 +121,7 @@ class SmallVideo extends React.Component {
                         <i title="Participant has stopped the camera" className="videoOffRemote"><VideoOff /></i>
                     }
                     <>
-                    {!audioMuted &&
+                    {!audioMuted && this.props.callStatus.toLowerCase() !== CALL_STATUS_DISCONNECTED &&
                         <div className={`audio_indication left height_adjust transistion_adjust ${handleAudioClasses(60)}`}>
                             <div className="audio_indicator audio_indicator_1"></div>
                             <div className="audio_indicator audio_indicator_2"></div>
@@ -148,7 +147,7 @@ class SmallVideo extends React.Component {
                         )}
                     </>
                 )}
-                {userStatus && userStatusDisplay !== "" && userStatus.toLowerCase() !== CALL_STATUS_CONNECTED &&
+                {userStatus && userStatusDisplay !== "" && userStatus.toLowerCase() !== CALL_STATUS_CONNECTED && userStatus.toLowerCase() !== CALL_STATUS_DISCONNECTED &&
                     <div className="overlay-text">
                         {userStatusDisplay}
                     </div>

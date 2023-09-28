@@ -2,7 +2,6 @@ import React, { Component, Fragment, Suspense } from "react";
 import { Carousel } from "react-responsive-carousel";
 import "react-responsive-carousel/lib/styles/carousel.min.css";
 import { toast } from "react-toastify";
-import "react-videoplayer/lib/index.css";
 import uuidv4 from "uuid/v4";
 import { AudioFile, dragDrop } from "../../../assets/images";
 import "../../../assets/scss/image-gallery-custom.scss";
@@ -89,7 +88,7 @@ export default class MediaPreview extends Component {
   onDrop = (e) => {
     e.preventDefault();
     const { seletedFiles: { mediaType } = {} } = this.props;
-    var files = e.target.files || (e.dataTransfer && e.dataTransfer.files);
+    let files = e.target.files || (e.dataTransfer && e.dataTransfer.files);
     const imagePreviewContainer = document.getElementById("imagePreviewContainer");
     imagePreviewContainer && imagePreviewContainer.classList.remove("highlight");
     if (files) {
@@ -111,7 +110,7 @@ export default class MediaPreview extends Component {
 
   createAddFileContainer = (thumbsWrapper,mediaType) => {
     const {attachment : { isAttachmentEnabled = false  } = {} } = this.props;
-    var child = document.createElement("div");
+    let child = document.createElement("div");
     if(mediaType === "imagevideo") {
     child.innerHTML = `<div id="dynamicUpload" class="uploadfile" style="display: ${
       this.state.selectedFiles.length >= maxAllowedMediaCount ? "none" : INLINE_FLEX
@@ -171,7 +170,7 @@ export default class MediaPreview extends Component {
       this.handleFiles(event.target.files, mediaType, "new");
     });
     thumbsWrapper.appendChild(child);
-    var sendButtonChild = document.createElement("div");
+    let sendButtonChild = document.createElement("div");
     sendButtonChild.innerHTML = `<div class="attachmentSend"><i>
     <svg fill="#fff" width="26.705" height="25.802" viewBox="0 0 26.705 25.802"><path d="M0,64.052l26.7-12.9L0,38.25v11l14.525,1.905L0,53.057Z" 
     transform="translate(0 -38.25)"></path></svg></i></div>`;
@@ -216,7 +215,7 @@ export default class MediaPreview extends Component {
           () => {
             this.setState(
               {
-                previewData: this.handleDisplayMedia(),
+                previewData: this.handleDisplayMedia(type),
                 ...(type === "new" && { selectedSlide: selectedFiles.length })
               },
               () => {
@@ -258,7 +257,7 @@ export default class MediaPreview extends Component {
     );
   };
 
-  onChangeCaption = (updateThis = {}, caption = "",mentionedUsersIds = []) => {
+  onChangeCaption = (updateThis = {}, caption = "", mentionedUsersIds = []) => {
     let temp = document.createElement("div");
     temp.innerHTML = caption;
     updateThis.caption = temp.innerHTML;
@@ -313,19 +312,6 @@ export default class MediaPreview extends Component {
     );
   };
 
-  videoControls = (src) => {
-    return {
-      autoplay: false,
-      controls: true,
-      sources: [
-        {
-          src: src,
-          type: "video/mp4"
-        }
-      ]
-    };
-  };
-
   handleMediaOnChange = (index, item) => {
     this.setState({ selectedSlide: index });
     document
@@ -336,23 +322,19 @@ export default class MediaPreview extends Component {
 
   sendMediaFile = () => {
     if(blockOfflineMsgAction()) return false;
-    // Restricting the Send if Thumb is not Loaded for Image and Video
     const found = this.state.selectedFiles.filter((el) => {
-      const {
-        fileDetails: { msgType, imageUrl }
-      } = el;
-      if ((!msgType || msgType === "image" || msgType === "video ") && !imageUrl) return false;
-      return true;
+      const { fileDetails: { msgType, imageUrl }} = el;
+      return !((!msgType || msgType === "image" || msgType === "video ") && !imageUrl);
     });
     if (found.length !== this.state.selectedFiles.length) return true;
 
     this.props.onClickSend(this.state.selectedFiles);
-    return true
+    return true;
   };
 
-  handleDisplayMedia = () => {
+  handleDisplayMedia = (type) => {
     const { selectedFiles } = this.state;
-    const { seletedFiles: { chatType } = {} } = this.props;
+    const { seletedFiles: { chatType } = {}, chatId } = this.props;
     if (selectedFiles.length === 0) return this.closePreview();
     return selectedFiles.map((res, index) => {
       let fileType = res.type;
@@ -366,9 +348,11 @@ export default class MediaPreview extends Component {
             <Image
               thumb={"image"}
               key={fileId}
+              type={type}
               uniqueId={fileId}
               onClickSend={this.sendMediaFile}
               chatType={chatType}
+              chatId={chatId}
               media={res}
               caption={caption}
               onClickCloseSelectedItem={this.props.onClickCloseSelectedItem}
@@ -381,8 +365,11 @@ export default class MediaPreview extends Component {
             <PreviewVideo
               thumb={"video"}
               key={fileId}
+              type={type}
+              uniqueId={fileId}
               onClickSend={this.sendMediaFile}
               chatType={chatType}
+              chatId={chatId}
               media={res}
               caption={caption}
               onClickCloseSelectedItem={this.props.onClickCloseSelectedItem}
@@ -438,10 +425,6 @@ export default class MediaPreview extends Component {
   imageOnLoad = (e) => {
     e.target.classList.remove("image-load");
     e.target.style.display = "block";
-  };
-
-  imageOnLoader = (e) => {
-    e.target.style.display = "none";
   };
 
   getMediaSrc = (thumb, placeholder, imageUrl) => {

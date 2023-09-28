@@ -6,11 +6,14 @@ import ImageComponent from "../../WebChat/Common/ImageComponent";
 
 const MAX_PROFILE_LIMIT = 3;
 
-const ReadyToJoin = ({ participantsData = [], displayName = "", handleTryAgain, handleCancel, handleJoinCall }) => {
+const ReadyToJoin = ({ participantsData = [], displayName = "", handleTryAgain, handleCancel, handleJoinCall, behavior, readyToJoinActive }) => {
   const { isOnline = true } = useSelector((state) => state.appOnlineStatus);
 
   useEffect(() => {
-    if (isOnline && participantsData?.length === 0) {
+    if (
+      (isOnline && behavior === "call" && participantsData?.length === 0) ||
+      (isOnline && behavior === "meet" && displayName.includes("undefined"))
+    ) {
       handleTryAgain();
     }
   }, [participantsData]);
@@ -22,14 +25,15 @@ const ReadyToJoin = ({ participantsData = [], displayName = "", handleTryAgain, 
           <img src={NewLogoVector} alt={NewLogoVector} />
         </div>
         <h2>Ready to join ?</h2>
+        {participantsData?.length > 0 ? <>
         <div className="meeting_participant_list">
           {participantsData?.map(
             (el, i) =>
               i < MAX_PROFILE_LIMIT && (
-                <div className="calleeProfiles" key={i}>
+                <div className="calleeProfiles" key={el.initialName}>
                   <ImageComponent 
                   chatType={"chat"} 
-                  imageToken={el.thumbImage !== "" ? el.thumbImage : el.image} 
+                  imageToken={(el.thumbImage && el.thumbImage !== "") ? el.thumbImage : el.image} 
                   name={el.initialName} />
                 </div>
               )
@@ -41,6 +45,9 @@ const ReadyToJoin = ({ participantsData = [], displayName = "", handleTryAgain, 
           )}
         </div>
         <p className="participant-names">{displayName}</p>
+        </> :
+        <p className="no-one-alret">No one else is here</p>
+        }
         {participantsData?.length == getMaxUsersInCall() ? (
           <>
             <div className="action-btns">
@@ -54,7 +61,7 @@ const ReadyToJoin = ({ participantsData = [], displayName = "", handleTryAgain, 
             <p className="internet show">Maximum {getMaxUsersInCall()} members allowed in call</p>
           </>
         ) : (
-          <button type="button" onClick={handleJoinCall} className="Meeting_join">
+          <button type="button" onClick={handleJoinCall} className="Meeting_join" style={{cursor: readyToJoinActive ? "pointer" : "not-allowed"}} >
             Join Now
           </button>
         )}

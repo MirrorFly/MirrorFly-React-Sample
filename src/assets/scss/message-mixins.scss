@@ -199,6 +199,7 @@
           @include align-items(center);
           vertical-align: middle;
           span{
+            user-select: none;
             height: 0.9em;
             min-height: 7px;
           }
@@ -531,6 +532,7 @@
           @include align-items(center);
           vertical-align: middle;
           span{
+            user-select: none;
             height: 0.9em;
             min-height: 7px;
           }

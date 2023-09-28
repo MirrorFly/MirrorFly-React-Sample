@@ -4,10 +4,11 @@ import { showModal } from '../../../Actions/PopUp';
 import {  DropdownArrow } from '../../../assets/images';
 import Store from '../../../Store';
 import ProfileImage from '../Common/ProfileImage';
-import { formatUserIdToJid, isLocalUser, getUserNickName, getContactNameFromRoster, getDataFromRoster } from '../../../Helpers/Chat/User';
+import { formatUserIdToJid, isLocalUser, getUserNickName, getContactNameFromRoster, getDataFromRoster, isDisplayNickName } from '../../../Helpers/Chat/User';
 import UserStatus from '../Common/UserStatus';
 import { getFormatPhoneNumber } from '../../../Helpers/Utility';
 import { getFromLocalStorageAndDecrypt } from '../WebChatEncryptDecrypt';
+import { REACT_APP_CONTACT_SYNC } from '../../processENV';
 
 const Participants = (props) => {
 
@@ -60,7 +61,10 @@ const Participants = (props) => {
     const localUser = isLocalUser(fromuser)
     const nickName = getUserNickName(props.members);
     const token = getFromLocalStorageAndDecrypt('token');
-    const displayNickname = false;
+    let displayNickname = false;
+    if (REACT_APP_CONTACT_SYNC) {
+        displayNickname = isDisplayNickName(props.members);
+    }
 
     const getInitalName = () => {
         if (localUser) return nickName;
@@ -82,7 +86,7 @@ const Participants = (props) => {
                         chatType={'chat'}
                         userToken={token}
                         temporary={false}
-                        imageToken={thumbImage !== "" ? thumbImage : image}
+                        imageToken={(thumbImage && thumbImage !== "") ? thumbImage : image}
                         emailId={emailId}
                         userId={updateJid}
                         name={getInitalName()}

@@ -5,10 +5,18 @@ const initialState = {
     activeUser: {},
     unreadDataObj: {}
 }
-
+let msgCount = 0
 const updateCount = (unreadDataObj, currentData) => {
     const existUser = unreadDataObj[currentData.fromUserId];
     const currentDataCount = currentData.count;
+   if(currentDataCount){
+    msgCount += currentDataCount 
+   }
+   else{
+       msgCount = msgCount + 1 
+       }
+        
+   localStorage.setItem("unreadMessageCount",msgCount)
     if(!existUser){
         unreadDataObj[currentData.fromUserId] = {
             count: currentDataCount || 1
@@ -27,8 +35,11 @@ const updateCount = (unreadDataObj, currentData) => {
 }
 
 const deleteCount = (unreadDataObj, currentData) => {
+    const existUser = unreadDataObj[currentData.fromUserId];
     if(unreadDataObj[currentData.fromUserId]){
         delete unreadDataObj[currentData.fromUserId];
+        msgCount = msgCount - existUser.count
+       localStorage.setItem("unreadMessageCount",msgCount)
     }
     return unreadDataObj;
 }

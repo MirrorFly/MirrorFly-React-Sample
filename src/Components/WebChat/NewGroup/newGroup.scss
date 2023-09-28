@@ -380,7 +380,14 @@
     .emojiPicker-container{
       bottom: 1.5em !important;
       right: -1.1em !important;
-      margin-left: 0;
+      margin-left: 0 !important;
+      > div{
+        width: 100%;
+        em-emoji-picker{
+        width: 300px;
+        height: 320px;
+        }
+      }
       .emoji-mart{
         width: 19.25em!important;
       }

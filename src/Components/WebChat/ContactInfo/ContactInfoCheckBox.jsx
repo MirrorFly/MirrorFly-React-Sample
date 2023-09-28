@@ -34,7 +34,7 @@ const ContactInfoCheckBox = (props = {}) => {
                             chatType={'chat'}
                             userToken={token}
                             temporary={false}
-                            imageToken={thumbImage !== "" ? thumbImage : image}
+                            imageToken={(thumbImage && thumbImage !== "") ? thumbImage : image}
                             emailId={emailId}
                             userId={userId}
                             name={iniTail}

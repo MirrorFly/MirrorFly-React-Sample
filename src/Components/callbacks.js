@@ -86,7 +86,8 @@ import {
     startCallingTimer,
     startMissedCallNotificationTimer,
     clearMissedCallNotificationTimer,
-    handleCallParticipantToast
+    handleCallParticipantToast,
+    disconnectCallConnection
 } from '../Helpers/Call/Call';
 import {
     CALL_CONVERSION_STATUS_CANCEL,
@@ -161,9 +162,8 @@ import {
     webSettingLocalAction
 } from '../Actions/BrowserAction';
 import { adminBlockStatusUpdate } from '../Actions/AdminBlockAction';
-import { disconnectCallConnection } from  '../Helpers/Call/Call'
 import { deleteAllCallLog } from '../Actions/CallLogAction';
-export var strophe = false;
+export let strophe = false;
 let localStream = null,
     localVideoMuted = false,
     localAudioMuted = false,
@@ -252,7 +252,7 @@ const initiateDisconnectedScreenTimer = (res) => {
 }
 
 const removingRemoteStream = (res) => {
-    remoteStream.map((item, key) => {
+    remoteStream.forEach((item, key) => {
         if (item.fromJid === res.userJid) {
             remoteStream.splice(key, 1);
         }
@@ -260,7 +260,7 @@ const removingRemoteStream = (res) => {
 }
 
 export const removeRemoteStream = (userJid) => {
-    remoteStream.map((item, key) => {
+    remoteStream.forEach((item, key) => {
         if (item.fromJid === userJid) {
             remoteStream.splice(key, 1);
         }
@@ -361,7 +361,12 @@ const updateCallConnectionStatus = (usersStatus) => {
 
 const connected = (res) => {
     const userIndex = remoteStream.findIndex(item => item.fromJid === res.userJid);
-    if (userIndex > -1) {
+    const behaviorResponse = SDK.getCallBehaviour();
+    let behavior = "call";
+    if (behaviorResponse.statusCode === 200) {
+      behavior = behaviorResponse.data;
+    }
+    if (behavior === "meet" || userIndex > -1) {
         let usersStatus = res.usersStatus;
         updatingUserStatusInRemoteStream(usersStatus);
         updateCallConnectionStatus(usersStatus);
@@ -389,7 +394,8 @@ const connected = (res) => {
             localVideoMuted: localVideoMuted,
             localAudioMuted: localAudioMuted,
             remoteVideoMuted: remoteVideoMuted,
-            remoteAudioMuted: remoteAudioMuted
+            remoteAudioMuted: remoteAudioMuted,
+            callStatusText: CALL_STATUS_CONNECTED
         }));
     }
 }
@@ -536,7 +542,6 @@ const ended = (res) => {
         if (callConnectionData) {
             clearMissedCallNotificationTimer();
         }
-        setTimeout(() => {
             localstoreCommon();
             Store.dispatch(showConfrence({
                 showComponent: false,
@@ -555,7 +560,6 @@ const ended = (res) => {
                 browserNotify.sendCallNotification(callDetailObj);
             }
             resetCallData();
-        }, DISCONNECTED_SCREEN_DURATION);
     } else {
         if (!onCall || (remoteStream && Array.isArray(remoteStream) && remoteStream.length < 1)) {
             return;
@@ -639,7 +643,6 @@ const hold = (res) => {
 }
 
 const subscribed = (res) => {
-    // updatingUserStatusInRemoteStream(res.usersStatus);
     const {
         getState,
         dispatch
@@ -682,7 +685,7 @@ const callStatus = (res) => {
     }
 }
 
-export var callbacks = {
+export const callbacks = {
     connectionListener: function (res) {
         const connStatus = res.status || "";
         console.log('connStatus :>> ', connStatus);
@@ -865,7 +868,7 @@ export var callbacks = {
             if (remoteStream.length === 2) {
                 Store.dispatch(selectLargeVideoUser(res.userJid));
             } else {
-                remoteStream.map((item) => {
+                remoteStream.forEach((item) => {
                     return Store.dispatch(selectLargeVideoUser(item.userJid));
                 });
             }
@@ -980,7 +983,7 @@ export var callbacks = {
         speaking(res);
     },
     callUsersUpdateListener: (res) => {
-        remoteStream.map((item) => {
+        remoteStream.forEach((item) => {
             if (!res.usersList.includes(item.fromJid)) {
                 removeRemoteStream(item.fromJid);
             }
@@ -1215,7 +1218,7 @@ export var callbacks = {
             if (vcardData && vcardData.nickName) {
                 return vcardData.nickName;
             }
-            return "Anonymous user " + Math.floor(Math.random() * 10);
+            return "Anonymous user ";
         },
         getImageUrl: () => {
             let vcardData = getLocalUserDetails();

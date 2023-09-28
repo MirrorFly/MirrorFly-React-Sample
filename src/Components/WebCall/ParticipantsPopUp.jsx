@@ -4,7 +4,7 @@ import RecentSearch from '../WebChat/RecentChat/RecentSearch';
 import { ReactComponent as Close2 } from '../../assets/images/close2.svg';
 import { ReactComponent as Info } from '../../assets/images/errorinfo.svg';
 import Contact from '../WebChat/ContactInfo/Contact'
-import { NO_SEARCH_CHAT_CONTACT_FOUND, REACT_APP_XMPP_SOCKET_HOST } from '../processENV';
+import { NO_SEARCH_CHAT_CONTACT_FOUND, REACT_APP_CONTACT_SYNC, REACT_APP_XMPP_SOCKET_HOST } from '../processENV';
 import { getFriendsFromRosters, getLocalUserDetails, getUserDetails, getUserInfoForSearch } from "../../Helpers/Chat/User";
 import ParticipantsBadge from './ParticipantsBadge';
 import { toast } from 'react-toastify';
@@ -15,9 +15,9 @@ import { getCallFullLink, getValidSearchVal, handleFilterBlockedContact } from '
 import Store from '../../Store';
 import { callIntermediateScreen } from '../../Actions/CallAction';
 import {getFromLocalStorageAndDecrypt} from '../WebChat/WebChatEncryptDecrypt';
+import { FEATURE_RESTRICTION_ERROR_MESSAGE } from '../../Helpers/Constants';
 import userList from '../WebChat/RecentChat/userList';
 import InfiniteScroll from 'react-infinite-scroll-component';
-import { FEATURE_RESTRICTION_ERROR_MESSAGE } from '../../Helpers/Constants';
 
 let rosterDatas = [];
 
@@ -63,20 +63,25 @@ class ParticipantPopUp extends Component {
                 let foundRoster = this.props.rosterData?.data?.find(el => el.userId === ele.split("@")[0]);
                 if (!foundRoster.isAdminBlocked && !foundRoster.isDeletedUser) return ele;
             });
-
             selectedContactId = selectedContactId.filter(function( element ) {
                 return element !== undefined;
-             });
-             const { rosterData: { data },
+            });
+            if (!REACT_APP_CONTACT_SYNC) {
+                const { rosterData: { data },
                      popUpData: { modalProps: { groupName } } } = this.props
-            if(!groupName) {
+                if(!groupName) {
+                    this.setState({
+                        participantToAdd: selectedContactId,
+                        loaderStatus: this.props?.rosterData?.isFetchingUserList,
+                        userList: getFriendsFromRosters(handleFilterBlockedContact(data)),
+                        filteredContacts: getFriendsFromRosters(handleFilterBlockedContact(data))
+                    });
+                }
+            } else {
                 this.setState({
-                    participantToAdd: selectedContactId,
-                    loaderStatus: this.props?.rosterData?.isFetchingUserList,
-                    userList: getFriendsFromRosters(handleFilterBlockedContact(data)),
-                    filteredContacts: getFriendsFromRosters(handleFilterBlockedContact(data))
+                    participantToAdd: selectedContactId
                 });
-            }
+            } 
         }
     }
 
@@ -103,10 +108,14 @@ class ParticipantPopUp extends Component {
 
     componentDidMount() {
         this.getCallInfoDetails();
-        this.setState({ isLoading: this.props?.rosterData?.isFetchingUserList })
-        const { popUpData: { modalProps: { groupName } } } = this.props;
-        if (this.isInviteModelType && !groupName && !this.isCallLogModelType) {
-            this.setState({userList: []})
+        if (!REACT_APP_CONTACT_SYNC) {
+            this.setState({ loaderStatus: this.props?.rosterData?.isFetchingUserList })
+            const { popUpData: { modalProps: { groupName } } } = this.props;
+            if (this.isInviteModelType && !groupName && !this.isCallLogModelType) {
+                this.setState({userList: []})
+            }
+        } else {
+            this.setState({ isLoading: false });
         }
     }
 
@@ -206,17 +215,16 @@ class ParticipantPopUp extends Component {
                 const rosterJid = item.username || item.userJid;
                 if (searchTerm === "") {
                     if (participantToAdd.indexOf(rosterJid) === -1) {
-                        return false
+                        return []
                     }
                 }
                 const regexList = getUserInfoForSearch(item);
                 return regexList.find((str) => {
-                    // if (!item.isFriend || !str) return false
                     return (str.search(new RegExp(searchTerm, "i")) !== -1)
                 });
             });
         }
-        return "";
+        return [];
     }
 
     searchFilterList = (searchValue) => {
@@ -227,25 +235,40 @@ class ParticipantPopUp extends Component {
             const { popUpData: { modalProps: { groupName } } } = this.props;
             if (!searchValue) {
                 let data = rosterDatas;
-                this.setState({
-                    searchValue: '',
-                    errorMesage: '',
-                    filteredContacts: data,
-                    userList: data
-                })
-                if (this.isInviteModelType && !groupName && !this.isCallLogModelType) {
-                    userList.getUsersListFromSDK(1, searchWith);
-                }                
+                if (!REACT_APP_CONTACT_SYNC) {
+                    if (this.isInviteModelType && !groupName && !this.isCallLogModelType) {
+                        this.setState({
+                            searchValue: '',
+                            errorMesage: '',
+                            filteredContacts: data,
+                            userList: data
+                        })
+                        userList.getUsersListFromSDK(1, searchWith);
+                    }
+                } else {
+                    this.setState({
+                        searchValue: '',
+                        errorMesage: '',
+                        filteredContacts: data
+                    });
+                }
                 return;
             }
             const filteredContacts = this.contactsSearch(searchWith).filter(item=>item?.isAdminBlocked !== true && item?.isDeletedUser !== true)
-            this.setState({
-                searchValue: searchValue,
-                filteredContacts: filteredContacts,
-                userList: filteredContacts
-            })
-            if (this.isInviteModelType && !groupName && !this.isCallLogModelType) {
-                userList.getUsersListFromSDK(1, searchWith);
+            if (!REACT_APP_CONTACT_SYNC) {
+                this.setState({
+                    searchValue: searchValue,
+                    filteredContacts: filteredContacts,
+                    userList: filteredContacts
+                });
+                if (this.isInviteModelType && !groupName && !this.isCallLogModelType) {
+                    userList.getUsersListFromSDK(1, searchWith);
+                }
+            } else {
+                this.setState({
+                    searchValue: searchValue,
+                    filteredContacts: filteredContacts
+                })
             }
         }, 0);
     }
@@ -286,7 +309,7 @@ class ParticipantPopUp extends Component {
             return (
                 <ParticipantsBadge 
                     removeParticipant={this.removeParticipant}
-                    key={key}
+                    key={userJid}
                     jid={updateJid}
                     userToken={token}
                     image={image}
@@ -314,45 +337,50 @@ class ParticipantPopUp extends Component {
 
     handleUserListData() {
         let dataArr = [];
-        var { searchValue, participantToAdd } = this.state;
+        const { searchValue, participantToAdd } = this.state;
         const { popUpData: { modalProps: { currentCallUsersLength } } } = this.props;
         const stateFilteredContacts = this.state.filteredContacts;
         const maxMemberReached = Boolean((participantToAdd.length + (currentCallUsersLength || 0)) >= (getMaxUsersInCall() - 1));
         const hideCheckbox = this.isCallLogModelType;
         const blockedContactArr = this.props.blockedContact.data;
         let filteredContacts= stateFilteredContacts.filter(item=>item?.isAdminBlocked !== true)
-        if (this.state.userList.length > 0) {
-            this.state.userList.map((contact) => {
-                const { displayName, name, username, userJid, status , initialName } = contact
-                const contactName = displayName || name || username
-                let updateJid = username || userJid
-                let isChanged = participantToAdd.includes(updateJid) ? 1 : -1;
-                const isBlocked = blockedContactArr.indexOf(updateJid.includes("@") ? updateJid : updateJid + "@" + REACT_APP_XMPP_SOCKET_HOST) > -1;
-                dataArr.push(
-                    <Contact
-                        initialName = {initialName}
-                        isBlocked={isBlocked}
-                        searchValue={searchValue}
-                        contactName={contactName}
-                        isChanged={isChanged}
-                        statusMsg={status}
-                        image={contact.image}
-                        thumbImage={contact.thumbImage}
-                        emailId={contact.emailId}
-                        membersCount={filteredContacts.length + participantToAdd.length}
-                        errorMessageListner={this.errorMessageListner}
-                        prepareContactToAdd={this.prepareContactToAdd}
-                        prepareContactToRemove={this.prepareContactToRemove}
-                        userJid={userJid}
-                        userId={userJid}
-                        key={updateJid}
-                        hideCheckbox={hideCheckbox}
-                        maxMemberReached={maxMemberReached}
-                        roster={contact}
-                    />
-                )
+        let usersList = this.state.userList;
+        let { popUpData: { modalProps: { currentCallUsers } } } = this.props
+        if (!currentCallUsers) currentCallUsers = [];
+        if (usersList.length > 0) {
+            usersList.forEach((contact) => {
+                const { displayName, name, username, userJid, userId, status , initialName } = contact
+                if (!currentCallUsers.includes(userId)) {
+                    const contactName = displayName || name || username
+                    let updateJid = username || userJid
+                    let isChanged = participantToAdd.includes(updateJid) ? 1 : -1;
+                    const isBlocked = blockedContactArr.indexOf(updateJid.includes("@") ? updateJid : updateJid + "@" + REACT_APP_XMPP_SOCKET_HOST) > -1;
+                    dataArr.push(
+                        <Contact
+                            initialName = {initialName}
+                            isBlocked={isBlocked}
+                            searchValue={searchValue}
+                            contactName={contactName}
+                            isChanged={isChanged}
+                            statusMsg={status}
+                            image={contact.image}
+                            thumbImage={contact.thumbImage}
+                            emailId={contact.emailId}
+                            membersCount={filteredContacts.length + participantToAdd.length}
+                            errorMessageListner={this.errorMessageListner}
+                            prepareContactToAdd={this.prepareContactToAdd}
+                            prepareContactToRemove={this.prepareContactToRemove}
+                            userJid={userJid}
+                            userId={userJid}
+                            key={updateJid}
+                            hideCheckbox={hideCheckbox}
+                            maxMemberReached={maxMemberReached}
+                            roster={contact}
+                        />
+                    )
+                }
             });
-        }
+          }
         return dataArr;
     }
 
@@ -362,14 +390,23 @@ class ParticipantPopUp extends Component {
         userList.getUsersListFromSDK(Math.ceil((userListArr.length / 20) + 1), searchWith);
     }
 
+    handleParticipantsClick = () => {
+        const { participantToAdd } = this.state;
+        const { featureStateData: { isOneToOneCallEnabled = false } } = this.props;
+        if(participantToAdd.length > 1 || (participantToAdd.length === 1 && isOneToOneCallEnabled)) {
+            this.addUsersInCall();
+        } else if(participantToAdd.length === 1 && !isOneToOneCallEnabled) {
+            toast.error(FEATURE_RESTRICTION_ERROR_MESSAGE);
+        } else {
+            toast.info("Please select any Participant");
+        }
+    }
+
     render() {
-        const { searchValue, participantToAdd, errorMesage,copyToast } = this.state
+        const { searchValue, participantToAdd, errorMesage, copyToast, isLoading, loaderStatus } = this.state
         const stateFilteredContacts = this.state.filteredContacts
-        const { popUpData: { modalProps: { groupName, currentCallUsersLength,callType, closePopup } },
-                featureStateData:{isOneToOneCallEnabled = false}
-             } = this.props;
+        const { popUpData: { modalProps: { groupName, currentCallUsersLength,callType, closePopup, callBehaviour } }, contactPermission } = this.props;
         let BadgeList = this.selectedBadge();
-        
         const title = this.isCallLogModelType ? 'Participants' : this.invideModeFun();
         const hideSerachBox = this.isCallLogModelType;
         const hideBadgeList = this.isCallLogModelType;
@@ -377,6 +414,9 @@ class ParticipantPopUp extends Component {
         const isAllUsersExists = stateFilteredContacts.length === 0 && !searchValue;
         let filteredContacts= stateFilteredContacts.filter(item=>item?.isAdminBlocked !== true)
         const userListArr = this.handleUserListData();
+        const blockedContactArr = this.props.blockedContact.data;
+        const hideCheckbox = this.isCallLogModelType;
+        const maxMemberReached = Boolean((participantToAdd.length + (currentCallUsersLength || 0)) >= (getMaxUsersInCall() - 1));
         return (
             <Fragment>
                 <div className="popup-wrapper">
@@ -391,7 +431,7 @@ class ParticipantPopUp extends Component {
                                 {/* <span className="webcallConnet" onClick={ this.addUsersInCall }>Connect</span> */}
                             </div>
                             {this.state.callLink && <div className={`meetingLinkCopy`}>
-                                <h3 className='meeting_heading'>Call Link</h3>
+                                <h3 className='meeting_heading'>{callBehaviour === 'meet' ? "Meet Link" : "Call Link"}</h3>
                                 <div className='meeting_body'>
                                     <i className='linkIcon'><IconLink/></i>
                                     <div className='link_desc'>
@@ -403,11 +443,11 @@ class ParticipantPopUp extends Component {
                                 </div>
                             </div>}
 
-                            {!hideSerachBox && <RecentSearch search={this.searchFilterList} />}
+                            {!hideSerachBox && callBehaviour != "meet" && <RecentSearch search={this.searchFilterList} />}
 
-                            <div className="popup-body" style={{overflow: "hidden"}}>                                
+                            <div className="popup-body" style={{overflow: "hidden", display: callBehaviour == "meet" ? "none" : "block"}}>                                
                                 <div className="contactList" style={{ height: "100%" }}>
-                                    {/* <ul className="chat-list-ul">
+                                    { REACT_APP_CONTACT_SYNC && <ul className="chat-list-ul" style={{ height: "100%" }}>
                                         {!hideBadgeList &&
                                             <li className="chat-list-li BadgeContainer">
                                                 <div className="selectedBadge">
@@ -417,10 +457,13 @@ class ParticipantPopUp extends Component {
                                                 </div>
                                             </li>
                                         }
+                                        {isLoading && <div className="response_loader style-2">
+                                            <img src={loaderSVG} alt="loader"  />
+                                        </div> }
                                         {filteredContacts.length === 0 && searchValue &&
                                             <span className="searchErrorMsg"><Info /> {NO_SEARCH_CHAT_CONTACT_FOUND}</span>
                                         }
-                                        {isAllUsersExists &&
+                                        {isAllUsersExists && contactPermission === 1 && 
                                             <span className="searchErrorMsg"><Info /> All members of your contacts are already in the call.</span>
                                         }
                                         <li>{errorMesage && <div className="errorMesage"><Info /><span>{errorMesage}</span></div>}</li>
@@ -453,8 +496,8 @@ class ParticipantPopUp extends Component {
                                                 />
                                             )
                                         })}
-                                    </ul> */}
-                                    {userListArr.length > 0 &&
+                                    </ul> }
+                                    {!REACT_APP_CONTACT_SYNC && 
                                         <ul className="chat-list-ul" style={{ height: "100%" }} id="scrollableUl-addparticipantCall">
                                             {!hideBadgeList &&
                                                 <li className="chat-list-li BadgeContainer">
@@ -465,6 +508,9 @@ class ParticipantPopUp extends Component {
                                                     </div>
                                                 </li>
                                             }
+                                            {loaderStatus && <div className="response_loader style-2">
+                                            <img src={loaderSVG} alt="loader"  />
+                                            </div> }
                                             {filteredContacts.length === 0 && searchValue &&
                                                 <span className="searchErrorMsg"><Info /> {NO_SEARCH_CHAT_CONTACT_FOUND}</span>
                                             }
@@ -485,18 +531,12 @@ class ParticipantPopUp extends Component {
                                             }
                                         </ul>
                                     }
-                                    {this.state.loaderStatus && <div className="response_loader style-2">
-                                        <img src={loaderSVG} alt="loader" />
-                                        </div>
-                                    }
+                                    
                                 </div>
                             </div>
                             <div className={`webcallConnet ${(isAllUsersExists || hideCallNow) ? "disabled": ""}`} 
-                            onClick={this.state.participantToAdd.length > 1 ? this.addUsersInCall
-                               : (this.state.participantToAdd.length === 1 && isOneToOneCallEnabled) ? this.addUsersInCall 
-                               :()=> (this.state.participantToAdd.length === 1 && !isOneToOneCallEnabled) ? toast.error(FEATURE_RESTRICTION_ERROR_MESSAGE)
-                             : toast.info("Please select any Participant")
-                             }>
+                                onClick={this.handleParticipantsClick} style={{ display: callBehaviour == "meet" ? "none" : "block"}}
+                            >
                                <span className="callBtn"><i>{callType === "audio" ? <FloatingCallAudio /> : <FloatingCallVideo/> }</i>
                                <span>Call now {this.state.participantToAdd.length ? `(${this.state.participantToAdd.length})` : null}</span></span>
                             </div>
@@ -521,7 +561,8 @@ const mapStateToProps = (state, props) => {
         blockedContact: state.blockedContact,
         callIntermediateScreen: state.callIntermediateScreen,
         isAppOnline: state?.appOnlineStatus?.isOnline,
-        featureStateData: state.featureStateData
+        featureStateData: state.featureStateData,
+        contactPermission: state?.contactPermission?.data
     }
 }
 

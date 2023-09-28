@@ -9,9 +9,9 @@ const TIME_FORMAT = "HH:mm";
  * @param {date} date
  */
 function formatAMPM(date) {
-  var hours = date.getHours();
-  var minutes = date.getMinutes();
-  var ampm = hours >= 12 ? "pm" : "am";
+  let hours = date.getHours();
+  let minutes = date.getMinutes();
+  let ampm = hours >= 12 ? "pm" : "am";
   hours = hours % 12;
   hours = hours ? hours : 12;
   minutes = minutes < 10 ? "0" + minutes : minutes;
@@ -105,13 +105,13 @@ export const formatChatDateTime = (date, type) => {
  */
 export const convertUTCTOLocalTimeStamp = (date) => {
   date = new Date(date.replace(/-/g, "/"));
-  var newDate = new Date(date);
+  let newDate = new Date(date);
   newDate.setMinutes(newDate.getMinutes() - newDate.getTimezoneOffset());
   return newDate;
 };
 
 function datetoTime(secs) {
-  var todayDate = new Date();
+  let todayDate = new Date();
   todayDate.setSeconds(todayDate.getSeconds() - secs);
   return todayDate;
 }
@@ -121,7 +121,7 @@ function secondsToHms(secs) {
     return 0;
   }
   secs = Number(secs);
-  var calcHours = Math.floor(secs / 3600);
+  let calcHours = Math.floor(secs / 3600);
   return calcHours > 0 ? calcHours : 0;
 }
 
@@ -132,11 +132,11 @@ function findYesterday(secs , currentDate){
 }
 
 export const getLastseen = (secs) => {
-  var userDate = datetoTime(secs);
-  var currentDate = new Date();
-  var weekday = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  var month = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  var HHMM = { hour: "numeric", minute: "numeric" };
+  let userDate = datetoTime(secs);
+  let currentDate = new Date();
+  const weekday = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const month = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const HHMM = { hour: "numeric", minute: "numeric" };
   if (secs === 0) {
     return "Online";
   } else if (userDate.getDate() === currentDate.getDate() && userDate.getMonth() === currentDate.getMonth()) {

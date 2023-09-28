@@ -42,13 +42,14 @@ const StarredMessages = (props = {}) => {
  const [unstarDrop, setUnstarDrop] = useState(false);
  const [unstarConfirm, setUnstarConfirm] = useState(false);
  const [dropDownStatus, setDropDown] = useState(-1);
- const { handleBackToSetting, featureStateData : { isStarMessageEnabled = false } = {} } = props;
+ const { handleBackToSetting, featureStateData : { isStarMessageEnabled = false } = {}, handleShowCallScreen } = props;
  const { data: starData = [] } = useSelector((state) => state.starredMessages);
  const chatConversation = useSelector((state) => state.chatConversationHistory) || {};
  const { data: chatHistoreData = {} } = chatConversation;
  const [starredMessages, setStarredMessages] = useState([]);
  const [seletedData, setSeletedData] = useState({});
- 
+ const { starProfileData  } = useSelector((state) => state.rosterData);
+
  useEffect(() => {
    const sortedData = starData.sort((x, y) => new Date(y.favDate).getTime() - new Date(x.favDate).getTime());
    const addReplyIsEsisting = sortedData.map((ele) => {
@@ -69,8 +70,7 @@ const StarredMessages = (props = {}) => {
    return (() => {
      setSeletedData({});
    })
- }, [starData]);
- // await this.requestChatMessages(chatType, "up", chatMessages[0].msgId, RECONNECT_GET_CHAT_LIMIT);
+ }, [starData,starProfileData]);
  
  useEffect(() => {
    if (Object.keys(chatHistoreData).length !== 0) {
@@ -93,54 +93,40 @@ const StarredMessages = (props = {}) => {
 
  const getSenderName = (data) => {
    let messageFrom = data?.publisherId;
- 
-  //  if (isLocalUser(messageFrom)) {
-  //    const groupData = getGroupData(data?.fromUserId);
-  //    return groupData?.groupName || "-";
-  //  }
-
-  if(!isLocalUser(messageFrom)){
-    const { nameToDisplay = "-" } =formatDisplayName(messageFrom) || {};
-    return nameToDisplay;
-  }
-  return "You"
- };
+    if (!isLocalUser(messageFrom)) {
+      const { nameToDisplay = "-" } =formatDisplayName(messageFrom) || {};
+      return nameToDisplay;
+    }
+    return "You"
+  };
  
  const getReceiverName = (data) => {
-   if(isGroupChat(data?.chatType)){
-    const { groupName = "" } =getGroupData(data?.fromUserId) || {};
-    return groupName || "-"; 
-   }
-    if(isSingleChat(data?.chatType)){
-    const { nameToDisplay = "-" } =formatDisplayName(data?.fromUserId) || {};
-    if(data?.fromUserId === data?.publisherId){  
-      // if(!isLocalUser(data?.favouriteBy)){
-      //   const { favByName } =formatDisplayName(data?.favouriteBy) || {};
-      //   return favByName;
-      // }
-      return "You"
-    }  
-    return nameToDisplay;
-  }
-  
-  //  if (isSingleChat(data?.chatType) || (isGroupChat(data?.chatType) && isLocalUser(data?.publisherId))) {
-  //    return "You";
-  //  }
+    if (isGroupChat(data?.chatType)) {
+      const { groupName = "" } =getGroupData(data?.fromUserId) || {};
+      return groupName || "-";
+    }
+    if (isSingleChat(data?.chatType)) {
+      const { nameToDisplay = "-" } =formatDisplayName(data?.fromUserId) || {};
+      if (data?.fromUserId === data?.publisherId) {  
+        return "You"
+      }
+      return nameToDisplay;
+    }
   }
 
  const handleUnStarall = () => {
-   setUnstarDrop(false);
-   if (blockOfflineAction()) return;
-   setUnstarConfirm(true);
- };
+    setUnstarDrop(false);
+    if (blockOfflineAction()) return;
+    setUnstarConfirm(true);
+  };
  
  const handleUnStarallAction = async () => {
-   setUnstarConfirm(false);
-   if (blockOfflineAction()) return;
-   SDK.removeAllFavouriteMessages();
-   Store.dispatch(RemoveAllStarredMessages());
-   Store.dispatch(RemoveAllStarredMessagesHistory(starredMessages));
- };
+    setUnstarConfirm(false);
+    if (blockOfflineAction()) return;
+    SDK.removeAllFavouriteMessages();
+    Store.dispatch(RemoveAllStarredMessages());
+    Store.dispatch(RemoveAllStarredMessagesHistory(starredMessages));
+  };
  
  const getParentClass = (data) => (isLocalUser(data.publisherId) ? "starred-own" : "Starred-others");
  
@@ -156,7 +142,7 @@ const StarredMessages = (props = {}) => {
    ((data.msgType === "image" || data.msgType === "video") && data?.msgBody?.media?.caption !== "") ? " has-caption " : "";
  
  const getProfileElement = (data) => {
-   const userDetails = getUserDetails(data.publisherId);
+   const userDetails = getUserDetails(data.publisherId || data.fromUserId);
    const iniTail = initialNameHandle(userDetails, userDetails.initialName);
    return (
      <div className="senderDetails">
@@ -165,7 +151,7 @@ const StarredMessages = (props = {}) => {
          <span className="sender-image">
            <ProfileImage
              name={iniTail}
-             imageToken={userDetails.thumbImage !== "" ? userDetails.thumbImage : userDetails.image}
+             imageToken={(userDetails.thumbImage && userDetails.thumbImage !== "") ? userDetails.thumbImage : userDetails.image}
              chatType="chat"
            />
          </span>
@@ -188,7 +174,7 @@ const StarredMessages = (props = {}) => {
    switch (data.msgType) {
      case "text":
      case "auto_text":
-       return <TextComponent messageObject={data} isSender={isSender} />;
+       return <TextComponent messageObject={data} isSender={isSender} handleShowCallScreen={handleShowCallScreen} />;
  
      case "image":
        return <ImageComponent messageObject={data} isSender={isSender} uploadStatus={2} imageHeightAdjust={true} />;
@@ -226,22 +212,22 @@ const StarredMessages = (props = {}) => {
  };
  
  const unStarMessage = async (data) => {
-   const storeData = Store.getState();
-   const { recentChatData: { rosterData: { recentChatItems = [] } = {} } = {} } = storeData || {};
-   const dataFind = recentChatItems.filter((ele) => ele.recent.fromUserId === data.fromUserId);
-   if (dataFind.length >= 1 && dataFind[0]?.roster?.groupId != null && dataFind[0]?.roster?.isAdminBlocked) {
-     return;
-   }
-   setDropDown(-1);
-   if (blockOfflineAction()) return;
-   SDK.updateFavouriteStatus(data.fromUserJid, [data.msgId], false);
-   toast.success(`1 message unstarred`);
- };
+    const storeData = Store.getState();
+    const { recentChatData: { rosterData: { recentChatItems = [] } = {} } = {} } = storeData || {};
+    const dataFind = recentChatItems.filter((ele) => ele.recent.fromUserId === data.fromUserId);
+    if (dataFind.length >= 1 && dataFind[0]?.roster?.groupId != null && dataFind[0]?.roster?.isAdminBlocked) {
+      return;
+    }
+    setDropDown(-1);
+    if (blockOfflineAction()) return;
+    SDK.updateFavouriteStatus(data.fromUserJid, [data.msgId], false);
+    toast.success(`1 message unstarred`);
+  };
  
  const noUnstarMessages = () => {
-   toast.info("There is no starred message.");
-   setUnstarDrop(false);
- };
+    toast.info("There is no starred message.");
+    setUnstarDrop(false);
+  };
  
  const scrollToMsg = async (msgId = "") => {
    setTimeout(() => {
@@ -254,8 +240,7 @@ const StarredMessages = (props = {}) => {
      }, 3000);
      return (() => clearTimeout(activeTimer));
    }, 300);
- 
- }
+  }
  
  const getMsgId = async (msgItem = {}) => {
    const storeData = Store.getState();
@@ -271,9 +256,9 @@ const StarredMessages = (props = {}) => {
      }
      const dataMsgHistory = getChatMessageHistoryById(msgItem.fromUserId);
      if (dataMsgHistory.length === 0) {
-       Store.dispatch(ActiveChatAction(dataFind[0]));//open recent chat
-       setSeletedData(msgItem)
-     } else {
+        Store.dispatch(ActiveChatAction(dataFind[0]));//open recent chat
+        setSeletedData(msgItem)
+      } else {
        const findListMagId = dataMsgHistory.find((ele) => ele.msgId === msgItem.msgId);
        Store.dispatch(ActiveChatAction(dataFind[0]));
        if (findListMagId) {
@@ -283,40 +268,39 @@ const StarredMessages = (props = {}) => {
            { fromPage: "starPage", callOriginStrMsg: true, callOriginStrMsgId: msgItem, }
          ));
        }
-     }
+      }
    }
  };
  
  const requestReplyMessage = (grmsgid, replyTo, chatType) => {
-   if (isAppOnline()) {
-     SDK.getReplyMessage(replyTo, chatType);
-   } else {
-     // When user try to reply in offline, at this time get the message
-     // details from the local message history & set that message as reply message
-     const message = getActiveConversationMessageByMsgId(replyTo, chatType);
-     const replyMsgDetails = getReplyMessageFormat(message);
-     if (replyMsgDetails) {
-       Store.dispatch(ReplyMessageAction(replyMsgDetails));
-     }
-   }
- };
+    if (isAppOnline()) {
+      SDK.getReplyMessage(replyTo, chatType);
+    } else {
+      // When user try to reply in offline, at this time get the message
+      // details from the local message history & set that message as reply message
+      const message = getActiveConversationMessageByMsgId(replyTo, chatType);
+      const replyMsgDetails = getReplyMessageFormat(message);
+      if (replyMsgDetails) {
+        Store.dispatch(ReplyMessageAction(replyMsgDetails));
+      }
+    }
+  };
  
  const replayContentRender = (elememt = {}) => {
-   const { fromUserJid = "", msgBody: { replyTo = "" } = {}, msgId = "", chatType = "" } = elememt;
-   const newObj = getMessageFromHistoryById(fromUserJid, replyTo);
-   if (_isEmpty(newObj)) {
-     requestReplyMessage(msgId, replyTo, chatType);
-   } else {
-     offlineReplyHandle(newObj, replyTo);
-   }
-   const newArr = [...starredMessages];
-   const findIndex = newArr.findIndex((ele) => _get(ele, "msgBody.replyTo") === _get(elememt, "msgBody.replyTo"));
-   newArr[findIndex] = {
-     ...newArr[findIndex],
-     isReply: false,
-   }
-   // setStarredMessages(newArr);
- }
+    const { fromUserJid = "", msgBody: { replyTo = "" } = {}, msgId = "", chatType = "" } = elememt;
+    const newObj = getMessageFromHistoryById(fromUserJid, replyTo);
+    if (_isEmpty(newObj)) {
+      requestReplyMessage(msgId, replyTo, chatType);
+    } else {
+      offlineReplyHandle(newObj, replyTo);
+    }
+    const newArr = [...starredMessages];
+    const findIndex = newArr.findIndex((ele) => _get(ele, "msgBody.replyTo") === _get(elememt, "msgBody.replyTo"));
+    newArr[findIndex] = {
+      ...newArr[findIndex],
+      isReply: false,
+    }
+  }
  
  return (
    <Fragment>

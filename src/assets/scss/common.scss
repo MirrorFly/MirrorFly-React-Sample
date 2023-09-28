@@ -75,8 +75,7 @@ button {
 
 }
 
-// Chat list page style starts //
-
+// Chat list page style starts // 
 .container {
   min-height: var(--maxParentheight);
   @include flexbox();
@@ -1390,6 +1389,9 @@ i{
       + div + div + div > div{
         top:0;
         height: calc(100% - 6.363em);
+        &.mediaAttachmemtUpload{
+          height: calc(100%);
+        }
       }
       .onGoingcallDuration {
         height: 2.5em;
@@ -1785,6 +1787,12 @@ i{
           margin-left: 0 !important;
           left: 2.500em;
           right: calc(2.500em) !important;
+          em-emoji-picker{
+            width: 100%;
+            section#root{
+              width: 100% !important;
+            }
+          }
 
           .emoji-mart {
             width: 100% !important;
@@ -1827,6 +1835,7 @@ i{
               font-family: $regular;
               color: $clr-typing-area;
               white-space: pre-wrap;
+              word-break: break-all;
               /* css-3 */
               word-wrap: break-word;
               /* Internet Explorer 5.5+ */
@@ -2381,7 +2390,6 @@ i{
                 user-select: none;
               }
             }
-
             span .em {
               margin-left: 0;
             }
@@ -2846,6 +2854,7 @@ i{
               @include align-items(center);
               margin: 0 5px;
               @include flex(12px 0 0);
+              margin-right: 1.2em;
               }
               h6 {
                 @include flex(40% 1 1);
@@ -3087,7 +3096,12 @@ i{
           i.emoji {
             position: absolute;
             right: 2px;
-  
+            em-emoji-picker {
+              width: 380px !important;
+              @media screen and (max-width: 767px){
+                width: 280px !important;
+              }
+            }
             .emojiPicker-container {
               top: 120%;
               right: -32px !important;
@@ -3097,6 +3111,10 @@ i{
               bottom: unset !important;
               white-space: normal !important;
               z-index: 1;
+              margin-left: 0 !important;
+              em-emoji-picker{
+                width: 100%;
+              }
   
               .emoji-mart-category-list span {
                 width: 24px !important;
@@ -5059,7 +5077,8 @@ width: calc(100% - 3.875em);
       i svg path {
         fill: $fill-rev-sender-sends;
       }
-    }
+    } 
+   
   }
 
   &.sender {
@@ -6717,7 +6736,8 @@ width: 100%;
     }
 }
 .meetinglink {
-  cursor: pointer;
+  color: #fff;
+  cursor: pointer; 
   .sender-name{
     left: 0 !important;
     padding-left: .4em;
@@ -6772,12 +6792,11 @@ width: 100%;
       padding: 0.6em 0.6em 0.4em 0.6em;
       .meeting_ink{
         width: 100%;
-        font: normal normal 0.75rem/120% $regular;
+        font: normal normal 12px/15px $regular;
         text-decoration: underline;
         letter-spacing: 0px;
-        color: var(--clr_meeting_link_color);
-        margin-bottom: 0.125em;
-        padding-right: 1.25rem;
+        margin-bottom: 0.125em;        
+        color: #fff;
       }
       .Meeting_dail{
         font: normal normal 0.75rem/150% $regular;
@@ -6785,19 +6804,19 @@ width: 100%;
       }
     }
     .meeting_desc{
+      color: #fff;
       user-select: none;
       width: 100%;
       padding: 0.2em 0.6em;
       @include flexbox();
-      @include align-items(center);
-      @include justify-content(space-between);
+      @include align-items(center); 
       background: var(--bg_meeting_desc);
       .call_details{
         // font: normal normal 0.875rem/130% $regular;
         // color: var(--clr_meeting_link_detail);
         margin-left: 0.3em;
         color:var(--clr_meeting_link_detail);
-        font: normal normal 0.75rem/100% $regular;
+        font: normal normal 12px/20px $regular;
       }
       .call_icon{
         width: 1.625em;
@@ -6813,6 +6832,10 @@ width: 100%;
         height: 1.5625em;
         object-fit: contain;
         object-position: center;
+      }
+      .mirrorfly_meeting_logo{
+        width: 32px;
+        height: 32px;
       }
     }
     .company_detais{
@@ -6844,6 +6867,20 @@ width: 100%;
     margin: 0;
   }
 }
+.meeting_center_description {
+  display: flex;
+  justify-content: space-between; 
+  width: 100%;
+  padding: 12px;  
+  span{
+    &:first-child{
+      width: calc(100% - 50px);
+      font-size: 14px;
+      line-height: 17px;
+    }
+  }
+}
+ 
 }
 .page-loader{
   position: fixed;
@@ -6949,7 +6986,7 @@ body > iframe {
   padding: 0;
   color: #B5B5B5;
   text-transform: capitalize;
-  cursor: default;
+  cursor: auto;
   i{
     cursor: default;
   }
@@ -7005,8 +7042,125 @@ body > iframe {
   }
 }
 }
+.receiver.reply-textmeetinglink, .receiver.sender-text-groupmeetinglink, .starred-own, .starred-others,  .receiver.reply-text.fileProgressmeetinglink{
+  padding: 0   !important;
+  border-bottom-right-radius: 0  !important;
+  .meetinglink{ 
+    .message_meeting_link{
+      button{
+        .meeting_center_description{
+          background-color:#2C77D1;
+          color: #ffffff;
+          .call_icon{
+            svg{
+              width: 25px !important;
+              height: 16px !important;
+            }
+          }
+        }
+      } 
+    }
+  }
+}
+
+.sender.reply-textmeetinglink, .sender.sender-text-groupmeetinglink, .Starred-others{ 
+  padding: 0   !important;
+  .message-dropdown-menu .message-dropdown{
+    i{
+      svg{
+        g{
+          path{
+            fill: #000;
+          }
+        }
+      }
+    }
+  }
+  .meetinglink{
+    .message_meeting_link{
+      .meetingL_link_share {
+        .meeting_desc{
+          color: #000;
+        }
+        .meeting_link_detail {
+          .meeting_ink{
+            color: #000;
+          }
+        }
+      }
+    }
+    .meeting_center_description{
+      background-color: #EDEDED;
+      color: #000000;
+      svg{
+        path{
+          fill: #c3c1c1;
+        }
+      }
+    }
+  }
+}
+
+.sender.sender-text-groupmeetinglink{ 
+  .sender-name {
+    position: relative;
+    padding: 5px 5px 0px 5px  !important;
+    @extend .sender-name-style;
+  }
+}
+
+.chat-list-ul.padding-bottom-adjust{
+  .infinite-scroll-component__outerdiv{
+    margin-bottom: 5rem;
+  }
+}
+.container {
+  .recent-chatlist{
+    .contactlist{
+      .chat-list-ul{
+          .chat-list-li{
+            &:hover{
+              background-color: #edf4f9;
+            }
+          }
+        &.active{
+          .chat-list-li{
+              cursor: not-allowed;
+              &:hover{
+                background-color: transparent;   
+              }
+          }
+        }
+      } 
+    }
+  }
+}
+.sender {
+  .textmessages {
+    color: #000000;
+  }
+}
+
+.receiver {
+  .textmessages {
+    color: #ffffff;
+  }
+}
+.Starred-others{
+  .sender.text-message{
+    .meetinglink{
+      box-shadow: 0px 0 2px 0 #c9c9c9;
+    }
+  } 
+}
+
+.meeting_center_description svg{ 
+   width: 25px; 
+   height: 16px;
+  }
 
 @import 'media-in-details.scss';
 @import 'single-group-chat.scss';
 @import 'meeting.scss';
 @import 'box-layout-style.scss';
+ 

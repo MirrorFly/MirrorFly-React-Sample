@@ -13,7 +13,7 @@ const ParticipantsBadge = (props) => {
                 <span className="badgeImg">
                     <ImageComponent
                         userToken={userToken}
-                        imageToken={thumbImage !== "" ? thumbImage : image}
+                        imageToken={(thumbImage && thumbImage !== "") ? thumbImage : image}
                         temporary={true}
                         chatType="chat"
                     />

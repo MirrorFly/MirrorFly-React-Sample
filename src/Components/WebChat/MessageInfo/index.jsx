@@ -54,7 +54,7 @@ const MessageInfo = (props) => {
       let newMsgStatus;
       if (deliveredMembers.length && deliveredMembers.length === totalMembers) newMsgStatus = 1;
       if (seenMembers.length && seenMembers.length === totalMembers) newMsgStatus = 2;
-      if (newMsgStatus && infoMsg.msgStatus !== newMsgStatus) {
+      if (newMsgStatus && infoMsg.msgStatus !== newMsgStatus && messageInfoData.data.msgId === msgId) {
         setInfoMsg({
           ...infoMsg,
           msgStatus: newMsgStatus

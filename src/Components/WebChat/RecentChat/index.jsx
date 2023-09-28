@@ -77,22 +77,6 @@ class RecentChatSection extends Component {
     return broadcastListArray.find((broadcast) => messageFrom === broadcast.jid);
   };
 
-  getMessageSenderDetails = (newChatFrom) => {
-    const { rosterData: { data: rosterDataArray = [] } = {} } = this.props;
-    const rosterDetail = rosterDataArray.find((profile) => {
-      const rosterJid = profile.username ? profile.username : profile.userId;
-      return newChatFrom === rosterJid;
-    });
-    return rosterDetail || { contactNumber: newChatFrom };
-  };
-
-  getChatType = (broadcastId) => {
-    if (broadcastId) {
-      return "broadcast";
-    }
-    return "chat";
-  };
-
   getRoaster = (chatType = "groupchat", messageFrom = "") => {
     const messageType = {
       groupchat: this.filterProfileFromGroup,
@@ -173,8 +157,7 @@ class RecentChatSection extends Component {
 
     if (prevProps.groupsData && this.props.groupsData && prevProps.groupsData.id !== this.props.groupsData.id) {
       this.updateGroupInfo();
-      return;
-    }
+    }    
   }
 
   /**
@@ -272,10 +255,7 @@ class RecentChatSection extends Component {
     const nextPropsMsgId = nextProps?.messageData?.id;
     const nextPropsMsgType = nextProps?.messageData?.data?.messageType;
     const checkExist = isRenderMessageType(nextPropsMsgType);
-    if (messageType && nextPropsMsgId !== id && checkExist) {
-      return false;
-    }
-    return true;
+    return !(messageType && nextPropsMsgId !== id && checkExist);    
   }
 
   render() {
@@ -348,7 +328,7 @@ class RecentChatSection extends Component {
                   ? "offline"
                   : ""
                 } ${pageType === "archive" ? "archive" : ""} ${pageType === "archive" && updatedRecentChat.length === 0 && !searchValue ? " no-chat-archive " : ""
-                } ${!pageType === "archive" && updatedRecentChat.length === 0 && !searchValue ? " no-chat " : ""}`}
+                } ${(pageType != "archive") && updatedRecentChat.length === 0 && !searchValue ? " no-chat " : ""}`}
             >
               {isPermanentArchvie && pageType === "recent" && archivedChats.length > 0 && (
                 <div className="archivedWrapper" onClick={this.props.handleArchivedChatList}>

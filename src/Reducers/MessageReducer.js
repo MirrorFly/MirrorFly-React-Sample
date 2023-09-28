@@ -24,7 +24,7 @@ const updateReplyMessage = (newMessage, replyMessageArray = []) => {
     return replyMessageArray; //.concat(firstObject);
 }
 
-export function ReplyMessageReducer(state = [], action = {}) {
+export function ReplyMessageReducer(state = {}, action = {}) {
     const { payload: { id, data } = {} } = action
     switch (action.type) {
         case REPLY_MESSAGE_DATA:
@@ -63,7 +63,7 @@ const updateMessageInfo = (time, activeUserId, messageStatus, participants = [])
     })
 }
 
-export function messageInfoReducer(state = [], action = {}) {
+export function messageInfoReducer(state = {}, action = {}) {
 
     const { payload: { id, data, activeUserId, messageStatus = '', time } = {} } = action
     switch (action.type) {
@@ -121,12 +121,12 @@ export function messageForwardReducer(state = initialState, action = {}) {
     }
 }
 
-export function selectedMessageInfoReducer(state = [], action = {}) {
-        if (action.type === SELECTED_MESSAGE_INFO) {
+export function selectedMessageInfoReducer(state = {}, action = {}) {
+    if (action.type === SELECTED_MESSAGE_INFO) {
             return {
                 ...state,
                data: action.payload
             }
-        }
-            return state;
+    } else return state;
+
 }

@@ -18,14 +18,11 @@ import ForwardOptions from "./Templates/Common/ForwardOptions";
 import ChatTemplate from "./Templates/ChatTemplate";
 import WebChatMessagesComposing from "./WebChatMessagesComposing";
 import {
-  displayNameFromRencentChat,
   getActiveConversationUserJid,
-  getActiveConversationGroupJid,
   isSingleChat,
   isBroadcastChat,
   getActiveConversationMessageByMsgId,
   getReplyMessageFormat,
-  isSingleOrBroadcastChat,
   getActiveConversationChatId,
   isSingleOrGroupChat,
   getChatMessageHistoryById,
@@ -37,7 +34,6 @@ import {
   getMessagesForReport
 } from "../../../Helpers/Chat/ChatHelper";
 import {
-  getFormatPhoneNumber,
   getMessageObjSender,
   getMessageType,
   getRecentChatMsgObj,
@@ -155,6 +151,9 @@ class WebChatConversationHistory extends Component {
 
     if (prevProps.activeChatId !== activeChatId) {
       this.handleBlockUserData();
+      setTimeout(() => {
+        this.scrollToBottom();
+      }, 60); 
     }
 
     if (
@@ -239,120 +238,6 @@ class WebChatConversationHistory extends Component {
     }
   };
 
-  singleChatUpdateInHistory = (prevProps) => {
-    const activeChatDataId = this.props?.activeChatData?.id;
-    const { singleChatMsgHistoryData: { id: singlechatId } = {}, messageData } = this.props;
-    const chatType = this.props?.activeChatData?.data?.recent?.chatType;
-
-    if (prevProps.activeChatData.id !== activeChatDataId && isSingleOrBroadcastChat(chatType)) {
-      this.setState(
-        {
-          loaderStatus: true,
-          sendMessgeType: this.state?.userReplayDetails.length !== 0 ? "Reply" : "",
-          dragOnContainer: {},
-          replyMessage: {},
-          messageInfo: {},
-          forwardOption: false,
-          addionalnfo: {
-            forward: false
-          }
-        },
-        () => {
-          this.props.messageInfoShow(false);
-          this.props.forwardReset();
-        }
-      );
-      return;
-    }
-
-    if (singlechatId && prevProps.singleChatMsgHistoryData.id !== singlechatId && isSingleOrBroadcastChat(chatType)) {
-      const { activeChatData: { data: { roster, recent } = [] } = {} } = this.props;
-      const chatData = this.props.singleChatMsgHistoryData;
-
-      const detail = Object.keys(roster).length > 0 ? roster : recent;
-      const jid = formatUserIdToJid(detail.userId);
-      this.updateActiveMessage(chatData, chatType, jid);
-      return;
-    }
-
-    const messageType = messageData?.data?.msgType;
-    const messageId = messageData?.data?.msgId;
-    const preveMessageId = prevProps?.messageData?.data?.msgId;
-
-    if (
-      (messageType === "acknowledge" ||
-        messageType === "carbonSentMessage" ||
-        messageType === "carbonReceiveMessage" ||
-        messageType === "receiveMessage") &&
-      messageId !== preveMessageId
-    ) {
-      const type = messageData?.data?.type;
-      if (!messageId || (messageType === "acknowledge" && type !== "acknowledge")) return;
-
-      /** New chat message when chat open */
-      if (messageType === "carbonSentMessage") {
-        setTimeout(() => this.props.scrollBottomChatHistoryAction(), 1);
-      }
-    }
-  };
-
-  groupsChatUpdateInHistory = (prevProps) => {
-    const { groupChatMessage } = this.props;
-    const activeChatDataId = this.props?.activeChatData?.id;
-    const chatType = this.props?.activeChatData?.data?.recent?.chatType;
-
-    if (prevProps.activeChatData.id !== activeChatDataId && chatType === "groupchat") {
-      this.setState(
-        {
-          loaderStatus: true,
-          sendMessgeType: this.state?.userReplayDetails.length !== 0 ? "Reply" : "",
-          replyMessage: {},
-          dragOnContainer: {},
-          messageInfo: {},
-          forwardOption: false,
-          addionalnfo: {
-           forward: false
-          }
-        },
-        () => {
-          this.props.messageInfoShow(false);
-          this.props.forwardReset();
-        }
-      );
-      return;
-    }
-
-    if (groupChatMessage && groupChatMessage.id !== prevProps.groupChatMessage.id) {
-      const groupJid = getActiveConversationGroupJid();
-      this.updateActiveMessage(groupChatMessage, chatType, groupJid);
-    }
-  };
-
-  updateActiveMessage = (chatmessages, chatType, jid) => {
-    this.setState(
-      {
-        messageData: [],
-        jid: jid,
-        loaderStatus: false
-      },
-      () => {
-        if (this.viewReplyMessageId) {
-          this.smoothScroll(this.viewReplyMessageId);
-          this.viewReplyMessageId = null;
-        }
-      }
-    );
-
-    // Close the reply tag when chat conversation is empty
-    if (
-      this.state.sendMessgeType === "Reply" &&
-      chatmessages &&
-      (!chatmessages.data || (Array.isArray(chatmessages.data) && chatmessages.data.length === 0))
-    ) {
-      this.closeReplyAction();
-    }
-  };
-
   onScrolledTop = async () => {
     const {
       activeChatData: { data: { chatType, chatId } = {} } = {},
@@ -385,14 +270,6 @@ class WebChatConversationHistory extends Component {
   };
   onScrolledBottom = () => { };
 
-  handleChatMessageJID = (data = {}) => {
-    const { userId = "", username = "", fromUserId = "" } = data;
-    if (userId) {
-      return userId;
-    }
-    return username ? username : fromUserId;
-  };
-
   componentWillUnmount() {
     clearTimeout(this.activeTimer);
   }
@@ -404,7 +281,7 @@ class WebChatConversationHistory extends Component {
     container.classList.add("animatefinded");
     this.activeTimer = setTimeout(() => {
       container.classList.remove("animatefinded");
-    }, 3000);
+    }, 500);
   };
 
   // Show button when page is scorlled upto given distance
@@ -415,14 +292,12 @@ class WebChatConversationHistory extends Component {
   };
 
   viewOriginalMessage = async (messageId, msgId) => {
-    this.viewReplyMessageId = messageId;
     const chatType = this.props?.activeChatData?.data?.recent?.chatType;
 
     const chatMessages = getActiveChatMessages();
     const isExist = chatMessages.find((message) => message.msgId === messageId);
     if (isExist) {
       this.smoothScroll(messageId);
-      this.viewReplyMessageId = null;
       return;
     }
     if (chatMessages.length) {
@@ -504,7 +379,6 @@ class WebChatConversationHistory extends Component {
       messageInfo: {}
     });
     this.props.messageInfoShow(!this.props.showMessageinfo);
-    return;
   };
 
   handleStarredAction = async () => {
@@ -688,7 +562,6 @@ class WebChatConversationHistory extends Component {
         Store.dispatch(TranslateMessageHistory(dispatchData));
       }
     }
-    return;
   }
 
   closeReplyAction = (userId = "") => {
@@ -808,16 +681,17 @@ class WebChatConversationHistory extends Component {
     const { sendMessgeType = "", replyMessage = {} } = this.state;
     const replyTo = this.msgReplyPassId(replyMessage);
     const userProfile = this.props?.vCardData;
+    const msgId = uuidv4();
     if (message.content !== "") {
       let jid = this.prepareJid();
       const jids = getIdFromJid(jid);
-      let sendMessageResponse = await SDK.sendTextMessage({
+      await SDK.sendTextMessage({
         toJid: jid,
         messageText: handleMessageParseHtml(message.content),
+        msgId: msgId,
         replyMessageId: replyTo,
         mentionedUsersIds: message?.mentionedUsersIds
       });
-      let msgId = sendMessageResponse.data.msgId;
       if (chatType === CHAT_TYPE_SINGLE || chatType === CHAT_TYPE_GROUP) {      
         const dataObj = {
           jid,
@@ -831,7 +705,6 @@ class WebChatConversationHistory extends Component {
         };
         const conversationChatObj = await getMessageObjSender(dataObj);
         const recentChatObj = getRecentChatMsgObj(dataObj);
-        //SDK.sendTextMessage(jid, handleMessageParseHtml(message.content), msgId, replyTo, message?.mentionedUsersIds);
         SDK.sendTypingGoneStatus(jid);
         Store.dispatch(MessageAction(conversationChatObj));
         const dispatchData = {
@@ -897,18 +770,10 @@ class WebChatConversationHistory extends Component {
     });
   };
 
-  handleChatMessageJID = (data = {}) => {
-    const { jid = "", username = "", msgfrom = "" } = data;
-    if (jid) {
-      return jid;
-    }
-    return username ? username : msgfrom;
-  };
-
   onDragEnter = (event) => {
     if (event.dataTransfer.types) {
-      for (var i = 0; i < event.dataTransfer.types.length; i++) {
-        if (event.dataTransfer.types[i] === "Files") {
+      for (const type of event.dataTransfer.types) {
+        if (type === "Files") {
           const dragId = document.getElementById("msgContent");
           dragId.setAttribute("draggable", true);
           this.setState(
@@ -937,11 +802,6 @@ class WebChatConversationHistory extends Component {
     const isBlocked = blockedContactArr.indexOf(jid) > -1;
     this.setState({ isBlocked });
     return true;
-  };
-
-  getDisplayName = () => {
-    const { activeChatData: { data: { roster, recent: { msgfrom } } = [] } = {} } = this.props;
-    return displayNameFromRencentChat(roster) || getFormatPhoneNumber(msgfrom);
   };
 
   dispatchAction = async () => {

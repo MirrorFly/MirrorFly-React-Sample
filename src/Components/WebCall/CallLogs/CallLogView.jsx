@@ -1,11 +1,13 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { IconAudiocall, IconVideocall, IconVideoOutgoingCall, IconAudioOutgoingCall, IconVideoIncommingCall, IconAudioIncommingCall, IconAudioMissedCall, IconVideoMissedCall } from '../../../assets/images';
 import { formatCallLogDate, formatCallLogTime, durationCallLog, getHighlightedText } from '../../../Helpers/Utility';
 import ProfileImage from '../../../Components/WebChat/Common/ProfileImage'
 import {getFromLocalStorageAndDecrypt} from '../../WebChat/WebChatEncryptDecrypt';
+import SDK from '../../SDK';
 
 const CallLogView = (props = {}) => {
     let { displayName, image, searchterm, callLog, emailId,initialName="", isAdminBlocked, isDeletedUser } = props;
+    const [callBehaviour, setCallBehaviour] = useState("call")
 
     const onClick = useCallback(() => {
         if(isAdminBlocked || isDeletedUser) return;
@@ -34,6 +36,13 @@ const CallLogView = (props = {}) => {
         callStateView = props.callLog.callType === "video" ? <IconVideoOutgoingCall /> : <IconAudioOutgoingCall/> ;
     } else {
         callStateView = props.callLog.callType === "video" ? <IconVideoIncommingCall /> : <IconAudioIncommingCall/> ;
+    }
+
+    const handleCallLogHover = () =>{
+        const behaviourResponse = SDK.getCallBehaviour();
+        if(behaviourResponse.data == "meet"){
+            setCallBehaviour("meet")
+        }
     }
 
     return <li className={`chat-list-li ${(isAdminBlocked || isDeletedUser) ? "pointer-default-all" : ""}`} onClick={onClick}>
@@ -65,10 +74,10 @@ const CallLogView = (props = {}) => {
                         </span></div>
                 </div>
             </div>
-            <div className="callAction">
+            <div className="callAction" onMouseEnter={handleCallLogHover}>
                 {showDuration &&
                     <span className="callDuration" >{durationText}</span>}
-                <i className="callType">
+                <i className="callType" style={{cursor:callBehaviour == 'meet' ? "not-allowed":"pointer" }}>
                     {props.callLog.callType === "video" ? <IconVideocall /> : <IconAudiocall />}
                 </i>
             </div>

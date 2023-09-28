@@ -425,6 +425,30 @@
               right: 1.625em;
               height: 0.875em;
               width: 0.875em;
+              .emojiPicker-container {
+                margin-left: 0 !important;
+                right: -35px !important;
+                bottom: 30px !important;
+              em-emoji-picker{
+                width: 480px;
+                height: 320px;
+              }
+            }
+            @media screen and (max-width : 720px) {
+              .emojiPicker-container {
+              em-emoji-picker{
+                width: 320px !important;
+              }
+            }
+          }
+          @media screen and (max-width : 720px) {
+            .emojiPicker-container {
+              
+            em-emoji-picker{
+              width: 300px !important;
+            }
+          }
+        }
             }
             .em-slightly_smiling_face {
               background-image: url(./images/emoji.svg);

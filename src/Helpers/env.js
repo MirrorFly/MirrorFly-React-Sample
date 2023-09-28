@@ -21,7 +21,7 @@ class Env {
    */
   responseParser() {
     return response => {
-      var contentType = response.headers.get("content-type");
+      let contentType = response.headers.get("content-type");
       if (contentType && contentType.indexOf("application/json") !== -1) {
         return response.json();
       } else if (

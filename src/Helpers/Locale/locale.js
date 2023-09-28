@@ -82,8 +82,7 @@ const locale = {
     }
   },
   attributes: [],
-  password:
-    ":attribute must have atleast 1 uppercase, lowercase, special character and number."
+  pass: ":attribute must have atleast 1 uppercase, lowercase, special character and number."
 };
 
 export default locale;

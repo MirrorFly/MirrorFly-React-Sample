@@ -139,7 +139,7 @@ const Chat = (props = {}) => {
                       <div>
                         <ul className="drop-option">
                           {translateLanguages.map((lang, i) => (
-                            <li className="language" key={i}>
+                            <li className="language" key={lang.name}>
                               <button onClick={() => handleLanguage(lang)}>{lang.name}</button>
                             </li>
                           ))}

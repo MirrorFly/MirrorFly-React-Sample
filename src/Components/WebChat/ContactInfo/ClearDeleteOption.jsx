@@ -6,6 +6,7 @@ import { useSelector } from "react-redux";
 import { getArchiveSetting } from "../../../Helpers/Utility";
 import { isLocalUser } from "../../../Helpers/Chat/User";
 import userList from "../RecentChat/userList";
+import { REACT_APP_CONTACT_SYNC } from "../../processENV";
 
 const ClearDeleteOption = (props = {}) => {
   const {
@@ -22,7 +23,9 @@ const ClearDeleteOption = (props = {}) => {
 
   const handleNewParticipants = () => {
     props.handleNewParticipants();
-    userList.getUsersListFromSDK(1);
+    if (!REACT_APP_CONTACT_SYNC) {
+      userList.getUsersListFromSDK(1);
+    }
   }
 
   let exitGroup = !participants.find(users => isLocalUser(users.userId));
@@ -77,7 +80,7 @@ const ClearDeleteOption = (props = {}) => {
             participants.map((members, index) => {
               return (
                 <Participants
-                  key={index}
+                  key={members.userId}
                   members={members}
                   isAdmin={isAdmin}
                   groupuniqueId={groupuniqueId}

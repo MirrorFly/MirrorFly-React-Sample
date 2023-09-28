@@ -136,8 +136,8 @@ class WebCallingLayout extends Component {
                 });
                 return callUserDetails.map(user => {
                     const { displayName, name, username, jid, GroupUser } = user
-                    let DisplayName = displayName || name || jid || username || getFormatPhoneNumber(GroupUser)
-                    return (<li>{DisplayName}</li>)
+                    let displayGroupMemberName = displayName || name || jid || username || getFormatPhoneNumber(GroupUser)
+                    return (<li key={jid}>{displayGroupMemberName}</li>)
                 });
             }
             return [];
@@ -285,7 +285,7 @@ class WebCallingLayout extends Component {
                                 <WebChatProfileImg
                                 name = {iniTail}
                                 chatType={chatType}
-                                rostersnap={rosterData.thumbImage !== "" ? rosterData.thumbImage : rosterData.image}
+                                rostersnap={(rosterData.thumbImage && rosterData.thumbImage !== "") ? rosterData.thumbImage : rosterData.image}
                                 jid={(rosterData.username) ? rosterData.username : rosterData.jid} />
                                         <div className="ripple-1"></div>
                                         <div className="ripple-2"></div>

@@ -79,7 +79,7 @@ const ImageComponent = (props = {}) => {
         {caption !== "" && (
           <span>
             <span>{captionLink(caption,mentionedUsersIds)}</span>
-            {isTranslated() && <Translate tMessage={translatedMessage} />}
+            {!!isTranslated() && <Translate tMessage={translatedMessage} />}
           </span>
         )}
       </div>

@@ -18,6 +18,7 @@ import {
     CAMERA_ERROR, CAMERA_NOT_FOUND,
     CAMERA_PERMISSION_DENIED, CANCEL, CROP_PHOTO,
     PERMISSION_DENIED, PROFILE,
+    REACT_APP_CONTACT_SYNC,
     REACT_APP_GROUP_NAME_CHAR, REMOVE, REMOVE_PHOTO,
     REMOVE_YOUR_PROFILE_PHOTO, TAKE_PHOTO,
     UPLOAD_PHOTO, VIEW_PHOTO
@@ -26,7 +27,7 @@ import WebChatEmoji from '../../WebChat/WebChatEmoji';
 import { removeMoreNumberChar } from "../../../Helpers/Chat/ContentEditableEle"
 import { dataURLtoFile } from '../../../Helpers/Utility';
 import userList from '../RecentChat/userList';
-var cropme;
+let cropme;
 export default class NewGroupProfile extends Component {
     constructor(props) {
         super(props)
@@ -104,7 +105,7 @@ export default class NewGroupProfile extends Component {
             }, () => {
                 const elementNewProfile = document.getElementById("CameraContainer")
                 cropme = new Cropme(elementNewProfile, WebChatCropOption);
-                var readerNewProfile = new FileReader();
+                const readerNewProfile = new FileReader();
                 readerNewProfile.onload = function (e) {
                     cropme.bind({
                         url: e.target.result
@@ -119,32 +120,6 @@ export default class NewGroupProfile extends Component {
                 readerNewProfile.readAsDataURL(fileNewProfile);
             })
         }
-    }
-
-    /**
-     * handleViewProfile() method to maintain state for view profile popup.
-     */
-    handleViewProfile = () => {
-        this.setState({ viewProfileStatus: true });
-    }
-
-    /**
-     * handleVCardClose() method to maintain state for view profile popup close window state.
-     */
-    handleVCardClose = () => {
-        this.setState({
-            viewProfileStatus: false,
-            viewEmojiUsername: false,
-            viewEmojiStatus: false,
-            viewEdit: true,
-            viewEditStatus: true,
-            viewTick: true,
-            viewTickStatus: true,
-            charCount: false,
-            charCountStatus: false,
-            showImgDropDown: false,
-            showProfilePhotoRemove: false
-        });
     }
 
     /**
@@ -245,8 +220,6 @@ export default class NewGroupProfile extends Component {
         event.target.src = GroupProfile
     }
 
-    afterImageLoad = (event) => event.target.style.backgroundImage = '';
-
     findNegativeValue = (message = "") => {
         const groupNameLength = REACT_APP_GROUP_NAME_CHAR - _toArray(message).length;
         if (groupNameLength >= 0) {
@@ -291,8 +264,9 @@ export default class NewGroupProfile extends Component {
             })
             return
         }
-        userList.getUsersListFromSDK(1);
-
+        if (!REACT_APP_CONTACT_SYNC) {
+            userList.getUsersListFromSDK(1);
+        }
         this.props.handleMoveToPartcipantList({
             typingMessage, groupProfileImage, profileImage: true
         })

@@ -96,7 +96,6 @@ const AudioRecorder = (props = {}) => {
       }
       if (diff < 0) {
         autoStop();
-        return;
       }
     }
     timer();
@@ -118,7 +117,9 @@ const AudioRecorder = (props = {}) => {
           setRecorder(recorder);
           setMicStatus(false);
           let sounds = document.getElementsByTagName("audio");
-          for (let i = 0; i < sounds.length; i++) sounds[i].pause();
+          for (const sound of sounds) {
+            sound.pause();
+          }
           recorder
             .start()
             .then(() => {
@@ -126,7 +127,7 @@ const AudioRecorder = (props = {}) => {
               recordingStatus(false);
               const container = document.getElementById("typingContainer");
               container && container.setAttribute("contentEditable", false);
-              startTimer(audioLimit, document.getElementById("recordDuration"));
+              setTimeout(()=>startTimer(audioLimit, document.getElementById("recordDuration")))
             })
             .catch((e) => {
               console.error(e);

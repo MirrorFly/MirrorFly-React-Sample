@@ -2,7 +2,6 @@ import React, { Fragment, Suspense } from "react";
 import { connect } from "react-redux";
 import { Carousel } from "react-responsive-carousel";
 import "react-responsive-carousel/lib/styles/carousel.min.css";
-import "react-videoplayer/lib/index.css";
 import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
 import "video.js/dist/video-js.css";
 import {
@@ -63,7 +62,6 @@ class WebChatMediaPreview extends React.Component {
     };
     this.tempSelectedItem = 0;
     this.localDb = new IndexedDb();
-    this.myAudioElemet = React.createRef();
 
     document.addEventListener("keydown", this.handleOnKeyPress, false);
   }
@@ -91,6 +89,7 @@ class WebChatMediaPreview extends React.Component {
         .catch(() => thumbImage);
     }
   };
+
 
   handleDisplayMedia = async () => {
     return Promise.allSettled(
@@ -145,7 +144,6 @@ class WebChatMediaPreview extends React.Component {
                           <div className="tools zoomTools">
                             <button onClick={zoomIn}>
                               <ZoomIn />
-
                             </button>
                             <button onClick={zoomOut}>
                               <ZoomOut />
@@ -206,7 +204,7 @@ class WebChatMediaPreview extends React.Component {
             break;
 
           case "video":
-            if (this.state.initialRender == true && index === this.tempSelectedItem) {
+            if (this.state.initialRender && index === this.tempSelectedItem) {
               const videoSrc = is_uploading === 1 ? file_url : await this.getFile(file_url, "video", {}, file_key, fileExtensionSlice);
               if (!videoSrc || videoSrc === "") {
                 break;
@@ -277,7 +275,7 @@ class WebChatMediaPreview extends React.Component {
         }
         return (
           <div key={msgId} className={mediaData.class} id={msgId}>
-            <img src={mediaData.imageURL} alt={mediaData.fileName} />
+            <img style={{display:"none"}} src={mediaData.imageURL} className="data" alt={mediaData.fileName} />
             {mediaData.media}
           </div>
         );
@@ -453,7 +451,7 @@ class WebChatMediaPreview extends React.Component {
     const mutationObserver = new MutationObserver((mutations) => {
       mutations.forEach((mutationRecord) => {
         const { m41: newM41 } = this.getTransformMatrix(mutationRecord.target);
-        if (this.state.lastTranslateX !== newM41 && newM41) {
+        if (this.state.lastTranslateX != newM41 && newM41) {
           this.setTransformMatrix(targetThumb, newM41);
         }
       });
@@ -536,17 +534,6 @@ class WebChatMediaPreview extends React.Component {
         this.handleDeleteMedia();
       }
 
-      // if (this.props.messageData.data && this.props.messageData.data.msgType === "receiveMessage") {
-      // if (this.props.messageData.data.fromUserId === getUserIdFromJid(this.props.jid)) {
-      // const { msgBody = {} } = this.props.messageData.data;
-      // if (isMediaMessage(msgBody)) {
-      // let newMediaList = this.state.mediaList;
-      // newMediaList.unshift(this.props.messageData.data);
-      // this.setState({ mediaList: newMediaList }, () => this.diplayMedia("add"));
-      // this.initializeMutation();
-      // }
-      // }
-      // }
     }
     if (prevProps.groupsData && prevProps.groupsData.id !== this.props.groupsData.id) {
       const groupId = this.props.jid.split("@")[0]
@@ -574,16 +561,17 @@ class WebChatMediaPreview extends React.Component {
 
   customRenderThumb = (children) =>
     children.map((item, index) => {
+      let indexCounter = index;
       const url = item.props?.children[0]?.props?.src;
       const duration = item.props?.children[1]?.props?.duration;
       const videoIcon = (item.props?.className === "type-media videosThumb" || item.props?.className === "type-media videos") ? "video-icon" : "";
       const FileIcon = item.props?.className === "type-image file" ? "File" : "";
       if (this.state.viewAllMedias) {
         return (
-          <div key={index} className={`thumb-img ${videoIcon || FileIcon} img-load`}>
+          <div key={indexCounter} className={`thumb-img ${videoIcon || FileIcon} img-load`}>
             <img
               src={url}
-              key={`${index}-Img`}
+              key={`${indexCounter}-Img`}
               alt=""
               onLoad={this.imageOnLoad}
               className="image-load"
@@ -592,7 +580,7 @@ class WebChatMediaPreview extends React.Component {
             <Spinner />
 
             {duration && (
-              <p className="audio-duration" key={`${index}-Duration`}>
+              <p className="audio-duration" key={`${indexCounter}-Duration`}>
                 {duration}
               </p>
             )}
@@ -646,13 +634,6 @@ class WebChatMediaPreview extends React.Component {
     };
   };
 
-  getSelectedMsgObj = () => {
-    if (this.tempSelectedItem > -1 && this.state.mediaList.length > 0) {
-      return this.state.mediaList[this.tempSelectedItem] || {};
-    }
-    return {};
-  };
-
   downloadFile = () => {
     if (this.tempSelectedItem > -1 && this.state.mediaList.length > 0) {
       const selectedMediaData = this.state.mediaList[this.tempSelectedItem];
@@ -663,24 +644,6 @@ class WebChatMediaPreview extends React.Component {
         downloadMediaFile(file_url, message_type, fileName, file_key);
       }
     }
-  };
-
-  getSelectedMsgId = () => {
-    const selectedMedia = this.getSelectedMsgObj();
-    if (selectedMedia && Object.keys(selectedMedia).length > 0) {
-      return selectedMedia.msgId;
-    }
-    return "";
-  };
-
-  getSelectedFavouriteStatus = () => {
-    const selectedMedia = this.getSelectedMsgObj();
-    if (selectedMedia && Object.keys(selectedMedia).length > 0) {
-      const { favouriteMsgs } = this.state;
-      const localFavStatus = favouriteMsgs[selectedMedia.msgId];
-      return localFavStatus !== undefined ? localFavStatus : selectedMedia.favouriteStatus;
-    }
-    return 0;
   };
 
   handleStarMessage = async () => {
@@ -698,8 +661,7 @@ class WebChatMediaPreview extends React.Component {
     const initialThumbnailImage = getThumbBase64URL(this.state.mediaList[selectedItem]?.msgBody?.media?.thumb_image);
 
     return (
-      <Suspense
-        fallback={<div>Loading...</div>}>
+      <Suspense fallback={<div>Loading...</div>}>
         <Fragment>
           <div>
             <div
@@ -761,7 +723,7 @@ class WebChatMediaPreview extends React.Component {
                   </li>
                 </ul>
               </div>
-              {previewData.length && (
+              {!!previewData.length && (
                 <Carousel
                   key={this.state.mediaList[0].msgId}
                   renderArrowPrev={this.handleNext} // For Handling Right to Left Slide, We are Revering the Logic

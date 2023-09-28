@@ -33,7 +33,6 @@ export const useGetTypingStatus = ({ typingId, typingData, fromUserId, chatType 
         isTyping: isUserTyping,
         displayName
       });
-      return;
     }
   }, [fromUserId, typingId]);
 
