@@ -9,9 +9,17 @@ export const setGroupParticipants = (res) => {
 }
 
 export const setGroupParticipantsByGroupId = (groupId, participantsList) => {
+    const uniqueUserJids = {};
+        const uniqueParticipantsList = participantsList.filter(item => {
+            if (item.userType != "" && !uniqueUserJids[item.userJid]) {
+                uniqueUserJids[item.userJid] = true;
+                return true;
+            }
+            return false;
+        });
     Store.dispatch(GroupsMemberParticipantsListAction({
         "groupId": groupId,
-        "participantsList": participantsList,
+        "participantsList": uniqueParticipantsList,
     }));
 }
 
@@ -51,3 +59,4 @@ export const isUserExistInGroup = (userId, groupUsers) => {
     }
     return groupUsers.find((user) => user.userId === userId);
   };
+

@@ -111,7 +111,8 @@ export default class PreviewVideo extends Component {
             onChangeCaption={this.props.onChangeCaption}
             media={this.props.media}
             onClickSend={this.props.onClickSend}
-            uniqueId={this.state.uniqueId}
+            uniqueId={this.props.uniqueId}
+            selectedFiles={this.props.selectedFiles}
             chatType={this.props.chatType}
             chatId={this.props.chatId}
             newFile={this.props.type}

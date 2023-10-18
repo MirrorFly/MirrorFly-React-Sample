@@ -340,7 +340,6 @@ export default class MediaPreview extends Component {
       let fileType = res.type;
       let mediaType = getMessageType(res.type, res);
       const fileExtension = getExtension(res.name);
-
       const { fileDetails: { fileId }, caption = "" } = res;
       switch (mediaType) {
         case "image":
@@ -350,6 +349,7 @@ export default class MediaPreview extends Component {
               key={fileId}
               type={type}
               uniqueId={fileId}
+              selectedFiles={selectedFiles}
               onClickSend={this.sendMediaFile}
               chatType={chatType}
               chatId={chatId}
@@ -367,6 +367,7 @@ export default class MediaPreview extends Component {
               key={fileId}
               type={type}
               uniqueId={fileId}
+              selectedFiles={selectedFiles}
               onClickSend={this.sendMediaFile}
               chatType={chatType}
               chatId={chatId}

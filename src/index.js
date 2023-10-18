@@ -26,11 +26,12 @@ window.onbeforeunload = function() {
       deleteItemFromLocalStorage('roomName');
       deleteItemFromLocalStorage('callType');
       deleteItemFromLocalStorage('call_connection_status');
+      deleteItemFromLocalStorage('inviteStatus');
       deleteItemFromLocalStorage('connecting');
       encryptAndStoreInLocalStorage('callingComponent',false);
     }
 
-  };
+};
 
 let ProviderComponent = React.lazy(() => import('./Provider/ProviderComponent'));
 const root = ReactDOM.createRoot(document.getElementById("root"));

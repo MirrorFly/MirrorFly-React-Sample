@@ -263,57 +263,58 @@ class ParticipantPopUp extends Component {
                             <div className="popup-body">
                                 <div className="contactList">
                                     { REACT_APP_CONTACT_SYNC &&
-                                    <ul className="chat-list-ul">
-                                        {isLoading && <div className="response_loader style-2">
-                                            <img src={loaderSVG} alt="loader"  />
-                                        </div> }
-                                        {filteredContacts.length === 0 && searchValue &&
-                                            <span className="searchErrorMsg"><Info />
-                                                {NO_SEARCH_CHAT_CONTACT_FOUND}
-                                            </span>}
-                                        <li className="chat-list-li BadgeContainer">
-                                            <div className="selectedBadge">
-                                                <ul>
-                                                    {participantToAdd.map(participant => {
-                                                        const { userId } = participant
-                                                        return <Badge
-                                                            key={userId}
-                                                            {...participant}
-                                                            removeParticipant={this.removeParticipant}
-                                                        />
-                                                    })}
-                                                </ul>
-                                            </div>
-                                        </li>
-                                        <li>{errorMesage &&
-                                            <div className="errorMesage"><Info /><span>
-                                                {errorMesage}</span></div>}
-                                        </li>
-                                        {filteredContacts.map(contact => {
-                                            const { username, userId } = contact
-                                            const contactName = getContactNameFromRoster(contact);
-                                            const updateJid = username || userId
-                                            const isChanged = participantToAdd.findIndex(participant => participant.userId === updateJid);
-                                            let blockedContactArr = this.props.blockedContact.data;
-                                            const jid = formatUserIdToJid(updateJid);
-                                            const isBlocked = blockedContactArr.indexOf(jid) > -1;
-                                            return (
-                                                <Contact
-                                                    isBlocked={isBlocked}
-                                                    searchValue={searchValue}
-                                                    contactName={contactName}
-                                                    isChanged={isChanged}
-                                                    membersCount={groupMembers.length + participantToAdd.length}
-                                                    errorMessageListner={this.errorMessageListner}
-                                                    prepareContactToAdd={this.prepareContactToAdd}
-                                                    prepareContactToRemove={this.prepareContactToRemove}
-                                                    key={updateJid}
-                                                    roster={contact}
-                                                    {...contact}
-                                                />
-                                            )
-                                        })}
-                                    </ul> }
+                                        <ul className="chat-list-ul">
+                                            {isLoading && <div className="response_loader style-2">
+                                                <img src={loaderSVG} alt="loader"  />
+                                            </div> }
+                                            {filteredContacts.length === 0 && searchValue &&
+                                                <span className="searchErrorMsg"><Info />
+                                                    {NO_SEARCH_CHAT_CONTACT_FOUND}
+                                                </span>}
+                                            <li className="chat-list-li BadgeContainer">
+                                                <div className="selectedBadge">
+                                                    <ul>
+                                                        {participantToAdd.map(participant => {
+                                                            const { userId } = participant
+                                                            return <Badge
+                                                                key={userId}
+                                                                {...participant}
+                                                                removeParticipant={this.removeParticipant}
+                                                            />
+                                                        })}
+                                                    </ul>
+                                                </div>
+                                            </li>
+                                            <li>{errorMesage &&
+                                                <div className="errorMesage"><Info /><span>
+                                                    {errorMesage}</span></div>}
+                                            </li>
+                                            {filteredContacts.map(contact => {
+                                                const { username, userId } = contact
+                                                const contactName = getContactNameFromRoster(contact);
+                                                const updateJid = username || userId
+                                                const isChanged = participantToAdd.findIndex(participant => participant.userId === updateJid);
+                                                let blockedContactArr = this.props.blockedContact.data;
+                                                const jid = formatUserIdToJid(updateJid);
+                                                const isBlocked = blockedContactArr.indexOf(jid) > -1;
+                                                return (
+                                                    <Contact
+                                                        isBlocked={isBlocked}
+                                                        searchValue={searchValue}
+                                                        contactName={contactName}
+                                                        isChanged={isChanged}
+                                                        membersCount={groupMembers.length + participantToAdd.length}
+                                                        errorMessageListner={this.errorMessageListner}
+                                                        prepareContactToAdd={this.prepareContactToAdd}
+                                                        prepareContactToRemove={this.prepareContactToRemove}
+                                                        key={updateJid}
+                                                        roster={contact}
+                                                        {...contact}
+                                                    />
+                                                )
+                                            })}
+                                        </ul> 
+                                    }
                                     { !REACT_APP_CONTACT_SYNC && 
                                         <ul style={{height:"100%"}} className="chat-list-ul" id="scrollableUl-addparticipant">
                                             {loaderStatus && <div className="response_loader style-2">

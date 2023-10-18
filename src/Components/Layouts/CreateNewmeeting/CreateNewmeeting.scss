@@ -1,3 +1,5 @@
+@import "../../../assets/scss/fonts.scss"; 
+@import "../../../assets/scss/variables.scss";
 .create_new_meeting_wraper {
     position: relative;
 
@@ -170,6 +172,45 @@
                 transition: 150ms ease-in-out;
             }
         }
+        .join_btn_disabel{
+          background: #A8A8A8;
+          border: none;
+          cursor: not-allowed;
+
+          &:hover {
+              background: #A8A8A8;
+              color: #fff;
+          }
+        }
+        &.instantCallScheduling{
+            position: absolute;
+            width: 365px;
+            background: #FFFFFF;
+            box-shadow: 3px 3px 8px #98989840;
+            border: 1px solid #ECECEC;
+            border-radius: 0.5em;
+            left: 50%;
+            top: 50%;
+            z-index: 9;
+            padding: 40px;
+            transform: translate(-50%, -50%);   
+            h2{
+                font-size: 14px;
+                margin-bottom: 4px;
+            }
+            p{  @media(min-width:1800px){
+                width: 315px;
+              }
+                margin-bottom: 14px;
+            }
+            .join_new_meeting{
+              margin:0;
+            }
+            .border{
+                margin:16px 0;
+            }
+           
+        } 
     }
 
     .border {
@@ -196,3 +237,190 @@
         }
     }
 }
+
+// instant call scheduling
+.calender-switch {
+    position: relative;
+    display: inline-block;
+    width: 30px;
+    height: 16px; 
+    input { 
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+       
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #fff;
+    -webkit-transition: .4s;
+    transition: .4s;
+   &:before {
+        position: absolute;
+        content: "";
+        height: 12px;
+        width: 12px;
+        left: 3px;
+        top: 1px;
+        transform: translateY(0px);
+        background-color: #767676;
+        transition: .4s;
+        box-shadow: 0 0 0.688em -0.188em #B2B2B2;
+    }
+    &.round {
+        border-radius: 34px;
+        border:1px solid #767676;
+        &::before{ 
+                border-radius: 50%;  
+        }
+      }
+  }
+    
+  input:checked + .slider {
+    background-color: #2196F3;
+    &.round {
+        background-color: #fff; 
+        border:1px solid #2196F3;
+    }
+    &:before{
+        transform: translateX(12px);
+        right: 0;
+        top: 1px;
+        background-color: #3276E2;
+    }
+  }
+  input:focus + .slider {
+    box-shadow: 0 0 1px #2196F3;
+  }
+  
+
+ 
+  }  
+
+  .schedule-meeting{
+    display: flex; 
+    align-items: center; 
+    margin-top: 20px;
+
+    h4{
+        font:normal normal 14px var(--semibold);
+        display: flex;
+        flex: 1;
+    }
+    .toggle-container{
+        display: flex; 
+    }
+    .calendarOption{
+        display: flex;
+    }
+  }
+  .calendar-time{
+    position: relative;
+    i{
+        position: absolute;
+        top: 25px;
+        right: 11px;
+        svg{
+            fill: #656565;
+            width: 24px;
+            height: 24px;
+        }
+
+    }
+  }
+  .meeting_center_description svg{ 
+    width: 25px; 
+    height: 16px;
+   }
+   .meeting_center_left{
+     .scheduled_label {
+         display: block;
+         width: 100%;   
+         font-size: 14px;
+         font-family: $medium;
+         padding-bottom: 3px;
+     }
+     .scheduled_message{ 
+       font:normal normal 12px/17px var(--regular);
+       margin-top: 3px;
+     }
+   }
+   .receiver{
+    .meeting_center_left{ 
+        .scheduled_message{
+          color:#B3CEEE; 
+        }
+      }
+   }
+   .chat-meet{
+     svg{
+       height: 15px;
+       width: 15px;
+       position: relative;
+       top: 2px;
+       left: 0;
+     }
+   }
+ .recentText{
+     position: relative;
+   }
+ .call_icon {
+   svg{
+     path{
+       fill: #FFFFFFA3;
+     }
+   }
+ }
+ .reply-message-type{
+   background-color: transparent;
+   .mirrorfly_meeting_logo {
+     width: 30px;
+     height: 30px;
+   }
+ }
+ 
+ .close_popup {
+   svg {
+     width: 16px;
+     height: 16px;
+     position: absolute;
+     top: 15px;
+     right: 20px;
+     cursor: pointer;
+     path{
+        fill: #181818;
+        stroke: #181818;
+     }
+   }
+ }
+
+ @media(max-width:1500px){
+    .create_new_meeting_wraper .Create_meeting_popup.instantCallScheduling{  
+    transform: translate(-50%, -80%); 
+    top:0;
+    }
+  }  
+  @media(max-width:767px){
+    .create_new_meeting_wraper .Create_meeting_popup.instantCallScheduling{  
+       transform: translate(-51%, -100%);
+        top: 0;
+    }
+  }  
+
+ @media(min-width:1800px){
+    .create_new_meeting_wraper .Create_meeting_popup.instantCallScheduling{ 
+        width: 400px; 
+    }
+}
+  @media(min-width:2000px){
+    .create_new_meeting_wraper .Create_meeting_popup.instantCallScheduling{ 
+    width: 430px;
+    transform: translate(-50%, -100%);
+    top:0;
+    }
+  }  

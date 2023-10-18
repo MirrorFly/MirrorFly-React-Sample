@@ -160,12 +160,6 @@ function OtpLogin(props = {}) {
   }
 
   const handleProfileDetails = async (value1, e) => {
-    // if (isSandboxMode()) {
-    //   await SDK.syncContacts(resultData.login.username);      
-    // }
-    // if (profileDetails && profileDetails.registerData && !profileDetails.registerData.isProfileUpdated) {
-    //   SDK.sendRegisterUpdate();
-    // } 
    const registerData = getFromLocalStorageAndDecrypt("auth_user")
     handleLoginSuccess(registerData, resultData.login, true)
   };
@@ -201,7 +195,6 @@ function OtpLogin(props = {}) {
     const phoneValue = regMobileNo.mobileNumber;
     const phoneNumber = `${countryCode}${phoneValue}`;
     setOtpverify(otpInitialState);
-   
     firebase
       .auth()
       .signInWithPhoneNumber(phoneNumber, window.recaptchaVerifier)

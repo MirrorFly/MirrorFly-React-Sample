@@ -152,6 +152,7 @@ export const getDataFromSDK = async(userId) => {
         if(profileDetailsResponse.statusCode === 200){
             let userProfileDetails = profileDetailsResponse.data;
             userProfileDetails.name = userProfileDetails.nickName;
+            userProfileDetails.userId = userId;
             data = {
             ...data,
             ...userProfileDetails,
@@ -279,7 +280,7 @@ export const getLocalUserId = () => {
     return "";
 }
 
-export const handleMentionedUser = (text, mentionedUsersIds, mentionedMe, mentionedClass = "") => {
+export const handleMentionedUser = (text, mentionedUsersIds, mentionedMe, mentionedClass = "", chatType = "chat") => {
     let userId = mentionedUsersIds;
     if (!text) return "";
     const pattern = /@\[\?\]/gi;
@@ -293,12 +294,35 @@ export const handleMentionedUser = (text, mentionedUsersIds, mentionedMe, mentio
                 const mentionedUserId = userId[i];
                 let rosterData = getUserDetailsForMention(mentionedUserId);
                 let displayName = rosterData.displayName;
-                content = content.replace(uid, "<button data-mentioned=\"" + mentionedUserId + "\" class='" + mentionedClass + (mentionedMe === mentionedUserId ? " tagged " : " ") + " mentioned'><b>@</b> <i>" + (displayName !== undefined ? displayName : []) + "</i> </button>");
+                if(chatType === 'groupchat'){
+                    content = content.replace(uid, "<button data-mentioned=\"" + mentionedUserId + "\" class='" + mentionedClass + (mentionedMe === mentionedUserId ? " tagged " : " ") + " mentioned'><b>@</b> <i>" + (displayName !== undefined ? displayName : []) + "</i> </button>");
+                }else{
+                    content = content.replace(uid, "<b>@</b> <i>" + (displayName !== undefined ? displayName : []) + "</i>");
+                }
+                
             }
             });
         return content;
     }
-  else {
-    return text;
-  }
+    else {
+        let parser = new DOMParser();
+        let doc = parser.parseFromString(text, "text/html");
+        let spans = doc.querySelectorAll("span");
+        spans.forEach(function (span) {
+            if (chatType === "groupchat") {
+                if (!span.classList.contains("blue")) {
+                    span.classList.add("blue");
+                }
+                if (span.getAttribute("data-mentioned") === mentionedMe) {
+                    if (!span.classList.contains("tagged")) {
+                        span.classList.add("tagged");
+                    }
+                }
+            } else {
+                span.className = "";
+            }
+        });
+        let updatedText = doc.body.innerHTML;
+        return updatedText;
+    }
 }

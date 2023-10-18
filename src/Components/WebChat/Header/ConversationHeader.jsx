@@ -2,7 +2,7 @@ import React, { Fragment } from 'react';
 import { connect } from 'react-redux';
 import 'react-toastify/dist/ReactToastify.css';
 import { CallConnectionState, showConfrence } from '../../../Actions/CallAction';
-import { ArrowBack, AudioCall, SampleGroupProfile, SampleChatProfile, VideoCall } from '../../../assets/images';
+import { ArrowBack, AudioCall, SampleGroupProfile, SampleChatProfile, VideoCall, IconCalendar} from '../../../assets/images';
 import Store from '../../../Store';
 import { REACT_APP_XMPP_SOCKET_HOST } from '../../processENV';
 import { hideModal, showModal } from '../../../Actions/PopUp'
@@ -18,6 +18,7 @@ import { CONNECTED, NO_INTERNET } from '../../../Helpers/Constants';
 import { formatUserIdToJid, getContactNameFromRoster, getIdFromJid, initialNameHandle } from '../../../Helpers/Chat/User';
 import { muteLocalVideo } from "../../callbacks";
 import { isGroupChat, isSingleChat } from '../../../Helpers/Chat/ChatHelper';
+import { isAppOnline } from '../../../Helpers/Utility';
 
 let groupId = "";
 let groupName = "";
@@ -35,7 +36,8 @@ class ConversationHeader extends React.Component {
             emailId: null,
             localRoster: {},
             isAdminBlocked: false,
-            isDeletedUser: false
+            isDeletedUser: false,
+            schedulePopup: false
         }
         this.preventMultipleClick = false;
         this.premissionConst = "Permission denied";
@@ -392,6 +394,20 @@ class ConversationHeader extends React.Component {
         return room !== null;
     }
 
+    handleSchedulePopup() {
+        if (isAppOnline()) {
+            Store.dispatch(
+                showModal({
+                    open: true,
+                    modelType: "scheduleMeeting"
+                })
+            );
+        }
+        else {
+            toast.error(NO_INTERNET)
+        }
+    }
+
     render() {
         const { groupMemberDetails, activeChatId, displayNames, featureStateData,
             userData: { data: { chatId = "",recent: { chatType = "", fromUserId = "" } } = {} } = {} } = this.props || {};
@@ -400,12 +416,12 @@ class ConversationHeader extends React.Component {
         const avatarIcon = chatType === 'chat' ? SampleChatProfile : SampleGroupProfile;
         let canSendMessage = this.canSendMessage();
         const { mobileNumber, thumbImage } = this.state.localRoster
-        const { image, displayName, emailId, isAdminBlocked } = this.state
+        const { image, displayName, emailId, isAdminBlocked, isDeletedUser } = this.state
         const iniTail = initialNameHandle(this.state.localRoster, displayName);
         groupName = displayName;
-        let blockedContactArr = this.props.contactsWhoBlockedMe.data;
+        let blockedContactArr = this.props.blockedContact.data;
         const isBlocked = blockedContactArr.indexOf(formatUserIdToJid(activeChatId)) > -1 || isAdminBlocked
-        if (isBlocked) {
+        if (isBlocked || isDeletedUser) {
             canSendMessage = false;
         }
         let imageToken = "";
@@ -455,6 +471,9 @@ class ConversationHeader extends React.Component {
                                 onClick={chatType === "chat" && !this.props.showonGoingcallDuration ? () => this.makeOne2OneCall('video') : () => this.showCallParticipants('video')}
                                 className={`videoCall ${(this.props.showonGoingcallDuration || this.state.isAdminBlocked || this.state.isDeletedUser) ? 'calldisabled' : ''}`}>
                                 <span className="toggleAnimation"></span><VideoCall />
+                            </i>
+                            <i title="Schedule Meeting" onClick={() => this.handleSchedulePopup()}>
+                             <span className="toggleAnimation"></span><IconCalendar />
                             </i>
                         </>}
                     </div>

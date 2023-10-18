@@ -10,8 +10,10 @@ import MentionUserList from "../Conversation/Templates/Common/MentionUserList";
 import { getUserDetails } from "../../../Helpers/Chat/User";
 import { useSelector } from "react-redux";
 import { placeCaretAtEnd } from "../../../Helpers/Utility";
+import { CHAT_TYPE_GROUP } from "../../../Helpers/Chat/Constant";
+
 const Caption = (props = {}) => {
-  const { onChangeCaption, media = {}, onClickSend, chatType, uniqueId, chatId, newFile } = props;
+  const { onChangeCaption, media = {}, onClickSend, chatType, uniqueId, chatId, newFile, selectedFiles } = props;
   const { caption = "" } = media;
   const [typingMessage, setTypingMessage] = useState({
     value: ""
@@ -20,11 +22,11 @@ const Caption = (props = {}) => {
   const [position, setPosition] = useState(0);
   const setCursorPosition = (pos) => setPosition(pos);
   const [GroupMemberList, setGroupMemberlist ] = useState([]);
-  const [MentionView,setMentionView] = useState(false)
-  const [MentionViewClicked,setMentionViewClicked] = useState(false)
+  const [MentionView, setMentionView] = useState(false)
+  const [MentionViewClicked, setMentionViewClicked] = useState(false)
   const [emojiSelected, setEmojiSelected] = useState(false);
   const [showEmojiState, setShowEmojiState] = useState(false);
-  const [mentionedUsersIds,setMentionedUsersId] = useState([])
+  const [mentionedUsersIds, setMentionedUsersId] = useState([])
   const groupList = useSelector((state)=>state.groupsMemberListData);
   const vcardData = useSelector((state)=>state.vCardData)
   const groupMembers = useSelector((state)=>state.groupsMemberListData)
@@ -32,13 +34,14 @@ const Caption = (props = {}) => {
   const [showCursor, setshowCursor] = useState(false);
   const [searchEmoji, setSearchEmoji] = useState("");
   const [filteredTextForSearch, setFilteredTextForSearch] = useState("");
+  const [getId, setId] = useState("image-preview-typingContainer");
 
   const handleEmojiText = (emojiObject, isClicked = false) => {
     setEmojiSelected(isClicked)
     const { value: typeVal } = typingMessage;
     let positionToUpdate;
     let text = "";
-    const msgContent = document.getElementById(`image-preview-typingContainer-${uniqueId}`)
+    const msgContent = document.getElementById(`${getId}-${uniqueId}`);
     // When user select all the text & choose emoji means,
     // Need to replace the emoji with existing content.
     // That's why below we check condition, selectedText & current state typingMessage is equal
@@ -64,7 +67,7 @@ const Caption = (props = {}) => {
       });
       onChangeCaption(media, text);
       
-      if ((typingMessage.value.length === position) && chatType === "groupchat") {
+      if ((typingMessage.value.length === position) && chatType === CHAT_TYPE_GROUP) {
         const atIndex = text.lastIndexOf('@')-1;
         const findBeforeAt = text.charAt(atIndex);
         filteredHtml = text.toString().includes('@') && text.substring(text.lastIndexOf('@')+1, positionToUpdate);
@@ -73,7 +76,7 @@ const Caption = (props = {}) => {
           setFilteredTextForSearch(filteredHtml);
           setMentionView(true);
         }
-      } else if ((typingMessage.value.length !== position) && chatType === "groupchat") {
+      } else if ((typingMessage.value.length !== position) && chatType === CHAT_TYPE_GROUP) {
         const atIndex = text.lastIndexOf('@', position);
         const checkBeforeAt = text.charAt(atIndex-1);
         const result = text.substring(atIndex+1, positionToUpdate);
@@ -96,10 +99,11 @@ const Caption = (props = {}) => {
     let displayName = rosterDataValue.displayName;
     let positionToUpdate;
     let text = "";
-    let messageDocContent = document.getElementById(`image-preview-typingContainer-${uniqueId}`);
-    let startCursor = messageDocContent?.innerHTML?.substring(0, position);
+    let messageDocContent = document.getElementById(`${getId}-${uniqueId}`);
+    let msgElement = typingMessage.value;
+    let startCursor = msgElement?.substring(0, position);
     startCursor = startCursor.substring(0, startCursor.lastIndexOf("@"));
-    const end = messageDocContent?.innerHTML?.substring(position);
+    const end = msgElement?.substring(position);
     const uiHtml = `<span data-mentioned="${userId}" class="mentioned blue" contenteditable="false">@${displayName}</span> `;
     text = startCursor + uiHtml + end;
     positionToUpdate = position + (uiHtml.length -1);
@@ -167,6 +171,7 @@ const Caption = (props = {}) => {
   };
 
   const handleMessage = ({ target }) => {
+    const msgContent = document.getElementById(`${getId}-${uniqueId}`);
     const { value: targetVal } = target;
     setTypingMessage((prevState) => ({
       ...prevState,
@@ -176,10 +181,12 @@ const Caption = (props = {}) => {
           ? ""
           : targetVal
     }));
-    if(showCursor === true) {
-      const msgContent = document.getElementById(`image-preview-typingContainer-${uniqueId}`);
-      placeCaretAtEnd(msgContent)
-      setshowCursor(false)
+    if (showCursor === true) {
+      if (selectedFiles.length > 1 && msgContent !== null) {
+        let msgContent = document.getElementById(`${getId}-${selectedFiles[0]?.fileDetails?.fileId}`)
+        placeCaretAtEnd(msgContent)
+      } else { placeCaretAtEnd(msgContent) }
+      setshowCursor(false);
     }
     onChangeCaption(media, targetVal, mentionedUsersIds);
   };
@@ -207,13 +214,13 @@ const Caption = (props = {}) => {
   const setSelectedText = (selectText) => setSelectedTextState(selectText);
 
   useEffect(() => {
-    const msgContent = document.getElementById(`image-preview-typingContainer-${uniqueId}`);
+    const msgContent = document.getElementById(`${getId}-${uniqueId}`);
     if (MentionViewClicked === true || emojiSelected === true) {
       placeCaretAtEnd(msgContent)
       setMentionViewClicked(false)
       emojiSelected && setEmojiSelected(false)
     }
-    if(newFile === undefined || newFile === null) {
+    if (newFile === undefined || newFile === null) {
       setshowCursor(true)
       handleMessage({ target: { value: typedMessage } });
       setCursorPosition(typedMessage.length)    
@@ -221,9 +228,9 @@ const Caption = (props = {}) => {
   }, []);
 
   useEffect(() => {
-    if(chatType === "groupchat" && filteredTextForSearch.length > 0 && filteredTextForSearch !== "") {
+    if (chatType === CHAT_TYPE_GROUP && filteredTextForSearch.length > 0 && filteredTextForSearch !== "") {
       const searchedList = handleSearchList(filteredTextForSearch)
-      if(searchedList.length < 1) {
+      if (searchedList.length < 1) {
         setShowEmojiState(true)
       }
       else {
@@ -233,15 +240,16 @@ const Caption = (props = {}) => {
   }, [filteredTextForSearch]);
 
   useEffect(() => {
-    const msgContent = document.getElementById(`image-preview-typingContainer-${uniqueId}`);
-    if (chatType === "groupchat") {
+    const msgContent = document.getElementById(`${getId}-${uniqueId}`);
+    /** Group Chat **/
+    if (chatType === CHAT_TYPE_GROUP) {
       if (GroupMemberList.length > 0 && MentionView === true && showEmojiState === true){
         setShowEmojiState(false)
-      } else if(GroupMemberList.length < 1 && MentionView === true && showEmojiState === false){
+      } else if (GroupMemberList.length < 1 && MentionView === true && showEmojiState === false){
         setShowEmojiState(true)
       }
 
-      if(caption.length === position && (MentionViewClicked === true || emojiSelected === true)) {
+      if (caption.length === position && (MentionViewClicked === true || emojiSelected === true)) {
         placeCaretAtEnd(msgContent)
         setMentionViewClicked(false)
         emojiSelected && setEmojiSelected(false);
@@ -260,10 +268,29 @@ const Caption = (props = {}) => {
           MentionViewClicked && setMentionViewClicked(false);
         }  
       }
+    } else {
+        /** Single Chat **/
+      if (caption.length === position && emojiSelected === true) {
+        placeCaretAtEnd(msgContent)
+        emojiSelected && setEmojiSelected(false);
+      } else if ((caption.length !== position) && emojiSelected === true && caption.includes("&amp;") === false) { //&& (caption.includes("&amp;") === false && caption.includes("span") === false)
+        emojiSelected && setEmojiSelected(false);
+        setCursorPosition(position);
+        setCaretPosition(msgContent, position);
+      } else {
+        if (emojiSelected === true) {
+          emojiSelected && setEmojiSelected(false);
+          setCursorPosition(position);
+          placeCaretAtEnd(msgContent);
+        }
+      }
     }
 
     if (caption.length > 0) {
       handleMessage({ target: { value: caption } }); //captionValue has been set
+    }
+    if (chatId) {
+       setId("image-preview-$typingContainer");
     }
   }, [caption]);
 
@@ -272,22 +299,23 @@ const Caption = (props = {}) => {
   const handleshowEmoji = (isClicked = false) => {
     setShowEmojiState(isClicked) 
     if (isClicked === true) {
-      const messageContent = document.getElementById(`image-preview-typingContainer-${uniqueId}`);
-      if (chatType === "groupchat") {
+      const messageContent  = document.getElementById(`${getId}-${uniqueId}`);
+      const messageContent1 = typingMessage.value;
+      if (chatType === CHAT_TYPE_GROUP) {
         let groupMemberList = groupMembers.data.participants;
         let groupLists = groupMemberList?.filter(participants => participants.userId !== vcardData.data.userId);
         groupLists = groupLists.map((obj) => {
           obj.rosterData = getUserDetails(obj.userId)
           return obj;
         });
-        const lastIndex = messageContent.innerHTML.lastIndexOf('@');
-        const result = messageContent.innerHTML.substring(lastIndex-1, lastIndex);
+        const lastIndex = messageContent1?.lastIndexOf('@');
+        const result = messageContent1?.substring(lastIndex-1, lastIndex);
         if ((lastIndex < 0 === false) && result.length < 1 || result === ' ') {
           setMentionView(true)
           if (searchEmoji !== "" && MentionView === true) {
             handleSearchList(searchEmoji);
           } else {
-            if (MentionView === true) setGroupMemberlist(groupLists) //need to check
+            if (MentionView === true) setGroupMemberlist(groupLists);
           }
         }
 
@@ -321,7 +349,7 @@ const Caption = (props = {}) => {
             captionLength={value}
             chatType={chatType}
             handleSearchView={handleSearchEmojiView}
-            id={`image-preview-typingContainer-${uniqueId}`}
+            id={`${getId}-${uniqueId}`}
             handleMessage={handleMessage}
             handleSendTextMsg={onClickSend}
             onInputListener={inputListenerHandler}
@@ -334,13 +362,13 @@ const Caption = (props = {}) => {
             handleEmptyContent={handleEmptyContent}
             html={removeMoreNumberChar(CAPTION_CHARACTER_LIMIT, value)}
           />
-          {chatType === "groupchat" && GroupMemberList.length > 0 && MentionView && showEmojiState === false && (
+          {chatType === CHAT_TYPE_GROUP && GroupMemberList.length > 0 && MentionView && showEmojiState === false && (
             <OutsideClickHandler onOutsideClick={() => handleMentionList(false , [])}>
               <MentionUserList handleMentionedData={handleMentionedUser} GroupParticiapantsList={GroupMemberList} />
             </OutsideClickHandler>
           )}  
 
-          {chatType === "groupchat" && GroupMemberList.length > 0 && MentionView && showEmojiState === true && (
+          {chatType === CHAT_TYPE_GROUP && GroupMemberList.length > 0 && MentionView && showEmojiState === true && (
             <MentionUserList handleMentionedData={handleMentionedUser} GroupParticiapantsList={GroupMemberList} />
           )}
           {remainingLenthCall(_toArray(_get(typingMessage, "value", "")).length)}

@@ -1,6 +1,8 @@
 import React, { Fragment, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
+import { popupStatus } from "../../../../../Actions/PopUp";
 import { SelectedForward, SelectedClose, Delete, StarredDark, UnStarDark } from "../../../../../assets/images";
+import Store from "../../../../../Store";
 import Modal from "../../../Common/Modal";
 import ForwardPopUp from "../../../PopUp/Forward";
 
@@ -13,6 +15,7 @@ export default function ForwardOptions(props = {}) {
   const [popUpStatus, setPopUpStatus] = useState(false);
   const showForwardPopUp = () => {
     setPopUpStatus(!popUpStatus);
+    Store.dispatch(popupStatus(!popUpStatus));
   };
 
   useEffect(() => {

@@ -12,6 +12,7 @@ import MentionUserList from "../Conversation/Templates/Common/MentionUserList";
 import OutsideClickHandler from "react-outside-click-handler";
 import { getUserDetails } from "../../../Helpers/Chat/User";
 import { placeCaretAtEnd } from "../../../Helpers/Utility";
+import { CHAT_TYPE_GROUP } from "../../../Helpers/Chat/Constant";
 
 const CapturePicture = (props = {}) => {
     const { photoTaken, loader, imgSrc, onCameraCheck,
@@ -22,13 +23,13 @@ const CapturePicture = (props = {}) => {
     });
     const [height, setHeight] = useState({});
     const [selectedText, setSelectedTextState] = useState(null);
-    let [position, setPosition] = useState(0);
+    const [position, setPosition] = useState(0);
     const [GroupParticiapantsList, setGrouplist ] = useState([]);
     const [showMention,setShowMention] = useState(false);
     const [MentionViewClicked,setMentionViewClicked] = useState(false);
     const [mentionedUsersIds,setMentionedUsersIds] = useState([]);
     const { typedMessage = "" } = useSelector((state)=>state.chatConversationHistory?.data[chatId] || {});
-    const [showCursor, setshowCursor] = useState(true);
+    const [showCursor, setshowCursor] = useState(false);
     const [initalPosition, setInitialPosition] = useState(true);
     const [emojiSelected, setEmojiSelected] = useState(false);
     const [showEmojiState, setShowEmojiState] = useState(false);
@@ -59,7 +60,7 @@ const CapturePicture = (props = {}) => {
         }));
     }
 
-    const handleEmojiText = (emojiObject, isClicked = false) => {
+    const handleEmojiText = async (emojiObject, isClicked = false) => {
         setEmojiSelected(isClicked)
         let positionToUpdate;
         let text = "";
@@ -89,7 +90,7 @@ const CapturePicture = (props = {}) => {
             });
             
             // Handled groupchat emoji search while mentioning group participants
-            if ((caption.value.length === position) && chatType === "groupchat") {
+            if ((caption.value.length === position) && chatType === CHAT_TYPE_GROUP) {
                 const atIndex = text.lastIndexOf('@')-1;
                 const findBeforeAt = text.charAt(atIndex);
                 filteredHtml = text.toString().includes('@') && text.substring(text.lastIndexOf('@')+1, positionToUpdate);
@@ -98,13 +99,13 @@ const CapturePicture = (props = {}) => {
                   setFilteredTextForSearch(filteredHtml);
                   setShowMention(true);
                 }
-            } else if ((caption.value.length !== position) && chatType === "groupchat") {
+            } else if ((caption.value.length !== position) && chatType === CHAT_TYPE_GROUP) {
                 const atIndex = text.lastIndexOf('@', position);
                 const checkBeforeAt = text.charAt(atIndex-1);
                 const result = text.substring(atIndex+1, positionToUpdate);        
                 filteredHtml = result;        
                 if (filteredHtml !== undefined && filteredHtml.length > 0 &&
-                  showMention === true && GroupParticiapantsList.length < 1 && 
+                    showMention === true && GroupParticiapantsList.length < 1 && 
                   (checkBeforeAt.includes(' ') === true || checkBeforeAt === "")) {
                     setFilteredTextForSearch(filteredHtml);
                     setShowMention(true);
@@ -117,7 +118,7 @@ const CapturePicture = (props = {}) => {
         setShowEmojiState(isClicked) 
         if (isClicked === true) {
          const messageContent = document.getElementById("camera-preview-typingContainer");
-            if (chatType === "groupchat") {
+            if (chatType === CHAT_TYPE_GROUP) {
                 let groupMemberList = groupList.data.participants;
                 let groupLists = groupMemberList?.filter(participants => participants.userId !== vcardData.data.userId);
                 groupLists = groupLists.map((obj) => {
@@ -137,16 +138,18 @@ const CapturePicture = (props = {}) => {
                 }
 
                 if (position === caption.value.length && (caption.value.includes('&amp;') === true)) {
-                placeCaretAtEnd(messageContent)
+                    placeCaretAtEnd(messageContent);
                 } else {
-                setCursorPosition(position);
-                setCaretPosition(messageContent, position);
+                    if(caption.value.includes("&amp;") !== true) {
+                        setCursorPosition(position);
+                        setCaretPosition(messageContent, position);
+                    }
                 }     
             }
         }
     }
 
-    const handleSearchList = (searchChar = "") => {       
+    const handleSearchList = (searchChar = "") => {
         try {
             let searchValue = searchChar.includes("&amp;") === true ? 
             searchChar.replace("&amp;", "&") : searchChar;
@@ -241,82 +244,100 @@ const CapturePicture = (props = {}) => {
         if (isRetake === true && isRetakeSet === true && msgContent !== null) {
             handleMessage({ target: { value: typedMessage !== "" ? typedMessage : caption.value } });
             setshowCursor(true)
-            setIsRetake(true)           
+            setIsRetake(true)
         }
         if (typedMessage !== undefined && typedMessage.length > 0 && photoTaken === true && initalPosition === true) {
             handleMessage({ target: { value: typedMessage } }); // chatscreen typedvalue has been set
-            photoTaken === true && setInitialPosition(false)
+            photoTaken === true && setInitialPosition(false);
+            setshowCursor(true);
         }
     }, [photoTaken]);
 
-    useEffect(() => {
-        if (chatType === "groupchat" && filteredTextForSearch.length > 0 && filteredTextForSearch !== "") {
+    const handleMentionedActions = (msgContent) => {
+        if (emojiSelected === true && filteredTextForSearch.length > 0 && filteredTextForSearch !== "") {
             const searchedList = handleSearchList(filteredTextForSearch);
-            if (searchedList.length < 1) setShowEmojiState(true);
-            else setShowEmojiState(false);
+            if (searchedList?.length < 1){ 
+                setShowEmojiState(true);
+                setFilteredTextForSearch("")
+            }
+            else {
+                setShowEmojiState(false);
+                setFilteredTextForSearch("")
+            }
         }
-    }, [filteredTextForSearch]);
+
+        if (GroupParticiapantsList.length > 0 && showMention === true && showEmojiState === true) {
+            setShowEmojiState(false);
+        } else if (GroupParticiapantsList.length < 1 && showMention === true && showEmojiState === false) {
+            setShowEmojiState(true);
+        }
+
+        if (MentionViewClicked === true || emojiSelected === true) {
+            if ((position !== msgContent?.innerHTML.length) && MentionViewClicked === false && caption.value.includes('span') === false) {
+                if (emojiSelected === true && caption.value.includes('&amp;') === true) {
+                    placeCaretAtEnd(msgContent);
+                }else{
+                    setCursorPosition(position);
+                    setCaretPosition(msgContent, position);
+                }                    
+            } else {
+                if (MentionViewClicked === true && msgContent?.innerHTML.includes("&amp;") === true) {
+                    setCursorPosition(msgContent?.innerHTML?.length);
+                    handleMessage({ target: { value: msgContent?.innerHTML } });
+                    placeCaretAtEnd(msgContent);
+                } else {
+                    if ((position !== caption.value.length) && showMention === true && emojiSelected === true) {
+                        setCursorPosition(position);
+                        setCaretPosition(msgContent, position);
+                    } else {
+                        setCursorPosition(caption.value.length);
+                        placeCaretAtEnd(msgContent);
+                    }
+                }
+            }            
+            emojiSelected && setEmojiSelected(false);
+            MentionViewClicked && setMentionViewClicked(false);
+        } 
+    }
 
     useEffect(() => {
         const msgContent = document.getElementById("camera-preview-typingContainer");
-        if (chatType === "groupchat") {
-            if (GroupParticiapantsList.length > 0 && showMention === true && showEmojiState === true){
-              setShowEmojiState(false)
-            } else if(GroupParticiapantsList.length < 1 && showMention === true && showEmojiState === false){
-              setShowEmojiState(true)
-            }
-        
-            if (MentionViewClicked === true || emojiSelected === true) {
-                if (MentionViewClicked === true && (position !== msgContent?.innerHTML.length)) {
-                    setCursorPosition(position - 1);
-                }
-
-                if ((position !== msgContent?.innerHTML.length) && MentionViewClicked === false && caption.value.includes('span') === false) {
-                    setCursorPosition(position)
-                    setCaretPosition(msgContent, position)
-                } else {
-                    if (MentionViewClicked === true && msgContent?.innerHTML.includes("&amp;") === true) {
-                        setCursorPosition(msgContent.innerHTML.length)
-                        placeCaretAtEnd(msgContent)
-
-                    } else {
-                        setCursorPosition(caption.value.length)
-                        placeCaretAtEnd(msgContent)
-                        console.log("line 396  main ELSE - Else")
-
-                    }
-                }            
-                emojiSelected && setEmojiSelected(false)
-                msgContent?.innerHTML.includes("&amp;") === false && MentionViewClicked && setMentionViewClicked(false)
-            } 
+        /** Group Chat */
+        if (chatType === CHAT_TYPE_GROUP) {
+            handleMentionedActions(msgContent);
         } else {
-                if (msgContent?.innerHTML.includes("&amp;") === false) {
-                    setCursorPosition(position)
-                    setCaretPosition(msgContent, position)
-                }
-        }
-        if (showCursor === true && photoTaken === true && (msgContent !== undefined || msgContent !== null)) {
-            if (typedMessage.length < 1) {
-                setCursorPosition(caption.value.length);
-                placeCaretAtEnd(msgContent);
-                if(msgContent?.innerHTML.includes("&amp;")=== false) setshowCursor(false);
-                else setshowCursor(false)
-                
-            } 
-            else if (typedMessage.length > 0) {
-                if ((position === msgContent?.innerHTML.length) && msgContent?.innerHTML.includes("&amp;")=== true) {
-                    setCursorPosition(msgContent?.innerHTML.length)
-                    placeCaretAtEnd(msgContent)
-                    setshowCursor(false)
-                } else {
-                    setCursorPosition(caption.value.length);
+            /** Single Chat **/
+            if (caption.value.includes("&amp;") === true && emojiSelected === false) {
+                if (position > 0 && isRetake === false) setCursorPosition(position - 4);
+            } else {
+                if (caption.value.includes("&amp;") === true && emojiSelected === true) {
+                    setCursorPosition(position);
                     placeCaretAtEnd(msgContent);
-                    if(typedMessage.length > 0 && isRetake === false) { setshowCursor(true); } 
+                    emojiSelected === true && setEmojiSelected(false);
                 }
+                else if (isRetake === false) {
+                    setCursorPosition(position);
+                    caption.value.includes("&amp;") === false && setCaretPosition(msgContent, position);
+                    emojiSelected === true && setEmojiSelected(false);
+                } else {
+                    setCursorPosition(position);
+                    setCaretPosition(msgContent, position);
+                }
+                if (caption.value.length < 1 || caption.value === "") placeCaretAtEnd(msgContent);
             }
-
         }
-      }, [caption, position]);
+
+        if (showCursor === true && photoTaken === true && (msgContent !== undefined || msgContent !== null)) {
+            if (chatType === CHAT_TYPE_GROUP && msgContent?.innerHTML.includes("&amp;") === true && typedMessage.length > 0) {
+                handleMessage({ target: { value: msgContent?.innerHTML } });
+                placeCaretAtEnd(msgContent);
+            } else {
+                showCursor && setCursorPosition(msgContent.innerHTML.length);
+                placeCaretAtEnd(msgContent);
+            }
+            setshowCursor(false);
+        }
+      }, [caption]);
 
     useLayoutEffect(() => {
         window.addEventListener('resize', () => {
@@ -380,7 +401,7 @@ const CapturePicture = (props = {}) => {
                                 handleEmptyContent={handleEmptyContent}
                                 html={removeMoreNumberChar(CAPTION_CHARACTER_LIMIT, _get(caption, "value", ""))}
                             />
-                            {chatType === "groupchat" && GroupParticiapantsList.length > 0 && showMention && showEmojiState === false && (
+                            {chatType === CHAT_TYPE_GROUP && GroupParticiapantsList.length > 0 && showMention && showEmojiState === false && (
                                 <OutsideClickHandler onOutsideClick={() => handleMentionView(false , [])}>
                                 <MentionUserList 
                                 screenName="camera-preview"
@@ -388,7 +409,7 @@ const CapturePicture = (props = {}) => {
                                 GroupParticiapantsList={GroupParticiapantsList} />
                                 </OutsideClickHandler>
                             )}  
-                            {chatType === "groupchat" && GroupParticiapantsList.length > 0 && showMention && showEmojiState === true && (
+                            {chatType === CHAT_TYPE_GROUP && GroupParticiapantsList.length > 0 && showMention && showEmojiState === true && (
                                 <MentionUserList 
                                 screenName="camera-preview"
                                 handleMentionedData={handleMentionedData} 

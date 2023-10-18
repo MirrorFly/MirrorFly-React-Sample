@@ -3,6 +3,7 @@ import ProgressLoader from "../../ProgressLoader";
 import IndexedDb from "../../../../../Helpers/IndexedDb";
 import Translate from "./Translate";
 import { captionLink, getDbInstanceName, getThumbBase64URL, isBlobUrl } from "../../../../../Helpers/Utility";
+import { getLocalUserDetails } from "../../../../../Helpers/Chat/User";
 
 const ImageComponent = (props = {}) => {
   const {
@@ -32,6 +33,7 @@ const ImageComponent = (props = {}) => {
     height: `${imageHeightAdjust ? "auto" : webHeight + "px"}`,
     maxHeight: webHeight + "px"
   });
+  const vcardData = getLocalUserDetails();
 
   useEffect(() => {
     if (imgSrc) {
@@ -78,7 +80,7 @@ const ImageComponent = (props = {}) => {
       <div className="image-caption">
         {caption !== "" && (
           <span>
-            <span>{captionLink(caption,mentionedUsersIds)}</span>
+            <span>{captionLink(caption,mentionedUsersIds,vcardData.userId, messageObject.chatType)}</span>
             {!!isTranslated() && <Translate tMessage={translatedMessage} />}
           </span>
         )}

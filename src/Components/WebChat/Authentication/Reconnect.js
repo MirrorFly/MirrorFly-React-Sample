@@ -27,7 +27,7 @@ import { ActiveChatResetAction, RecentChatAction } from "../../../Actions/Recent
 import { hideModal } from '../../../Actions/PopUp';
 import { messageInfoAction } from "../../../Actions/MessageActions";
 import { GroupsDataAction } from "../../../Actions/GroupsAction";
-import { setGroupParticipantsByGroupId } from "../../../Helpers/Chat/Group";
+import { setGroupParticipants, setGroupParticipantsByGroupId } from "../../../Helpers/Chat/Group";
 import { RosterData, RosterPermissionAction } from "../../../Actions/RosterActions";
 import { FeatureEnableState } from "../../../Actions/FeatureAction";
 import { REACT_APP_CONTACT_SYNC } from "../../processENV";
@@ -188,6 +188,7 @@ export async function login() {
             const groupPartRes = await SDK.getGroupParticipants(groupJid);
             if (groupPartRes && groupPartRes.statusCode === 200) {
               setGroupParticipantsByGroupId(groupJid, groupPartRes.data.participants);
+              setGroupParticipants(groupPartRes.data);
             }
           });
           Store.dispatch(GroupsDataAction(groupListRes.data));

@@ -107,10 +107,37 @@ class RecentChatSection extends Component {
     clearTimeout(this.timer);
   }
 
-  async componentDidUpdate(prevProps) {
+  getRecentChatsItems() {
     const {
       rosterData: { id: rosterId, data: rosterDataArray = [] } = {},
-      recentChatData: { id: recentchatId, data: recentChatArray = [], refreshUnreadCount } = {},
+      recentChatData: { id: recentchatId, data: recentChatArray = [] } = {}
+    } = this.props;
+    const filteredRoaster = this.filterRosterByUserNames(recentChatArray, rosterDataArray);
+    let recentChatItems = this.constructRecentChatItems(recentChatArray, filteredRoaster);
+    let recentChatNames = this.filterUserNameFromRecent(recentChatArray);
+    return { recentChatItems, recentChatNames, rosterId, recentchatId };
+  }
+
+  componentDidMount() {
+    let {recentChatItems, recentChatNames, rosterId, recentchatId} = this.getRecentChatsItems();
+    if (rosterId && recentchatId) {
+      if(recentChatItems.length > 0){
+        this.setState({
+          recentChatItems: recentChatItems,
+          recentChatNames: recentChatNames,
+          loader: false
+        })
+      }
+      else{
+        this.setState({loader: false})
+      }
+    }
+  }
+
+  async componentDidUpdate(prevProps) {
+    const {
+      rosterData: { id: rosterId } = {},
+      recentChatData: { id: recentchatId, refreshUnreadCount } = {},
       commonData: {
         data: { isArchived = false }
       }
@@ -120,11 +147,7 @@ class RecentChatSection extends Component {
 
     if (prevProps.rosterData.id !== rosterId || prevProps.recentChatData.id !== recentchatId || isRefreshed) {
       if (!rosterId || !recentchatId) return;
-
-      const filteredRoaster = this.filterRosterByUserNames(recentChatArray, rosterDataArray);
-      let recentChatItems = this.constructRecentChatItems(recentChatArray, filteredRoaster);
-      let recentChatNames = this.filterUserNameFromRecent(recentChatArray);
-
+      let { recentChatItems,recentChatNames } = this.getRecentChatsItems();
       this.setState(
         {
           recentChatItems: recentChatItems,

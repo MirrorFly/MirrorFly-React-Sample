@@ -23,7 +23,6 @@ export default class Image extends Component {
   }
 
   render() {
-    
     return (
       <div className="type-image" id="preview">
         <div className={`imageZoomWrapper`}>
@@ -52,6 +51,7 @@ export default class Image extends Component {
           onChangeCaption={this.props.onChangeCaption}
           media={this.props.media}
           uniqueId={this.props.uniqueId}
+          selectedFiles={this.props.selectedFiles}
           onClickSend={this.props.onClickSend}
           chatType={this.props.chatType}
           chatId={this.props.chatId}

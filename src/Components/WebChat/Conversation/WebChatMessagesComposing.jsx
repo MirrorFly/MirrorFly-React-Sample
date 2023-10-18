@@ -299,6 +299,7 @@ class WebChatMessagesComposing extends Component {
       },
       () => {
         showEmoji && this.updateEmojiPopUpState();
+        Store.dispatch(UpdateTypedMessage({ chatId: this.props.jid, message: this.state.typingMessage }));
       }
     );
   };
@@ -693,7 +694,7 @@ class WebChatMessagesComposing extends Component {
     return (
       <footer className={`${loaderStatus ? "v-hidden" : ""} footer `}>
         <OutsideClickHandler onOutsideClick={this.outsideClick}>
-          <Emoji emojiState={showEmoji} onEmojiClick={this.handleEmojiText} />
+          {recordingStatus && <Emoji emojiState={showEmoji} onEmojiClick={this.handleEmojiText} /> }
 
           {autoReplay ? (
             <ReplyToMessage

@@ -1,5 +1,5 @@
 import MicRecorder from "mic-recorder-to-mp3";
-import React, { Fragment, useMemo, useRef, useState } from "react";
+import React, { Fragment, useMemo, useRef, useState, useEffect } from "react";
 import { RecordAudio, StartRecord, StopRecord, AudioPermissionIcon } from "../../../assets/images";
 import "./AudioRecorder.scss";
 import { AUDIO_PERMISSION_DENIED, PERMISSION_DENIED } from "../../processENV";
@@ -7,6 +7,7 @@ import Modal from "./Modal";
 import { blockOfflineMsgAction, setRecorder } from "../../../Helpers/Utility";
 import { toast } from "react-toastify";
 import {getFromLocalStorageAndDecrypt} from "../WebChatEncryptDecrypt";
+import { useSelector } from "react-redux";
 
 function getBlobDuration(blob) {
   const tempVideoEl = document.createElement("video");
@@ -22,11 +23,19 @@ function getBlobDuration(blob) {
 
 const AudioRecorder = (props = {}) => {
   const recorder = useMemo(() => new MicRecorder({ bitRate: 128 }), []);
+  const { modalProps: { open, modelType } } = useSelector(state => state.popUpData)
   const [recordStatus, setRecordStatus] = useState(true);
   const [micStatus, setMicStatus] = useState(false);
   const [sendStatus, setSendStatus] = useState(false);
   const audioTimer = useRef(null);
   const { recordingStatus } = props;
+
+  useEffect(() => {
+    if (modelType == 'scheduleMeeting' && open) {
+      stopRecored()
+    }
+  }, [open])
+  
 
   const stopRecored = () => {
     recorder.stop();

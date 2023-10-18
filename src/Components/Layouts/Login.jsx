@@ -44,6 +44,7 @@ import BlockedFromApplication from "../BlockedFromApplication";
 import { adminBlockStatusUpdate } from "../../Actions/AdminBlockAction";
 import PageLoader from "./PageLoader";
 import { login } from "../WebChat/Authentication/Reconnect";
+import { showModal } from "../../Actions/PopUp";
 
 const createHistory = require("history").createBrowserHistory;
 export const history = createHistory();
@@ -76,7 +77,8 @@ class Login extends React.Component {
       contactPermissionPopup: false,
       contactPermissionPopupText: "",
       hideRecentChat: false,
-      accountDeletedToast: getFromLocalStorageAndDecrypt("deleteAccount")
+      accountDeletedToast: getFromLocalStorageAndDecrypt("deleteAccount"),
+      scheduleMeetData : {}
     };
     this.handleQRCode = this.handleQRCode.bind(this);
     this.handleLogin = this.handleLogin.bind(this);
@@ -162,6 +164,12 @@ class Login extends React.Component {
     encryptAndStoreInLocalStorage("hideCallScreen", true);
     this.setState({ hideCallScreen: true });
   };
+
+  handleMeetMsgeSend = (scheduleMeetData) =>{
+    this.setState({
+      scheduleMeetData
+    })
+  }
 
   componentDidUpdate(prevProps, prevState) {
     
@@ -621,6 +629,7 @@ class Login extends React.Component {
           handlePopupState={this.handlePopupState}
           callMode={(callConnectionDate && callConnectionDate.callMode) || ""}
           handleContactPermissionPopup={this.handleContactPermissionPopup}
+          handleMeetMsgeSend = {this.handleMeetMsgeSend}
         />
         <ConversationSection
           showMessageinfo={this.state.showMessageinfo}
@@ -632,6 +641,7 @@ class Login extends React.Component {
           showCallerName={callConnectionDate && callConnectionDate.from}
           openStatus={this.state.openStatus}
           handlePopupState={this.handlePopupState}
+          scheduleMeetData = {this.state.scheduleMeetData}
         />
         {isShowPreviewMedia && (
           <WebChatMediaPreview
@@ -725,6 +735,12 @@ class Login extends React.Component {
   handleUseHere = () => {
     if (this.props.isAppOnline) {
       //
+      Store.dispatch(
+        showModal({
+            open: false,
+            modelType: "scheduleMeeting"
+        })
+      );
       deleteItemFromLocalStorage('username');
       let currentTabId = getFromSessionStorageAndDecrypt("sessionId");
       encryptAndStoreInLocalStorage("sessionId", currentTabId);

@@ -10,11 +10,12 @@ const ForwardCommon = (props = {}) => {
         uploadStatus = 0,
         showForwardPopUp,
         closeForwardPopUp,
-        pageType
+        pageType,
+        messageType
     } = props;
     return (
         <React.Fragment>
-            {uploadStatus === 2 && !forward && pageType === "conversation" && (
+            {((messageType != "meet" && uploadStatus === 2 )|| messageType == "meet") && !forward && pageType === "conversation" && (
                 <span title="Forward" className="SingleForward" onClick={showForwardPopUp}>
                     <i>
                         <SingleForward2 />

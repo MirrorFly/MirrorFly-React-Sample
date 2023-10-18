@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { ChatContactImg,  ChatAudioRecorder, ChatAudioReceiver2 } from '../../../../../assets/images';
+import { ChatContactImg,  ChatAudioRecorder, ChatAudioReceiver2, ImgFavicon } from '../../../../../assets/images';
 import { displayNameFromRoster, getDisplayNameFromGroup, isSingleChat, isTextMessage } from '../../../../../Helpers/Chat/ChatHelper';
 import { handleMentionedUser, isLocalUser } from "../../../../../Helpers/Chat/User";
-import { getThumbBase64URL, millisToMinutesAndSeconds } from "../../../../../Helpers/Utility";
+import { getThumbBase64URL, handleScheduledTimeFormat, millisToMinutesAndSeconds } from "../../../../../Helpers/Utility";
 import { getExtension } from "../../../Common/FileUploadValidation";
 import ImageComponent from '../../../Common/ImageComponent';
 import { getFromLocalStorageAndDecrypt } from "../../../WebChatEncryptDecrypt";
@@ -82,8 +82,9 @@ export default React.memo(({ msgId, viewOriginalMessage, groupMemberDetails, cha
     }
     const fileExtension = getExtension(fileName);
     const placeholder = getFileFromType(null, fileExtension);
+    const scheduledon = handleScheduledTimeFormat(replyMessageData?.replyMsgContent?.meet?.scheduledDateTime);
 
-    const getReplyCaption = (mediaCaption) => mediaCaption.length > maximumCaptionLimit ? mediaCaption.substring(0, maximumCaptionLimit).concat('...') : mediaCaption;
+    const getReplyCaption = (mediaCaption = "") => mediaCaption?.length > maximumCaptionLimit ? mediaCaption.substring(0, maximumCaptionLimit).concat('...') : mediaCaption;
     return (
         <div className="reply-container" onClick={(event) => {
             event.stopPropagation();
@@ -102,10 +103,11 @@ export default React.memo(({ msgId, viewOriginalMessage, groupMemberDetails, cha
                 {message_type === 'file' && <span className="sender-sends filename">{fileName}</span>}
                 {message_type === 'contact' && <span className="sender-sends ReplyContact">{name}</span>}
                 {message_type === 'location' && <span className="sender-sends location"> Location</span>}
+                {message_type === 'meet' && <span className="sender-sends" style={{textDecoration:"underline"}}> {scheduledon}</span>}
 
             </div>
             {!isTextMessage(message_type) &&
-                <div className={`reply-message-type ${message_type === 'audio' ? "audio" : ""}`}>
+                <div className={`reply-message-type ${message_type === 'audio'  ? "audio" : ""} ${message_type === 'meet'  ? "meet" : ""}`}>
                     {message_type === 'image' && <img src={getThumbBase64URL(thumb_image)} className={`webchat-conver-image ${caption === "" ? "no-caption" : ""}`} alt="reply message" /> }
                     {message_type === 'audio' && 
                     <span className="webchat-conver-image">
@@ -116,6 +118,7 @@ export default React.memo(({ msgId, viewOriginalMessage, groupMemberDetails, cha
                     {message_type === 'file' && <span className="webchat-conver-image"><i className="doc-icon"><img alt="file" src={placeholder} /></i></span>}
                     {message_type === 'contact' && <img src={ChatContactImg} alt=""/>}
                     {message_type === 'location' && <span className="webchat-conver-image no-caption"><GoogleMapMarker latitude={latitude} longitude={longitude} /></span>}
+                    {message_type === 'meet' &&  <img className="mirrorfly_meeting_logo" src={ImgFavicon} alt="Mirrorfly Video Call" />}
                 </div>
             }
         </div>

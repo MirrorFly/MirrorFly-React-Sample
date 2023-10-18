@@ -42,8 +42,8 @@ function GetOtp(props = {}) {
     fullPageLoader(false);
     let otpInput = "";
     const input = Object.keys(otp);
-    for (var i = 0; i < input.length; i++) {
-      otpInput += otp[input[i]];
+    for (const char of input) {
+      otpInput += otp[char];
     }
 
     if (otpInput.length === 0) {
@@ -159,7 +159,7 @@ function GetOtp(props = {}) {
             .fill(null)
             .map((_, i) => (
               <CommonInputTag
-                key={i + 1}
+                key={`otp${i + 1}`}
                 type={"text"}
                 name={`otp${i + 1}`}
                 id={`otp${i + 1}`}

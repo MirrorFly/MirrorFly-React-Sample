@@ -36,9 +36,6 @@ export const updateRecentChatMessage = (messgeObject, stateObject) => {
   const { recentChatData, rosterData } = stateObject;
   const { data: rosterDataArray = [] } = rosterData;
   const { rosterData: { recentChatNames } = {} } = recentChatData;
-  if (!recentChatNames) {
-    return;
-  }
   const { msgType, fromUserId, fromUserJid, toUserId, msgId, timestamp, chatType, msgBody, publisherId } = messgeObject;
 
   const newChatTo = msgType === "carbonSentMessage" ? toUserId : fromUserId;
@@ -55,7 +52,7 @@ export const updateRecentChatMessage = (messgeObject, stateObject) => {
   /**
    * update the chat message if message alredy exist in recent chat
    */
-  if (recentChatNames.indexOf(newChatTo) !== -1) {
+  if (recentChatNames && recentChatNames?.indexOf(newChatTo) !== -1) {
     const constructNewMessage = {
       ...messgeObject,
       MessageType: msgType ? msgType : msgBody.message_type || "",
@@ -77,7 +74,7 @@ export const updateRecentChatMessage = (messgeObject, stateObject) => {
      */
     const getMute = getFromLocalStorageAndDecrypt("tempMuteUser");
     let parserLocalStorage = getMute ? JSON.parse(getMute) : {};
-    const isMuted = parserLocalStorage[newChatTo] ? 1 : 0;
+    const isMuted = parserLocalStorage[newChatTo]?.isMuted ? 1 : 0;
     if (isMuted) {
       SDK.updateMuteNotification(formatUserIdToJid(newChatTo, chatType), true);
     }

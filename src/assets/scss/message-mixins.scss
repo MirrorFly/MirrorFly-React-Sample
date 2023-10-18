@@ -242,6 +242,9 @@
   }
   .reply-message-type {
     background:$bgc-send-rep-reply-message-type !important;
+    &.meet{
+      background:transparent !important;
+    }
   }
   }
   .sender.image-block {

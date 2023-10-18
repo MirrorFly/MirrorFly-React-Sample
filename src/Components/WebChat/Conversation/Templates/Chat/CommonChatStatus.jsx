@@ -20,11 +20,12 @@ const CommonChatStatus = (props = {}) => {
     messageObject,
     isTranslatable,
     isEnableTranslate,
-    handleTranslateLanguage
+    handleTranslateLanguage,
+    messageType
   } = props;
   return (
     <React.Fragment>
-      {uploadStatus === 2 && !forward && pageType === "conversation" && (
+      {((messageType != "meet" && uploadStatus === 2 )|| messageType == "meet") && !forward && pageType === "conversation" && (
         <div className={`${isTranslatable && isEnableTranslate? "drop-lg"  : "" } message-dropdown-menu`}>
           <span className="message-dropdown">
             {(isEnableTranslate && isSender && isTranslatable) && caption !== "" && <span onClick={() => handleTranslateLanguage(msgId,messageObject)} className="translateIcon"> <Translate /></span>}

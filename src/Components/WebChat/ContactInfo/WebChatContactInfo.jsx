@@ -40,6 +40,7 @@ import { clearLastMessageinRecentChat, updateMuteStatusRecentChat } from '../../
 import ActionInfoPopup from '../../ActionInfoPopup';
 import { ClearChatHistoryAction } from '../../../Actions/ChatHistory';
 import { RemoveStaredMessagesClearChat } from '../../../Actions/StarredAction';
+import { encryptAndStoreInLocalStorage, getFromLocalStorageAndDecrypt } from '../WebChatEncryptDecrypt';
 class WebChatContactInfo extends React.Component {
 
     /**
@@ -579,6 +580,13 @@ class WebChatContactInfo extends React.Component {
             fromUserId: getUserIdFromJid(chatJid),
             isMuted: muteStatus
         }
+        const mutedConversationId = JSON.parse(getFromLocalStorageAndDecrypt('tempMuteUser'));
+        const userId = dispatchData.fromUserId;
+        const constructObj = {
+            ...mutedConversationId,
+            [userId]: dispatchData
+        };
+        encryptAndStoreInLocalStorage('tempMuteUser', JSON.stringify(constructObj));
         Store.dispatch(updateMuteStatusRecentChat(dispatchData));
     };
 

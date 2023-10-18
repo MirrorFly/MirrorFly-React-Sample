@@ -6,6 +6,7 @@ import {
   getDisplayNameFromGroup,
   getMessageFromHistoryById,
   getMsgStatusEle,
+  isMeetMessage,
   isSingleChat,
   isTextMessage,
   offlineReplyHandle,
@@ -42,6 +43,8 @@ import DocumentComponent from "./DocumentComponent";
 import LocationComponent from "./LocationComponent";
 import ContactComponent from "./ContactComponent";
 import { getExtension } from "../../../Common/FileUploadValidation";
+import MeetComponent from "./MeetComponent";
+import { popupStatus as popupStatusAction } from "../../../../../Actions/PopUp";
 
 const ChatMessageTemplate = (props = {}) => {
   const dispatch = useDispatch();
@@ -250,11 +253,13 @@ const ChatMessageTemplate = (props = {}) => {
       return;
     }
     dispatch(messageForwardAdd({ msgId, timestamp, favouriteStatus }));
+    dispatch(popupStatusAction(true));
     setPopUpStatus(true);
   };
 
   const closeForwardPopUp = () => {
     closeMessageOption(true);
+    dispatch(popupStatusAction(false));
     setPopUpStatus(false);
   };
 
@@ -352,14 +357,14 @@ const ChatMessageTemplate = (props = {}) => {
   const isDocumentMessage = () => message_type === "file";
   const isContactMessage = () => message_type === "contact";
 
-  const replyTextClass = singleChat && isTextMessage(message_type) ? " reply-text" : " sender-text-group";
+  const replyTextClass = singleChat && (isTextMessage(message_type) || isMeetMessage(message_type)) ? " reply-text" : " sender-text-group";
 
   const getMessageElementRootClass = () =>
     `${isSender ? " sender" : " receiver"}${isImageMessage() && caption === "" ? " singleFile" : ""}${
       isImageMessage() || isVideoMessage() ? " image-block" : ""
-    }${replyTo ? " reply-block" : ""}${isTextMessage(message_type) ? replyTextClass : ""}${
+    }${replyTo ? " reply-block" : ""}${(isTextMessage(message_type) || isMeetMessage(message_type)) ? replyTextClass : ""}${
       isAudioMessage() ? " audio-message" : ""
-    }${uploadStatus === 2 ? "" : " fileProgress"}${
+    }${(uploadStatus === 2 || isMeetMessage(message_type))? "" : " fileProgress"}${
       isLocationMessage() ? " location-message image-block singleFile" : ""
     }${isDocumentMessage() ? " file-message" : ""}${isContactMessage() ? " contact-message" : ""}`;
 
@@ -390,7 +395,7 @@ const ChatMessageTemplate = (props = {}) => {
           className={`${getMessageElementRootClass()}${(messageObject?.msgId === downloadReduxState?.downloadingStatus[messageObject?.msgId]?.downloadMediaMsgId 
             && downloadReduxState?.downloadingStatus[messageObject?.msgId].downloading === true
             && (downloadReduxState?.downloadingStatus[msgId]?.downloadingMediaType === 'video' || downloadReduxState?.downloadingStatus[msgId]?.downloadingMediaType === 'image')) ? " fileProgress" : ""}${
-            isTextMessage(message_type) && callLinkMessageBody.meetLink && isCallLink(callLinkMessageBody.meetLink) ? "meetinglink" : ""
+            ((isTextMessage(message_type) && callLinkMessageBody.meetLink && isCallLink(callLinkMessageBody.meetLink)) || isMeetMessage(message_type)) ? "meetinglink" : ""
           }`}
         >
           {isSameUser && isSender && nameToDisplay && (
@@ -416,10 +421,18 @@ const ChatMessageTemplate = (props = {}) => {
             />
           )}
 
+          {isMeetMessage(message_type) && (
+            <MeetComponent
+              messageObject={messageObject}
+              pageType={pageType}
+              handleShowCallScreen={props.handleShowCallScreen}
+            />
+          )}
+
           {isImageMessage() && (
             <ImageComponent
               messageObject={messageObject}
-              imgSrc={imgSrc}
+              imgSrc={imgSrc ? imgSrc : file_url}
               fileKey={file_key}
               handleMediaShow={handleMediaShow}
               isSender={isSender}
@@ -497,6 +510,7 @@ const ChatMessageTemplate = (props = {}) => {
                 isEnableTranslate={isEnableTranslate}
                 caption={caption}
                 isTranslatable={isTranslatable()}
+                messageType={message_type}
               />
               <ForwardCommon
                 jid={jid}
@@ -506,6 +520,7 @@ const ChatMessageTemplate = (props = {}) => {
                 uploadStatus={uploadStatus}
                 showForwardPopUp={showForwardPopUp}
                 closeForwardPopUp={closeForwardPopUp}
+                messageType={message_type}
               />
             </Fragment>
           )}

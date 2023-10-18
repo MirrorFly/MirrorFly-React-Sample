@@ -14,7 +14,7 @@ import SDK from '../SDK';
 import { getCallFullLink, getValidSearchVal, handleFilterBlockedContact } from '../../Helpers/Utility';
 import Store from '../../Store';
 import { callIntermediateScreen } from '../../Actions/CallAction';
-import {getFromLocalStorageAndDecrypt} from '../WebChat/WebChatEncryptDecrypt';
+import {deleteItemFromLocalStorage, getFromLocalStorageAndDecrypt} from '../WebChat/WebChatEncryptDecrypt';
 import { FEATURE_RESTRICTION_ERROR_MESSAGE } from '../../Helpers/Constants';
 import userList from '../WebChat/RecentChat/userList';
 import InfiniteScroll from 'react-infinite-scroll-component';
@@ -236,7 +236,6 @@ class ParticipantPopUp extends Component {
             if (!searchValue) {
                 let data = rosterDatas;
                 if (!REACT_APP_CONTACT_SYNC) {
-                    if (this.isInviteModelType && !groupName && !this.isCallLogModelType) {
                         this.setState({
                             searchValue: '',
                             errorMesage: '',
@@ -244,7 +243,6 @@ class ParticipantPopUp extends Component {
                             userList: data
                         })
                         userList.getUsersListFromSDK(1, searchWith);
-                    }
                 } else {
                     this.setState({
                         searchValue: '',
@@ -292,6 +290,7 @@ class ParticipantPopUp extends Component {
             }, () => {
                 makeGroupCall(callType, participantToAdd, groupuniqueId);
                 this.props.popUpData.modalProps.closePopup();
+                deleteItemFromLocalStorage('inviteStatus');
             });
         }
     }
@@ -380,14 +379,8 @@ class ParticipantPopUp extends Component {
                     )
                 }
             });
-          }
+        }
         return dataArr;
-    }
-
-    fetchMoreData = () => {
-        let userListArr = this.state.userList;
-        let searchWith = getValidSearchVal(this.state.searchValue);
-        userList.getUsersListFromSDK(Math.ceil((userListArr.length / 20) + 1), searchWith);
     }
 
     handleParticipantsClick = () => {
@@ -514,14 +507,13 @@ class ParticipantPopUp extends Component {
                                             {filteredContacts.length === 0 && searchValue &&
                                                 <span className="searchErrorMsg"><Info /> {NO_SEARCH_CHAT_CONTACT_FOUND}</span>
                                             }
-                                            {isAllUsersExists &&
+                                            {isAllUsersExists && filteredContacts.length > 0 &&
                                                 <span className="searchErrorMsg"><Info /> All members of your contacts are already in the call.</span>
                                             }
                                             <li>{errorMesage && <div className="errorMesage"><Info /><span>{errorMesage}</span></div>}</li>
                                             {this.props.isAppOnline ?
                                             <InfiniteScroll
                                                 dataLength={userListArr.length}
-                                                next={this.fetchMoreData}
                                                 hasMore={true}
                                                 scrollableTarget="scrollableUl-addparticipantCall"
                                             >
@@ -531,7 +523,6 @@ class ParticipantPopUp extends Component {
                                             }
                                         </ul>
                                     }
-                                    
                                 </div>
                             </div>
                             <div className={`webcallConnet ${(isAllUsersExists || hideCallNow) ? "disabled": ""}`} 

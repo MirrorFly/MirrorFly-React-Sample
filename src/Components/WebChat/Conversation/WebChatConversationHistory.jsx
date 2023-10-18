@@ -62,6 +62,7 @@ import { toast } from "react-toastify";
 import { handleMessageParseHtml } from "../../../Helpers/Chat/RecentChat";
 import { REACT_APP_GOOGLE_TRANSLATE_API_KEY } from "../../processENV";
 import ActionInfoPopup from "../../ActionInfoPopup";
+import { showModal } from "../../../Actions/PopUp";
 
 class WebChatConversationHistory extends Component {
   constructor(props) {
@@ -88,7 +89,8 @@ class WebChatConversationHistory extends Component {
       userReplayDetails: [],
       msgActionType: "",
       isAdminBlocked: false,
-      isDeletedAccount:false
+      isDeletedAccount:false,
+      originalMessageDeleted: false,
     };
     this.activeTimer = 0;
     this.rosterConst = "roster.userId";
@@ -192,6 +194,11 @@ class WebChatConversationHistory extends Component {
         this.setState({ jid: chatId, loaderStatus: false, forwardOption: false });
       }
     }
+
+    if (prevProps.scheduleMeetData !== this.props.scheduleMeetData){
+      this.handleSendMeetMsg(this.props.scheduleMeetData)
+    }
+
   }
 
   requestChatMessages = async (
@@ -201,6 +208,21 @@ class WebChatConversationHistory extends Component {
     limit = CHAT_HISTORY_LIMIT,
     rowId = null
   ) => {
+    const activeChatMessages = getActiveChatMessages();
+    const activeChatFirstMessage = activeChatMessages && activeChatMessages[0];
+    const activeChatLastMessage = activeChatMessages && activeChatMessages[activeChatMessages.length - 1];
+    let lastactiveChatId = null;
+    if (!Array.isArray(activeChatMessages)) {
+        return null;
+    } else {
+        for (let i = activeChatMessages.length - 1; i >= 0; i--) {
+            const currentMessage = activeChatMessages[i];
+            if (currentMessage && currentMessage.msgId === activeChatLastMessage?.msgId) {
+                lastactiveChatId = currentMessage.msgId;
+                break;
+            }
+        }
+    }
     if (isSingleOrGroupChat(chatType)) {
       let chatJid = getActiveConversationUserJid(),
         activeConversationId = getActiveConversationChatId();
@@ -210,6 +232,11 @@ class WebChatConversationHistory extends Component {
       // User may switch another user chat conversation screen when clicked user chat request is in process
       // That's why we check condition(compare userJid from response) here to avoid load the previous user chat history to current users.
       if (chatMessageRes && chatMessageRes.statusCode === 200) {
+        const chatLastMessage = chatMessageRes?.data[chatMessageRes?.data?.length - 1];
+        if((activeChatFirstMessage && activeChatFirstMessage?.msgId === chatLastMessage?.msgId) || (lastactiveChatId && lastactiveChatId === activeChatLastMessage?.msgId) ){
+          this.setState({originalMessageDeleted: true})
+        }
+
         chatMessageRes.chatType = chatType;
         chatMessageRes.fetchLimit = limit;
         delete chatMessageRes.statusCode;
@@ -288,7 +315,7 @@ class WebChatConversationHistory extends Component {
   // Set the top cordinate to 0
   // make scrolling smooth
   scrollToBottom = () => {
-    document && document.getElementById("InBottom").scrollIntoView({ block: "end" });
+    document && document.getElementById("InBottom")?.scrollIntoView({ block: "end" });
   };
 
   viewOriginalMessage = async (messageId, msgId) => {
@@ -300,13 +327,15 @@ class WebChatConversationHistory extends Component {
       this.smoothScroll(messageId);
       return;
     }
-    if (chatMessages.length) {
-      this.loadMoreUpdate(true);
-      await this.requestChatMessages(chatType, "up", chatMessages[0].msgId, RECONNECT_GET_CHAT_LIMIT);
+    if (chatMessages.length && !this.state.originalMessageDeleted) { 
+     this.loadMoreUpdate(true);
+     await this.requestChatMessages(chatType, "up", chatMessages[0].msgId, RECONNECT_GET_CHAT_LIMIT);
       setTimeout(() => {
         this.loadMoreUpdate(false);
         this.viewOriginalMessage(messageId, msgId);
       }, 100);
+    }else {
+      this.setState({originalMessageDeleted:false})
     }
   };
 
@@ -737,6 +766,64 @@ class WebChatConversationHistory extends Component {
     }
   }
   ;
+
+  handleSendMeetMsg = async (scheduleMeetData) => {
+    if (this.canSendMessage() && !this.state.isAdminBlocked) {
+      let chatType = this.props?.activeChatData?.data?.recent?.chatType;
+      const msgId = uuidv4();
+      const { sendMessgeType = "", replyMessage = {} } = this.state;
+      const replyTo = this.msgReplyPassId(replyMessage);
+      const jid = this.prepareJid();
+      const jids = getIdFromJid(jid);
+      const scheduleMeetLink = scheduleMeetData.scheduleMeetLink;
+      const userProfile = this.props?.vCardData;
+      await SDK.sendMeetMessage({
+        toJid: jid,
+        link: handleMessageParseHtml(scheduleMeetLink),
+        title: "schedule meet",
+        msgId: msgId,
+        replyMessageId: replyTo,
+        mentionedUsersIds: [],
+        scheduledDateTime: scheduleMeetData.scheduledDateTime
+      })
+        const dataObj = {
+          jid,
+          msgType: "meet",
+          message: handleMessageParseHtml(scheduleMeetLink),
+          userProfile,
+          chatType: chatType,
+          msgId,
+          replyTo,
+          meet:{
+            link:scheduleMeetLink,
+            scheduledDateTime: scheduleMeetData.scheduledDateTime ? scheduleMeetData.scheduledDateTime : 0,
+            title: "schedule meet",
+          },
+          mentionedUsersIds: []
+        };
+        const conversationChatObj = await getMessageObjSender(dataObj);
+        const recentChatObj = getRecentChatMsgObj(dataObj);
+        SDK.sendTypingGoneStatus(jid);
+        Store.dispatch(MessageAction(conversationChatObj));
+        const dispatchData = {
+          data: [conversationChatObj],
+          ...(isSingleChat(chatType) ? { userJid: jid } : { groupJid: jid })
+        };
+        Store.dispatch(ChatMessageHistoryDataAction(dispatchData));
+        Store.dispatch(RecentChatUpdateAction(recentChatObj));
+        handleTempArchivedChats(jid, chatType);
+        this.props.scrollBottomChatHistoryAction();
+        sendMessgeType && this.closeReplyAction(jids);
+    }
+    else {
+      Store.dispatch(
+        showModal({
+            open: false,
+            modelType: "scheduleMeeting"
+        })
+    );
+    }
+  }
 
   closeMessageOption = (forward = null) => {
     const { addionalnfo } = this.state;

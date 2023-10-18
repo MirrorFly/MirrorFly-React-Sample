@@ -1,4 +1,4 @@
-import { SHOW_MODAL, HIDE_MODAL } from '../Actions/Constants';
+import { SHOW_MODAL, HIDE_MODAL, POPUP_SHOW_HIDE } from '../Actions/Constants';
 
 const initialState = {
     modalType: null,
@@ -17,8 +17,14 @@ export function PopUp(state = initialState, action = {}) {
           type: action.type
         }
       case HIDE_MODAL:
-        return initialState
+        return initialState;
+      case POPUP_SHOW_HIDE:
+        return {
+          modalProps: {
+            status: action.payload.status
+          }
+        }
       default:
-        return state
+        return state;
     }
   }

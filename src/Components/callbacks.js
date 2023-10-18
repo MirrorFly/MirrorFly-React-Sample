@@ -394,8 +394,7 @@ const connected = (res) => {
             localVideoMuted: localVideoMuted,
             localAudioMuted: localAudioMuted,
             remoteVideoMuted: remoteVideoMuted,
-            remoteAudioMuted: remoteAudioMuted,
-            callStatusText: CALL_STATUS_CONNECTED
+            remoteAudioMuted: remoteAudioMuted
         }));
     }
 }
@@ -527,6 +526,7 @@ const handleEngagedOrBusyStatus = (res) => {
 }
 
 const ended = (res) => {
+    deleteItemFromLocalStorage('inviteStatus');
     let roomId = getFromLocalStorageAndDecrypt('roomName');
     if (res.sessionStatus === "closed") {
         let callConnectionData = null;
@@ -1169,7 +1169,13 @@ export const callbacks = {
         if (authUser.username === res.userId) {
             Store.dispatch(VCardDataAction(res));
         } else {
-            Store.dispatch(VCardContactDataAction(res));
+            const VCardProfileData = {
+                ...res,
+                name:  res.nickName,
+                isDeletedUser: false,
+               displayName: res.nickName
+             }
+            Store.dispatch(VCardContactDataAction(VCardProfileData));
         }
     },
     favouriteMessageListener: function (res) {
