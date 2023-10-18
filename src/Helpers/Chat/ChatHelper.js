@@ -460,6 +460,11 @@ export const isTextMessage = (msgType) => {
     return ["text", "auto_text"].indexOf(msgType) > -1;
 }
 
+export const isMeetMessage = (msgType) => {
+    if (!msgType) return false;
+    return ["meet"].indexOf(msgType) > -1;
+}
+
 /**
  * Return the reply message format object from given message
  * @param {*} message 

@@ -4,6 +4,7 @@ import ProgressLoader from "../../ProgressLoader";
 import { Playbtn2, VideoIcon3 } from "../../../../../assets/images";
 import { captionLink, getThumbBase64URL, millisToMinutesAndSeconds } from "../../../../../Helpers/Utility";
 import Translate from "./Translate";
+import { getLocalUserDetails } from "../../../../../Helpers/Chat/User";
 
 const VideoComponent = (props = {}) => {
   const globalStore = useSelector((state) => state);
@@ -28,6 +29,8 @@ const VideoComponent = (props = {}) => {
       mentionedUsersIds = []
     } = {}
   } = messageObject;
+
+  const vcardData = getLocalUserDetails();
 
 
   const [dimension, setDimension] = useState({
@@ -84,7 +87,7 @@ const VideoComponent = (props = {}) => {
       <div className="image-caption">
         {caption !== "" && (
           <span>
-            <span>{captionLink(caption, mentionedUsersIds)}</span>
+            <span>{captionLink(caption,mentionedUsersIds,vcardData.userId,messageObject.chatType)}</span>
             {!!isTranslated() && <Translate tMessage={translatedMessage} />}
           </span>
         )}

@@ -213,6 +213,7 @@ export const disconnectCallConnection = (remoteStreams = []) => {
         deleteItemFromLocalStorage('roomName')
         deleteItemFromLocalStorage('callType')
         deleteItemFromLocalStorage('call_connection_status');
+        deleteItemFromLocalStorage('inviteStatus');
         encryptAndStoreInLocalStorage("hideCallScreen", false);
         resetCallData();
         Store.dispatch(showConfrence({

@@ -272,3 +272,5 @@ export {ReactComponent as IconReport} from './report.svg';
 export {ReactComponent as IconGroupReport} from './group_report.svg';
 export {ReactComponent as IconSingleReport} from './single_report.svg';
 export {default as VideoPlaceholder} from '../videos/placeholder.mp4';
+export { ReactComponent as IconCalendar } from './IconCalendar.svg';
+export { ReactComponent as IconCalendarTime } from './IconCalendarTime.svg';

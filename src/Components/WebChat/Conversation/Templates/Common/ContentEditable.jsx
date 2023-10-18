@@ -4,7 +4,7 @@ import React, { Component } from 'react';
 import { placeCaretAtEnd } from '../../../../../Helpers/Utility';
 import { getCaretPosition, getSelectedText } from '../../../../../Helpers/Chat/ContentEditableEle';
 import { getUserDetails } from '../../../../../Helpers/Chat/User';
-
+import { CHAT_TYPE_GROUP } from '../../../../../Helpers/Chat/Constant';
 
 class ContentEditable extends Component {
     constructor(props = {}) {
@@ -16,7 +16,6 @@ class ContentEditable extends Component {
         this.searchValue = ''
         this.searchPos = 0
     }
-
 
     shouldComponentUpdate(nextProps) {
         return nextProps.html !== this.typingContainner.innerHTML;
@@ -77,7 +76,7 @@ class ContentEditable extends Component {
         let midPosSecondLast = newStr.charAt(position-2);
         let midLastEle = newStr.charAt(position);
         let midSecondLastEle = newStr.charAt(midPosLast);
-        if (this.props.chatType === "groupchat") {
+        if (this.props.chatType === CHAT_TYPE_GROUP) {
             if (newStr.length > 1) {  
                 this.handleMentionEnableDisable(isBack, lastElement, secondLastElement, thirdLastElement,
                     midLastEle, midSecondLastEle, midPosSecondLast);
@@ -212,10 +211,10 @@ class ContentEditable extends Component {
             this.handle_AtSymbolKey(newStr, lastElement, secondLastElement, thirdLastElement);
         }
         if (e.which === 32) {
-            this.handleSpaceBarKey(position, newStr, secondLastElement, thirdLastElement);
+            this.handleSpaceBarKey(secondLastElement, thirdLastElement);
         }
         if (e.which ===  8 || e.which === 46) {
-            if (this.props.chatType === "groupchat") {
+            if (this.props.chatType === CHAT_TYPE_GROUP) {
                 this.handleBackspaceAndDeleteKey(position, newStr, lastElement, secondLastElement, thirdLastElement);
 
                 let s = window.getSelection();
@@ -262,7 +261,7 @@ class ContentEditable extends Component {
     }
       
     handleLeftArrowKey = (secondLastElement, thirdLastElement) => {
-        if (this.props.chatType === "groupchat") {
+        if (this.props.chatType === CHAT_TYPE_GROUP) {
             if (secondLastElement !== "@" && thirdLastElement.length < 1 ||
                 (secondLastElement !== "@" && thirdLastElement !== " ")|| secondLastElement === ' ' || thirdLastElement === ' ') {
                 this.props.handleMentionView(false, []);
@@ -283,7 +282,7 @@ class ContentEditable extends Component {
     }
       
     handle_AtSymbolKey = (newStr, lastElement, secondLastElement, thirdLastElement) => {
-        if (this.props.chatType === "groupchat") {
+        if (this.props.chatType === CHAT_TYPE_GROUP) {
             const groupList = this.groupMentionUsersList();
             const position = getCaretPosition(this.typingContainner);
             if (position === newStr.length) {
@@ -314,15 +313,11 @@ class ContentEditable extends Component {
         }
     }
 
-    handleSpaceBarKey = (position, newStr, secondLastElement, thirdLastElement) => {
-        if (this.props.chatType === "groupchat") {
+    handleSpaceBarKey = (secondLastElement, thirdLastElement) => {
+        if (this.props.chatType === CHAT_TYPE_GROUP) {
             if ((secondLastElement !== ' ' || thirdLastElement === ' ') || (secondLastElement=== ' ' && thirdLastElement !== '')
             || (secondLastElement=== ' ' && thirdLastElement === '')) {
                     this.props.handleMentionView(false, []);
-                    if(position !== newStr.length) {
-                        this.searchView = false;
-                    }
-                    return
             }
         }
     }
@@ -352,7 +347,9 @@ class ContentEditable extends Component {
                 this.emitChange("", true);
             }
         } else {
-            this.searchView = true;
+            const findChar= newStr.charAt(position-1);
+            if (findChar === "@") this.searchView = false;
+            else this.searchView = true;
         }
     }
       
@@ -387,7 +384,7 @@ class ContentEditable extends Component {
         const secondLastElement = this.typingContainner.innerHTML.slice(-2, -1);
         let regex = /^ +$/;
         let position = getCaretPosition(this.typingContainner);
-        if (this.props.chatType === "groupchat") {
+        if (this.props.chatType === CHAT_TYPE_GROUP) {
             const groupList = this.groupMentionUsersList();
             let s = window.getSelection();
             if (position === this.typingContainner.innerHTML.length) {
@@ -409,13 +406,16 @@ class ContentEditable extends Component {
     render() {
         const { placeholder = "", id = "" } = this.props;
         let { lastHtml = "" } = this.state;
+        let divId = id;
         let textContent = "";
-        if(lastHtml === "") {
-            textContent = placeholder ? placeholder : "Start Typing...";
+        if (lastHtml === "") {
+            textContent = placeholder || "Start Typing...";
         }
+        divId = id.includes('image-preview-typingContainer') ? "" : divId;
+
         return (
             <div
-                id={id}
+                id={divId}
                 name="typingMessage"
                 contentEditable="true"
                 className="typing-area"
@@ -442,9 +442,10 @@ class ContentEditable extends Component {
                     e.target.classList.remove('incaption')
                     this.props.setSelectedText && this.props.setSelectedText(getSelectedText());
                 }}
-                onClick={(e) => { this.handleInputFieldClickable(e) }}
+                onClick={(e) => {
+                    this.handleInputFieldClickable(e);
+                }}
             >
-
             </div>)
     }
 }

@@ -24,7 +24,7 @@ import _get from "lodash/get"
 import { BackToChat, ClosePopup, IconInvite, IconParticiants, TileView,TileViewRemove } from '../../assets/images';
 import CallParticipantList from './CallParticipantList/index';
 import OutsideClickHandler from 'react-outside-click-handler';
-import {deleteItemFromLocalStorage, getFromLocalStorageAndDecrypt} from '../WebChat/WebChatEncryptDecrypt';
+import {deleteItemFromLocalStorage, encryptAndStoreInLocalStorage, getFromLocalStorageAndDecrypt} from '../WebChat/WebChatEncryptDecrypt';
 import userList from '../WebChat/RecentChat/userList';
 
 let remoteStreamDatas = [];
@@ -131,8 +131,9 @@ class WebRtcCall extends React.Component {
     }
 
     handleInvitePeople = () => {
+        const isInviteStatus = encryptAndStoreInLocalStorage('inviteStatus', true);
         const callStatus = this.getCallStatus();
-        if (!REACT_APP_CONTACT_SYNC) {
+        if (!REACT_APP_CONTACT_SYNC && isInviteStatus) {
             const callConnectionData = JSON.parse(getFromLocalStorageAndDecrypt('call_connection_status'));
             const {callMode, groupId} = callConnectionData;
             if((!callConnectionData.hasOwnProperty('groupId') || groupId === null || "") && (callMode === "onetoone" || callMode === "onetomany")){
@@ -155,6 +156,7 @@ class WebRtcCall extends React.Component {
     handleCloseInvitePeople = () => {
         this.setState({ invite: false })
         Store.dispatch(hideModal());
+        deleteItemFromLocalStorage('inviteStatus');
     }
     handleHangUp = async (e) => {
         await this.endCall()

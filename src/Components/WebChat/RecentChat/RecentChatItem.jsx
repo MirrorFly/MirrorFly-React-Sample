@@ -20,7 +20,8 @@ import {
   ChatMute,
   DropdownArrow,
   IconMissedCallAudio,
-  IconMissedCallVideo
+  IconMissedCallVideo,
+  IconCalendarTime
 } from "../../../assets/images";
 import { groupstatus } from "../../../Helpers/Chat/RecentChat";
 import IndexedDb from "../../../Helpers/IndexedDb";
@@ -118,7 +119,7 @@ class RecentChatItem extends Component {
 
   formatMessage = (msgBody, msgType) => {
     let message = msgBody.message;
-    if (["image", "video", "audio", "file", "contact", "location"].indexOf(msgType) > -1) {
+    if (["image", "video", "audio", "file", "contact", "location", "meet"].indexOf(msgType) > -1) {
       // Media type icon mapping
       const icons = {
         image: (
@@ -161,17 +162,33 @@ class RecentChatItem extends Component {
             <IconMissedCallVideo />
           </i>
         ),
+        meet: (
+          <i className="chat-meet">
+            <IconCalendarTime />
+          </i>
+        )
 
       };
-      message = msgBody && typeof msgBody === "object" && msgBody.media ? msgBody.media.caption : undefined;
-      message = message || (msgType === "image" ? "Photo" : capitalizeFirstLetter(msgType));
-      message = htmlToReactParser.parse(handleMentionedUser(getFormattedRecentChatText(message),msgBody.mentionedUsersIds ? msgBody.mentionedUsersIds : [],false));
+
+      if (msgBody && typeof msgBody === "object") {
+        if (msgType === "meet") {
+          message = msgBody?.meet?.link;
+        } else if (msgType === "image") {
+          message = "Photo";
+        } else {
+          message = capitalizeFirstLetter(msgType)
+        }
+        if (msgBody?.media?.caption) {
+          message = msgBody.media.caption;
+        }
+      }
+      message = htmlToReactParser.parse(handleMentionedUser(getFormattedRecentChatText(message), msgBody.mentionedUsersIds || [], false));
       return (
         <>
-          {icons[msgType] || ""} {message}
+          {message && icons[msgType] || ""} {message}
         </>
       );
-      }
+    }
     return htmlToReactParser.parse(handleMentionedUser(getFormattedRecentChatText(message), msgBody.mentionedUsersIds ? msgBody.mentionedUsersIds : [], false));
   };
 
@@ -260,6 +277,7 @@ class RecentChatItem extends Component {
       case "file":
       case "contact":
       case "location":
+      case "meet":
         return this.handleLastMessage(item);
       default:
         return null;

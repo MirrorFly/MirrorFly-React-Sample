@@ -196,7 +196,7 @@ class WebChatRoster extends React.Component {
      * handleUpdateRoster() method handles if roster dynamic update in search result.
      */
     handleUpdateRoster = (rosterData, isFetchingUserList = false) => {
-        let searchWith = getValidSearchVal(this.state.searchWith);
+        let searchWith = this.state.searchWith;
         let data = handleFilterBlockedContact(rosterData).filter(function (item) {
             let filterVariable = getContactNameFromRoster(item) || item.userId;
             return (item.isFriend) && filterVariable.toLowerCase().search(searchWith.toLowerCase()) !== -1;
@@ -217,7 +217,12 @@ class WebChatRoster extends React.Component {
      */
     componentDidUpdate(prevProps, prevState) {
         if (!REACT_APP_CONTACT_SYNC) {
-            if (prevProps.rosterData && ( prevProps.rosterData.id !== this.props.rosterData.id || prevProps?.rosterData?.isFetchingUserList !== this.props?.rosterData?.isFetchingUserList)) {
+            const isInviteStatus = JSON.parse(getFromLocalStorageAndDecrypt('inviteStatus'));
+            const { popUpData: { modalProps: { status = false, open = false } = {} } } = this.props;
+            if (prevProps.rosterData && ( prevProps.rosterData.id !== this.props.rosterData.id || 
+                prevProps?.rosterData?.isFetchingUserList !== this.props?.rosterData?.isFetchingUserList) &&
+                 (isInviteStatus === null && !status && !open))
+            {
                 this.handleUpdateRoster(this.props.rosterData.data, this.props?.rosterData?.isFetchingUserList);
             }
         } else {
@@ -367,6 +372,7 @@ const mapStateToProps = (state) => {
         contactsWhoBlockedMe: state.contactsWhoBlockedMe,
         blockedContact: state.blockedContact,
         isAppOnline: state?.appOnlineStatus?.isOnline,
+        popUpData: state.popUpData
     });
 };
 

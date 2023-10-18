@@ -30,6 +30,7 @@ import { NEW_CHAT_CONTACT_PERMISSION_DENIED, NEW_GROUP_CONTACT_PERMISSION_DENIED
 import { encryptAndStoreInLocalStorage} from '../WebChat/WebChatEncryptDecrypt';
 import userList from '../WebChat/RecentChat/userList';
 import { REACT_APP_CONTACT_SYNC } from '../processENV';
+import CallScheduling from '../WebChat/ContactInfo/CallScheduling';
 
 class Sidebar extends React.Component {
 
@@ -51,6 +52,7 @@ class Sidebar extends React.Component {
             settingStatus: false,
             archivedSetting: false,
             callLogCount: 1,
+            scheduleMeetData: null
         };
     }
 
@@ -215,6 +217,10 @@ class Sidebar extends React.Component {
         this.closeModel("CallConfirm");
     };
 
+    handleMeetMsgeSend = (scheduleMeetData) =>{
+       this.props.handleMeetMsgeSend(scheduleMeetData)
+    }
+
     render() {
         let { menuDropDownStatus, popupStatus, newChatStatus, newGroupParticipants, settingStatus,
             callLogs, archivedChatList, callLogCount } = this.state;
@@ -343,6 +349,7 @@ class Sidebar extends React.Component {
                         />
                     </Modal>
                 )}
+                 {open && modelType === 'scheduleMeeting' && <CallScheduling handleMeetMsgeSend={this.handleMeetMsgeSend}  handleShowCallScreen={this.props.handleShowCallScreen} />}
             </>
 
         )

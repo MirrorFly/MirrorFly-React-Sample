@@ -648,6 +648,7 @@ button {
                   height: 0.833em;
                   width: 1.000em;
                 }
+                
                 i.recallMsgIcon {
                   height: 0.833em;
                   width: 0.833em;
@@ -1198,8 +1199,8 @@ i{
       .chat-list-ul {
         height: calc(var(--maxParentheight) - 7.5em);
         overflow: hidden auto;
+        padding-bottom: 100px;
         @include chat-list-li-mixin;
-
         //new group design start
         &.newGroup {
           position: relative;
@@ -6872,6 +6873,7 @@ width: 100%;
   justify-content: space-between; 
   width: 100%;
   padding: 12px;  
+  align-items: center;
   span{
     &:first-child{
       width: calc(100% - 50px);
@@ -7152,14 +7154,13 @@ body > iframe {
       box-shadow: 0px 0 2px 0 #c9c9c9;
     }
   } 
+} 
+
+.reply-message-type.meet {
+  background: transparent !important;
 }
 
-.meeting_center_description svg{ 
-   width: 25px; 
-   height: 16px;
-  }
-
-@import 'media-in-details.scss';
+@import 'media-in-details.scss';  
 @import 'single-group-chat.scss';
 @import 'meeting.scss';
 @import 'box-layout-style.scss';

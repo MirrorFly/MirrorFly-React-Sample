@@ -76,7 +76,14 @@ class WebChatEmoji extends React.Component {
         {this.state.showEmojis  &&
         <OutsideClickHandler onOutsideClick={() => setTimeout(()=>{ this.closeMenu("", true) },100)}> 
           <span className="emojiPicker-container" style={getEmojiStyle()} ref={el => (this.emojiPicker = el)}>
-          <Picker style={{width : "100%"}} dynamicWidth={true} className="emoji_picker" data={data} previewEmoji={false} enableFrequentEmojiSort={false} onEmojiSelect={this.addEmoji}
+            <Picker 
+              style={{width : "100%"}} 
+              dynamicWidth={true} 
+              className="emoji_picker" 
+              data={data} 
+              previewEmoji={false} 
+              enableFrequentEmojiSort={false} 
+              onEmojiSelect={this.addEmoji}
             />
           </span>
         </OutsideClickHandler>

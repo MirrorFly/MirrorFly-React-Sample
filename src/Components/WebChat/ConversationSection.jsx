@@ -211,6 +211,7 @@ class ConversationSection extends Component {
                         messageInfoShow={this.props.messageInfoShow}
                         avoidRecord={this.props.showonGoingcallDuration}
                         handleShowCallScreen={this.props.handleShowCallScreen}
+                        scheduleMeetData = {this.props.scheduleMeetData}
                     />
                 </div>
             </Fragment>

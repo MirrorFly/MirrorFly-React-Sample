@@ -96,10 +96,12 @@ const initialState = {
 }
 
 export function messageForwardReducer(state = initialState, action = {}) {
-    const { payload: { id, data } = {} } = action
+    const { payload: { id, data } = {} } = action;
     switch (action.type) {
         case MESSAGE_FORWARD_ADD:
-            const updatedArray = [...state.data, data]
+            const selectedData = [...state.data];
+            const DataPresent =  selectedData.some(item => item.msgId === data.msgId);
+            const updatedArray = !DataPresent  ? [...state.data, data] : selectedData;
             return {
                 ...state,
                 id,

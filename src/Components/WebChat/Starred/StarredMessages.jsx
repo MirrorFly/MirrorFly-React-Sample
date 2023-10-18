@@ -35,6 +35,7 @@ import { blockOfflineAction, isAppOnline } from "../../../Helpers/Utility";
 import { ActiveChatAction } from "../../../Actions/RecentChatActions";
 import { ReplyMessageAction } from "../../../Actions/MessageActions";
 import ReplyMessageBlock from "../../WebChat/Conversation/Templates/Common/ReplyMessage";
+import MeetComponent from "../Conversation/Templates/Chat/MeetComponent";
  
  
  
@@ -175,6 +176,9 @@ const StarredMessages = (props = {}) => {
      case "text":
      case "auto_text":
        return <TextComponent messageObject={data} isSender={isSender} handleShowCallScreen={handleShowCallScreen} />;
+
+     case "meet":
+      return <MeetComponent messageObject={data} isSender={isSender} handleShowCallScreen={handleShowCallScreen} />;
  
      case "image":
        return <ImageComponent messageObject={data} isSender={isSender} uploadStatus={2} imageHeightAdjust={true} />;

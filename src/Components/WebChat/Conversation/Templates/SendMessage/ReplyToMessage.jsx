@@ -1,10 +1,10 @@
 import React, { Fragment, useEffect, useState } from "react";
 import { connect } from 'react-redux';
 import { popUpState } from '../../../../../Actions/ConversationAction';
-import { Camera, CloseReply, Contact, DocumentIcon, Location, VideoIcon2, ChatAudioSender2, ChatAudioRecorderDark } from '../../../../../assets/images';
+import { Camera, CloseReply, Contact, DocumentIcon, Location, VideoIcon2, ChatAudioSender2, ChatAudioRecorderDark, ImgFavicon } from '../../../../../assets/images';
 import { displayNameFromRoster, getDisplayNameFromGroup, isSingleChat, isTextMessage } from '../../../../../Helpers/Chat/ChatHelper';
 import { handleMentionedUser, isLocalUser } from "../../../../../Helpers/Chat/User";
-import { getThumbBase64URL, millisToMinutesAndSeconds } from "../../../../../Helpers/Utility";
+import { getThumbBase64URL, handleScheduledTimeFormat, millisToMinutesAndSeconds } from "../../../../../Helpers/Utility";
 import ImageComponent from '../../../Common/ImageComponent';
 import { getFromLocalStorageAndDecrypt } from "../../../WebChatEncryptDecrypt";
 import GoogleMapMarker from "../Common/GoogleMapMarker";
@@ -88,6 +88,9 @@ const ReplyMessage = React.memo((props) => {
     useEffect(() => {
         setOverflowActive(isEllipsisActive(callRefSpan));
     },[callRefSpan]);
+
+    const scheduledon = handleScheduledTimeFormat(messageContent?.meet?.scheduledDateTime);
+
     return (
         <Fragment>
         {(showMention === false || showMention === undefined) && <div id="reply-block-bottom" className="reply-block-bottom">
@@ -113,6 +116,8 @@ const ReplyMessage = React.memo((props) => {
                     {message_type === 'file' && <span className="sender-sends"><span><i className="chat-docu send-attac-icon"><DocumentIcon /> </i><span>{fileName} </span></span></span>}
                     {message_type === 'contact' && <span className="sender-sends"><span><i className="chat-contact send-attac-icon"><Contact /></i><span> {name}</span></span></span>}
                     {message_type === 'location' && <span className="sender-sends"><span><i className="chat-location send-attac-icon"><Location /></i><span> Location</span></span></span>}
+                    {message_type === 'meet' && <span className="sender-sends meetReply"> {scheduledon}</span>}
+
                 </div>
                 {!isTextMessage(message_type) &&
                 <div className="reply-message-type">
@@ -129,6 +134,7 @@ const ReplyMessage = React.memo((props) => {
                     <span className="webchat-conver-image"></span>
                     }
                     {message_type === 'location' && <span className="webchat-conver-image"><GoogleMapMarker latitude={latitude} longitude={longitude} /></span>}
+                    {message_type === 'meet' &&  <img className="mirrorfly_meeting_logo" src={ImgFavicon} alt="Mirrorfly Video Call" />}
                 </div>
                 }
             </div>

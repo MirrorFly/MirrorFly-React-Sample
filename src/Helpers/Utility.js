@@ -32,7 +32,7 @@ import { getExtension } from "../Components/WebChat/Common/FileUploadValidation"
 import { REACT_APP_LICENSE_KEY, REACT_APP_SITE_DOMAIN, REACT_APP_AUTOMATION_CHROME_USER, REACT_APP_AUTOMATION_CHROME_PASS, REACT_APP_AUTOMATION_EDGE_USER, REACT_APP_AUTOMATION_FIREFOX_USER, REACT_APP_AUTOMATION_FIREFOX_PASS, REACT_APP_AUTOMATION_EDGE_PASS, REACT_APP_HIDE_NOTIFICATION_CONTENT } from "../Components/processENV";
 import Store from "../Store";
 import { getContactNameFromRoster, formatUserIdToJid, isSingleChatJID, getLocalUserDetails, handleMentionedUser } from "./Chat/User";
-import { MSG_PROCESSING_STATUS, GROUP_CHAT_PROFILE_UPDATED_NOTIFY, MSG_SENT_STATUS_CARBON, CHAT_TYPE_SINGLE, CHAT_TYPE_GROUP, COMMON_ERROR_MESSAGE, SERVER_LOGOUT } from "./Chat/Constant";
+import { MSG_PROCESSING_STATUS, GROUP_CHAT_PROFILE_UPDATED_NOTIFY, MSG_SENT_STATUS_CARBON, CHAT_TYPE_SINGLE, CHAT_TYPE_GROUP, SERVER_LOGOUT } from "./Chat/Constant";
 import toastr from "toastr";
 import { isGroupChat } from "./Chat/ChatHelper";
 import Push from "push.js";
@@ -42,6 +42,8 @@ import { ActiveChatAction } from "../Actions/RecentChatActions";
 import { UnreadCountDelete } from "../Actions/UnreadCount"
 import { callIntermediateScreen } from "../Actions/CallAction";
 import { getFromLocalStorageAndDecrypt, encryptAndStoreInLocalStorage} from "../Components/WebChat/WebChatEncryptDecrypt";
+import userList from "../Components/WebChat/RecentChat/userList";
+
 const HtmlToReactParser = require('html-to-react').Parser;
 const htmlToReactParser = new HtmlToReactParser();
 
@@ -504,9 +506,9 @@ export const placeCaretAtEnd = (el) => {
   }
 };
 
-export const captionLink = (text,mentionedUserId) => {
+export const captionLink = (text, mentionedUserId, userId,chatType) => {
   if (!text) return "";
-  return htmlToReactParser.parse(handleMentionedUser(convertTextToURL(text.replace(/&nbsp;/g, "").replace(/&amp;/g, "&")),mentionedUserId,false));
+  return htmlToReactParser.parse(handleMentionedUser(getFormattedText(text),mentionedUserId, userId, null, chatType ));
 };
 
 /**
@@ -515,24 +517,20 @@ export const captionLink = (text,mentionedUserId) => {
  */
 export const logout = async(type = "") => {
   if(isAppOnline()){
-    const logoutResult = SDK && await SDK.logout();
-    if(logoutResult.statusCode === 200){
-      localStorage.clear();
-      await deleteAllIndexedDb();
-      if (type === "accountDeleted") {
-        encryptAndStoreInLocalStorage("deleteAccount", true);
-        // deleteItemFromLocalStorage("getuserprofile")
-      }
-      if(type === SERVER_LOGOUT){
-        encryptAndStoreInLocalStorage("serverLogout",type);
-      }
-      if (type !== "block") {
-        window.location.reload();
-      }
-    }else{
-      toastr.error(COMMON_ERROR_MESSAGE);
+    await SDK.logout();
+    localStorage.clear();
+    await deleteAllIndexedDb();
+    if (type === "accountDeleted") {
+      encryptAndStoreInLocalStorage("deleteAccount", true);
+      // deleteItemFromLocalStorage("getuserprofile")
     }
-  }else{
+    if (type === SERVER_LOGOUT) {
+      encryptAndStoreInLocalStorage("serverLogout", type);
+    }
+    if (type !== "block") {
+      window.location.reload();
+    }
+  } else {
     toastr.warning(NO_INTERNET);
   }
 };
@@ -742,7 +740,7 @@ export const stripTags = (dirtyString) => {
 };
 
 export const getMessageObjSender = async (dataObj, idx) => {
-  const { jid, msgType, userProfile, msgId, chatType, message = "", file, fileOptions = {}, replyTo, fileDetails, mentionedUsersIds} = dataObj;
+  const { jid, msgType, userProfile, msgId, chatType, message = "", file, fileOptions = {}, replyTo, fileDetails, mentionedUsersIds, meet} = dataObj;
   const timestamp = Date.now() * 1000;
   const senderId = userProfile.data.fromUser;
   const msgBody = {
@@ -754,7 +752,12 @@ export const getMessageObjSender = async (dataObj, idx) => {
 
   if (msgType === "text") {
     msgBody.message = stripTags(message);
-  } else {
+  } 
+  else if(msgType === "meet"){
+    msgBody.message = stripTags(message);
+    msgBody.meet = meet;
+  }
+  else {
     let webWidth = 0,
       webHeight = 0,
       androidWidth = 0,
@@ -844,7 +847,7 @@ export const getMessageObjReceiver = (messgeObject, newChatTo) => {
 };
 
 export const getRecentChatMsgObj = (dataObj) => {
-  const { jid, msgType, userProfile, msgId, chatType, message = "", fileOptions = {}, mentionedUsersIds } = dataObj;
+  const { jid, msgType, userProfile, msgId, chatType, message = "", fileOptions = {}, mentionedUsersIds, meet } = dataObj;
 
   const createdAt = changeTimeFormat(Date.now() * 1000)
   const senderId = userProfile.data.fromUser;
@@ -856,7 +859,12 @@ export const getRecentChatMsgObj = (dataObj) => {
 
   if (msgType === "text") {
     msgBody.message = stripTags(message);
-  } else {
+  } 
+  else if(msgType === "meet"){
+    msgBody.message = stripTags(message);
+    msgBody.meet = meet;
+  }
+  else {
     msgBody.media = {
       caption: fileOptions.caption || "",
       duration: fileOptions.duration || 0,
@@ -873,7 +881,7 @@ export const getRecentChatMsgObj = (dataObj) => {
   const fromUserId = getUserIdFromJid(jid);
   const getMute = getFromLocalStorageAndDecrypt("tempMuteUser");
   let parserLocalStorage = getMute ? JSON.parse(getMute) : {};
-  const isMuted = parserLocalStorage[fromUserId] ? 1 : 0;
+  const isMuted = parserLocalStorage[fromUserId] && parserLocalStorage[fromUserId].isMuted ? 1 : 0;
   if (isMuted){
     setTimeout(( ) =>  SDK.updateMuteNotification(jid, true), 1000);
   }
@@ -946,8 +954,8 @@ export const getValidSearchVal = (value) => {
   return value.trim();
 };
 
-export const fetchMoreParticipantsData = (userList, searchValue) => {
-  let userListArr = userList;
+export const fetchMoreParticipantsData = (userLists, searchValue) => {
+  let userListArr = userLists;
   let searchWith = getValidSearchVal(searchValue);
   userList.getUsersListFromSDK(Math.ceil((userListArr.length / 20) + 1), searchWith);
 }
@@ -1062,8 +1070,7 @@ export const getMessageObjForward = (originalMsg, toJid, newMsgId) => {
       translatedMessage:"",
       media: {
         ...originalMsg.msgBody.media,
-        is_uploading: 8,
-        caption: ""
+        is_uploading: 8
       }
     },
   };
@@ -1095,8 +1102,7 @@ export const getRecentChatMsgObjForward = (originalMsg, toJid, newMsgId) => {
     msgBody: {
       ...originalMsg.msgBody,
       media: {
-        ...originalMsg.msgBody.media,
-        caption: ""
+        ...originalMsg.msgBody.media
       }
     },
   };
@@ -1121,20 +1127,73 @@ export const getColorCodeInitials = (name) => {
 export const getInitialsFromName = (name = "") => {
   let acronym, matches = [];
   if(!name) return null;
+  if (containsOnlyEmojis(name)) {
+    if (name.includes(" ")) {
+      const wordsArray = name.split(" "); // Split by space
+      acronym = [wordsArray[0].substring(0, 2), wordsArray[1].substring(0, 2)].join('');
+    } else {
+      acronym = name.length >= 4 ? name.substring(0, 4): name;
+    }
+    return acronym && acronym.toUpperCase();
+  } else {
+    name = removeEmojis(name);
+  }
+
+  if (containsOnlySpecialCharacters(name)) {
+    if (name.includes(" ")) {
+      const wordsArray = name.split(" "); // Split by space
+      acronym = [wordsArray[0].substring(0, 1), wordsArray[1].substring(0, 1)].join('');
+    } else {
+      acronym = name.length >= 2 ? name.substring(0, 2): name;
+    }
+    return acronym && acronym.toUpperCase();
+  } else {
+    name = removeSpecialCharacters(name);
+  }
+
   if(name.match(/\b(\w)/g) && name.match(/\b(\w)/g).length === 1){
     matches = name.split("");
     acronym = [matches[0],matches[1]].join('');
-  }
-  else if ( name.match(/\b(\w)/g) && name.includes("+")) {
-    matches = name.substring(1,3);
-    acronym = matches
-  }
-  else {
+  } else {
     matches = name.match(/\b(\w)/g);
     acronym = matches ? [matches[0],matches[1]].join('') : "";
   }
   return acronym && acronym.toUpperCase();
 };
+
+const containsOnlyEmojis = (inputString) => {
+  inputString = inputString.replace(/ /g, "");
+  // Regular expression to match emojis
+  const emojiRegex = /[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{1F004}-\u{1F0CF}\u{1F170}-\u{1F251}\u{2702}]/gu;
+  // Use the regular expression to check if the string contains only emojis
+  const matches = inputString.match(emojiRegex);
+  // If matches exist and they cover the entire string length, it contains only emojis
+  return matches !== null && matches.join('') === inputString;
+}
+
+const removeEmojis = (inputString) =>  {
+  // Regular expression to match emojis
+  const emojiRegex = /[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{1F004}-\u{1F0CF}\u{1F170}-\u{1F251}\u{2702}]/gu;
+  // Use the replace method to replace emojis with the specified text
+  const replacedString = inputString.replace(emojiRegex, "");
+  return replacedString.trim();
+}
+
+const containsOnlySpecialCharacters = (inputString) => {
+  inputString = inputString.replace(/ /g, "");
+  // Regular expression to match special characters
+  const specialCharacterRegex = /^[^a-zA-Z0-9\s]+$/;
+  // Use test method to check if the string consists only of special characters
+  return specialCharacterRegex.test(inputString);
+}
+
+const removeSpecialCharacters = (inputString) => {
+  /// Regular expression to match special characters (excluding spaces)
+  const specialCharacterRegex = /[^a-zA-Z0-9\s]/g;
+  // Use the replace method to remove special characters
+  const cleanedString = inputString.replace(specialCharacterRegex, "");
+  return cleanedString.trim();
+}
 
 export const isBlobUrl = (fileToken) => /^(blob:http|blob:https):\/\//i.test(fileToken);
 
@@ -1352,3 +1411,24 @@ export const stopRecorder = () => {
     encryptAndStoreInLocalStorage("recordingStatus", true);
   }
 }
+
+export const handleScheduledTimeFormat = (scheduledTime) => {
+  const scheduledDateTime = parseInt(scheduledTime, 10);
+  const dateObject = new Date(scheduledDateTime);
+  const optionsDate = {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  };
+  const optionsTime = {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true, // Use 12-hour format (true) or 24-hour format (false)
+  };
+
+  const dateString = dateObject.toLocaleString('en-US', optionsDate);
+  const timeString = dateObject.toLocaleString('en-US', optionsTime);
+
+  return `${dateString} ${timeString.replace(',', '')}`;
+}
+

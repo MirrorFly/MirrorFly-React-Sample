@@ -100,8 +100,8 @@ class NewParticipants extends Component {
 
             const regexList = getUserInfoForSearch(item);
             return regexList.find((str) => {
-                if (!item.isFriend || !str) return false
-                return (str.search(new RegExp(searchTerm, "i")) !== -1)
+                if (!item.isFriend || !str) return false;
+                return (str.search(new RegExp(searchTerm, "i")) !== -1);
             });
         });
     }
@@ -165,7 +165,8 @@ class NewParticipants extends Component {
             }
         }
 
-        if (prevProps.rosterData && prevProps.rosterData.id !== this.props.rosterData.id) {
+        const { popUpData: { modalProps: { status = false, open = false } = {} } } = this.props;
+        if ( !status && !open && prevProps.rosterData && prevProps.rosterData.id !== this.props.rosterData.id) {
             let newSelectedParticipant = this.state.participantToAdd.map(ele => {
                 let foundRoster = this.props.rosterData?.data?.find(el => el.userId === ele.userId);
                 if (!foundRoster?.isAdminBlocked && !foundRoster?.isDeletedUser) return ele;
@@ -374,6 +375,9 @@ class NewParticipants extends Component {
                                 {this.state.loaderStatus && <div className="loader-container style-2">
                                     <img src={loaderSVG} alt="loader" />
                                 </div>}
+                                {filteredContacts.length === 0 && searchValue &&
+                                <span className="searchErrorMsg"><Info /> {NO_SEARCH_CHAT_CONTACT_FOUND}</span>
+                                }
                                 { this.props.isAppOnline ?
                                 <InfiniteScroll
                                     dataLength={userListArr.length}
