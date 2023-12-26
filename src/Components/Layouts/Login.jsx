@@ -240,7 +240,6 @@ class Login extends React.Component {
     let responseCall = { statusCode: 200 };
 
     if (response.statusCode === 200 && responseCall.statusCode === 200) {
-      SDK.setMediaEncryption(true); //Enable the media encryption
       if (window.location.hostname === REACT_APP_AUTOMATION_URL) {
         const staticCredential = getAutomationLoginCredentials();
         this.setState({ webChatStatus: true }, () => {
@@ -312,6 +311,7 @@ class Login extends React.Component {
   }
   
   handleLoginSuccess = async (data, data1 = null, profileSuccess = false) => {
+    SDK.setMediaEncryption(true); //Enable the media encryption
     encryptAndStoreInLocalStorage("auth_user", data);
     if (profileSuccess === true) {
       this.setState({

@@ -1,6 +1,7 @@
 import React from "react";
 import { Menu, Translate } from "../../../../../assets/images";
 import DropDownAction from "../Common/DropDownAction";
+import { useSelector } from "react-redux";
 
 const CommonChatStatus = (props = {}) => {
   const {
@@ -23,6 +24,8 @@ const CommonChatStatus = (props = {}) => {
     handleTranslateLanguage,
     messageType
   } = props;
+  const mediaDropDownState = useSelector((state) => state.mediaDropDownData);
+ 
   return (
     <React.Fragment>
       {((messageType != "meet" && uploadStatus === 2 )|| messageType == "meet") && !forward && pageType === "conversation" && (
@@ -34,7 +37,7 @@ const CommonChatStatus = (props = {}) => {
               <Menu />
             </i>
           </span>
-          {dropDownStatus && (
+          {dropDownStatus && mediaDropDownState[msgId] && mediaDropDownState[msgId]?.dropDownStatus && (
             <DropDownAction
               msgid={msgId}
               isSender={isSender}

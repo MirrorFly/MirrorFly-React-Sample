@@ -25,7 +25,6 @@ const DocumentComponent = (props = {}) => {
         className={`document-message-block ${uploadStatus !== 2 || 
           (msgId === mediaDownloadData?.downloadingStatus[msgId]?.downloadMediaMsgId && mediaDownloadData?.downloadingStatus[msgId]?.downloading === true) ? "fileProgress" : ""} 
           ${Extension === "pdf" || Extension === "ppt" ? "fileThumb" : ""}`}
-        onClick={(e) => downloadAction(e, file_url, fileName, file_key)}
       >
         <>
           <i className="doc">
@@ -34,7 +33,7 @@ const DocumentComponent = (props = {}) => {
           <span className="doc_name">
             <span>{fileName}</span>
           </span>
-          <i className="doc-download">
+          <i className="doc-download" onClick={(e) => downloadAction(e, file_url, fileName, file_key, msgId)}>
             <DocumentDownload />
           </i>
           <ProgressLoader

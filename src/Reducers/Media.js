@@ -1,4 +1,4 @@
-import { CANCEL_MEDIA_DOWNLOAD, CANCEL_MEDIA_UPLOAD, DOWNLOADING_MEDIA } from "../Actions/Constants";
+import { CANCEL_MEDIA_DOWNLOAD, CANCEL_MEDIA_UPLOAD, DOWNLOADING_MEDIA, MEDIA_DROPDOWNSTATUS, MEDIA_IMG_THUMB } from "../Actions/Constants";
 
 const initialState = {
   id: null,
@@ -6,6 +6,9 @@ const initialState = {
   downloadingData:{},
   downloadingStatus:{}
 };
+
+const dropDownState = {}
+const mediaImageThumb = {}
 
 export function UpdateMediaUploadStateReducer(state = initialState, action = {}) {
   const { id, data } = action.payload || {};
@@ -49,6 +52,29 @@ export function MediaDownloadStateReducer(state = initialState, action = {}) {
           [data.downloadMediaMsgId]:data
         } 
       }
+    };
+  }
+  return state;
+}
+
+export function MediaDropdownStatusReducer(state = dropDownState, action = {}) {
+  const { data } = action.payload || {};
+  if (action.type === MEDIA_DROPDOWNSTATUS) {
+    return {
+      ...{
+          [data.msgId]:data
+      }
+    };
+  }
+  return state;
+}
+
+export function MediaImageThumbDataReducer(state = mediaImageThumb, action = {}) {
+  const { data } = action.payload || {};
+  if (action.type === MEDIA_IMG_THUMB) {
+    return {
+      ...state,
+      [data.fileId]: data,
     };
   }
   return state;

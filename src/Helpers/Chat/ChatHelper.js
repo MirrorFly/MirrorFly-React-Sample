@@ -18,7 +18,7 @@ import { ResetUnreadCount } from '../../Actions/UnreadCount';
 import { MEDIA_MESSAGE_TYPES } from '../Constants';
 import { DELETE_MESSAGE_FOR_EVERYONE, DELETE_MESSAGE_FOR_ME } from '../../Actions/Constants';
 import IndexedDb from "../../Helpers/IndexedDb";
-import { UpdateMediaUploadStatus } from '../../Actions/ChatHistory';
+import { CancelMediaUpload, UpdateMediaUploadStatus } from '../../Actions/ChatHistory';
 import { ReplyMessageAction } from '../../Actions/MessageActions';
 import SDK from "../../Components/SDK"
 import { getExtension } from '../../Components/WebChat/Common/FileUploadValidation';
@@ -27,7 +27,7 @@ import { getGroupData } from './Group';
 import { getAvatarImage, groupAvatar } from '../../Components/WebChat/Common/Avatarbase64';
 import { webSettingLocalAction } from '../../Actions/BrowserAction';
 import Config from "../../config";
-import { DownloadingChatMedia } from '../../Actions/Media';
+import { DownloadingChatMedia, MediaDownloadDataAction, MediaUploadDataAction } from '../../Actions/Media';
  
 const indexedDb = new IndexedDb();
 
@@ -642,7 +642,7 @@ export const getUpdatedHistoryData = (data, stateData) => {
 };
 
 export const getUpdatedHistoryDataUpload = (data, stateData) => {
-    // Here Get the Current Active Chat History and Active Message
+   // Here Get the Current Active Chat History and Active Message
     const currentChatData = stateData[data.fromUserId];
     if (currentChatData?.messages && Object.keys(currentChatData?.messages).length > 0) {
         const currentMessage = currentChatData.messages[data.msgId];
@@ -653,26 +653,6 @@ export const getUpdatedHistoryDataUpload = (data, stateData) => {
                 currentMessage.msgBody.media.file_url = data.fileToken || "";
                 currentMessage.msgBody.media.thumb_image = data.thumbImage || "";
                 currentMessage.msgBody.media.file_key = data.fileKey || "";
-            }
-
-            let msgIds = Object.keys(currentChatData?.messages);
-            let nextIndex = msgIds.indexOf(data.msgId) + 1;
-            let nextItem = msgIds[nextIndex];
-
-            if (nextItem) {
-                let nextMessage = currentChatData.messages[nextItem];
-                if (nextMessage?.msgBody?.media?.is_uploading === 0) {
-                    nextMessage.msgBody.media.is_uploading = 1;
-
-                    return {
-                        ...stateData,
-                        [data.fromUserId]: {
-                            ...currentChatData,
-                            [data.msgId]: currentMessage,
-                            [nextItem]: nextMessage
-                        }
-                    };
-                }
             }
             return {
                 ...stateData,
@@ -753,6 +733,29 @@ export const updateMediaUploadStatus = (data, stateData) => {
     });
 };
 
+export const uploadFileSuccess = (msgId, jid, response) => {
+    let updateObj = {
+        msgId,
+        statusCode: 200,
+        fromUserId: getUserIdFromJid(jid)
+    };
+    updateObj.fileToken = response.msgBody.media.fileToken
+    updateObj.thumbImage = response.msgBody.media.thumbImage;
+    updateObj.fileKey = response.msgBody.media.file_key;
+    Store.dispatch(UpdateMediaUploadStatus(updateObj));
+}
+
+export const uploadFileFailure = (msgId, jid) => {
+    const cancelObj = {
+        msgId,
+        fromUserId: getUserIdFromJid(jid),
+        uploadStatus: 3,
+        mediaUploading: true,
+        mediaUploadCanceled: true
+    };
+    Store.dispatch(CancelMediaUpload(cancelObj));
+}
+
 export const uploadFileToSDK = async (file, jid, msgId) => {
     const { caption = "",  mentionedUsersIds =[],fileDetails: { replyTo, audioType = "" } = {} } = file;
     const msgType = getMessageType(file.type, file);
@@ -761,60 +764,87 @@ export const uploadFileToSDK = async (file, jid, msgId) => {
         msgId: msgId,
         caption: caption
     };
-    let response = {};
     if (msgType === "file") {
-        response = await SDK.sendFileMessage({
+        await SDK.sendMediaFileMessage({
             toJid: jid,
             messageType: "file",
             fileMessageParams: fileOptions,
             mentionedUsersIds: mentionedUsersIds,
             replyMessageId: replyTo
+        }, 
+        (msgId) => {
+            const fileUploadingData =  {msgId,uploading:true}
+            Store.dispatch(MediaUploadDataAction(fileUploadingData));
+        }, 
+        (response) => {
+            uploadFileSuccess(response.msgId, jid, response);
+        }, 
+        (error) => {
+            uploadFileFailure(msgId, jid);
         });
     } else if (msgType === "image") {
-        response = await SDK.sendFileMessage({
+        await SDK.sendMediaFileMessage({
             toJid: jid,
             messageType: "image",
             fileMessageParams: fileOptions,
             mentionedUsersIds: mentionedUsersIds,
             replyMessageId: replyTo
+        }, 
+        (msgId) => {
+          const imageUploadingData =  {msgId,uploading:true}
+          Store.dispatch(MediaUploadDataAction(imageUploadingData));
+        }, 
+        async(response) => {
+            uploadFileSuccess(response.msgId, jid, response);
+            const fileBlob = await fileToBlob(file);
+            indexedDb.setImage(response.msgBody.media.fileToken, fileBlob, getDbInstanceName(msgType));
+        }, 
+        (error) => {
+            uploadFileFailure(msgId, jid);
         });
     } else if (msgType === "video") {
-        response = await SDK.sendFileMessage({
+        await SDK.sendMediaFileMessage({
             toJid: jid,
             messageType: "video",
             fileMessageParams: fileOptions,
             mentionedUsersIds: mentionedUsersIds,
             replyMessageId: replyTo
+        }, 
+        (msgId) => {
+            const videoUploadingData =  {msgId,uploading:true}
+            Store.dispatch(MediaUploadDataAction(videoUploadingData));
+        }, 
+        (response) => {
+            uploadFileSuccess(response.msgId, jid, response);
+        }, 
+        (error) => {
+            uploadFileFailure(msgId, jid);
         });
     } else if (msgType === "audio") {
-        response = await SDK.sendFileMessage({
+        await SDK.sendMediaFileMessage({
             toJid: jid,
             messageType: audioType === "recording" ? "audio_recorded" : "audio",
             fileMessageParams: fileOptions,
             mentionedUsersIds: mentionedUsersIds,
             replyMessageId: replyTo
+        }, 
+        (msgId) => {
+            const audioUploadingData =  {msgId,uploading:true}
+            Store.dispatch(MediaUploadDataAction(audioUploadingData));
+        }, 
+        async(response) => {
+            uploadFileSuccess(response.msgId, jid, response);
+            const fileBlob = await fileToBlob(file);
+            indexedDb.setImage(response.msgBody.media.fileToken, fileBlob, getDbInstanceName(msgType));
+        }, 
+        (error) => {
+            uploadFileFailure(msgId, jid);
         });
     }
-    let updateObj = {
-        msgId,
-        statusCode: response.statusCode,
-        fromUserId: getUserIdFromJid(jid)
-    };
-    if (response.statusCode === 200) {
-        if (msgType === "image" || msgType === "audio") {
-            const fileBlob = await fileToBlob(file);
-            indexedDb.setImage(response.data.msgBody.media.fileToken, fileBlob, getDbInstanceName(msgType));
-        }
-        updateObj.fileToken = response.data.msgBody.media.fileToken
-        updateObj.thumbImage = response.data.msgBody.media.thumbImage;
-        updateObj.fileKey = response.data.msgBody.media.file_key;
-    } else if (response.statusCode === 500) {
-        updateObj.uploadStatus = 3;
-    }
-    Store.dispatch(UpdateMediaUploadStatus(updateObj));
 };
 
 export const updateMediaUploadStatusHistory = (data, stateData) => {
+    
     // Here Get the Current Active Chat History and Active Message
     const currentChatData = stateData[data.fromUserId];
     if (currentChatData?.messages && Object.keys(currentChatData?.messages).length > 0) {
@@ -902,35 +932,48 @@ export const getDownloadFileName = (file_url, msgType) => {
     return `${BRAND_NAME} ${capitalizeFirstLetter(fileType)} ${time}${extension}`;
 };
 
-export const downloadMediaFile = async (msgId, file_url, msgType, file_name, fileKey, event) => {
+export const downloadMediaFile = async (filemsgId, file_Url, msgType, file_name, fileKey, event) => {
     if (blockOfflineAction()) return;
-    Store.dispatch(DownloadingChatMedia({ downloadMediaMsgId: msgId, downloadingFile: file_url, downloading: true, downloadingMediaType: msgType }));
-    if (file_url) {
-        const fileName = msgType === "file" ? file_name : getDownloadFileName(file_url, msgType);
-        let fileUrl = file_url;
+    Store.dispatch(DownloadingChatMedia({ downloadMediaMsgId: filemsgId, downloadingFile: file_Url, downloading: true, downloadingMediaType: msgType }));
+    if (file_Url) {
+        const fileName = msgType === "file" ? file_name : getDownloadFileName(file_Url, msgType);
+        let fileUrl = file_Url;
         // For Downloading Live File with Original Name
-        if (file_url.search("blob:") === -1) {
+        if (file_Url.search("blob:") === -1) {
             if (event) {
                 event.preventDefault();
                 event.stopPropagation();
-            }
-            const mediaResponse = await SDK.getMediaURL(file_url, fileKey, msgId);
-            if (mediaResponse.statusCode === 200) {
-                Store.dispatch(DownloadingChatMedia({ downloadMediaMsgId: msgId, downloadingFile: file_url, downloading: false, downloadingMediaType: msgType }));
-                fileUrl = mediaResponse.data.blobUrl; 
-            } else {
-                console.log("error in downloading media file");
-                return;
-            }
+            }            
+            await SDK.downloadMedia(filemsgId, (res) => {
+                Store.dispatch(MediaDownloadDataAction(res));
+            }, 
+            (mediaResponse) => {
+                Store.dispatch(DownloadingChatMedia({ downloadMediaMsgId: filemsgId, downloadingFile: file_Url, downloading: false, downloadingMediaType: msgType }));
+                fileUrl = mediaResponse.blobUrl;
+                const anchor = document.createElement("a");
+                anchor.style.display = "none";
+                anchor.href = fileUrl;
+                anchor.setAttribute("download", fileName);
+                document.body.appendChild(anchor);
+                anchor.click();
+                window.URL.revokeObjectURL(anchor.href);
+                document.body.removeChild(anchor);
+                Store.dispatch(DownloadingChatMedia({ downloadMediaMsgId: filemsgId, downloadingFile: file_Url, downloading: false, downloadingMediaType: msgType }));
+            }, 
+            (error) => {
+                console.log("error in downloading media file", error);
+            });            
+        } else {
+            const anchor = document.createElement("a");
+            anchor.style.display = "none";
+            anchor.href = fileUrl;
+            anchor.setAttribute("download", fileName);
+            document.body.appendChild(anchor);
+            anchor.click();
+            window.URL.revokeObjectURL(anchor.href);
+            document.body.removeChild(anchor);
+            Store.dispatch(DownloadingChatMedia({ downloadMediaMsgId: filemsgId, downloadingFile: file_Url, downloading: false, downloadingMediaType: msgType }));
         }
-        const anchor = document.createElement("a");
-        anchor.style.display = "none";
-        anchor.href = fileUrl;
-        anchor.setAttribute("download", fileName);
-        document.body.appendChild(anchor);
-        anchor.click();
-        window.URL.revokeObjectURL(anchor.href);
-        document.body.removeChild(anchor);
     }
 }
 
@@ -966,9 +1009,9 @@ export const getFavaouriteMsgObj = (msg, chatId) => {
     }
 };
 
-export const getBlobUrlFromToken = (fileToken, dbInstance, fileKey) => {
+export const getBlobUrlFromToken = (fileToken, dbInstance, fileKey, msgId) => {
     return indexedDb
-      .getImageByKey(fileToken, dbInstance, fileKey)
+      .getImageByKey(fileToken, dbInstance, fileKey, msgId)
       .then((blob) =>  window.URL.createObjectURL(blob))
       .catch(() =>  "");
 }

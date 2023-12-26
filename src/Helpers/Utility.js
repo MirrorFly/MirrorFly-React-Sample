@@ -708,14 +708,17 @@ export const calculateWidthAndHeightOffset = (width, height, offsetWidth, offset
 };
 
 const getMediaDimension = (blobUrl, mediaType) => {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     if (mediaType === "image") {
       const image = new Image();
       image.onload = function () {
         const { naturalWidth: width, naturalHeight: height } = this;
         resolve(calculateWidthAndHeight(width, height));
       };
-
+      image.onerror = (error) => {
+        console.error("Error loading image:", error);
+        resolve(calculateWidthAndHeight(0, 0));
+      };
       image.src = blobUrl;
     } else {
       const video = document.createElement("video");
@@ -728,6 +731,10 @@ const getMediaDimension = (blobUrl, mediaType) => {
         false
       );
       video.src = blobUrl;
+      video.addEventListener("error", (event) => {
+        console.error("Error loading video:", event);
+        resolve(calculateWidthAndHeight(0, 0));
+      });
     }
   });
 };
@@ -1432,3 +1439,42 @@ export const handleScheduledTimeFormat = (scheduledTime) => {
   return `${dateString} ${timeString.replace(',', '')}`;
 }
 
+export const generateImageThumbnail = (file, fileExtension) =>
+  new Promise((resolve, reject) => {
+    try {
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl); // Clean up object URL
+        const width = img.width;
+        const height = img.height;
+        // Scale down the image if necessary
+        const scaleFactor = calculateScaleFactor(width, height, 600);
+        const scaledWidth = width * scaleFactor;
+        const scaledHeight = height * scaleFactor;
+        const canvas = document.createElement("canvas");
+        canvas.width = scaledWidth;
+        canvas.height = scaledHeight;
+        const context = canvas.getContext("2d");
+        context.drawImage(img, 0, 0, scaledWidth, scaledHeight);
+        const imageType = `image/${fileExtension}`;
+        const thumb = canvas.toDataURL(imageType, 0.9).replace(/^data:image\/\w+;base64,/, "");
+        resolve(thumb);
+      };
+      img.src = objectUrl;
+      img.onerror = (error) => {
+        URL.revokeObjectURL(objectUrl); // Clean up object URL
+        console.error("Error loading image:", error);
+        reject(error);
+      };
+      
+    } catch (error) {
+      console.error("Thumbnail generation error:", error);
+      resolve("");
+    }
+  });
+
+// Helper function to calculate the scale factor
+const calculateScaleFactor = (width, height, targetWidth) => {
+  return targetWidth / width;
+};

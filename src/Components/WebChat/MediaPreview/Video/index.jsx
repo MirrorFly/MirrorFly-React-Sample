@@ -18,47 +18,40 @@ export default class PreviewVideo extends Component {
   }
 
   setFileInfo = (file) => {
-    const fileReader = new FileReader();
-    fileReader.onload = () => {
-      const blob = new Blob([fileReader.result], { type: file.type });
-      const url = URL.createObjectURL(blob);
-      const video = document.createElement("video");
-      video.addEventListener("error", (ex) => {
-        console.log("error when loading video file", ex);
+    const video = document.createElement("video");
+    video.addEventListener("error", (ex) => {
+      console.log("error when loading video file", ex);
+    });
+    video.addEventListener("loadeddata", () => {
+      const canvas = document.createElement("canvas");
+      this.setState({ originalWidth: video.videoWidth, originalHeight: video.videoHeight });
+      const { webWidth, webHeight, androidWidth, androidHeight } = calculateWidthAndHeight(
+        video.videoWidth,
+        video.videoHeight
+      );
+      const width = video.videoWidth;
+      const height = video.videoHeight;
+      canvas.width = MIN_THUMB_WIDTH;
+      canvas.height = (height / width) * MIN_THUMB_WIDTH;
+      canvas.getContext("2d").drawImage(video, 0, 0, MIN_THUMB_WIDTH, (height / width) * MIN_THUMB_WIDTH);
+      const image = canvas.toDataURL();
+      const thumb = image.replace(/^data:image\/\w+;base64,/, "");
+      this.props.updateMedia(this.props.media, {
+        duration: Math.round(video.duration * 1000),
+        imageUrl: thumb,
+        msgType: "video",
+        webWidth,
+        webHeight,
+        androidWidth,
+        androidHeight,
+        originalWidth: video.videoWidth,
+        originalHeight: video.videoHeight
       });
-      video.addEventListener("loadeddata", () => {
-        const canvas = document.createElement("canvas");
-        this.setState({ originalWidth: video.videoWidth, originalHeight: video.videoHeight });
-        const { webWidth, webHeight, androidWidth, androidHeight } = calculateWidthAndHeight(
-          video.videoWidth,
-          video.videoHeight
-        );
-        const width = video.videoWidth;
-        const height = video.videoHeight;
-        canvas.width = MIN_THUMB_WIDTH;
-        canvas.height = (height / width) * MIN_THUMB_WIDTH;
-        canvas.getContext("2d").drawImage(video, 0, 0, MIN_THUMB_WIDTH, (height / width) * MIN_THUMB_WIDTH);
-        const image = canvas.toDataURL();
-        const thumb = image.replace(/^data:image\/\w+;base64,/, "");
-        this.props.updateMedia(this.props.media, {
-          duration: Math.round(video.duration * 1000),
-          imageUrl: thumb,
-          msgType: "video",
-          webWidth,
-          webHeight,
-          androidWidth,
-          androidHeight,
-          originalWidth: video.videoWidth,
-          originalHeight: video.videoHeight
-        });
-        URL.revokeObjectURL(url);
-      });
-      video.preload = "metadata";
-      video.src = url;
-      video.muted = true;
-      video.play();
-    };
-    fileReader.readAsArrayBuffer(file);
+    });
+    video.preload = "metadata";
+    video.src = URL.createObjectURL(file);
+    video.muted = true;
+    video.play();
   };
 
   videoControls = () => {
@@ -92,20 +85,20 @@ export default class PreviewVideo extends Component {
       <Fragment>
         <div className="type-media video">
           <div className="video-wrapper-0">
-          {originalWidth !== 0 && originalHeight !== 0 && (
-            <div className="video-wrapper1" id={`video-player-${this.state.uniqueId}`}>
-              <VideoPlayer
-                deleteOption={true}
-                onClickCloseSelectedItem={this.handleDelete}
-                {...this.videoControls()}
-                webWidth={originalWidth}
-                webHeight={originalHeight}
-                msgId={this.state.uniqueId}
-                captionMargin={CAPTION_MARGIN}
-                fileType={"video"}
-              />
-            </div>
-          )}
+            {originalWidth !== 0 && originalHeight !== 0 && (
+              <div className="video-wrapper1" id={`video-player-${this.state.uniqueId}`}>
+                <VideoPlayer
+                  deleteOption={true}
+                  onClickCloseSelectedItem={this.handleDelete}
+                  {...this.videoControls()}
+                  webWidth={originalWidth}
+                  webHeight={originalHeight}
+                  msgId={this.state.uniqueId}
+                  captionMargin={CAPTION_MARGIN}
+                  fileType={"video"}
+                />
+              </div>
+            )}
           </div>
           <Caption
             onChangeCaption={this.props.onChangeCaption}

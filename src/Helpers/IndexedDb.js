@@ -4,6 +4,8 @@ import { getFromLocalStorageAndDecrypt, encryptAndStoreInLocalStorage} from '../
 import configureRefreshFetch from './refreshFetch'
 import { REACT_APP_API_URL } from '../Components/processENV';
 import { CHAT_AUDIOS, CHAT_IMAGES, INVALID_STORENAME } from "./Constants";
+import { MediaDownloadDataAction } from "../Actions/Media";
+import Store from "../Store";
 
 const shouldRefreshToken = error => {
     return error.status === 401 && error.message === 'Token Expired'
@@ -113,17 +115,31 @@ class IndexedDb {
         return allImages
     }
 
-    async makeHttpRequet(key, storeName, fileKey, options = {}) {
-        const uniqueKey = substringBetween(key,mediaUrl,'?mf');
-        const response = await SDK.getMediaURL(uniqueKey, fileKey, options);
-        if (response.statusCode === 200) {
-            return this.setImage(uniqueKey, response.data.blob, storeName).then(()=>{
-                return this.getImageByKey(uniqueKey, storeName, options)
-            });
-        }
+    async makeHttpRequest(key, storeName, fileKey, msgId = "") {
+        return new Promise(async(resolve, reject) => {
+            const uniqueKey = substringBetween(key,mediaUrl,'?mf');
+            if (msgId) {
+                SDK.downloadMedia(msgId, (res) => {
+                    Store.dispatch(MediaDownloadDataAction(res));
+                }, (response) => {
+                    return this.setImage(uniqueKey, response.blob, storeName).then(()=>{
+                        resolve(this.getImageByKey(uniqueKey, storeName, fileKey, msgId));
+                    });
+                }, (error) => {
+                    console.log("error occured in downloading media", error);
+                });
+            } else {
+                const response = await SDK.getMediaURL(uniqueKey, fileKey, msgId);
+                if (response.statusCode === 200) {
+                    return this.setImage(uniqueKey, response.data.blob, storeName).then(()=>{
+                        resolve(this.getImageByKey(uniqueKey, storeName, fileKey, msgId));
+                    });
+                }
+            }
+        });
     }        
 
-    getImageByKey(keyString, storeName, fileKey, options) {
+    getImageByKey(keyString, storeName, fileKey, msgId = "") {
         if (!keyString) {
             return Promise.reject(null)
         }
@@ -131,9 +147,11 @@ class IndexedDb {
             throw new Error(INVALID_STORENAME)
         }
         return this._localforage[storeName]?.getItem(keyString)
-            .then(blob => {
+            .then(async(blob) => {
                 if (!blob) {
-                    return this.makeHttpRequet(keyString, storeName, fileKey, options)
+                    let result = await this.makeHttpRequest(keyString, storeName, fileKey, msgId)
+                    console.log("result", result);
+                    return result;
                 }
                 return blob;
             })

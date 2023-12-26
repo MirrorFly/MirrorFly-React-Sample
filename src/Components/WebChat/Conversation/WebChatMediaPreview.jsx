@@ -66,28 +66,28 @@ class WebChatMediaPreview extends React.Component {
     document.addEventListener("keydown", this.handleOnKeyPress, false);
   }
 
-  getFile = async (fileToken, type, thumbImage, fileKey, fileExtensionSlice) => {
+  getFile = async (msgId, fileToken, type, thumbImage, fileKey, fileExtensionSlice) => {
     if (!fileToken) return null;
-    if (type === "video") {
-      const mediaResponse = await SDK.getMediaURL(fileToken, fileKey);
-      if (mediaResponse.statusCode === 200) {
-        const videoBlob = new Blob([mediaResponse.data.blob], { type: type + "/" + fileExtensionSlice });
-        const blobUrl = window.URL.createObjectURL(videoBlob)
-        return blobUrl
+    return new Promise(async(resolve, reject) => {
+      if (type === "video") {
+        await SDK.downloadMedia(msgId, () => {
+        }, (response) => {
+          resolve(response.blobUrl);
+        }, () => {
+          console.log("error in loading media file");
+          resolve("");
+        });
       } else {
-        console.log("error in loading media file");
-        return "";
+          this.localDb
+          .getImageByKey(fileToken, getDbInstanceName(type), fileKey, msgId)
+          .then((blob) => {
+            const dbBlob = new Blob([blob], { type: type + "/" + fileExtensionSlice });
+            const blobUrl = window.URL.createObjectURL(dbBlob)
+            resolve(blobUrl);
+          })
+          .catch(() => thumbImage);
       }
-    } else {
-      return this.localDb
-        .getImageByKey(fileToken, getDbInstanceName(type), fileKey)
-        .then((blob) => {
-          const dbBlob = new Blob([blob], { type: type + "/" + fileExtensionSlice });
-          const blobUrl = window.URL.createObjectURL(dbBlob)
-          return blobUrl
-        })
-        .catch(() => thumbImage);
-    }
+    });
   };
 
 
@@ -127,7 +127,7 @@ class WebChatMediaPreview extends React.Component {
 
         switch (message_type) {
           case "image":
-            const imageSrc = is_uploading === 1 ? file_url : await this.getFile(file_url, "image", thumb_image, file_key, fileExtensionSlice);
+            const imageSrc = is_uploading === 1 ? file_url : await this.getFile(msgId, file_url, "image", thumb_image, file_key, fileExtensionSlice);
             if (!imageSrc || imageSrc === "") {
               break;
             }
@@ -181,7 +181,7 @@ class WebChatMediaPreview extends React.Component {
             break;
 
           case "audio":
-            const audioSrc = is_uploading === 1 ? file_url : await this.getFile(file_url, "audio", {}, file_key, fileExtensionSlice);
+            const audioSrc = is_uploading === 1 ? file_url : await this.getFile(msgId, file_url, "audio", {}, file_key, fileExtensionSlice);
             if (!audioSrc || audioSrc === "") {
               break;
             }
@@ -205,7 +205,7 @@ class WebChatMediaPreview extends React.Component {
 
           case "video":
             if (this.state.initialRender && index === this.tempSelectedItem) {
-              const videoSrc = is_uploading === 1 ? file_url : await this.getFile(file_url, "video", {}, file_key, fileExtensionSlice);
+              const videoSrc = is_uploading === 1 ? file_url : await this.getFile(msgId, file_url, "video", {}, file_key, fileExtensionSlice);
               if (!videoSrc || videoSrc === "") {
                 break;
               }
@@ -638,10 +638,11 @@ class WebChatMediaPreview extends React.Component {
     if (this.tempSelectedItem > -1 && this.state.mediaList.length > 0) {
       const selectedMediaData = this.state.mediaList[this.tempSelectedItem];
       if (selectedMediaData && Object.keys(selectedMediaData).length > 0) {
-        const { msgBody: { media: { file_url, fileName: file_name, file_key } = {}, message_type = "" } = {} } =
+        const { msgBody: { media: { file_url, fileName: file_name, file_key, msgId } = {}, message_type = "" } = {} } =
           selectedMediaData;
         const fileName = message_type === "file" ? file_name : "";
-        downloadMediaFile(file_url, message_type, fileName, file_key);
+        const messageId = (msgId && msgId !== null && msgId !== "") ? msgId : selectedMediaData?.msgId;
+        downloadMediaFile(messageId, file_url, message_type, fileName, file_key);
       }
     }
   };

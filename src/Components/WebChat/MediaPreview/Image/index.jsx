@@ -2,17 +2,16 @@ import React, { Component } from "react";
 import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
 import { ZoomIn, ZoomOut, ZoomRestore } from "../../../../assets/images";
 import Caption from "../Caption";
+import { connect } from "react-redux";
+import { getThumbBase64URL } from "../../../../Helpers/Utility";
 
-export default class Image extends Component {
+class Image extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      imgSrc: URL.createObjectURL(props.media)
+      imgSrc: URL.createObjectURL(props.media),
+      imageThumbsrc:null,
     };
-  }
-
-  shouldComponentUpdate(nextProps, nextState) {
-    return this.state.imgSrc === nextState.imgSrc && this.props.caption === nextProps.caption ? false : true;
   }
 
   componentDidMount() {
@@ -20,6 +19,19 @@ export default class Image extends Component {
       imageUrl: this.state.imgSrc,
       msgType: "image"
     });
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (prevProps.mediaImageThumbData && prevProps.mediaImageThumbData !== this.props.mediaImageThumbData) {
+      const thumbImageData = this.props.mediaImageThumbData[this.props.uniqueId]?.thumbImage;
+      if(thumbImageData){
+       const thumbImageurl = getThumbBase64URL(thumbImageData);
+        this.setState({
+          imageThumbsrc:thumbImageurl
+        })
+      }
+    }
+    
   }
 
   render() {
@@ -41,7 +53,7 @@ export default class Image extends Component {
                   </button>
                 </div>
                 <TransformComponent>
-                  <img className="sliderImage" src={this.state.imgSrc} alt="" />
+                  <img className="sliderImage" src={this.state.imageThumbsrc || ''} alt="" />
                 </TransformComponent>
               </React.Fragment>
             )}
@@ -61,3 +73,11 @@ export default class Image extends Component {
     );
   }
 }
+
+const mapStateToProps = (state) => {
+  return {
+    mediaImageThumbData: state.mediaImageThumbData,
+  };
+};
+
+export default connect(mapStateToProps, {})(Image);
