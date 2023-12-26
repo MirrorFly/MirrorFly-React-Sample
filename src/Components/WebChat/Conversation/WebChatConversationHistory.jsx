@@ -636,7 +636,7 @@ class WebChatConversationHistory extends Component {
           fileName: file.name,
           fileSize: file.size,
           caption: caption,
-          blobUrl: URL.createObjectURL(file),
+          blobUrl: imageUrl,
           msgId: msgId,
           duration: duration,
           audioType

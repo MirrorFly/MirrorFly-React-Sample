@@ -45,11 +45,15 @@ import ContactComponent from "./ContactComponent";
 import { getExtension } from "../../../Common/FileUploadValidation";
 import MeetComponent from "./MeetComponent";
 import { popupStatus as popupStatusAction } from "../../../../../Actions/PopUp";
+import { MediaDropDownStatus } from "../../../../../Actions/Media";
+import localforage from "localforage";
 
 const ChatMessageTemplate = (props = {}) => {
   const dispatch = useDispatch();
   const globalState = useSelector((state) => state.webLocalStorageSetting);
   const downloadReduxState = useSelector((state) => state.mediaDownloadData);
+  const uploadReduxState = useSelector((state) => state.mediaUploadData);
+  const mediaDropDownState = useSelector((state) => state.mediaDropDownData);
 
   const { isTranslationEnabled = false } = useSelector((state) => state.featureStateData);
   let isEnableTranslate = false;
@@ -119,6 +123,7 @@ const ChatMessageTemplate = (props = {}) => {
     meetLink:null,
     endMeetText:null
   })
+  const [dropdownState, setDropdownState] = useState({})
 
   const isTranslatable = () => {
     const { msgBody: { translatedMessage = "", message = "", media: mediMsg = {} } = {} } = messageObject;
@@ -157,7 +162,7 @@ const ChatMessageTemplate = (props = {}) => {
   },[])
 
   useEffect(() => {
-    if (replyTo) {
+     if (replyTo) {
       const newObj = getMessageFromHistoryById(jid, replyTo);
       if (_isEmpty(newObj)) {
         requestReplyMessage(msgId, replyTo, chatType);
@@ -173,11 +178,16 @@ const ChatMessageTemplate = (props = {}) => {
       if (isAudioMessage()) setMediaUrl(file_url);
     } else if (is_uploading === 3 || is_uploading === 7) {
       if (isImageMessage()) saveImage(file_url);
-    } else if (is_uploading !== 0 && is_uploading !== 8) {
-      if (isImageMessage()) imgFileDownload();
+    } else if (is_uploading && is_uploading !== 0 && is_uploading !== 8) {
+      if (is_uploading == 2) setUploadStatus(2);
+      else if (isImageMessage()) imgFileDownload();
       else if (isAudioMessage()) getAudioFile();
       else setUploadStatus(2);
-    }
+    } else if (!is_uploading) {
+      if (isImageMessage()) imgFileDownload();
+      else if (isAudioMessage()) getAudioFile();
+      else setUploadStatus(1);
+    } 
     return () => setIsSubscribed(false);
   }, []);
 
@@ -242,9 +252,27 @@ const ChatMessageTemplate = (props = {}) => {
     msgStatus === 0 && setUploadStatus(2);
   }, [msgStatus]);
 
+  useEffect(() => {
+    if (mediaDropDownState[msgId]) {
+      setDropdownState((prevDropdownState) => {
+        const updatedState = mediaDropDownState[msgId];
+        return updatedState;
+      });
+    }
+  }, [mediaDropDownState]);
+
   const handleDropDownVideo = (event) => {
     event.stopPropagation();
-    setDropDown(!dropDownStatus);
+    if ((isAudioMessage() && !mediaUrl )|| (isImageMessage() && imgSrc.search("blob:") === -1)) {
+      setDropDown(false);
+    } else {
+      Store.dispatch(MediaDropDownStatus({ msgId, dropDownStatus: true }));
+      if (dropdownState?.msgId !== mediaDropDownState[msgId]?.msgId) {
+        setDropDown(true);
+      } else {
+        setDropDown(!dropDownStatus);
+      }
+    }
   };
 
   const showForwardPopUp = () => {
@@ -301,15 +329,17 @@ const ChatMessageTemplate = (props = {}) => {
     }
   }, [msgId]);
 
-  
-
   useEffect(() => {
     is_uploading === 8 && setUploadStatus(is_uploading);
-    if (is_uploading === 1) {
+    if (is_uploading === 1 || is_uploading === 0) {
       setUploadStatus(1);
-      uploadFileToSDK(file, formatUserIdToJid(jid, chatType), msgId, props.messageContent.media);
+      uploadFileToSDK(file, formatUserIdToJid(jid, chatType), msgId);
+    } else if(is_uploading === 10){
+      setUploadStatus(1)
+    } else if(is_uploading === 11){
+      setUploadStatus(11)
     }
-    (is_uploading === 3 || is_uploading === 7) && setUploadStatus(3);
+    (is_uploading === 7 || (uploadReduxState?.data[msgId]?.uploadStatus === 3 && is_uploading !== 1 && is_uploading !== 11)) && setUploadStatus(3);
   }, [is_uploading]);
 
   const audioFileDownloadOnclick = (event = {}) => {
@@ -350,6 +380,22 @@ const ChatMessageTemplate = (props = {}) => {
     setPopupStatus(!popupStatus);
   };
 
+  const audioUrlDownloaded = (blobUrl) =>{
+    setMediaUrl(blobUrl)
+  }
+
+  const imageUrlDownloaded = async (blobUrl) => {
+    if (uploadStatus === 4 && blobUrl) {
+      const storeName = getDbInstanceName("image");
+      await localforage[storeName]?.getItem(file_url).then(async (blob) => {
+        if(blob){
+         setUploadStatus(2);
+        }
+      });
+    }
+    saveImage(blobUrl);
+  };
+
   const isImageMessage = () => message_type === "image";
   const isVideoMessage = () => message_type === "video";
   const isAudioMessage = () => message_type === "audio";
@@ -372,7 +418,7 @@ const ChatMessageTemplate = (props = {}) => {
     <Fragment>
       <div
         id={msgId}
-        className={`${getMediaClassName(dropDownStatus, isSender, forward, msgStatus, isChecked)}${
+        className={`${getMediaClassName(mediaDropDownState[msgId]?.msgId === msgId ? dropDownStatus : false, isSender, forward, msgStatus, isChecked)}${
           isVideoMessage() && caption === "" ? "singleFile" : ""
         }${isVideoMessage() && caption !== "" ? " has-caption " : ""}${
           isImageMessage() && caption !== "" ? " has-caption " : ""
@@ -439,6 +485,7 @@ const ChatMessageTemplate = (props = {}) => {
               uploadStatus={uploadStatus}
               imgFileDownloadOnclick={imgFileDownloadOnclick}
               pageType={pageType}
+              imageUrlDownloaded = {imageUrlDownloaded}
             />
           )}
 
@@ -463,6 +510,7 @@ const ChatMessageTemplate = (props = {}) => {
               isSender={isSender}
               uploadStatus={uploadStatus}
               audioFileDownloadOnclick={audioFileDownloadOnclick}
+              audioUrlDownloaded={audioUrlDownloaded}
             />
           )}
 
@@ -521,6 +569,8 @@ const ChatMessageTemplate = (props = {}) => {
                 showForwardPopUp={showForwardPopUp}
                 closeForwardPopUp={closeForwardPopUp}
                 messageType={message_type}
+                mediaUrl={mediaUrl}
+                imgSrc={imgSrc ? imgSrc : file_url}
               />
             </Fragment>
           )}

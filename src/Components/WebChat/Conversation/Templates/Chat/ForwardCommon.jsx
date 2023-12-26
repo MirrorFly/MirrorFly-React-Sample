@@ -11,11 +11,13 @@ const ForwardCommon = (props = {}) => {
         showForwardPopUp,
         closeForwardPopUp,
         pageType,
-        messageType
+        messageType,
+        mediaUrl,
+        imgSrc
     } = props;
     return (
         <React.Fragment>
-            {((messageType != "meet" && uploadStatus === 2 )|| messageType == "meet") && !forward && pageType === "conversation" && (
+            {((((messageType != "meet" && messageType != "audio" && messageType != "image") || (messageType == "image" && imgSrc.search("blob:") !== -1 ) || (messageType == "audio" && mediaUrl)) && uploadStatus === 2) || messageType == "meet") && !forward && pageType === "conversation" && (
                 <span title="Forward" className="SingleForward" onClick={showForwardPopUp}>
                     <i>
                         <SingleForward2 />

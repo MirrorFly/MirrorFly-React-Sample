@@ -341,7 +341,7 @@
       cursor: pointer;
       margin: 0.1875em;
       position: relative;
-      padding: 0.3em 0.3em 0.3em 0.250em;
+      padding: 0.55em 0.3em 0.3em 0.250em;
       @include border-radius(0.5625em);
       @include flexbox();
       @include align-items(center);
@@ -654,7 +654,7 @@
         cursor: pointer;
         margin: 0.1875em;
         position: relative;
-        padding: 0.3em 0.3em 0.3em 0.250em;
+        padding: 0.55em 0.3em 0.3em 0.250em;
         background-color: $bgc-rev-document-message-block;
         border-radius: 0.5625em;
         @include flexbox();

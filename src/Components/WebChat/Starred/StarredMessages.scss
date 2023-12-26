@@ -187,7 +187,126 @@
             fill : #949494 !important;
         }
     }
+    .fileInprogess,.loadingProgress,.reLoadFile{
+        user-select: none;
+        cursor: pointer;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 2em;
+        height: 2em;
+        color: #fff;
+        border-radius: 0.1875em;
+        @include flexbox();
+        @include justify-content(center);
+        @include align-items(center);
+        box-shadow: 0 0 0.0625em 0.0625em #fff;
+        svg{
+          width: 1em;
+          height: 1em;
+        }
+        .progressBar{
+          overflow: hidden;
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          content: '';
+          height: 0.125em;
+          background-color: #fff;
+          // animation: progress-loader 9s  1s infinite;
+        }
+        .progress-animate {
+          animation: progress-loader 1.5s  1s infinite;
+        }
+        .active-progress {
+          background-color: #00e24b !important;
+        }
+        &.failed{
+          width: auto !important;
+        .failed-text{
+          text-transform: none !important;
+          margin: 0.625em !important;
+          white-space: nowrap;
+        }
+      }
+      }
+      .loadingProgress{
+        overflow: hidden; svg{
+         color: rgba(51, 51, 51, 0.05);
+      }
+      &.sync.right{
+        svg{
+          transform: rotate(180deg);
+        }
+      } 
+    }
+    
+    .image-message + .progressOverlay {
+      position: absolute;
+      width: 100%;
+      left: 0;
+      top:0;
+      height: 100%;
+      > img{
+        -webkit-backdrop-filter: blur(5px);
+        backdrop-filter: blur(5px);
+        -webkit-filter: blur(5px);
+        filter: blur(5px);
+          }
+          .fileInprogess,.reLoadFile{
+            box-shadow: none !important;
+            border: 1px solid transparent;
+            background-color: rgba(0, 0, 0, .42);
+            width: 4.5em;
+            height: 1.9375em;
+            -webkit-backdrop-filter: blur(5px);
+            backdrop-filter: blur(5px);
+            svg{
+              width: 0.875em;
+              height: 0.875em;
+            }
+            span{
+                font: normal normal 0.625rem/100% SFUIDisplayMedium, sans-serif;
+                letter-spacing: 0px;
+                color: #FFFFFF;
+                text-transform: uppercase;
+                margin-left: 0.375em;
+                margin-top:0.1875em;
+            }
+          }
+          .loadingProgress{
+            box-shadow: none !important;
+            background-color: rgba(0, 0, 0, .42);  
+          // border: 1px solid transparent;
+          width: 4.5em;
+          height: 1.9375em;
+          overflow: hidden;
+          .progressBar{
+            background-color: #fff;
+          }
+          &.sync.right {
+            svg {
+              transform: rotate(180deg);
+            }
+          }
+        }
+    }
 }
 .staredMessages .staredContainer .receiver-row .receiver, .staredMessages .staredContainer .sender-row .sender{
     padding:0;
+}
+.staredMessages .staredContainer .receiver-row .receiver .fileInprogess{
+    svg{
+        path{
+            fill:#fff !important
+        }
+    }
+}
+.staredMessages .staredContainer .sender-row .sender .fileInprogess{
+    svg{
+        path{
+            fill:#949494 !important
+        }
+    }
 }

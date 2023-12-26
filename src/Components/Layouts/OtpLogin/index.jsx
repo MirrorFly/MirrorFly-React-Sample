@@ -295,7 +295,7 @@ function OtpLogin(props = {}) {
                       <img src={NewLogoVector} alt="logo" />
                     </div>
                     <div className="heading">
-                      <h4>Register Mobile Number</h4>
+                      <h1>Register Mobile Number</h1>
                     </div>
                     <div className="register_help_text">
                       <span className="">

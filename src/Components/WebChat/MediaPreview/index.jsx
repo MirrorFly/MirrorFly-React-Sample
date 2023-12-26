@@ -7,7 +7,7 @@ import { AudioFile, dragDrop } from "../../../assets/images";
 import "../../../assets/scss/image-gallery-custom.scss";
 import Config from "../../../config";
 import { INLINE_FLEX, FEATURE_RESTRICTION_ERROR_MESSAGE } from "../../../Helpers/Constants";
-import { getMessageType, getThumbBase64URL, millisToMinutesAndSeconds, blockOfflineMsgAction } from "../../../Helpers/Utility";
+import { getMessageType, getThumbBase64URL, millisToMinutesAndSeconds, blockOfflineMsgAction, generateImageThumbnail } from "../../../Helpers/Utility";
 import { getExtension, sendErrorMessage, validateFile } from "../../WebChat/Common/FileUploadValidation";
 import getFileFromType from "../Conversation/Templates/Common/getFileFromType";
 import Spinner from "../Conversation/Templates/Common/Spinner";
@@ -16,6 +16,8 @@ import PreviewDocument from "./Document";
 import Image from "./Image";
 import "./media-attachment.scss";
 import PreviewVideo from "./Video";
+import { MediaImageThumbData } from "../../../Actions/Media";
+import Store from "../../../Store";
 window.URL = window.URL || window.webkitURL;
 const maxAllowedMediaCount = Config.maxAllowedMediaCount;
 
@@ -29,7 +31,8 @@ export default class MediaPreview extends Component {
       isZoomed: false,
       videoProgress: 0,
       videoDuration: "",
-      selectedSlide: 0
+      selectedSlide: 0,
+      imageThumurls:[]
     };
     document.addEventListener("keydown", this.handleKeyboardActions, true);
   }
@@ -37,9 +40,10 @@ export default class MediaPreview extends Component {
   componentDidMount() {
     const { seletedFiles: { filesId, mediaType } = {} } = this.props;
     if (!filesId) return;
+    this.thumbImageCreation(this.props.seletedFiles.files)
     this.handleFiles(this.props.seletedFiles.files, mediaType);
   }
-
+  
   componentDidUpdate(prevProps) {
     const {
       seletedFiles: { filesId }
@@ -76,6 +80,41 @@ export default class MediaPreview extends Component {
         break;
     }
   };
+
+  thumbImageCreation = async (files) => {
+    if (files) {
+      setTimeout(async() =>{
+        for (const key in files) {
+          if (Object.hasOwnProperty.call(files, key)) {
+            const file = files[key];
+            const fileId = await file?.fileDetails?.fileId;
+            const fileName = file?.name;
+            const fileExtension = fileName.split('.').pop();
+            const fileType = file?.type?.split('/')[0];
+            if(fileType === "image"){
+              try {
+                const thumbImage = await generateImageThumbnail(file, fileExtension);
+                const thumbImageObj = {thumbImage, fileId}
+                const thumbImageurl = getThumbBase64URL(thumbImage);
+                Store.dispatch(MediaImageThumbData(thumbImageObj));
+                this.setState(
+                  {
+                    imageThumurls: [
+                      ...this.state.imageThumurls,
+                      {thumbImageurl, fileId}
+                    ]
+                  })
+              } catch (error) {
+                console.error("Error generating thumbnail:", error);
+              }
+            }
+          }
+        }
+      })
+    }
+  };
+  
+   
 
   onDragOver = (event) => {
     event.stopPropagation();
@@ -428,9 +467,9 @@ export default class MediaPreview extends Component {
     e.target.style.display = "block";
   };
 
-  getMediaSrc = (thumb, placeholder, imageUrl) => {
+  getMediaSrc = (thumb, placeholder, imageUrl, fileId = null) => {
     let mediaSrc;
-
+    const foundItem = this.state.imageThumurls.find(item => item.fileId === fileId);
     switch (thumb) {
       case "file":
       case "audio":
@@ -442,7 +481,7 @@ export default class MediaPreview extends Component {
         break;
 
       case "image":
-        mediaSrc = imageUrl;
+        mediaSrc = foundItem?.thumbImageurl ? foundItem?.thumbImageurl : null;
         break;
 
       default:
@@ -462,7 +501,7 @@ export default class MediaPreview extends Component {
         }
       } = item.props;
 
-      const mediaSrc = this.getMediaSrc(thumb, placeholder, imageUrl);
+      const mediaSrc = this.getMediaSrc(thumb, placeholder, imageUrl, fileId);
 
       return (
         <div key={fileId} className={thumb === "file" ? "thumb-img file img-load" : "thumb-img img-load"}>

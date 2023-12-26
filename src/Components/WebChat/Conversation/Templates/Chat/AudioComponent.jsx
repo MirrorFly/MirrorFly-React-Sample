@@ -9,7 +9,7 @@ import { useSelector } from "react-redux";
 import { getBlobUrlFromToken } from "../../../../../Helpers/Chat/ChatHelper";
 
 const AudioComponent = (props = {}) => {
-  const { messageObject = {}, uploadStatus, isSender, audioFileDownloadOnclick, mediaUrl = ""} = props;
+  const { messageObject = {}, uploadStatus, isSender, audioFileDownloadOnclick, mediaUrl = "", audioUrlDownloaded} = props;
   const { msgId = "", msgBody: { media: { file_url = "", audioType = "", file_key } = {} } = {} } = messageObject;
   const {mediaDownloadData, mediaDownloadingData} = useSelector((state) => state) || {};
 
@@ -17,15 +17,24 @@ const AudioComponent = (props = {}) => {
   const [audioUrl, setAudioUrl] = useState(mediaUrl);
 
   const getAudio = async () => {
-   const audioBlobUrl = await getBlobUrlFromToken(file_url, getDbInstanceName("audio"), file_key);
+   const audioBlobUrl = await getBlobUrlFromToken(file_url, getDbInstanceName("audio"), file_key, msgId);
    setAudioUrl(audioBlobUrl);
   };
 
   useEffect(() => {
     if (mediaUrl !== "") return setAudioUrl(mediaUrl);
     if (isBlobUrl(file_url)) return setAudioUrl(mediaUrl);
-    if (mediaUrl === "" && audioUrl === "") getAudio();
-  }, [mediaUrl, msgId]);
+    if (mediaUrl === "" && audioUrl === "" && uploadStatus === 2) getAudio();
+  }, [mediaUrl, msgId, uploadStatus]);
+
+  useEffect(() => {
+    if (audioUrl.search("blob:") !== -1 && uploadStatus ===2) {
+      setAudioUrl((prevAudioUrl) => {
+        audioUrlDownloaded && audioUrlDownloaded(prevAudioUrl);
+        return prevAudioUrl;
+      });
+    }
+  }, [audioUrl]);
 
   const handleOnPlayEnd = (e) => {
     e.target.play();
@@ -69,10 +78,12 @@ const AudioComponent = (props = {}) => {
           isSender={isSender}
           file_url={file_url}
           imgFileDownloadOnclick={audioFileDownloadOnclick}
-          uploadStatus={audioUrl === "" ? 1 : uploadStatus}
+          uploadStatus={((uploadStatus === 2 && audioUrl === "") || uploadStatus === 4) ? 1 : uploadStatus}
+          messageType = "audio"
+          downloadEnabled = {audioUrl !== "" ? true : false}
         />
         <AudioPlayer
-          src={uploadStatus === 1 ? "" : audioUrl}
+          src={audioUrl}
           autoPlay={false}
           autoPlayAfterSrcChange={false}
           showLoopControl={false}

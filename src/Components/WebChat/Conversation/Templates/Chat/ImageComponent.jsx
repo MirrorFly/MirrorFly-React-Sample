@@ -4,6 +4,7 @@ import IndexedDb from "../../../../../Helpers/IndexedDb";
 import Translate from "./Translate";
 import { captionLink, getDbInstanceName, getThumbBase64URL, isBlobUrl } from "../../../../../Helpers/Utility";
 import { getLocalUserDetails } from "../../../../../Helpers/Chat/User";
+import { useSelector } from "react-redux";
 
 const ImageComponent = (props = {}) => {
   const {
@@ -14,20 +15,22 @@ const ImageComponent = (props = {}) => {
     messageObject = {},
     imgFileDownloadOnclick,
     imageHeightAdjust = false,
-    pageType
+    pageType,
+    imageUrlDownloaded
   } = props;
-
   const {
     msgId = "",
     msgBody: {
       translatedMessage = "",
       message_type = "",
-      media: { caption = "", file_url = "", thumb_image = "", webWidth, webHeight, file_key   } = {},
+      media: { caption = "", file_url = "", thumb_image = "", webWidth, webHeight, file_key, file } = {},
       mentionedUsersIds = []
     } = {}
   } = messageObject;
   const localDb = useMemo(() => new IndexedDb(), []);
+  const mediaImageThumbData = useSelector((state) => state.mediaImageThumbData);
   const [imageSource, setImageSource] = useState(imgSrc || getThumbBase64URL(thumb_image));
+  const [imageThumbUrl] = useState(mediaImageThumbData[file?.fileDetails?.fileId]?.thumbImage)
   const [dimension, setDimension] = useState({
     width: `${webWidth}px`,
     height: `${imageHeightAdjust ? "auto" : webHeight + "px"}`,
@@ -53,12 +56,21 @@ const ImageComponent = (props = {}) => {
       if (isBlobUrl(file_url)) {
         setImageSource(file_url);
       } else {
-        localDb.getImageByKey(file_url, getDbInstanceName("image"), file_key).then((blob) => {
+        localDb.getImageByKey(file_url, getDbInstanceName("image"), file_key, msgId).then((blob) => {
           setImageSource(window.URL.createObjectURL(blob));
         });
       }
     }
   }, [file_url, message_type]);
+
+  useEffect(() => {
+    if (imageSource.search("blob:") !== -1) {
+      setImageSource((prevImgUrl) => {
+        imageUrlDownloaded && imageUrlDownloaded(prevImgUrl);
+        return prevImgUrl;
+      });
+    }
+  }, [imageSource]);
 
   const isTranslated = () =>
     isSender && pageType === "conversation" && translatedMessage && Object.keys(translatedMessage).length;
@@ -66,8 +78,8 @@ const ImageComponent = (props = {}) => {
   return (
     <>
       <div className="image-wrapper">
-        <div className={`image-message`} onClick={(e) => handleMediaShow && handleMediaShow(e)} style={dimension}>
-          <img className="webchat-conver-image" src={imageSource} alt="chat-img" />
+        <div className={`image-message`}  onClick={(e) => handleMediaShow && imageSource.search("blob:") !== -1 && handleMediaShow(e)} style={dimension}>
+          <img className="webchat-conver-image" style={imageSource.search("blob:") !== -1 ? {cursor:"pointer"} : {cursor:"auto"}} src={(!isSender && uploadStatus == 1) ? getThumbBase64URL(imageThumbUrl) : imageSource} alt="chat-img" />
         </div>
         <ProgressLoader
           msgId={msgId}
@@ -75,6 +87,8 @@ const ImageComponent = (props = {}) => {
           file_url={file_url}
           uploadStatus={uploadStatus}
           imgFileDownloadOnclick={imgFileDownloadOnclick}
+          messageType = {"image"}
+          downloadEnabled ={imageSource.search("blob:") !== -1 ? true : false}
         />
       </div>
       <div className="image-caption">

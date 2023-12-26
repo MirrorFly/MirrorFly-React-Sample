@@ -165,8 +165,8 @@ const StarredMessages = (props = {}) => {
    );
  };
  
- const downloadAction = async (event, file_url, fileName, fileKey) => {
-   downloadMediaFile(file_url, "file", fileName, fileKey, event);
+ const downloadAction = async (event, file_url, fileName, fileKey, msgId) => {
+  downloadMediaFile(msgId, file_url, "file", fileName, fileKey, event);
  };
  
  const getMessageElement = (data) => {
@@ -181,13 +181,13 @@ const StarredMessages = (props = {}) => {
       return <MeetComponent messageObject={data} isSender={isSender} handleShowCallScreen={handleShowCallScreen} />;
  
      case "image":
-       return <ImageComponent messageObject={data} isSender={isSender} uploadStatus={2} imageHeightAdjust={true} />;
+       return <ImageComponent messageObject={data} isSender={isSender} uploadStatus={2} imageHeightAdjust={true} imageUrlDownloaded={null} />;
  
      case "video":
        return <VideoComponent messageObject={data} isSender={isSender} uploadStatus={2} imageHeightAdjust={true} />;
  
      case "audio":
-       return <AudioComponent pageType={"starPage"} messageObject={data} isSender={isSender} uploadStatus={2} />;
+       return <AudioComponent pageType={"starPage"} messageObject={data} isSender={isSender} uploadStatus={2} audioUrlDownloaded={null} />;
  
      case "file":
        return (
@@ -305,7 +305,7 @@ const StarredMessages = (props = {}) => {
       isReply: false,
     }
   }
- 
+
  return (
    <Fragment>
      <div id={"star-msgContent"} className="staredMessages">

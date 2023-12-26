@@ -48,7 +48,7 @@ import { callLogReducer } from "./CallLogReducer";
 import { browserNotifyReducer, browserTabReducer, appOnlineStatusReducer, webLocalStorageSettingReducer } from "./BrowserReducer";
 import { scrollBottomChatHistoryReducer } from "./ScrollReducer";
 import { ChatConversationHistoryReducer } from "./ChatHistory";
-import { MediaDownloadStateReducer, UpdateMediaDownloadStateReducer, UpdateMediaUploadStateReducer } from "./Media";
+import { MediaDownloadStateReducer, MediaDropdownStatusReducer, MediaImageThumbDataReducer, UpdateMediaDownloadStateReducer, UpdateMediaUploadStateReducer } from "./Media";
 import { StarredMessagesReducer } from "./StarredReducer";
 import { TranslateLanguage } from "./TranslateLanguage";
 import { CommonDataReducer } from "./CommonReducer";
@@ -115,4 +115,6 @@ export default combineReducers({
   adminBlockData: AdminBlockReducer,
   selectedMessageInfoReducer: selectedMessageInfoReducer,
   mediaDownloadData: MediaDownloadStateReducer,
+  mediaDropDownData: MediaDropdownStatusReducer,
+  mediaImageThumbData : MediaImageThumbDataReducer
 });
