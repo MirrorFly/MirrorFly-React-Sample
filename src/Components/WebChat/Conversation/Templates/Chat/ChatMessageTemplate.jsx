@@ -178,16 +178,12 @@ const ChatMessageTemplate = (props = {}) => {
       if (isAudioMessage()) setMediaUrl(file_url);
     } else if (is_uploading === 3 || is_uploading === 7) {
       if (isImageMessage()) saveImage(file_url);
-    } else if (is_uploading && is_uploading !== 0 && is_uploading !== 8) {
+    } else if (is_uploading !== 0 && is_uploading !== 8) {
       if (is_uploading == 2) setUploadStatus(2);
       else if (isImageMessage()) imgFileDownload();
       else if (isAudioMessage()) getAudioFile();
       else setUploadStatus(2);
-    } else if (!is_uploading) {
-      if (isImageMessage()) imgFileDownload();
-      else if (isAudioMessage()) getAudioFile();
-      else setUploadStatus(1);
-    } 
+    }
     return () => setIsSubscribed(false);
   }, []);
 
@@ -249,7 +245,7 @@ const ChatMessageTemplate = (props = {}) => {
   };
 
   useEffect(() => {
-    msgStatus === 0 && setUploadStatus(2);
+    msgStatus === 0 && uploadStatus != 3 && setUploadStatus(2);
   }, [msgStatus]);
 
   useEffect(() => {
