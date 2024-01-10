@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import ProgressLoader from "../../ProgressLoader";
 import IndexedDb from "../../../../../Helpers/IndexedDb";
 import Translate from "./Translate";
-import { captionLink, getDbInstanceName, getThumbBase64URL, isBlobUrl } from "../../../../../Helpers/Utility";
+import { captionLink, generateImageThumbnail, getDbInstanceName, getThumbBase64URL, isBlobUrl } from "../../../../../Helpers/Utility";
 import { getLocalUserDetails } from "../../../../../Helpers/Chat/User";
 import { useSelector } from "react-redux";
 
@@ -30,7 +30,7 @@ const ImageComponent = (props = {}) => {
   const localDb = useMemo(() => new IndexedDb(), []);
   const mediaImageThumbData = useSelector((state) => state.mediaImageThumbData);
   const [imageSource, setImageSource] = useState(imgSrc || getThumbBase64URL(thumb_image));
-  const [imageThumbUrl] = useState(mediaImageThumbData[file?.fileDetails?.fileId]?.thumbImage)
+  const [imageThumbUrl, setImageThumbUrl] = useState(mediaImageThumbData[file?.fileDetails?.fileId]?.thumbImage)
   const [dimension, setDimension] = useState({
     width: `${webWidth}px`,
     height: `${imageHeightAdjust ? "auto" : webHeight + "px"}`,
@@ -46,13 +46,26 @@ const ImageComponent = (props = {}) => {
         height: `${imageHeightAdjust ? "auto" : webHeight + "px"}`,
         maxHeight: webHeight + "px"
       });
-    } else {
+    } else if(thumb_image) {
       setImageSource(getThumbBase64URL(thumb_image));
+    } else {
+      generateThumbImage(file);
     }
   }, [imgSrc, msgId]);
 
+  const generateThumbImage = async (file) => {
+    const fileName = file?.name;
+    const fileExtension = fileName.split('.').pop();
+    try {
+      const thumbImage = await generateImageThumbnail(file, fileExtension);
+      setImageThumbUrl(thumbImage);
+    } catch (error) {
+      console.error("Error generating thumbnail:", error);
+    }
+  }
+
   useEffect(() => {
-    if (message_type === "image" && file_url) {
+    if (message_type === "image" && file_url && imageSource.search("blob:") == -1) {
       if (isBlobUrl(file_url)) {
         setImageSource(file_url);
       } else {
@@ -79,7 +92,7 @@ const ImageComponent = (props = {}) => {
     <>
       <div className="image-wrapper">
         <div className={`image-message`}  onClick={(e) => handleMediaShow && imageSource.search("blob:") !== -1 && handleMediaShow(e)} style={dimension}>
-          <img className="webchat-conver-image" style={imageSource.search("blob:") !== -1 ? {cursor:"pointer"} : {cursor:"auto"}} src={(!isSender && uploadStatus == 1) ? getThumbBase64URL(imageThumbUrl) : imageSource} alt="chat-img" />
+          <img className="webchat-conver-image" style={imageSource.search("blob:") !== -1 ? {cursor:"pointer"} : {cursor:"auto"}} src={((!isSender && uploadStatus == 1 && imageThumbUrl) || (uploadStatus == 2 && imageThumbUrl && imageSource.search("blob:") === -1))? getThumbBase64URL(imageThumbUrl) : imageSource} alt="chat-img" />
         </div>
         <ProgressLoader
           msgId={msgId}

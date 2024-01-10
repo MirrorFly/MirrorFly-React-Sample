@@ -35,6 +35,7 @@ const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 
 const {reportMembers} = Config
 
+let uploadingFile = [];
 export const notificationMessageType = ["1", "2", "3", "4", "5"];
 export function formatBytes(a, b = 2) { 
     if (0 === a) 
@@ -783,6 +784,7 @@ export const uploadFileToSDK = async (file, jid, msgId) => {
             uploadFileFailure(msgId, jid);
         });
     } else if (msgType === "image") {
+        uploadingFile.push(fileOptions);
         await SDK.sendMediaFileMessage({
             toJid: jid,
             messageType: "image",
@@ -796,8 +798,10 @@ export const uploadFileToSDK = async (file, jid, msgId) => {
         }, 
         async(response) => {
             uploadFileSuccess(response.msgId, jid, response);
-            const fileBlob = await fileToBlob(file);
-            indexedDb.setImage(response.msgBody.media.fileToken, fileBlob, getDbInstanceName(msgType));
+            const uploadedImage = uploadingFile.find(item => item.msgId === response.msgId);
+            const imgFileBlob = await fileToBlob(uploadedImage.file);
+            indexedDb.setImage(response.msgBody.media.fileToken, imgFileBlob, getDbInstanceName(msgType));
+            uploadingFile = uploadingFile.filter(item => item.msgId !== response.msgId);
         }, 
         (error) => {
             uploadFileFailure(msgId, jid);
@@ -821,6 +825,7 @@ export const uploadFileToSDK = async (file, jid, msgId) => {
             uploadFileFailure(msgId, jid);
         });
     } else if (msgType === "audio") {
+        uploadingFile.push(fileOptions);
         await SDK.sendMediaFileMessage({
             toJid: jid,
             messageType: audioType === "recording" ? "audio_recorded" : "audio",
@@ -834,8 +839,10 @@ export const uploadFileToSDK = async (file, jid, msgId) => {
         }, 
         async(response) => {
             uploadFileSuccess(response.msgId, jid, response);
-            const fileBlob = await fileToBlob(file);
-            indexedDb.setImage(response.msgBody.media.fileToken, fileBlob, getDbInstanceName(msgType));
+            const uploadedAudio = uploadingFile.find(item => item.msgId === response.msgId);
+            const audioFileBlob = await fileToBlob(uploadedAudio.file);
+            indexedDb.setImage(response.msgBody.media.fileToken, audioFileBlob, getDbInstanceName(msgType));
+            uploadingFile = uploadingFile.filter(item => item.msgId !== response.msgId);
         }, 
         (error) => {
             uploadFileFailure(msgId, jid);
