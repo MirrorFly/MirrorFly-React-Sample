@@ -2,7 +2,7 @@ import { RecentChatUpdateAction } from "../../../Actions/RecentChatActions";
 import { chatSeenPendingMsg } from "../../../Actions/SingleChatMessageActions";
 import { changeTimeFormat } from "../../../Helpers/Chat/RecentChat";
 import { formatUserIdToJid, isLocalUser } from "../../../Helpers/Chat/User";
-import { getMessageObjReceiver, shouldHideNotification } from "../../../Helpers/Utility";
+import { getMessageObjReceiver, getMessageObjReceiverEdited, shouldHideNotification } from "../../../Helpers/Utility";
 import Store from "../../../Store";
 import SDK from "../../SDK";
 import {
@@ -17,12 +17,14 @@ import {
   notificationMessageType,
   isSingleChat,
   isGroupChat,
-  getChatHistoryMessagesData
+  getChatHistoryMessagesData,
+  getRecentChatMessagesData
 } from "../../../Helpers/Chat/ChatHelper";
 import { UnreadCountUpdate, UnreadCountDelete } from "../../../Actions/UnreadCount";
 import { ChatMessageHistoryDataAction } from "../../../Actions/ChatHistory";
 import browserNotify from "../../../Helpers/Browser/BrowserNotify";
 import {getFromLocalStorageAndDecrypt} from "../WebChatEncryptDecrypt";
+import { MessageActionEdited } from "../../../Actions/MessageActions";
 
 const getMessageSenderDetails = (newChatFrom, rosterDataArray) => {
   const rosterDetail = rosterDataArray.find((profile) => {
@@ -36,7 +38,8 @@ export const updateRecentChatMessage = (messgeObject, stateObject) => {
   const { recentChatData, rosterData } = stateObject;
   const { data: rosterDataArray = [] } = rosterData;
   const { rosterData: { recentChatNames } = {} } = recentChatData;
-  const { msgType, fromUserId, fromUserJid, toUserId, msgId, timestamp, chatType, msgBody, publisherId } = messgeObject;
+  const { msgType, fromUserId, fromUserJid, toUserId, msgId, timestamp, chatType, msgBody,
+     publisherId, editedStatus = 0, msgStatus, deleteStatus, archiveStatus } = messgeObject;
 
   const newChatTo = msgType === "carbonSentMessage" ? toUserId : fromUserId;
   const newChatFrom = chatType === "groupchat" ? publisherId : fromUserId;
@@ -49,25 +52,49 @@ export const updateRecentChatMessage = (messgeObject, stateObject) => {
   // Temp - Reorder Issue Fix
   if (Number(UTCseconds).toString().length > 13) UTCseconds = UTCseconds / 1000;
 
+  //get RecentChatData from Store
+  const recentStoreData = getRecentChatMessagesData();
+  const mappedResult = recentStoreData && recentStoreData.some((messageObject) => msgId === messageObject.msgId);
+
   /**
    * update the chat message if message alredy exist in recent chat
    */
   if (recentChatNames && recentChatNames?.indexOf(newChatTo) !== -1) {
-    const constructNewMessage = {
-      ...messgeObject,
-      MessageType: msgType ? msgType : msgBody.message_type || "",
-      msgType: msgBody.message_type ? msgBody.message_type : msgType,
-      publisher: newChatFrom,
-      publisherId: newChatFrom,
-      leftGroup: leftGroup,
-      filterBy: newChatTo,
-      fromUserId: newChatTo,
-      chatType: chatType,
-      contactDetails: userDetails,
-      createdAt: updateTime,
-      timestamp: parseInt(UTCseconds)
-    };
-    Store.dispatch(RecentChatUpdateAction(constructNewMessage));
+    let constructNewMessage = {};
+    if (editedStatus === 1) {
+      constructNewMessage = {
+        ...messgeObject,
+        chatType: chatType,
+        contactDetails: userDetails,
+        editedStatus: editedStatus,
+        filterBy: newChatTo,
+        fromUserId: newChatTo,
+        leftGroup: leftGroup,
+        MessageType: msgType ? msgType : msgBody.message_type || "",
+        msgType: msgBody.message_type ? msgBody.message_type : msgType,
+        publisher: newChatFrom,
+        publisherId: newChatFrom,
+      }
+    } else {
+      constructNewMessage = {
+        ...messgeObject,
+        MessageType: msgType ? msgType : msgBody.message_type || "",
+        msgType: msgBody.message_type ? msgBody.message_type : msgType,
+        publisher: newChatFrom,
+        publisherId: newChatFrom,
+        leftGroup: leftGroup,
+        filterBy: newChatTo,
+        fromUserId: newChatTo,
+        chatType: chatType,
+        contactDetails: userDetails,
+        createdAt: updateTime,
+        timestamp: parseInt(UTCseconds),
+        editedStatus: editedStatus
+      };
+    }
+    if ((mappedResult === false && editedStatus === 0) || (mappedResult === true && editedStatus === 1)) {
+      Store.dispatch(RecentChatUpdateAction(constructNewMessage));
+    }
   } else {
     /**
      * New chat that is not alreay exist in recent chat
@@ -79,22 +106,22 @@ export const updateRecentChatMessage = (messgeObject, stateObject) => {
       SDK.updateMuteNotification(formatUserIdToJid(newChatTo, chatType), true);
     }
     const newMessage = {
-      archiveStatus: 0,
+      archiveStatus: editedStatus === 1 ? archiveStatus : 0,
       chatType: chatType,
+      editedStatus: editedStatus,
       msgBody: msgBody,
       msgId: msgId,
-      msgStatus: 0,
+      msgStatus: editedStatus === 1 ? msgStatus : 0,
       muteStatus: isMuted,
       msgType: msgBody.message_type ? msgBody.message_type : msgType,
-      deleteStatus: 0,
-      unreadCount: 0,
+      deleteStatus: editedStatus === 1 ? deleteStatus : 0,
       fromUserId: newChatTo,
-      timestamp: parseInt(UTCseconds),
+      timestamp: editedStatus === 1 ? timestamp : parseInt(UTCseconds),
       publisher: newChatFrom,
       publisherId: newChatFrom,
       toUserId: toUserId,
       createdAt: updateTime,
-      filterBy: newChatTo
+      filterBy: newChatTo,
     };
     Store.dispatch(RecentChatUpdateAction(newMessage));
   }
@@ -106,6 +133,8 @@ export const updateRecentChatMessage = (messgeObject, stateObject) => {
 export const updateConversationMessage = (messgeObject, currentState) => {
   const newChatTo = messgeObject.msgType === "carbonSentMessage" ? messgeObject.toUserId : messgeObject.fromUserId;
   const singleChat = isSingleChat(messgeObject.chatType);
+  const editedStatus = messgeObject?.editedStatus || 0;
+  const editMessageId = messgeObject?.editMessageId || "";
 
   if (isActiveConversationUserOrGroup(newChatTo)) {
     const publisherId = singleChat ? newChatTo : messgeObject.publisherId;
@@ -128,8 +157,18 @@ export const updateConversationMessage = (messgeObject, currentState) => {
   }
 
   const conversationHistory = getChatHistoryMessagesData();
+  let conversationChatObj = {};
   if (Object.keys(conversationHistory).includes(newChatTo)) {
-    const conversationChatObj = getMessageObjReceiver(messgeObject, messgeObject.fromUserId);
+    if (editedStatus === 1) { //Incase of server gives updated time, time handled from storeData
+      conversationChatObj = getMessageObjReceiverEdited(messgeObject, newChatTo, conversationHistory);
+      const constructedObj = {
+        ...conversationChatObj,
+        editMessageId: (editMessageId && editMessageId !== messgeObject?.msgId) ? editMessageId : "",
+      }
+      Store.dispatch(MessageActionEdited(constructedObj));
+    } else {
+      conversationChatObj = getMessageObjReceiver(messgeObject, messgeObject.fromUserId);
+    }
 
     const dispatchData = {
       data: [conversationChatObj],
@@ -169,20 +208,21 @@ export const updateMsgSeenStatus = () => {
  */
 export const updateMessageUnreadCount = (messgeObject, stateObject) => {
   const { msgType, fromUserId, publisherId, chatType, msgBody, profileUpdatedStatus, toUserId, groupId } = messgeObject;
+  const editedStatus = messgeObject?.editedStatus || 0;
 
   if (
     [MSG_RECEIVE_STATUS, MSG_RECEIVE_STATUS_CARBON].indexOf(msgType) > -1 &&
     !isLocalUser(publisherId) &&
     ((shouldHideNotification() && browserNotify.isPageHidden ) || !isActiveConversationUserOrGroup(fromUserId, chatType)) &&
-    notificationMessageType.indexOf(msgBody) === -1
-  ) {
+    notificationMessageType.indexOf(msgBody) === -1 && editedStatus === 0)
+  {
     Store.dispatch(UnreadCountUpdate({ fromUserId }));
   }
 
   if (
     ((shouldHideNotification()&& browserNotify.isPageHidden ) || !isActiveConversationUserOrGroup(fromUserId, chatType)) &&    GROUP_UPDATE_ACTIONS.indexOf(profileUpdatedStatus) > -1 &&
-    !isLocalUser(publisherId)
-  ) {
+    !isLocalUser(publisherId) && editedStatus === 0)
+  {
     Store.dispatch(UnreadCountUpdate({ fromUserId }));
   }
 

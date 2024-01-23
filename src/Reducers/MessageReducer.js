@@ -24,6 +24,15 @@ const updateReplyMessage = (newMessage, replyMessageArray = []) => {
     return replyMessageArray; //.concat(firstObject);
 }
 
+//edit message store handled
+const editMessageUpdate = (newMessage, storeMessageArray = []) => {
+    let firstObject = newMessage;
+    const editMessageArray = storeMessageArray;
+    if (!firstObject) return [];
+    editMessageArray.push(firstObject);
+    return editMessageArray;
+}
+
 export function ReplyMessageReducer(state = {}, action = {}) {
     const { payload: { id, data } = {} } = action
     switch (action.type) {
@@ -43,19 +52,33 @@ export function ReplyMessageReducer(state = {}, action = {}) {
     }
 }
 
+
+export function MessageEditedReducer(state = {}, action = {}) {
+    const { payload: { id, data } = {} } = action;
+        if (action.type === "MESSAGE_EDIT") {
+            return {
+                ...state,
+                id,
+                data: editMessageUpdate(data, state.data)
+            }
+        } else {
+            return state;
+        }
+}
+
 function stringContainjid(s, word) {
     return new RegExp('\\b' + word + '\\b', 'i').test(s);
 }
 
-const updateMessageInfo = (time, activeUserId, messageStatus, participants = []) => {
+const updateMessageInfo = (time, editedTimeUpdated, activeUserId, messageStatus, participants = []) => {
     return participants.map(participant => {
         const { userId, deliveredTime, seenTime, msgStatus } = participant
 
         if (stringContainjid(activeUserId, userId)) {
             return {
                 ...participant,
-                ...(messageStatus === 1 && { deliveredTime: (time && deliveredTime === '0000-00-00 00:00:00') ? changeTimeFormat(time) : deliveredTime }),
-                ...(messageStatus === 2 && { seenTime: (time && seenTime === '0000-00-00 00:00:00') ? changeTimeFormat(time) : seenTime }),
+                ...(messageStatus === 1 && { deliveredTime: (time && deliveredTime === '0000-00-00 00:00:00') ? changeTimeFormat(time) : editedTimeUpdated }),
+                ...(messageStatus === 2 && { seenTime: (time && seenTime === '0000-00-00 00:00:00') ? changeTimeFormat(time) : editedTimeUpdated }),
                 msgStatus: getMsgStatusInOrder(msgStatus, messageStatus)
             }
         }
@@ -65,7 +88,7 @@ const updateMessageInfo = (time, activeUserId, messageStatus, participants = [])
 
 export function messageInfoReducer(state = {}, action = {}) {
 
-    const { payload: { id, data, activeUserId, messageStatus = '', time } = {} } = action
+    const { payload: { id, data, activeUserId, messageStatus = '', time, editedTimeUpdated } = {} } = action
     switch (action.type) {
         case MESSAGE_INFO_DATA:
             return {
@@ -79,7 +102,7 @@ export function messageInfoReducer(state = {}, action = {}) {
                 id,
                 data: {
                     ...state.data,
-                    participants: updateMessageInfo(time, activeUserId, messageStatus, state.data?.participants)
+                    participants: updateMessageInfo(time, editedTimeUpdated, activeUserId, messageStatus, state.data?.participants)
                 }
             }
 

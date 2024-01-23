@@ -9,10 +9,12 @@ import {
   Starred,
   UnStar,
   DropDownload,
-  IconReport
+  IconReport,
+  Edit
 } from "../../../../../assets/images";
 import { MEDIA_MESSAGE_TYPES } from "../../../../../Helpers/Constants";
 import { useSelector } from "react-redux";
+import { hasOwnProperty } from "react-bootstrap-typeahead/types/utils";
 
 class WatchClickOutside extends Component {
   constructor(props) {
@@ -56,9 +58,11 @@ const DropDownComponent = (props = {}) => {
     isSender,
     msgType,
     favouriteStatus,
-    messageObject
+    messageObject,
   } = props;
   const featureStateData = useSelector((state) => state.featureStateData);
+  const editStoreData = useSelector((state) => state.chatEditStatus);
+  let editStatus = editStoreData[msgId];
   const {
      isStarMessageEnabled = true,
      isDeleteMessageEnabled = true,
@@ -118,7 +122,18 @@ const DropDownComponent = (props = {}) => {
               </i>
               <span>Forward</span>
             </li>
-
+            {!isSender && messageObject !== undefined && messageObject?.msgStatus !== 3 && 
+              messageObject?.msgBody?.hasOwnProperty("meet") === false &&
+              (messageObject.msgBody?.media?.caption ? messageObject?.msgBody?.media?.caption !== "" : 
+            (messageObject?.msgBody && messageObject?.msgBody?.hasOwnProperty("message") === true && 
+            messageObject.msgBody?.message !== "")) && editStatus &&
+                <li className="Edit" title="Edit">
+                  <i>
+                    <Edit/>
+                  </i>
+                  <span>Edit</span>
+                </li>
+            }
             {isStarMessageEnabled &&
               favouriteStatus === 0 ? (
                 <li className="Starred" title="Starred">
@@ -172,6 +187,7 @@ const DropDownComponent = (props = {}) => {
             <span>Report</span>
           </li>
         }
+        
       </ul>
     </OutsideClickHandler>
   );
@@ -189,7 +205,7 @@ export default React.memo((props) => {
     favouriteStatus,
     messageAction = () => { },
     closeDropDown,
-    messageObject
+    messageObject,
   } = props;
 
   return (

@@ -104,7 +104,7 @@ const Caption = (props = {}) => {
     let startCursor = msgElement?.substring(0, position);
     startCursor = startCursor.substring(0, startCursor.lastIndexOf("@"));
     const end = msgElement?.substring(position);
-    const uiHtml = `<span data-mentioned="${userId}" class="mentioned blue" contenteditable="false">@${displayName}</span> `;
+    const uiHtml = `<span data-mentioned="${userId}" class="mentioned blue" contenteditable="true">@${displayName}</span> `;
     text = startCursor + uiHtml + end;
     positionToUpdate = position + (uiHtml.length -1);
     setMentionView(false)

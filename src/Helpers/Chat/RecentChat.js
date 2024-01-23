@@ -9,6 +9,9 @@ import { isLocalUser, getContactNameFromRoster, getDataFromRoster } from "./User
 window.moment = moment;
 
 export const sortBydate = (chatMessages) => {
+  const isEditedMsg = chatMessages && chatMessages.some(
+    (messageObject) => messageObject.MessageType === "receiveMessage" && messageObject.editedStatus === 1);
+  if (isEditedMsg) { return chatMessages; }
   return chatMessages.sort((a, b) => (b.timestamp > a.timestamp ? 1 : -1));
 };
 

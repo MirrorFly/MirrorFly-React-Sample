@@ -178,7 +178,7 @@
       .message-time {
         @extend .msg-time-inner;
         color: $clr-send-message-time;
-        z-index: 1;
+        z-index: 0;
         .star {
           width: 0.625em;
           height: 0.625em;
@@ -518,7 +518,7 @@
       .message-time {
         @extend .msg-time-inner;
         color: $clr-rev-message-time;
-        z-index: 1;
+        z-index: 0;
         .star {
           width: 0.625em;
           height: 0.625em;

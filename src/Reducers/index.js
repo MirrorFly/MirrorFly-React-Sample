@@ -24,7 +24,7 @@ import {
   GroupsMemberParticipantsListReducer
 } from "./GroupsReducer";
 import { LastActivityReducer } from "./LastActivityReducer";
-import { messageForwardReducer, messageInfoReducer, MessageReducer, ReplyMessageReducer , selectedMessageInfoReducer} from "./MessageReducer";
+import { MessageEditedReducer, messageForwardReducer, messageInfoReducer, MessageReducer, ReplyMessageReducer , selectedMessageInfoReducer} from "./MessageReducer";
 import { PopUp } from "./PopUp";
 import { PresenceReducer } from "./PresenceReducer";
 import {
@@ -47,7 +47,7 @@ import { VCardContactReducer, VCardReducer } from "./VCardReducer";
 import { callLogReducer } from "./CallLogReducer";
 import { browserNotifyReducer, browserTabReducer, appOnlineStatusReducer, webLocalStorageSettingReducer } from "./BrowserReducer";
 import { scrollBottomChatHistoryReducer } from "./ScrollReducer";
-import { ChatConversationHistoryReducer } from "./ChatHistory";
+import { ChatConversationHistoryReducer, EditStatusReducer } from "./ChatHistory";
 import { MediaDownloadStateReducer, MediaDropdownStatusReducer, MediaImageThumbDataReducer, UpdateMediaDownloadStateReducer, UpdateMediaUploadStateReducer } from "./Media";
 import { StarredMessagesReducer } from "./StarredReducer";
 import { TranslateLanguage } from "./TranslateLanguage";
@@ -105,6 +105,8 @@ export default combineReducers({
   appOnlineStatus: appOnlineStatusReducer,
   chatSeenPendingMsgData: chatSeenPendingMsgReducer,
   chatConversationHistory: ChatConversationHistoryReducer,
+  chatEditStatus: EditStatusReducer,
+  messageEditedData: MessageEditedReducer,
   mediaUploadData: UpdateMediaUploadStateReducer,
   mediaDownloadingData: UpdateMediaDownloadStateReducer,
   starredMessages: StarredMessagesReducer,

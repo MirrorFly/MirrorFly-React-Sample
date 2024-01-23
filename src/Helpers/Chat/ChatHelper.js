@@ -82,7 +82,7 @@ export const getNameFromGroup = (group) => {
 
 export const getDisplayNameFromGroup = (messageFrom = '', groupMemberDetails = []) => {
 
-    const userId = messageFrom.split('@')[0]
+    const userId = messageFrom?.split('@')[0]
     const rosterObject = getDataFromRoster(userId);
     if (!rosterObject) {
         const userDetails = getUserDetails(userId);
@@ -98,7 +98,7 @@ export const getDisplayNameFromGroup = (messageFrom = '', groupMemberDetails = [
         };
     }
     const { displayName, name, nickName, jid, userColor } = rosterObject || {}
-    let nameToDisplay = displayName || name || nickName || jid || getFormatPhoneNumber(messageFrom.split('@')[0]);
+    let nameToDisplay = displayName || name || nickName || jid || getFormatPhoneNumber(messageFrom?.split('@')[0]);
     
     return {
         nameToDisplay,
@@ -538,10 +538,17 @@ export const getChatHistoryData = (data, stateData) => {
     const userId = localUserJid ? getUserIdFromJid(localUserJid) : "";
     if (userId === lastMessage?.publisherId) {
         newSortedData = sortedData.map((msg => {
-            msg.msgStatus = getMsgStatusInOrder(msg.msgStatus, lastMessage?.msgStatus);
+            const currentMessage = data?.data[data?.data.length - 1];
+            if (currentMessage?.editedStatus === 1 && currentMessage?.msgId === msg?.msgId) {
+                msg.msgStatus = getMsgStatusInOrder(msg.msgStatus, currentMessage?.msgStatus);
+            } else {
+                msg.msgStatus = getMsgStatusInOrder(msg.msgStatus, lastMessage?.msgStatus);
+            }
             return msg;
         }));
-    } else  newSortedData = sortedData;
+    } else {
+        newSortedData = sortedData;
+    }
 
     let isScrollNeeded = true;
     if (data.fetchLimit) {
@@ -561,25 +568,25 @@ export const clearChatHistoryOffline = (data, stateData) => {
     const userId = data.fromUserId;
     const lastMessageId = data.lastMsgId;
 
-    if(chatIds.includes(userId)) {
+    if (chatIds.includes(userId)) {
         let userOrGroupId = "";
-        for(const chatId in chatData){
+        for (const chatId in chatData) {
             if(chatId === userId){
                 userOrGroupId = chatId;
             }
         }
         const chatMessages = chatData[userOrGroupId]?.messages;
-        if(chatMessages[lastMessageId] !== undefined || "") {
+        if (chatMessages[lastMessageId] !== undefined || "") {
             const timestamp = chatMessages[lastMessageId].timestamp;
-            for(let msg in chatMessages){
-                if(data.favourite === "1"){
-                    if(chatMessages[msg].timestamp <= timestamp){
-                        if(chatMessages[msg].favouriteStatus === 0 ){
+            for (let msg in chatMessages) {
+                if (data.favourite === "1") {
+                    if (chatMessages[msg].timestamp <= timestamp) {
+                        if (chatMessages[msg].favouriteStatus === 0 ) {
                             delete chatMessages[msg]
                         }
                     }
-                }else{
-                    if(chatMessages[msg].timestamp <= timestamp){
+                } else {
+                    if (chatMessages[msg].timestamp <= timestamp) {
                         delete chatMessages[msg]
                     }
                 }
@@ -592,6 +599,11 @@ export const clearChatHistoryOffline = (data, stateData) => {
 
 export const getChatHistoryMessagesData = () => {
     const { chatConversationHistory: { data } = {} } = Store.getState();
+    return data;
+};
+
+export const getRecentChatMessagesData = () => {
+    const { recentChatData: { data } = {} } = Store.getState();
     return data;
 };
 
@@ -790,7 +802,7 @@ export const uploadFileToSDK = async (file, jid, msgId) => {
             messageType: "image",
             fileMessageParams: fileOptions,
             mentionedUsersIds: mentionedUsersIds,
-            replyMessageId: replyTo
+            replyMessageId: replyTo,
         }, 
         (msgId) => {
           const imageUploadingData =  {msgId,uploading:true}
@@ -812,7 +824,7 @@ export const uploadFileToSDK = async (file, jid, msgId) => {
             messageType: "video",
             fileMessageParams: fileOptions,
             mentionedUsersIds: mentionedUsersIds,
-            replyMessageId: replyTo
+            replyMessageId: replyTo,
         }, 
         (msgId) => {
             const videoUploadingData =  {msgId,uploading:true}
@@ -985,10 +997,40 @@ export const downloadMediaFile = async (filemsgId, file_Url, msgType, file_name,
 }
 
 export const updateStarredList = (data, stateData = [], originalMsg = {}) => {
-    const newState = [...stateData];
+    let newState = [...stateData];
     const index = stateData.findIndex(el => el.msgId === data.msgId)
     if (index > -1) {
         if (data.favouriteStatus === 0) newState.splice(index, 1);
+        else if (data?.favouriteStatus === 1 && originalMsg?.editedStatus === 1) {
+            //Edited content instant update in starred message
+            const updatednewStateArr = newState;
+            const findedItemIndex = updatednewStateArr?.findIndex((item) => item?.msgId === originalMsg?.msgId);
+            const isCaption = newState[findedItemIndex]?.msgBody?.media?.caption || "";
+            let constructObj = {};
+            if (isCaption !== "") {
+                constructObj = {
+                    ...newState[findedItemIndex],
+                    msgBody: {
+                        ...newState[findedItemIndex].msgBody,
+                        media: {
+                            ...newState[findedItemIndex].msgBody.media,
+                            caption: originalMsg?.msgBody?.media?.caption,
+                        },
+                    },
+                    editedStatus: originalMsg?.editedStatus
+                }
+            } else {
+                constructObj = {
+                    ...newState[findedItemIndex],
+                    msgBody: {
+                        ...newState[findedItemIndex].msgBody,
+                        message: originalMsg?.msgBody?.message
+                    },
+                    editedStatus: originalMsg?.editedStatus
+                }
+            }
+            newState[findedItemIndex] = constructObj;
+        }
     } else if (data.favouriteStatus === 1) {
         newState.push(originalMsg);
     }
@@ -997,19 +1039,21 @@ export const updateStarredList = (data, stateData = [], originalMsg = {}) => {
 }
 
 export const getFavaouriteMsgObj = (msg, chatId) => {
+    const publisherId = Store.getState().vCardData?.data?.fromUser;
+    const isValidPublisherJid = publisherId === msg?.fromUserId ? publisherId : msg.publisherId;
     return {
         ...msg,
         favDate: changeTimeFormat(Date.now() * 1000),
         msgType: msg?.msgBody?.message_type,
         ...(isSingleChat(msg.chatType) && {
-            publisherId: msg.publisherId,
-            publisherJid: formatUserIdToJid(msg.publisherId),
+            publisherId: msg.publisherId || (publisherId === msg?.fromUserId ? publisherId : msg.publisherId),
+            publisherJid: formatUserIdToJid(msg?.publisherId ? msg.publisherId : isValidPublisherJid),
             fromUserId: chatId,
             fromUserJid: formatUserIdToJid(chatId)
         }),
         ...(isGroupChat(msg.chatType) && {
-            publisherId: msg.publisherId,
-            publisherJid: formatUserIdToJid(msg.publisherId),
+            publisherId: msg.publisherId || (publisherId === msg?.fromUserId ? publisherId : msg.publisherId),
+            publisherJid: formatUserIdToJid(msg?.publisherId ? msg.publisherId : isValidPublisherJid),
             fromUserId: chatId,
             fromUserJid: formatUserIdToJid(chatId, msg.chatType)
         }),
@@ -1126,7 +1170,7 @@ export const handleUnarchiveChat = (fromUserId, chatType = CHAT_TYPE_SINGLE) => 
 };
 
 export const handleArchiveActions = async (listenerData = {}) => {
-    const { msgType = "", fromUserId = "", chatType = "", msgBody: { replyTo = "" } = {} } = listenerData;
+    const { msgType = "", fromUserId = "", chatType = "", msgBody: { replyTo = "" } = {}, editedStatus = 0 } = listenerData;
     if (msgType === "carbonReceiveMessage" || msgType === "receiveMessage") {
       const chatIds = getArchivedChats(),
         isPermanentArchvie = getArchiveSetting();
@@ -1143,7 +1187,7 @@ export const handleArchiveActions = async (listenerData = {}) => {
           const orgMsg = await SDK.getMessageById(replyTo);
           if (orgMsg.statusCode === 200 && orgMsg.data) {
             const { publisherId = "" } = orgMsg.data || {};
-            if (isLocalUser(publisherId)) {
+            if (isLocalUser(publisherId) && editedStatus !== 1) {
               const { title, image, message } = await getPushNotificationData(listenerData);
               sendNotification(title, image, message, fromUserId);
             }
@@ -1205,7 +1249,11 @@ export const getMessagesForReport = (chatId, selectedMsgIdType) => {
         filteredData.map((item,key)=>{
             let msgObject = {}
             msgObject["msgId"] = item?.msgId || ""
-            msgObject["message"] = item?.msgBody?.message || item?.msgBody?.media?.caption || ""
+            if (item?.editedStatus === 1) {
+                msgObject["message"] = item?.msgBody?.media?.caption ? "Edited - "+item?.msgBody?.media?.caption : "Edited - "+item?.msgBody?.message;
+            } else {
+                msgObject["message"] = item?.msgBody?.message || item?.msgBody?.media?.caption || "";
+            }
             msgObject["msgType"] = item?.msgBody?.message_type || ""
             msgObject["filename"] = item?.msgBody?.media?.fileName || ""
             msgObject["timestamp"] = item?.timestamp

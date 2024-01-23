@@ -66,7 +66,7 @@ export { ReactComponent as AddParticiapants } from './addParticiapants.svg';
 export { ReactComponent as Blocked } from './blocked.svg';
 export { ReactComponent as Delete } from './delete.svg';
 export { ReactComponent as Done } from './done.svg';
-export { ReactComponent as Edit } from './edit.svg';
+export { ReactComponent as Edit } from './edit-msg-icon34377.svg';
 export { ReactComponent as GoBack } from './goback.svg';
 export { default as  mediaAudio } from './media-audio.svg';
 export { default as  mediaFile } from './media-document.svg';

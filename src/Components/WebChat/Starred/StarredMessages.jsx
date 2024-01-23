@@ -369,7 +369,8 @@ const StarredMessages = (props = {}) => {
                              el.createdAt,
                              1,
                              !isLocalUser(el.publisherId),
-                             el.msgType
+                             el.msgType,
+                             el.editedStatus
                            )}
                            <div className="message-dropdown-menu">
                              <span className="message-dropdown">

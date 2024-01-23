@@ -41,6 +41,7 @@ class ConversationHeader extends React.Component {
         }
         this.preventMultipleClick = false;
         this.premissionConst = "Permission denied";
+        this.disableEdit = false;
     }
 
     filterProfileFromRoster = (messageFrom) => {
@@ -138,6 +139,12 @@ class ConversationHeader extends React.Component {
     }
 
     makeOne2OneCall = async (callType) => {
+        this.disableEdit = true; // when other action click disable the Edit UI
+        this.props.handleEditDisabled(this.disableEdit);
+        this.disableEdit = false;
+        setTimeout(() => {
+            this.props.handleEditDisabled(this.disableEdit);
+        }, 1000);
         if (this.isRoomExist() || this.preventMultipleClick) {
             return;
         }
@@ -225,6 +232,12 @@ class ConversationHeader extends React.Component {
     }
 
     showCallParticipants = (callType) => {
+        this.disableEdit = true; // when other action click disable the Edit UI
+        this.props.handleEditDisabled(this.disableEdit);
+        this.disableEdit = false;
+        setTimeout(() => {
+            this.props.handleEditDisabled(this.disableEdit);
+        }, 1000);
         if (this.isRoomExist()) {
             return;
         }
@@ -370,6 +383,12 @@ class ConversationHeader extends React.Component {
     }
 
     handlePopUp = (forceClose = false) => {
+        this.disableEdit = true; // when other action click disable the Edit UI
+        this.props.handleEditDisabled(this.disableEdit);
+        this.disableEdit = false;
+        setTimeout(() => {
+            this.props.handleEditDisabled(this.disableEdit);
+        }, 1000);
         const { popUpData: { modalProps: { open } } } = this.props
         if (open && !forceClose) {
             return;
@@ -396,6 +415,12 @@ class ConversationHeader extends React.Component {
 
     handleSchedulePopup() {
         if (isAppOnline()) {
+            this.disableEdit = true; // when other action click disable the Edit UI
+            this.props.handleEditDisabled(this.disableEdit);
+            this.disableEdit = false;
+            setTimeout(() => {
+                this.props.handleEditDisabled(this.disableEdit);
+            }, 1000);
             Store.dispatch(
                 showModal({
                     open: true,
@@ -510,7 +535,8 @@ const mapStateToProps = state => {
         rosterData: state.rosterData,
         groupsData: state.groupsData,
         contactsWhoBlockedMe: state.contactsWhoBlockedMe,
-        activeChatData: state.activeChatData
+        activeChatData: state.activeChatData,
+        chatEditStatus: state.chatEditStatus
     }
 }
 

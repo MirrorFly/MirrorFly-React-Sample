@@ -6,7 +6,8 @@ import {
   MessageAction,
   messageInfoAction,
   ReplyMessageAction,
-  selectedMessageInfo
+  selectedMessageInfo,
+  MessageActionEdited
 } from "../../../Actions/MessageActions";
 import { get as _get } from "lodash";
 import { loaderSVG, BlockedIcon } from "../../../assets/images";
@@ -31,7 +32,7 @@ import {
   isTextMessage,
   handleTempArchivedChats,
   isGroupChat,
-  getMessagesForReport
+  getMessagesForReport,
 } from "../../../Helpers/Chat/ChatHelper";
 import {
   getMessageObjSender,
@@ -39,7 +40,10 @@ import {
   getRecentChatMsgObj,
   blockOfflineAction,
   isAppOnline,
-  getTranslateTargetLanguage
+  getTranslateTargetLanguage,
+  getMessageObjEdited,
+  getRecentMsgObjEdited,
+  getUserIdFromJid
 } from "../../../Helpers/Utility";
 import { RecentChatUpdateAction } from "../../../Actions/RecentChatActions";
 import Store from "../../../Store";
@@ -53,9 +57,9 @@ import {
 } from "../../../Helpers/Chat/User";
 import { scrollBottomChatHistoryAction } from "../../../Actions/ScrollAction";
 import { updateMsgSeenStatus } from "../Common/createMessage";
-import { ChatMessageHistoryDataAction, TranslateMessageHistory } from "../../../Actions/ChatHistory";
+import { ChatMessageHistoryDataAction, TranslateMessageHistory, UpdateTypedMessage } from "../../../Actions/ChatHistory";
 import { CHAT_HISTORY_LIMIT, FEATURE_RESTRICTION_ERROR_MESSAGE, RECONNECT_GET_CHAT_LIMIT } from "../../../Helpers/Constants";
-import { CHAT_TYPE_GROUP, CHAT_TYPE_SINGLE, UNBLOCK_CONTACT_TYPE } from "../../../Helpers/Chat/Constant";
+import { CHAT_TYPE_SINGLE, UNBLOCK_CONTACT_TYPE } from "../../../Helpers/Chat/Constant";
 import { BlockPopUp } from "../PopUp/BlockPopUp";
 import { updateBlockedContactAction } from "../../../Actions/BlockAction";
 import { toast } from "react-toastify";
@@ -63,6 +67,8 @@ import { handleMessageParseHtml } from "../../../Helpers/Chat/RecentChat";
 import { REACT_APP_GOOGLE_TRANSLATE_API_KEY } from "../../processENV";
 import ActionInfoPopup from "../../ActionInfoPopup";
 import { showModal } from "../../../Actions/PopUp";
+import IndexedDb from "../../../Helpers/IndexedDb";
+import { UpdateStarredMessages } from "../../../Actions/StarredAction";
 
 class WebChatConversationHistory extends Component {
   constructor(props) {
@@ -91,6 +97,9 @@ class WebChatConversationHistory extends Component {
       isAdminBlocked: false,
       isDeletedAccount:false,
       originalMessageDeleted: false,
+      messageDeletedData: {},
+      otherActionClick : false,
+      editedDetailsArr: {}
     };
     this.activeTimer = 0;
     this.rosterConst = "roster.userId";
@@ -320,21 +329,25 @@ class WebChatConversationHistory extends Component {
 
   viewOriginalMessage = async (messageId, msgId) => {
     const chatType = this.props?.activeChatData?.data?.recent?.chatType;
-
     const chatMessages = getActiveChatMessages();
     const isExist = chatMessages.find((message) => message.msgId === messageId);
+    let matchedObjForEdit = chatMessages.find((message) => message.editMessageId === messageId);
+    if (matchedObjForEdit && matchedObjForEdit.editedStatus === 1) {
+      this.smoothScroll(matchedObjForEdit.msgId);
+      return;
+    }
     if (isExist) {
       this.smoothScroll(messageId);
       return;
     }
     if (chatMessages.length && !this.state.originalMessageDeleted) { 
-     this.loadMoreUpdate(true);
-     await this.requestChatMessages(chatType, "up", chatMessages[0].msgId, RECONNECT_GET_CHAT_LIMIT);
+      this.loadMoreUpdate(true);
+      await this.requestChatMessages(chatType, "up", chatMessages[0].msgId, RECONNECT_GET_CHAT_LIMIT);
       setTimeout(() => {
         this.loadMoreUpdate(false);
         this.viewOriginalMessage(messageId, msgId);
       }, 100);
-    }else {
+    } else {
       this.setState({originalMessageDeleted:false})
     }
   };
@@ -375,10 +388,14 @@ class WebChatConversationHistory extends Component {
           await SDK.deleteMessagesForEveryone(jid, msgIds);
         }
         toast.success(`${msgIds.length} message${msgIds.length > 1 ? "s" : ""} deleted`);
+        this.handleOtherMessageActionClick(true);
       }
     );
     this.setState({
-      forwardOption: false
+      forwardOption: false,
+      messageDeletedData: {
+        isCurrentMsgDeleted: {[msgIds]: true}
+      }
     });
   };
 
@@ -426,6 +443,7 @@ class WebChatConversationHistory extends Component {
     await SDK.updateFavouriteStatus(this.props.activeChatData.data.chatJid, msgIds, isFavourite);
     toast.success(`${data.length} message${data.length > 1 ? "s" : ""} ${isFavourite ? "starred" : "unstarred"}`);
     this.setState({ forwardOption: false });
+    this.handleOtherMessageActionClick(false);
     this.props.forwardReset();
   };
 
@@ -460,8 +478,46 @@ class WebChatConversationHistory extends Component {
       this.setState({ userReplayDetails: newArr });
     }
 
+    //Handled Edit option click
+    if (optionType === "Edit") {
+      if (!isAppOnline()) {
+        blockOfflineAction();
+        return;
+      }
+      const chatType = this.props?.activeChatData?.data?.recent?.chatType;
+      let { isAdminBlocked = false } = getDataFromRoster(this.state.jid) || {};
+      isAdminBlocked = isAdminBlocked === 0 || !isAdminBlocked ? false : true;
+      if (this.state.isBlocked && isSingleChat(chatType) && !isAdminBlocked) {
+        this.popUpToggleAction(this.state.jid, this.state.nameToDisplay)
+      }
+      
+      const {
+        activeChatData: { data = {} }
+      } = this.props;      
+      const newObj = { ...selectedMessage};
+      const message =  newObj?.msgBody?.media?.caption || newObj?.msgBody?.message ;
+      Store.dispatch(UpdateTypedMessage({ chatId: this.state.jid, message: message }));
+      const constructedObj = { 
+        findEditDetails: data,
+        existingMessageData: message,
+        messageEditDetails: newObj,
+        timer: new Date().getTime(),
+        isEditable: true,
+        sendMessgeType: optionType
+      }
+      const editedDetailsArr = {
+          ...this.state.editedDetailsArr,
+          [this.state.jid] : constructedObj
+      }
+      this.setState({ 
+        editedDetailsArr: editedDetailsArr,
+      });
+    }
+
+
     if (optionType === "Delete") {
       if (blockOfflineAction()) return;
+      this.handleOtherMessageActionClick(true);
       const { addionalnfo } = this.state;
       this.props.messageInfoShow(false);
       this.setState({
@@ -500,17 +556,18 @@ class WebChatConversationHistory extends Component {
           const { msgId: messageId } = this.state.messageInfo;
           Store.dispatch(messageInfoAction({ statusUpdate: false, messageId }, true));
           messageId && SDK.getGroupMsgInfo(jid, messageId);
-          Store.dispatch(selectedMessageInfo(selectedMessage))
-
+          Store.dispatch(selectedMessageInfo(selectedMessage));
         }
       );
       return;
     }
 
     if (optionType === "Forward") {
+      this.handleOtherMessageActionClick(true);
       const { addionalnfo } = this.state;
       this.props.messageInfoShow(false);
       this.setState({
+        otherActionClick: true,
         msgActionType: "Forward",
         forwardOption: true,
         addionalnfo: {
@@ -538,10 +595,12 @@ class WebChatConversationHistory extends Component {
     }
 
     if (optionType === "Starred" || optionType === "UnStarred") {
+      this.handleOtherMessageActionClick(true);
       if (blockOfflineAction()) return;
       const { addionalnfo } = this.state;
       this.props.messageInfoShow(false);
       this.setState({
+        otherActionClick: true,
         msgActionType: optionType,
         forwardOption: true,
         addionalnfo: {
@@ -575,6 +634,11 @@ class WebChatConversationHistory extends Component {
     });
   };
 
+  //handled for dismiss the Edit message tag- when other option enable
+  handleOtherMessageActionClick = async (currentState) => {
+      this.setState({otherActionClick: currentState})
+  }
+
   handleTranslateLanguage = async (msgId, replyMessage) => {
     if (blockOfflineAction()) return;
     const { msgBody: { message = "", message_type = "", media: { caption = "" } = {} } = {} } = replyMessage;
@@ -593,6 +657,7 @@ class WebChatConversationHistory extends Component {
     }
   }
 
+  // Handled common function to dismiss reply and Edit UI
   closeReplyAction = (userId = "") => {
     const { userReplayDetails = [] } = this.state;
     const replyData = [...userReplayDetails];
@@ -603,8 +668,10 @@ class WebChatConversationHistory extends Component {
       sendMessgeType: reMoveEle.length !== 0 ? "Reply" : "",
       replyMessage: {},
       showModal: false,
-      userReplayDetails: reMoveEle
+      userReplayDetails: reMoveEle,
+      editedDetailsArr: {},
     });
+    Store.dispatch(UpdateTypedMessage({ chatId: this.state.jid, message: "" }));
   };
 
   replyToIdPass = (jid = "") => {
@@ -619,23 +686,135 @@ class WebChatConversationHistory extends Component {
     return "";
   };
 
-  sendMediaMessage = async (messageType, files, chatType) => {
+  //send mediaMsg edited - only if caption available
+  sendMediaMessageEdited = async (jid, editedCaption, messageType, files, chatType, editMessageId, editedMentionedIds) => {
+    if (messageType === "media") {
+      const indexedDb = new IndexedDb();
+      const newFileId = uuidv4();
+      let msgId = editMessageId;
+      let fileType = "";
+      const { timestamp = 0,
+        msgBody: {message_type = "", replyTo,
+        media: {fileName, file_size, file_url = "", duration = 0, thumb_image = "", audioType = "" }}
+          = {} } = files;
+      const lastIndexDot = fileName.lastIndexOf('.');
+      let findExtension = "";
+      if (lastIndexDot !== -1) {
+        findExtension = fileName.slice(lastIndexDot + 1);
+      } 
+      if (message_type === "image") {
+        fileType = "image/"+findExtension;
+      } else if (message_type === "video") {
+        fileType = "video/"+findExtension;
+      }
+      const getImageUrl = await indexedDb.getImageByKey(file_url, "chatimages");
+      const blobUrl = window.URL.createObjectURL(getImageUrl);
+      let blob = new Blob([getImageUrl], { type: fileType });
+      blob['lastModified'] = timestamp;
+      blob['lastModifiedDate'] = new Date();
+      blob['name'] = fileName;
+      const construct_file = {
+        type: fileType,
+        name: fileName
+      }
+      //Generate a new File
+      const fileDetails = {
+        fileId: newFileId,
+        imageUrl: blobUrl,
+        msgType: message_type,
+      }
+      let file = new File([blob], blob['name'], { type: fileType });
+      file.caption = editedCaption;
+      file.fileDetails = fileDetails;
+      file.mentionedUsersIds = editedMentionedIds;
+
+      const msgType = getMessageType(construct_file.type, construct_file);
+     
+      //To send the edited media captionText
+      const editMediaCaptionResp = await SDK.editMediaCaption({
+        messageId: msgId, 
+        editedTextContent: editedCaption, 
+        mentionedUsersIds: editedMentionedIds
+      })
+      //Dispatched edited message in seperate store
+      if (editMediaCaptionResp && editMediaCaptionResp?.data && editMediaCaptionResp.statusCode === 200) {
+        Store.dispatch(MessageActionEdited(editMediaCaptionResp.data));
+      }
+
+      let fileOptions = {
+        audioType,
+        blobUrl: URL.createObjectURL(file),
+        caption: editedCaption,
+        duration: duration,
+        fileName: fileName,
+        fileSize: file_size,
+        msgId: msgId,
+      };
+
+      if (msgType === "video" || msgType === "audio") {
+        fileOptions.thumbImage = thumb_image;
+      }
+      const userProfile = this.props?.vCardData;
+
+      const dataObj = {
+        chatType,
+        editMessageId: msgId,
+        jid,
+        msgType,
+        userProfile,
+        file,
+        fileOptions,
+        replyTo,
+        fileDetails: file.fileDetails,
+        mentionedUsersIds: editedMentionedIds
+      };
+
+      const conversationHistory = this.props.chatConversationHistory.data;
+      const recentChatData = this.props.recentChatData.data;
+      const conversationChatObj = await getMessageObjEdited(dataObj, conversationHistory);
+      const recentChatObj = getRecentMsgObjEdited(dataObj, recentChatData);
+      const dispatchData = {
+        data: [conversationChatObj],
+        ...(isSingleChat(chatType) ? { userJid: jid } : { groupJid: jid })
+      };
+      Store.dispatch(ChatMessageHistoryDataAction(dispatchData));
+      if (recentChatObj.hasOwnProperty("msgId")) { Store.dispatch(RecentChatUpdateAction(recentChatObj)); }
+      //update in starred
+      this.handleStarredForEditedMessage(jid, conversationChatObj);
+      handleTempArchivedChats(jid, chatType);
+    }
+  }
+
+  sendMediaMessage = async (messageType, files, chatType, editMessageId, messageDetails, editedMentionedIds) => {
     let jid = this.prepareJid();
-    const jids = getIdFromJid(jid);
+    const userId = getIdFromJid(jid);
     const { sendMessgeType } = this.state;
-    sendMessgeType && this.closeReplyAction(jids);
+    sendMessgeType && this.closeReplyAction(userId);
+    const editedCaption = files;
+    const conversationHistory = this.props.chatConversationHistory.data;
+    const mediaFileObject = conversationHistory[userId]?.messages[editMessageId]?.msgBody?.media;
+
+    //send Edited message Only If caption is available
+    if (messageType === "media" && editMessageId && editMessageId !== "" &&
+    editMessageId !== (undefined || null) && mediaFileObject?.caption !== "") {
+      this.sendMediaMessageEdited(jid, editedCaption, messageType, messageDetails, chatType, editMessageId, editedMentionedIds);
+      return true;
+    }
+
     if (messageType === "media") {
       let mediaData = {};
-
       // For Local Render Process - Needs to be Handled with "Asynchronous"
       for (let i = 0; i < files.length; i++) {
-        const file = files[i],
-          msgId = uuidv4();
+        let file = files[i];
+        const msgId = uuidv4();
         const { caption = "",mentionedUsersIds =[], fileDetails: { replyTo, duration = 0, imageUrl = "", audioType = "" } = {} } = file;
+        const regex = /<span\s[^>]*>@([^<]+)<\/span>/g;
+        let captionText = caption.replace(regex, "@[?]");
+        file.caption = captionText;
         let fileOptions = {
           fileName: file.name,
           fileSize: file.size,
-          caption: caption,
+          caption: captionText,
           blobUrl: imageUrl,
           msgId: msgId,
           duration: duration,
@@ -677,14 +856,17 @@ class WebChatConversationHistory extends Component {
     return false;
   };
 
-  parseAndSendMessage = async (message, chatType, messageType) => {
+  parseAndSendMessage = async (message, chatType, messageType, messageDetails) => {
     const jid = this.prepareJid();
     const jids = getIdFromJid(jid);
-    const { content } = message;
-    const { sendMessgeType = "" } = this.state;
-    const replyTo = sendMessgeType ? this.replyToIdPass(jids) : "";
-    content[0].fileDetails.replyTo = replyTo;
-    this.sendMediaMessage(messageType, content, chatType);
+    const { content, editMessageId = "", mentionedUsersIds = [] } = message;
+    let replyTo = "";
+    replyTo = this.handleReplyToScenario(messageDetails, replyTo, messageType, jids);
+    replyTo = this.handleReplyToForEditedReply(jid, replyTo);
+    if (editMessageId === "") {
+      content[0].fileDetails.replyTo = replyTo;
+    } 
+    this.sendMediaMessage(messageType, content, chatType, editMessageId, messageDetails, mentionedUsersIds);
   };
 
   msgReplyPassId = (replyMessage = {}) => {
@@ -700,28 +882,83 @@ class WebChatConversationHistory extends Component {
     return sendMessgeType ? replyMessage.msgId : "";
   };
 
-  handleSendMsg = async (message) => {
+  handleSendMsg = async (message, messageDetails) => {
     let messageType = message.type;
     let chatType = this.props?.activeChatData?.data?.recent?.chatType;
     if (messageType === "media") {
-      this.parseAndSendMessage(message, chatType, messageType);
+      this.parseAndSendMessage(message, chatType, messageType, messageDetails);
       return;
     }
-    const { sendMessgeType = "", replyMessage = {} } = this.state;
-    const replyTo = this.msgReplyPassId(replyMessage);
+    const { sendMessgeType = "" } = this.state;
+    let replyTo = "";
+    replyTo = this.handleReplyToScenario(messageDetails, replyTo);
     const userProfile = this.props?.vCardData;
     const msgId = uuidv4();
     if (message.content !== "") {
       let jid = this.prepareJid();
       const jids = getIdFromJid(jid);
-      await SDK.sendTextMessage({
-        toJid: jid,
-        messageText: handleMessageParseHtml(message.content),
-        msgId: msgId,
-        replyMessageId: replyTo,
-        mentionedUsersIds: message?.mentionedUsersIds
-      });
-      if (chatType === CHAT_TYPE_SINGLE || chatType === CHAT_TYPE_GROUP) {      
+      const isSingleorGroupChat = isSingleOrGroupChat(chatType);
+      let editMsgId = "";
+      editMsgId = (message?.editMessageId && message.editMessageId !== "") ? message.editMessageId : editMsgId;
+
+      if (message?.editMessageId && isSingleorGroupChat) { //Send edited Message block
+        const editMessageResp = await SDK.editTextMessage({
+          messageId: editMsgId,
+          editedTextContent: handleMessageParseHtml(message.content),
+          mentionedUsersIds: message?.mentionedUsersIds,
+        })
+        //Dispatched edited message in seperate store
+        if (editMessageResp && editMessageResp?.data && editMessageResp.statusCode === 200) {
+          Store.dispatch(MessageActionEdited(editMessageResp.data));
+        }
+        const dataObj = {
+          jid,
+          msgType: "text",
+          message: handleMessageParseHtml(message.content),
+          userProfile,
+          chatType,
+          editMessageId: message?.editMessageId || "",
+          replyTo,
+          mentionedUsersIds: message?.mentionedUsersIds || []
+        };
+        const conversationHistory = this.props.chatConversationHistory.data;
+        const recentChatData = this.props.recentChatData.data;
+        const conversationChatObj = await getMessageObjEdited(dataObj, conversationHistory);
+
+        //update in messageInfo
+        const senderId = getSenderIdFromMsgObj(conversationChatObj);
+        const { fromUser = "" } = this.props.vCardData?.data;
+        const isSender = senderId && senderId.indexOf(fromUser) !== -1;
+        this.setState({
+          messageInfo: {
+            ...conversationChatObj,
+            isSender: isSender,
+            forward: false
+          },
+        })
+
+        const recentChatObj = getRecentMsgObjEdited(dataObj, recentChatData);
+        const dispatchData = {
+          data: [conversationChatObj],
+          ...(isSingleChat(chatType) ? { userJid: jid } : { groupJid: jid })
+        };
+        Store.dispatch(ChatMessageHistoryDataAction(dispatchData));
+        if (recentChatObj.hasOwnProperty("msgId")) Store.dispatch(RecentChatUpdateAction(recentChatObj));
+
+        //update in starred
+        this.handleStarredForEditedMessage(jid, conversationChatObj)
+        handleTempArchivedChats(jid, chatType);
+        this.closeReplyAction(jids);
+
+      } else if (isSingleorGroupChat) { //Send normal Message block
+        replyTo = this.handleReplyToForEditedReply(jid, replyTo);
+        await SDK.sendTextMessage({
+          toJid: jid,
+          messageText: handleMessageParseHtml(message.content),
+          msgId: msgId,
+          replyMessageId: replyTo || "",
+          mentionedUsersIds: message?.mentionedUsersIds,
+        });
         const dataObj = {
           jid,
           msgType: "text",
@@ -764,8 +1001,64 @@ class WebChatConversationHistory extends Component {
         });
       }
     }
+  };
+
+  handleReplyToScenario = (messageDetails, replyId = "", messageType = "", jids = null) => {
+    const { sendMessgeType = "", replyMessage = {} } = this.state;
+    if (sendMessgeType === 'Edit' && messageDetails?.msgBody?.replyTo !== "") {
+      replyId = messageDetails?.msgBody?.replyTo;
+    } else if (sendMessgeType !== 'Edit') {
+      if (messageType === "media") {
+        replyId = sendMessgeType ? this.replyToIdPass(jids) : "";
+      } else {
+        replyId = this.msgReplyPassId(replyMessage) || "";
+      }
+    }
+    return replyId;
   }
-  ;
+
+  // Handled common function to return replyTo Id when Edited - Else return existing replyTo Id
+  handleReplyToForEditedReply = (jid, replyTo = "") => {
+    const conversationHistory = this.props.chatConversationHistory.data;
+    let storedata = {}, isMsgFromConversation = false;
+    const chatId = jid.split('@');
+    if (replyTo) {
+      storedata = conversationHistory[chatId[0]]?.messages[replyTo];
+    }
+    const currentReplyToIsEdited = (storedata?.editedStatus === 1) ? 1 : 0;
+    let messageStoreData = this.props.messageEditedData;
+    if (messageStoreData.hasOwnProperty('data') === false) {
+      messageStoreData = conversationHistory[chatId[0]]?.messages;
+      isMsgFromConversation = true;
+    }
+    if (currentReplyToIsEdited === 1 && messageStoreData) {
+      let filteredDataforParticularMsg = [];
+      let matchingObjectFromNormal = {};
+      if (!isMsgFromConversation) {
+        filteredDataforParticularMsg = messageStoreData?.data.filter((item) => {
+          if (item.msgId === replyTo) {
+            return true;
+          }
+        });
+      } else {
+        matchingObjectFromNormal = messageStoreData[replyTo];
+      }
+      const matchedItem = filteredDataforParticularMsg[filteredDataforParticularMsg.length -1];
+      replyTo = !isMsgFromConversation ? matchedItem?.editMessageId : matchingObjectFromNormal?.editMessageId;
+    }
+    return replyTo;
+  }
+
+  //Handled starred when Edited
+  handleStarredForEditedMessage = (jid, conversationChatObj) => {
+    const constructObj = {
+      favouriteStatus: conversationChatObj?.favouriteStatus,
+      fromUserId: getUserIdFromJid(jid),
+      fromUserJid: jid,
+      msgId: conversationChatObj?.msgId
+    }
+    conversationChatObj?.favouriteStatus === 1 && Store.dispatch(UpdateStarredMessages(constructObj));
+  }
 
   handleSendMeetMsg = async (scheduleMeetData) => {
     if (this.canSendMessage() && !this.state.isAdminBlocked) {
@@ -836,6 +1129,7 @@ class WebChatConversationHistory extends Component {
         }
       },
       () => {
+        this.handleOtherMessageActionClick(false);
         this.props.forwardReset();
       }
     );
@@ -860,7 +1154,7 @@ class WebChatConversationHistory extends Component {
   onDragEnter = (event) => {
     if (event.dataTransfer.types) {
       for (const type of event.dataTransfer.types) {
-        if (type === "Files") {
+        if (type === "Files" && this.state.editedDetailsArr[this.state.jid]?.isEditable !== true) {
           const dragId = document.getElementById("msgContent");
           dragId.setAttribute("draggable", true);
           this.setState(
@@ -946,7 +1240,8 @@ class WebChatConversationHistory extends Component {
       nameToDisplay,
       showReportPopup = false,
       selectedMsgUserName = "",
-  
+      messageDeletedData,
+      otherActionClick,
     } = this.state;
 
     const { groupMemberDetails, selectedMessageData, showMessageinfo = false } = this.props;
@@ -1052,6 +1347,7 @@ class WebChatConversationHistory extends Component {
           }
           {forwardOption && (
             <ForwardOptions
+              chatMessages={chatMessages}
               msgActionType={this.state.msgActionType}
               activeJid={jid}
               closeMessageOption={this.closeMessageOption}
@@ -1157,6 +1453,11 @@ class WebChatConversationHistory extends Component {
               groupMemberDetails={groupMemberDetails}
               userReplayDetails={this.state.userReplayDetails}
               avoidRecord={this.props.avoidRecord}
+              messageDeletedData={messageDeletedData}
+              otherActionClick={otherActionClick}
+              handleOtherMessageActionClick={this.handleOtherMessageActionClick}
+              editedDetailsArr={this.state.editedDetailsArr}
+              isEditDisabled={this.props.isEditDisabled}
             />
           )}
           <div className={`${mediaLoder ? "conversation-overlay" : ""}`}>
@@ -1193,8 +1494,11 @@ const mapStateToProps = (state) => {
     blockedContact: state.blockedContact,
     browserTabData: state.browserTabData,
     chatConversationHistory: state.chatConversationHistory,
+    recentChatData: state.recentChatData,
     selectedMessageData: state.selectedMessageData,
-    addMentionedDataReducer: state.addMentionedDataReducer
+    addMentionedDataReducer: state.addMentionedDataReducer,
+    replyMessageData: state.replyMessageData,
+    messageEditedData: state.messageEditedData
   };
 };
 

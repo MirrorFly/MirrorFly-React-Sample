@@ -41,7 +41,7 @@ class ContentEditable extends Component {
           }
         };            
 
-    emitChange = (event, isBack = false, isShow = false) => {
+    emitChange = (event, isBack = false, isShow = false, isClickedTypingField = false) => {
         let html = this.typingContainner.innerHTML;
         let newStr = html.replace(/<br>/g, "");
         let selection = window.getSelection();
@@ -64,7 +64,7 @@ class ContentEditable extends Component {
                 target: {
                     value: html
                 }
-            });
+            },isClickedTypingField);
         }
 
         this.lastHtml = newStr;
@@ -396,7 +396,7 @@ class ContentEditable extends Component {
                     }
                 } else {
                     if (s.toString().length < 1) {
-                        this.emitChange();
+                        this.emitChange(null, false, false, true);
                     }
                 }
             }

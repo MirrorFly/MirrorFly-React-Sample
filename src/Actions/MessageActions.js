@@ -178,6 +178,7 @@ export const MessageAction = (data) => (dispatch, getState) => {
         id: uuidv4(),
         activeUserId: data.publisherId,
         time: timestamp,
+        editedTimeUpdated: data.timestamp,
         messageStatus:
           msgType === MSG_DELIVERED_STATUS_CARBON || msgType === MSG_DELIVERED_STATUS
             ? MSG_DELIVERED_STATUS_ID
@@ -247,6 +248,17 @@ export const MessageAction = (data) => (dispatch, getState) => {
 export const ReplyMessageAction = (data) => {
   return {
     type: REPLY_MESSAGE_DATA,
+    payload: {
+      id: uuidv4(),
+      data
+    }
+  };
+};
+
+
+export const MessageActionEdited = (data) => {
+  return {
+    type: "MESSAGE_EDIT",
     payload: {
       id: uuidv4(),
       data

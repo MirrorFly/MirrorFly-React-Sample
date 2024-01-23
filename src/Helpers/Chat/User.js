@@ -294,10 +294,10 @@ export const handleMentionedUser = (text, mentionedUsersIds, mentionedMe, mentio
                 const mentionedUserId = userId[i];
                 let rosterData = getUserDetailsForMention(mentionedUserId);
                 let displayName = rosterData.displayName;
-                if(chatType === 'groupchat'){
-                    content = content.replace(uid, "<button data-mentioned=\"" + mentionedUserId + "\" class='" + mentionedClass + (mentionedMe === mentionedUserId ? " tagged " : " ") + " mentioned'><b>@</b> <i>" + (displayName !== undefined ? displayName : []) + "</i> </button>");
-                }else{
-                    content = content.replace(uid, "<b>@</b> <i>" + (displayName !== undefined ? displayName : []) + "</i>");
+                if (chatType === 'groupchat') {
+                    content = content.replace(uid, "<button data-mentioned=\"" + mentionedUserId + "\" class='" + mentionedClass + (mentionedMe === mentionedUserId ? " tagged " : " ") + " mentioned'><b>@</b> <i style='text-transform: capitalize'>" + (displayName !== undefined ? displayName : []) + "</i> </button>");
+                } else {
+                    content = content.replace(uid, "<b>@</b> <i style='text-transform: capitalize'>" + (displayName !== undefined ? displayName : []) + "</i>");
                 }
                 
             }
