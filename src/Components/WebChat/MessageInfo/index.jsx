@@ -22,6 +22,7 @@ const MessageInfo = (props) => {
     pageType
   } = props;
   const { msgBody = {}, msgId = "", msgBody: { message_type = "" } = {} } = msg;
+  const updatedMessage = msgBody.message;
 
   const { messageInfoData = {} } = useSelector((state) => state);
   const [getStyle, setStyle] = useState({});
@@ -47,7 +48,7 @@ const MessageInfo = (props) => {
       return;
     }
     setStyle({});
-  }, [msgId]);
+  }, [msgId,updatedMessage]);
 
   useEffect(() => {
     if (totalMembers) {

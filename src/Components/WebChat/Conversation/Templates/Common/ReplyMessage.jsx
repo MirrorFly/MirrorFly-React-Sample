@@ -62,22 +62,27 @@ export default React.memo(({ msgId, viewOriginalMessage, groupMemberDetails, cha
     },[overflowActive,replyMessageDetail]);
    
     
-    const { replyMessageData } = replyMessageDetail || {}
+    const { replyMessageData, vCardData } = replyMessageDetail || {}
     if (!replyMessageData) {
         return null
     }
 
-    const { replyMsgId, fromUserId: messageFrom, replyMsgContent: { message, message_type, media = {}, mentionedUsersIds = [],
+    const { replyMsgId, fromUserId: messageFrom, groupId: messageFromGroup, replyMsgContent: { message, message_type, media = {}, mentionedUsersIds = [],
         location: { latitude, longitude } = {},
         contact: { name } = {} } } = replyMessageData 
+    const { userId = "" } = vCardData?.data;
     const { fileName, duration, caption = "", audioType,thumb_image } = media;
     const getDisplayName = () => {
-        if (isLocalUser(messageFrom)) return 'You';
+        let fromId = messageFrom;
+        if (chatType === 'groupchat') { 
+            if (userId === messageFromGroup) { fromId = messageFromGroup; }
+        }
+        if (isLocalUser(fromId)) return 'You';
         if (isSingleChat(chatType)) {
             const { rosterData } = replyMessageDetail || {}
             return filterProfileFromRoster(rosterData, messageFrom)
         }
-        const { nameToDisplay } = getDisplayNameFromGroup(messageFrom, groupMemberDetails);
+        const { nameToDisplay } = getDisplayNameFromGroup(messageFromGroup, groupMemberDetails);
         return nameToDisplay;
     }
     const fileExtension = getExtension(fileName);
@@ -92,13 +97,25 @@ export default React.memo(({ msgId, viewOriginalMessage, groupMemberDetails, cha
         }}>
             <div className="reply-text-message ">
                 <span className="sender-name">{getDisplayName()}</span>
-                {isTextMessage(message_type) && <span id={`reply-${msgId}`}
-                ref={element => callRefSpan = element }
-                className="sender-sends">
-                <span dangerouslySetInnerHTML={{__html: handleMentionedUser(getReplyCaption(message),mentionedUsersIds,false )}} ></span> </span> }
+                {isTextMessage(message_type) && 
+                    <span id={`reply-${msgId}`}
+                        ref={element => callRefSpan = element }
+                        className="sender-sends"
+                    >
+                        <span dangerouslySetInnerHTML={{__html: handleMentionedUser(getReplyCaption(message), mentionedUsersIds, false )}}></span>
+                    </span>
+                }
                 {overflowActive ? <span className="sender-sends">...</span> : ""}
-                {message_type === 'image' && <span className="sender-sends ReplyCamera"> <span dangerouslySetInnerHTML={{__html: caption === '' ?  "Photo" : handleMentionedUser(getReplyCaption(caption),mentionedUsersIds,false)}}></span></span>}
-                {message_type === 'video' && <span className="sender-sends ReplyVideo"> <span dangerouslySetInnerHTML={{__html: caption === '' ? "Video" :  handleMentionedUser(getReplyCaption(caption),mentionedUsersIds,false)}}></span></span>}
+                {message_type === 'image' && 
+                    <span className="sender-sends ReplyCamera"> 
+                        <span dangerouslySetInnerHTML={{__html: caption === '' ?  "Photo" : handleMentionedUser(getReplyCaption(caption), mentionedUsersIds, false)}}></span>
+                    </span>
+                }
+                {message_type === 'video' && 
+                    <span className="sender-sends ReplyVideo"> 
+                        <span dangerouslySetInnerHTML={{__html: caption === '' ? "Video" :  handleMentionedUser(getReplyCaption(caption), mentionedUsersIds, false)}}></span>
+                    </span>
+                }
                 {message_type === 'audio' && < span className="sender-sends AudioMessage Recorded">{millisToMinutesAndSeconds(duration)}</span>}
                 {message_type === 'file' && <span className="sender-sends filename">{fileName}</span>}
                 {message_type === 'contact' && <span className="sender-sends ReplyContact">{name}</span>}

@@ -47,6 +47,7 @@ import MeetComponent from "./MeetComponent";
 import { popupStatus as popupStatusAction } from "../../../../../Actions/PopUp";
 import { MediaDropDownStatus } from "../../../../../Actions/Media";
 import localforage from "localforage";
+import { EditStatusAction } from "../../../../../Actions/ChatHistory";
 
 const ChatMessageTemplate = (props = {}) => {
   const dispatch = useDispatch();
@@ -54,6 +55,8 @@ const ChatMessageTemplate = (props = {}) => {
   const downloadReduxState = useSelector((state) => state.mediaDownloadData);
   const uploadReduxState = useSelector((state) => state.mediaUploadData);
   const mediaDropDownState = useSelector((state) => state.mediaDropDownData);
+  const editMessageStore = useSelector((state) => state.messageEditedData);
+  const conversationHistory = useSelector((state) => state.chatConversationHistory.data);
 
   const { isTranslationEnabled = false } = useSelector((state) => state.featureStateData);
   let isEnableTranslate = false;
@@ -90,10 +93,10 @@ const ChatMessageTemplate = (props = {}) => {
     timestamp,
     favouriteStatus,
     previousMessageUser,
-    msgBody: { contact = {} } = {}
+    msgBody: { contact = {} } = {},
+    editedStatus = 0,
   } = messageObject;
   const { name = "", phone_number = "" } = contact || {};
-
   const messageText = messageObject?.msgBody?.message;
   let messageFrom = singleChat ? fromUserId : publisherId;
   const { forward = false, forwardMessageId } = addionalnfo;
@@ -105,7 +108,7 @@ const ChatMessageTemplate = (props = {}) => {
     ? {}
     : getDisplayNameFromGroup(messageFrom, groupMemberDetails);
   const style = { color: userColor };
-  const { replyTo, media = {} } = messageContent;
+  const { replyTo = "", media = {} } = messageContent;
   const { file, caption, thumb_image, file_url, is_uploading, webWidth, fileName, file_key } = media || {};
 
   const [isChecked, selectedToForward] = useState(false);
@@ -159,11 +162,18 @@ const ChatMessageTemplate = (props = {}) => {
       meetLink:meetLinkUrl[0],
       endMeetText:ArrayOfLinkSplit[1]
     })
-  },[])
+  },[messageText])
 
   useEffect(() => {
      if (replyTo) {
-      const newObj = getMessageFromHistoryById(jid, replyTo);
+      let newObj = {};
+      newObj = getMessageFromHistoryById(jid, replyTo);
+      const chatId = jid.split('@');
+      const findedItem = conversationHistory[chatId[0]].messages[replyTo];
+      if (_isEmpty(newObj) || (findedItem && findedItem.msgId !== findedItem.editMessageId)) {
+        newObj = editMessageStore.data?.find(obj => obj.editMessageId === replyTo);
+      }
+      
       if (_isEmpty(newObj)) {
         requestReplyMessage(msgId, replyTo, chatType);
       } else {
@@ -191,6 +201,7 @@ const ChatMessageTemplate = (props = {}) => {
 
   const handleDropDown = (event) => {
     event.stopPropagation();
+    console.log("DropDown clicked--",dropDownStatus)
     setDropDown(!dropDownStatus);
     setDropRight(isTextMessage(message_type) && messageText.length <= 13 ? true : false);
   };
@@ -337,6 +348,25 @@ const ChatMessageTemplate = (props = {}) => {
     }
     (is_uploading === 7 || (uploadReduxState?.data[msgId]?.uploadStatus === 3 && is_uploading !== 1 && is_uploading !== 11)) && setUploadStatus(3);
   }, [is_uploading]);
+
+  //Handled timer functionality for message with fifteen minutes duration
+  useEffect(() => {
+    let messageTime = timestamp.toString().length === 16 ? Math.floor(timestamp/1000) : timestamp
+    const newtimestamp = messageTime + 900000;
+    if (newtimestamp > new Date().getTime() && (messageObject?.msgBody?.hasOwnProperty("message") === true && 
+    messageObject?.msgBody?.message !== "") || (messageObject?.msgBody?.media?.hasOwnProperty('caption') === true && 
+    messageObject?.msgBody?.media?.caption?.length > 0)) {
+      Store.dispatch(EditStatusAction(msgId, true));
+      // Set a timer to disable edit
+      const remainingTime = newtimestamp - new Date().getTime();
+      setTimeout(() => {
+        Store.dispatch(EditStatusAction(msgId, false));
+      }, remainingTime);
+    } else {
+      // If the new timestamp has already passed
+      Store.dispatch(EditStatusAction(msgId, false));
+    }
+  }, []);
 
   const audioFileDownloadOnclick = (event = {}) => {
     setUploadStatus(4);
@@ -531,7 +561,14 @@ const ChatMessageTemplate = (props = {}) => {
             />
           )}
 
-          {getMessageTimeElement(messageStatus, createdAt, favouriteStatus, isSender, message_type,fromUserId===fromUser)}
+          {getMessageTimeElement(
+            messageStatus,
+            createdAt, 
+            favouriteStatus, 
+            isSender, 
+            message_type, 
+            editedStatus
+          )}
 
           {!isTextMessage(message_type) && (
             <Fragment>
@@ -597,6 +634,7 @@ const ChatMessageTemplate = (props = {}) => {
                   messageAction={sentMessageToParent}
                   msgType={message_type}
                   favouriteStatus={favouriteStatus}
+                  editedStatus={editedStatus}
                 />
               )}
             </div>

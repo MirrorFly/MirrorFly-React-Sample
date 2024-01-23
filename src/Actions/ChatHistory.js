@@ -13,7 +13,8 @@ import {
   REMOVE_ALL_FAVOURITE_STATUS,
   TRANSLATE_MESSAGE,
   CLEAR_CHAT_HISTORY_ACTION_COMMON,
-  CANCEL_MEDIA_DOWNLOAD
+  CANCEL_MEDIA_DOWNLOAD,
+  CHAT_MESSAGE_EDIT
 } from "./Constants";
 
 export const ChatMessageHistoryDataAction = (data) => {
@@ -25,6 +26,13 @@ export const ChatMessageHistoryDataAction = (data) => {
     }
   };
 };
+
+export const EditStatusAction = (msgId, data = true) => {
+  return {
+      type: CHAT_MESSAGE_EDIT,
+      payload: {msgId, data }
+  }
+}
 
 
 export const ClearChatHistoryAction = (data) => {

@@ -28,13 +28,13 @@ const AudioRecorder = (props = {}) => {
   const [micStatus, setMicStatus] = useState(false);
   const [sendStatus, setSendStatus] = useState(false);
   const audioTimer = useRef(null);
-  const { recordingStatus } = props;
+  const { recordingStatus, isEditable } = props;
 
   useEffect(() => {
-    if (modelType == 'scheduleMeeting' && open) {
-      stopRecored()
+    if ((modelType == 'scheduleMeeting' && open) || (isEditable === true)) {
+      stopRecored();
     }
-  }, [open])
+  }, [open, isEditable])
   
 
   const stopRecored = () => {
@@ -134,8 +134,10 @@ const AudioRecorder = (props = {}) => {
             .then(() => {
               setRecordStatus(false);
               recordingStatus(false);
-              const container = document.getElementById("typingContainer");
-              container && container.setAttribute("contentEditable", false);
+              if (isEditable === false) {
+                const container = document.getElementById("typingContainer");
+                container && container.setAttribute("contentEditable", false);
+              }
               setTimeout(()=>startTimer(audioLimit, document.getElementById("recordDuration")))
             })
             .catch((e) => {
@@ -170,7 +172,7 @@ const AudioRecorder = (props = {}) => {
           </div>
         </div>
       )}
-      {recordStatus && (
+      {recordStatus && !isEditable && (
         <div className="formbtns">
           <a type="" className="recordAudio" onClick={startRecored}>
             <i title="Record" className="recordAudioIcon">

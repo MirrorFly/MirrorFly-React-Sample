@@ -7,7 +7,7 @@ import Modal from "../../../Common/Modal";
 import ForwardPopUp from "../../../PopUp/Forward";
 
 export default function ForwardOptions(props = {}) {
-  const { msgActionType, closeMessageOption, activeJid, deleteMultipleMessages, handleStarredAction } = props;
+  const { msgActionType, closeMessageOption, activeJid, deleteMultipleMessages, handleStarredAction, chatMessages } = props;
   const {
     selectedMessageData: { id = "", totalMessage = 0, data = [] } = {}
   } = useSelector((state) => state);
@@ -87,7 +87,12 @@ export default function ForwardOptions(props = {}) {
       </div>
       {popUpStatus && (
         <Modal containerId="container">
-          <ForwardPopUp activeJid={activeJid} closeMessageOption={closeMessageOption} closePopup={showForwardPopUp} />
+          <ForwardPopUp
+           activeJid={activeJid} 
+           closeMessageOption={closeMessageOption} 
+           closePopup={showForwardPopUp} 
+           chatMessages={chatMessages}
+          />
         </Modal>
       )}
     </Fragment>

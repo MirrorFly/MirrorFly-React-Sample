@@ -1790,6 +1790,13 @@ i{
           right: calc(2.500em) !important;
           em-emoji-picker{
             width: 100%;
+            height: 435px; 
+            @media(min-width:768px){
+              height: 280px;
+            }
+            @media(min-width:1280px){
+              height: 435px;
+            }
             section#root{
               width: 100% !important;
             }
@@ -4739,13 +4746,13 @@ i{
   box-shadow: 0px 1px 0px #0000001A;
   margin-right: 3.5em;
   .sender-name{
-  width: 100%;
+    width: 100%;
     display: block;
     font-size: .75rem;
     font-family: SFUIDisplaySemibold,sans-serif;
     margin-bottom: 0.313em;
     letter-spacing: .2px;
-}
+  }
 .reply-text-message {
 width: calc(100% - 3.875em);
 &.text-message{
@@ -4871,6 +4878,123 @@ width: calc(100% - 3.875em);
     fill: #848484;
   }
 }
+}
+
+// edit in bottom design  start
+.edit-block-bottom {
+  display: flex;
+  padding: 0.25em;
+  font-family: SFUIDisplayRegular,sans-serif;
+  margin-bottom: 0.313em;
+  position: relative;
+  background:$bgc-reply-block-bottom;
+  box-shadow: 0px 1px 0px #0000001A;
+  margin-right: 3.5em;
+  .edit-title{
+    width: 100%;
+    color: #2698F9;
+    display: block;
+    font-size: .75rem;
+    font-family: SFUIDisplaySemibold,sans-serif;
+    margin-bottom: 0.313em;
+    letter-spacing: .2px;
+  }
+  .edit-text-message {
+    width: calc(100% - 3.875em);
+    &.text-message{
+      width: 100%;
+    }
+  }
+  .sender-sends {
+    font-size: $font13;
+    font-family: $regular;
+    width: 100%;
+    display: inline-block;
+    max-height: 3.6em;
+    overflow: hidden;
+    color: #313131;
+  }
+  .edit-container{
+      padding: 1em;
+      width: 100%;
+      @include flexbox();
+      @include justify-content(space-between);
+      @include align-items(center);
+      background: $bgc-reply-container;
+      overflow: hidden;
+      border-radius: 0.313em;
+
+      .sender-sends {
+        span {
+          @include flexbox();
+          vertical-align: middle;
+          height:100%;
+          color: #313131;
+          white-space: pre;
+        }
+      }
+    .edit-message-type{
+      width: 3.875em;
+      height: 4.6em;
+      min-width: 3.875em;
+      margin: -1em;
+      @include flexbox();
+      @include justify-content(center);
+      @include align-items(center);
+      
+      .webchat-conver-image{
+        width: 3.875em;
+        height: 100%;
+        display: inline-block;
+        object-fit: cover;
+        img{
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          object-position: center;
+        }
+        i{
+          width:100%;
+          height:100%;
+          svg{
+            width: 2.875em;
+            height: 2.875em;
+
+            svg {
+              width: 2.875em;
+              height: 2.875em;
+
+              .sender-sends {
+                i {
+                  svg,
+                  rect,
+                  path {
+                    fill: $fill-reply-webchat-conver-image-svg;
+                    height: 1.125em;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  .RemoveEdit {
+    position: absolute;
+    right: -3.2em;
+    top: 50%;
+    transform: translateY(-50%);
+    min-width: 2em;
+    display: inline-block;
+    text-align: center;
+
+    svg {
+      width: 1em;
+      height: 1em;
+      fill: #848484;
+    }
+  }
 }
 
 // reply in bottom design End
@@ -6223,7 +6347,7 @@ footer {
     color: #fff !important;
     bottom: 0.8em !important;
     right: 0.7em !important;
-    z-index: 1;
+    z-index: 0;
   }
   &.location-message{
     .message-location:after{
@@ -7025,6 +7149,9 @@ body > iframe {
 .reply_mention .mentioned{
   margin-right: 3px;
 }
+.edit_mention .mentioned{
+  margin-right: 3px;
+}
 .sender .mentioned{
   color: #174EA5;
 }
@@ -7158,6 +7285,14 @@ body > iframe {
 
 .reply-message-type.meet {
   background: transparent !important;
+}
+
+.message-text.messageedited {
+  span{
+    &::after{
+      padding-right: 6.8em !important;
+    }
+  }
 }
 
 @import 'media-in-details.scss';  

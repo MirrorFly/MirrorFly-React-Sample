@@ -42,7 +42,7 @@ const filterProfileFromRoster = (rosterData, messageFrom) => {
 }
 
 const ReplyMessage = React.memo((props) => {
-    const { rosterData, closeReplyAction, replyMessage, groupMemberDetails, jid="", showMention } = props
+    const { rosterData, closeReplyAction, replyMessage, groupMemberDetails, jid="", showMention } = props;
     const { fromUserId, msgBody: messageContent = {}, message: groupchatMessage = {}, publisherId, chatType, msgBody: mentionedUsersIds = [] } = replyMessage;
     let callRefSpan = React.createRef();
     let messageFrom = isSingleChat(chatType) ? fromUserId : publisherId;
@@ -80,7 +80,9 @@ const ReplyMessage = React.memo((props) => {
         return senderName;
     }
 
-    const getReplyCaption = (mediaCaption) => mediaCaption.length > maximumCaptionLimit ? mediaCaption.substring(0, maximumCaptionLimit).concat('...') : mediaCaption;
+    const getReplyCaption = (mediaCaption) => {
+      return mediaCaption?.length > maximumCaptionLimit ? mediaCaption.substring(0, maximumCaptionLimit).concat('...') : mediaCaption;
+    }
     
     const isEllipsisActive = (e) => {
         return e.offsetHeight < e.scrollHeight || e.offsetWidth < e.scrollWidth;
@@ -97,14 +99,44 @@ const ReplyMessage = React.memo((props) => {
             <div className="reply-container">
                 <div className={`reply-text-message ${isTextMessage(message_type) ? "text-message" : "" }`}>
                     <span className="sender-name" >{getDisplayName() ? getDisplayName() : "You" }</span>
-                    {isTextMessage(message_type) && <span  ref={element => callRefSpan = element }  className="sender-sends"><span className="reply_mention" dangerouslySetInnerHTML={{__html: handleMentionedUser(getReplyCaption(message), mentionedUsersIds.mentionedUsersIds, false,"blue") }} ></span></span> }{overflowActive ? "..." : ""}
-                    {message_type === 'image' && <span className="sender-sends"><span><i className="chat-camera send-attac-icon"><Camera /></i><span className="reply_mention" dangerouslySetInnerHTML={{ __html: handleMentionedUser(caption === '' ?  "Photo" : getReplyCaption(caption), mentionedUsersIds.mentionedUsersIds, false,"blue") }}></span></span></span>}
+                    {isTextMessage(message_type) && 
+                        <span
+                         ref={element => callRefSpan = element }
+                         className="sender-sends">
+                            <span
+                             className="reply_mention"
+                             dangerouslySetInnerHTML={
+                                {__html: handleMentionedUser(getReplyCaption(message), mentionedUsersIds.mentionedUsersIds, false,"blue")}
+                                }
+                            ></span>
+                        </span>
+                    }
+                    {overflowActive ? "..." : ""}
+                    {message_type === 'image' && 
+                        <span
+                         className="sender-sends">
+                            <span>
+                                <i className="chat-camera send-attac-icon"><Camera /></i>
+                                <span
+                                 className="reply_mention"
+                                 dangerouslySetInnerHTML={
+                                    { __html: handleMentionedUser(caption === '' ?  "Photo" : getReplyCaption(caption), mentionedUsersIds.mentionedUsersIds, false,"blue")}
+                                    }
+                                ></span>
+                            </span>
+                        </span>
+                    }
                     {message_type === 'video' && <span className="sender-sends">
                             <span>
                                 <i className="chat-video send-attac-icon">
                                     <VideoIcon2 />
                                 </i>
-                                <span className="reply_mention" dangerouslySetInnerHTML={{ __html: caption === '' ? `${millisToMinutesAndSeconds(duration)} Video` : handleMentionedUser(getReplyCaption(caption), mentionedUsersIds.mentionedUsersIds, false,"blue") }}></span>
+                                <span
+                                 className="reply_mention" 
+                                 dangerouslySetInnerHTML={
+                                    { __html: caption === '' ? `${millisToMinutesAndSeconds(duration)} Video` : handleMentionedUser(getReplyCaption(caption), mentionedUsersIds.mentionedUsersIds, false,"blue")}
+                                    }
+                                ></span>
                             </span> </span>
                         }
                     {message_type === 'audio' && < span className="sender-sends">
@@ -120,22 +152,22 @@ const ReplyMessage = React.memo((props) => {
 
                 </div>
                 {!isTextMessage(message_type) &&
-                <div className="reply-message-type">
-                    {message_type === 'image' && 
-                    <img src={getThumbBase64URL(thumb_image)} className={`webchat-conver-image ${caption === "" ? "no-caption" : ""}`} alt="reply message" />
-                    }
-                    {message_type === 'audio' && ""}
-                    {message_type === 'video' && <img src={getThumbBase64URL(thumb_image)} className={`webchat-conver-image ${caption === "" ? "no-caption" : ""}`} alt="reply message" />}
-                    {message_type === 'file' && ""
-                    // Need to implement for ppt and pdf
-                    // <span className="webchat-conver-image"><i className="doc-icon"><img alt="file" src={placeholder} /></i></span>
-                    }
-                    {message_type === 'contact' &&
-                    <span className="webchat-conver-image"></span>
-                    }
-                    {message_type === 'location' && <span className="webchat-conver-image"><GoogleMapMarker latitude={latitude} longitude={longitude} /></span>}
-                    {message_type === 'meet' &&  <img className="mirrorfly_meeting_logo" src={ImgFavicon} alt="Mirrorfly Video Call" />}
-                </div>
+                    <div className="reply-message-type">
+                        {message_type === 'image' && 
+                        <img src={getThumbBase64URL(thumb_image)} className={`webchat-conver-image ${caption === "" ? "no-caption" : ""}`} alt="reply message" />
+                        }
+                        {message_type === 'audio' && ""}
+                        {message_type === 'video' && <img src={getThumbBase64URL(thumb_image)} className={`webchat-conver-image ${caption === "" ? "no-caption" : ""}`} alt="reply message" />}
+                        {message_type === 'file' && ""
+                        // Need to implement for ppt and pdf
+                        // <span className="webchat-conver-image"><i className="doc-icon"><img alt="file" src={placeholder} /></i></span>
+                        }
+                        {message_type === 'contact' &&
+                        <span className="webchat-conver-image"></span>
+                        }
+                        {message_type === 'location' && <span className="webchat-conver-image"><GoogleMapMarker latitude={latitude} longitude={longitude} /></span>}
+                        {message_type === 'meet' &&  <img className="mirrorfly_meeting_logo" src={ImgFavicon} alt="Mirrorfly Video Call" />}
+                    </div>
                 }
             </div>
             <div className="RemoveReplay">

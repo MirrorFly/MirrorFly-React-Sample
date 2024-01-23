@@ -506,9 +506,11 @@ export const placeCaretAtEnd = (el) => {
   }
 };
 
-export const captionLink = (text, mentionedUserId, userId,chatType) => {
+export const captionLink = (text, mentionedUserId, userId, chatType) => {
   if (!text) return "";
-  return htmlToReactParser.parse(handleMentionedUser(getFormattedText(text),mentionedUserId, userId, null, chatType ));
+  const regex = /<span\s[^>]*>@([^<]+)<\/span>/g;
+  text = text.replace(regex, "@[?]");
+  return htmlToReactParser.parse(handleMentionedUser(getFormattedText(text), mentionedUserId, userId, null, chatType));
 };
 
 /**
@@ -746,6 +748,92 @@ export const stripTags = (dirtyString) => {
   return container.innerHTML;
 };
 
+//Handled edited message in conversation messages
+export const getMessageObjEdited = async (dataObj, storeData) => {
+  const { jid, msgType, userProfile, chatType, message = "", file, fileOptions = {}, replyTo, mentionedUsersIds, meet, editMessageId} = dataObj;
+  const senderId = userProfile.data.fromUser;
+  const msgBody = {
+    message_type: msgType,
+    nickName: userProfile.data.nickName,
+    ...(replyTo && { replyTo }),
+    mentionedUsersIds: mentionedUsersIds,
+  };
+  
+  const chatId = jid.split('@');
+  const timestamp = storeData[chatId[0]]?.messages[editMessageId]?.timestamp;
+  const deleteStatus = storeData[chatId[0]]?.messages[editMessageId]?.deleteStatus;
+  const favouriteBy = storeData[chatId[0]]?.messages[editMessageId]?.favouriteBy;
+  const favouriteStatus = storeData[chatId[0]]?.messages[editMessageId]?.favouriteStatus;
+  const thumbImage = storeData[chatId[0]]?.messages[editMessageId]?.msgBody?.media?.thumb_image;
+  const fileUrl = storeData[chatId[0]]?.messages[editMessageId]?.msgBody?.media?.file_url;
+
+  if (msgType === "text") {
+    msgBody.message = stripTags(message);
+  } else if (msgType === "meet") {
+    msgBody.message = stripTags(message);
+    msgBody.meet = meet;
+  } else {
+    let webWidth = 0,
+      webHeight = 0,
+      androidWidth = 0,
+      androidHeight = 0,
+      originalWidth = 0,
+      originalHeight = 0;
+    const media = storeData[chatId[0]]?.messages[editMessageId]?.msgBody?.media || {};
+    const is_downloaded = media?.is_downloaded;
+    const is_uploading = media?.is_uploading;
+    const local_path = media?.local_path;
+
+    if (msgType === "image") {
+      ({ webWidth, webHeight, androidWidth, androidHeight } = media);
+    } else if (msgType === "video") {
+      ({ webWidth, webHeight, androidWidth, androidHeight, originalWidth, originalHeight } = media);
+    }
+    msgBody.message = "";
+    msgBody.media = {
+      file,
+      androidWidth: androidWidth,
+      androidHeight: androidHeight,
+      audioType: fileOptions?.audioType,
+      caption: fileOptions?.caption || "",
+      duration: fileOptions?.duration || 0,
+      fileName: fileOptions?.fileName || "",
+      file_size: fileOptions?.fileSize || 0,
+      file_url: fileUrl || "",
+      is_downloaded: is_downloaded,
+      is_uploading: is_uploading,
+      local_path: local_path || "",
+      thumb_image: thumbImage || "",
+      webWidth: webWidth,
+      webHeight: webHeight,
+      originalWidth,
+      originalHeight,
+    };
+  }
+
+  return {
+    chatType: chatType,
+    createdAt: changeTimeFormat(timestamp),
+    deleteStatus: deleteStatus,
+    favouriteBy: favouriteBy,
+    favouriteStatus: favouriteStatus,
+    fromUserId: senderId,
+    fromUserJid: formatUserIdToJid(senderId, chatType),
+    msgBody: msgBody,
+    msgId: editMessageId,
+    editedStatus: 1,
+    msgStatus: 3,
+    timestamp: timestamp,
+    msgType: MSG_PROCESSING_STATUS,
+    publisherId: senderId,
+    publisherJid: formatUserIdToJid(senderId),
+    ...(isGroupChat(chatType) && {
+      fromUserId: getUserIdFromJid(jid),
+      fromUserJid: jid
+    })
+  };
+};
+
 export const getMessageObjSender = async (dataObj, idx) => {
   const { jid, msgType, userProfile, msgId, chatType, message = "", file, fileOptions = {}, replyTo, fileDetails, mentionedUsersIds, meet} = dataObj;
   const timestamp = Date.now() * 1000;
@@ -805,6 +893,7 @@ export const getMessageObjSender = async (dataObj, idx) => {
     chatType: chatType,
     createdAt: changeTimeFormat(timestamp),
     deleteStatus: 0,
+    editedStatus: 0,
     favouriteBy: "0",
     favouriteStatus: 0,
     fromUserId: senderId,
@@ -823,6 +912,47 @@ export const getMessageObjSender = async (dataObj, idx) => {
   };
 };
 
+//Handled edited messges in received conversation messages
+export const getMessageObjReceiverEdited = (messgeObject, newChatTo, conversationStore) => {
+  const { msgType, msgStatus, msgBody, chatType, msgId, publisherId, fromUserId, publisherJid, profileUpdatedStatus, timestamp, editedStatus } =
+    messgeObject;
+  
+  const conversationHistory = conversationStore;
+  const chatId = msgType === "carbonSentMessage" ? newChatTo : fromUserId;
+  const createdAt = conversationHistory[chatId]?.messages[msgId]?.createdAt;
+  const timestampOriginal = conversationHistory[chatId]?.messages[msgId]?.timestamp;
+  const deleteStatus = conversationHistory[chatId]?.messages[msgId]?.deleteStatus;
+  const favouriteBy = conversationHistory[chatId]?.messages[msgId]?.favouriteBy;
+  const favouriteStatus = conversationHistory[chatId]?.messages[msgId]?.favouriteStatus;
+
+
+  return {
+    chatType: chatType,
+    createdAt: createdAt,
+    deleteStatus: deleteStatus || 0,
+    editedStatus: editedStatus,
+    favouriteBy: favouriteBy || "0",
+    favouriteStatus: favouriteStatus || 0,
+    fromUserId: fromUserId,
+    fromUserJid: formatUserIdToJid(fromUserId, chatType),
+    msgBody: msgBody,
+    msgId: msgId,
+    msgStatus: msgType === MSG_SENT_STATUS_CARBON ? msgStatus : 1,
+    timestamp: timestampOriginal || timestamp,
+    publisherId,
+    publisherJid,
+    ...(msgType === GROUP_CHAT_PROFILE_UPDATED_NOTIFY && {
+      profileUpdatedStatus,
+      msgType,
+      userId: messgeObject.userId,
+      userJid: messgeObject.userJid,
+      // Should have the unique msgId for all the messages. But for 'profileUpdate' not receiving the msgId
+      // that's why here we give the msgId manually
+      msgId: messgeObject.msgId || (messgeObject.timestamp && messgeObject.timestamp.toString()) || uuidv4()
+    })
+  };
+};
+
 export const getMessageObjReceiver = (messgeObject, newChatTo) => {
   const { msgType, msgBody, chatType, msgId, publisherId, publisherJid, profileUpdatedStatus, msgStatus } =
     messgeObject;
@@ -831,13 +961,14 @@ export const getMessageObjReceiver = (messgeObject, newChatTo) => {
     chatType: chatType,
     createdAt: changeTimeFormat(timestamp),
     deleteStatus: 0,
+    editedStatus: 0,
     favouriteBy: "0",
     favouriteStatus: 0,
     fromUserId: newChatTo,
     fromUserJid: formatUserIdToJid(newChatTo, chatType),
     msgBody: msgBody,
     msgId: msgId,
-    msgStatus: msgType === MSG_SENT_STATUS_CARBON ? msgStatus : 1,
+    msgStatus: msgStatus,
     timestamp: timestamp,
     publisherId,
     publisherJid,
@@ -851,6 +982,76 @@ export const getMessageObjReceiver = (messgeObject, newChatTo) => {
       msgId: messgeObject.msgId || (messgeObject.timestamp && messgeObject.timestamp.toString()) || uuidv4()
     })
   };
+};
+
+//Handled Edited message object for RecentChat
+export const getRecentMsgObjEdited = (dataObj, storeData) => {
+  const { jid, msgType, userProfile, chatType, message = "", fileOptions = {}, mentionedUsersIds, meet, editMessageId = "" } = dataObj;
+  const fromUserId = getUserIdFromJid(jid);
+  const matchingObject = storeData.find(obj => obj.fromUserId === fromUserId);
+  const mappedResult = storeData.some((messageObject) => editMessageId === messageObject.msgId);
+  if (!mappedResult) { 
+    return {};
+  } else {
+    const senderId = userProfile.data.fromUser;
+    const msgBody = {
+      message_type: msgType,
+      nickName: userProfile.data.nickName,
+      mentionedUsersIds: mentionedUsersIds,
+    };
+
+    const createdAt = matchingObject.createdAt;
+    const timestamp = matchingObject.timestamp;
+    const deleteStatus = matchingObject.deleteStatus;
+    const unreadCount = matchingObject.unreadCount;
+    const thumbImage = matchingObject.thumb_image;
+    const fileUrl = matchingObject.file_url;
+
+    if (msgType === "text") {
+      msgBody.message = stripTags(message);
+    } else if (msgType === "meet") {
+      msgBody.message = stripTags(message);
+      msgBody.meet = meet;
+    } else {
+      msgBody.media = {
+        audioType: fileOptions.audioType,
+        caption: fileOptions.caption || "",
+        duration: fileOptions.duration || 0,
+        fileName: fileOptions.fileName || "",
+        file_size: fileOptions.fileSize || 0,
+        file_url: fileUrl || "",
+        is_downloaded: 0,
+        is_uploading: 1,
+        local_path: "",
+        thumb_image: thumbImage || "",
+      };
+    }
+    const getMute = getFromLocalStorageAndDecrypt("tempMuteUser");
+    let parserLocalStorage = getMute ? JSON.parse(getMute) : {};
+    const isMuted = parserLocalStorage[fromUserId] && parserLocalStorage[fromUserId].isMuted ? 1 : 0;
+    if (isMuted) {
+      setTimeout(( ) =>  SDK.updateMuteNotification(jid, true), 1000);
+    }
+
+    return {
+      chatType: chatType,
+      createdAt: createdAt,
+      editedStatus: 1,
+      deleteStatus: deleteStatus,
+      fromUserId: fromUserId,
+      msgBody: msgBody,
+      msgId: editMessageId,
+      msgStatus: 3,
+      muteStatus: isMuted,
+      msgType: msgType,
+      notificationTo: "",
+      publisherId: senderId,
+      timestamp: timestamp,
+      toUserId: fromUserId,
+      unreadCount: unreadCount,
+      filterBy: fromUserId
+    };
+  }
 };
 
 export const getRecentChatMsgObj = (dataObj) => {
@@ -900,6 +1101,7 @@ export const getRecentChatMsgObj = (dataObj) => {
     fromUserId: fromUserId,
     msgBody: msgBody,
     msgId: msgId,
+    editedStatus: 0,
     msgStatus: 3,
     muteStatus: isMuted,
     msgType: msgType,
@@ -1069,6 +1271,7 @@ export const getMessageObjForward = (originalMsg, toJid, newMsgId) => {
     publisherId: senderId,
     publisherJid: formatUserIdToJid(senderId),
     deleteStatus: 0,
+    editedStatus: 0,
     favouriteBy: "0",
     favouriteStatus: 0,
     msgBody: {
@@ -1099,6 +1302,7 @@ export const getRecentChatMsgObjForward = (originalMsg, toJid, newMsgId) => {
     chatType: isSingleChatJID(toJid) ? CHAT_TYPE_SINGLE: CHAT_TYPE_GROUP,
     publisherId: senderId,
     deleteStatus: 0,
+    editedStatus: 0,
     notificationTo: "",
     toUserId: getUserIdFromJid(toJid),
     unreadCount: 0,
@@ -1315,7 +1519,7 @@ export const getCallFullLink = (callLink) => `${getSiteDomain()}/${callLink}`;
 
 export const isCallLink = (link) => {
   if (!validURL(link) && process.env.NODE_ENV !== "development") return false;
-  if (!link.includes(getSiteDomain())) return false;
+  if (!link?.includes(getSiteDomain())) return false;
   const splittedLink = link.split(`${getSiteDomain()}`);
   const callLinkRegex = /\/([0-9a-z]{3})-([0-9a-z]{4})-([0-9a-z]{3})$/gm;
   return splittedLink.length > 1 && callLinkRegex.test(splittedLink[1]);

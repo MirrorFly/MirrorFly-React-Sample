@@ -119,6 +119,7 @@ class RecentChatItem extends Component {
 
   formatMessage = (msgBody, msgType) => {
     let message = msgBody.message;
+    const { item: { recent: { chatType } } = {} } = this.props;
     if (["image", "video", "audio", "file", "contact", "location", "meet"].indexOf(msgType) > -1) {
       // Media type icon mapping
       const icons = {
@@ -180,16 +181,18 @@ class RecentChatItem extends Component {
         }
         if (msgBody?.media?.caption) {
           message = msgBody.media.caption;
+          const regex = /<span\s[^>]*>@([^<]+)<\/span>/g;
+          message = message.replace(regex, "@[?]");
         }
       }
-      message = htmlToReactParser.parse(handleMentionedUser(getFormattedRecentChatText(message), msgBody.mentionedUsersIds || [], false));
+      message = htmlToReactParser.parse(handleMentionedUser(getFormattedRecentChatText(message), msgBody.mentionedUsersIds || [], false, "", chatType));
       return (
         <>
           {message && icons[msgType] || ""} {message}
         </>
       );
     }
-    return htmlToReactParser.parse(handleMentionedUser(getFormattedRecentChatText(message), msgBody.mentionedUsersIds ? msgBody.mentionedUsersIds : [], false));
+    return htmlToReactParser.parse(handleMentionedUser(getFormattedRecentChatText(message), msgBody.mentionedUsersIds ? msgBody.mentionedUsersIds : [], false, "", chatType));
   };
 
   getDeletedText = (publisherId) =>
@@ -348,7 +351,7 @@ class RecentChatItem extends Component {
   componentDidUpdate(prevProps) {
     const {
       item: {
-        recent: { fromUserId, publisherId, chatType, muteStatus, archiveStatus = 0 },
+        recent: { fromUserId, publisherId, chatType, muteStatus, archiveStatus = 0, editedStatus = 0 },
         roster: { image } = {}
       } = {},
       messageId,
@@ -389,9 +392,9 @@ class RecentChatItem extends Component {
             if (NotificationTo !== messageFromUser && msgBody === "2") {
               return;
             }
-            Notifications && muteStatus === 0 && archiveStatus !== 1 && this.createPushNotification(recentChat);
+            Notifications && muteStatus === 0 && archiveStatus !== 1 && editedStatus !== 1 && this.createPushNotification(recentChat);
           } else {
-            Notifications && muteStatus === 0 && archiveStatus !== 1 && this.createPushNotification(recentChat);
+            Notifications && muteStatus === 0 && archiveStatus !== 1 && editedStatus !== 1 && this.createPushNotification(recentChat);
           }
         }
       }

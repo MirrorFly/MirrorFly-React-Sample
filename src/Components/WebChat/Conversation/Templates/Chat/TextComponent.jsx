@@ -21,7 +21,7 @@ const htmlToReactParser = new HtmlToReactParser();
 
 const TextComponent = (props = {}) => {
   const { messageObject = {}, isSender = false, pageType, vCardData = {}} = props;
-  const { msgBody = {} } = messageObject;
+  const { msgBody = {}, editedStatus = 0 } = messageObject;
   const { data = {} } = vCardData;
   const messageLink = convertTextToURL(msgBody.message);
   const { data: conferenceData = {} } = useSelector((state) => state.showConfrenceData || {});
@@ -31,7 +31,8 @@ const TextComponent = (props = {}) => {
     meetLink:null,
     endMeetText:null,
     prevtextMentionuser:null,
-    endtextMentionuser:null
+    endtextMentionuser:null,
+    editedMeetLink: null
   })
   const isTranslated = () =>
     !isSender &&
@@ -77,27 +78,40 @@ const TextComponent = (props = {}) => {
       const urlRegex = /https?:\/\/\S+/g;
       const ArrayOfLinkSplit = msgBody.message && msgBody.message?.split(urlRegex) || [];
       const meetLinkUrl =  msgBody.message && msgBody.message?.match(urlRegex) || [];
-      if(meetLinkUrl[0] && isCallLink(meetLinkUrl[0])){
-        const prevMeetTextMentionsLgn = ArrayOfLinkSplit[0]?.match(/@\[\?]/g)?.length;
-        const prevMeetTextMentionsFLgn = prevMeetTextMentionsLgn ? prevMeetTextMentionsLgn : 0;
-        const endMeetTextMentionsLgn = ArrayOfLinkSplit[1]?.match(/@\[\?]/g)?.length;
-        const prevMeetTextMentionsLst = msgBody.mentionedUsersIds && msgBody.mentionedUsersIds.slice(0 , prevMeetTextMentionsFLgn)
-        const endMeetTextMentionsLst = msgBody.mentionedUsersIds && msgBody.mentionedUsersIds.slice(prevMeetTextMentionsFLgn , (prevMeetTextMentionsFLgn + endMeetTextMentionsLgn))
+    
+      const prevMeetTextMentionsLgn = ArrayOfLinkSplit[0]?.match(/@\[\?]/g)?.length;
+      const prevMeetTextMentionsFLgn = prevMeetTextMentionsLgn ? prevMeetTextMentionsLgn : 0;
+      const endMeetTextMentionsLgn = ArrayOfLinkSplit[1]?.match(/@\[\?]/g)?.length;
+      const prevMeetTextMentionsLst = msgBody.mentionedUsersIds && msgBody.mentionedUsersIds.slice(0 , prevMeetTextMentionsFLgn)
+      const endMeetTextMentionsLst = msgBody.mentionedUsersIds && msgBody.mentionedUsersIds.slice(prevMeetTextMentionsFLgn , (prevMeetTextMentionsFLgn + endMeetTextMentionsLgn))
+      if ((meetLinkUrl[0] && isCallLink(meetLinkUrl[0])) || (editedStatus === 1 && meetLinkUrl[0])) {     
         setCallLinkMessageBody({
           prevMeetText:ArrayOfLinkSplit[0],
-          meetLink:meetLinkUrl[0],
+          meetLink:(editedStatus === 1 && meetLinkUrl.length > 1) ? msgBody.message : meetLinkUrl[0],
           endMeetText:ArrayOfLinkSplit[1],
           prevtextMentionuser:prevMeetTextMentionsLst,
           endtextMentionuser:endMeetTextMentionsLst,
-
+          editedMeetLink:meetLinkUrl[0]
+        })
+      } 
+      else {
+        setCallLinkMessageBody({
+          prevtextMentionuser: prevMeetTextMentionsLst,
+          endtextMentionuser: endMeetTextMentionsLst,
+          prevMeetText: ArrayOfLinkSplit[0],
+          meetLink:(editedStatus === 1 && meetLinkUrl.length > 1) ? msgBody.message : meetLinkUrl[0],
+          endMeetText: ArrayOfLinkSplit[1],
+          editedMeetLink: meetLinkUrl[0]
         })
       }
-  },[])
+  },[messageLink])
 
+  const isEditedLink = editedStatus === 1 && callLinkMessageBody.editedMeetLink?.length > 1;
+  const isValidMeetLink = isEditedLink ? isCallLink(callLinkMessageBody?.editedMeetLink) : isCallLink(callLinkMessageBody.meetLink);
   return (
     <div className='meetinglink'>
     <Fragment> 
-      {callLinkMessageBody.meetLink != null && isCallLink(callLinkMessageBody.meetLink) ? (
+      {callLinkMessageBody.meetLink != null && isValidMeetLink ? (
         <div className="message_meeting_link">
           <button type="button" className="meetingL_link_share" onClick={() => subscribeToCall(callLinkMessageBody.meetLink)}>
             <div className="meeting_link_detail">
@@ -123,12 +137,14 @@ const TextComponent = (props = {}) => {
             </div>
           </button>
         </div>
-      ) : (
-        <div className="message-text">
+      ) : 
+      (
+        <div className={`message-text ${editedStatus === 1 ? 'messageedited' : ''}`}>
           <span>{renderMessageBody()}</span>
           {!!isTranslated() && <Translate tMessage={msgBody?.translatedMessage} />}
         </div>
-      )}
+      )
+      }
     </Fragment>
     </div>
   );

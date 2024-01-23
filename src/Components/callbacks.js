@@ -1055,8 +1055,8 @@ export const callbacks = {
 
         if (res.msgType === MSG_CLEAR_CHAT || res.msgType === MSG_CLEAR_CHAT_CARBON) {
             const { chatConversationHistory: {data= {} } = {} } = Store.getState();
-            const chatMessages = data[res.fromUserId]?.messages;
-            if(chatMessages[res.lastMsgId] === undefined || chatMessages[res.lastMsgId] === null || "") {
+            const chatMessages = data[res.fromUserId]?.messages || {};
+            if (chatMessages && (chatMessages[res.lastMsgId] === undefined || chatMessages[res.lastMsgId] === (null || ""))) {
                 Store.dispatch(ClearChatHistoryAction(res));
                 Store.dispatch(ClearChatHistoryActionCommon(res));
                 Store.dispatch(clearLastMessageinRecentChat(res.fromUserId));
@@ -1064,10 +1064,10 @@ export const callbacks = {
                 return;
             }
             Store.dispatch(ClearChatHistoryActionCommon(res));                    
-            if(Object.keys(chatMessages).length === 0) {
+            if (Object.keys(chatMessages).length === 0) {
                 Store.dispatch(clearLastMessageinRecentChat(res.fromUserId));
             }
-            if(res.favourite === "0"){
+            if (res.favourite === "0"){
                 Store.dispatch(RemoveStaredMessagesClearChat(res)); 
             }                      
         }
@@ -1090,11 +1090,22 @@ export const callbacks = {
             return;
         }
 
-        if(res.msgType === DELETE_CALL_LOG) {
+        if (res.msgType === DELETE_CALL_LOG) {
             Store.dispatch(deleteAllCallLog(res));
-        }else{
+        } else {
             Store.dispatch(MessageAction(res));
         }
+    },
+    editMessageListener: async function (res) {
+        // Handled Edited message callbacks here
+        const { msgType } = res;
+        if (
+            msgType === "carbonSentMessage" ||
+            msgType === "receiveMessage" ||
+            msgType === "carbonReceiveMessage"
+          ) {
+            Store.dispatch(MessageAction(res));
+          }
     },
     groupProfileListener: async function (res) {
         if (res && res.groupJid) {

@@ -19,7 +19,8 @@ class ConversationSection extends Component {
         this.state = {
             groupMemberDetails: [],
             displayNames: '',
-            activeChatId: '' // Selected Chat - UserId or GroupId 
+            activeChatId: '', // Selected Chat - UserId or GroupId 
+            isEditDisabled: false,
         }
     }
 
@@ -144,6 +145,11 @@ class ConversationSection extends Component {
         this.props.handlePopupState(status);
     };
 
+    //Disable the Edit when other action Performs
+    handleEditDisabled = (disableEdit) => {
+        this.setState({isEditDisabled: disableEdit})
+    };
+
     render() {
         const { activeChatData, vCardData, ConnectionStateData: { id, data } = {}, modalPopUpReducer = {} } = this.props
         const { activeChatData: { data: { chatType } = {} } } = this.props
@@ -200,6 +206,7 @@ class ConversationSection extends Component {
                                 groupMemberDetails={groupMemberDetails}
                                 handlePopUpClassActive={this.handlePopUpClassActive}
                                 handleConversationSectionDisplay={this.props.handleConversationSectionDisplay}
+                                handleEditDisabled={this.handleEditDisabled}
                             />
                     }
                     <WebChatConversation
@@ -212,6 +219,7 @@ class ConversationSection extends Component {
                         avoidRecord={this.props.showonGoingcallDuration}
                         handleShowCallScreen={this.props.handleShowCallScreen}
                         scheduleMeetData = {this.props.scheduleMeetData}
+                        isEditDisabled={this.state.isEditDisabled}
                     />
                 </div>
             </Fragment>

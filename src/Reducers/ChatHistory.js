@@ -14,7 +14,8 @@ import {
   TRANSLATE_MESSAGE,
   CLEAR_ALL_CHAT,
   CLEAR_CHAT_HISTORY_ACTION_COMMON,
-  CANCEL_MEDIA_DOWNLOAD
+  CANCEL_MEDIA_DOWNLOAD,
+  CHAT_MESSAGE_EDIT
 } from "../Actions/Constants";
 import {
   clearChatHistoryOffline,
@@ -44,8 +45,6 @@ export function ChatConversationHistoryReducer(state = initialState, action = {}
           data: getChatHistoryData(data, state.data)
         }
       };
-
-    
 
     case CLEAR_CHAT_HISTORY_ACTION_COMMON:
       let msg = clearChatHistoryOffline(data, state.data);
@@ -179,4 +178,14 @@ export function ChatConversationHistoryReducer(state = initialState, action = {}
     default:
       return state;
   }
+}
+
+export function EditStatusReducer(state = {}, action = {}){
+  if (action.type === CHAT_MESSAGE_EDIT) {
+      return {
+        ...state,
+        [action.payload.msgId]: action.payload.data
+      }
+  }
+  return state;
 }

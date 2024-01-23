@@ -252,16 +252,43 @@ class ForwardPopUp extends Component {
     }
     Store.dispatch(popupStatus(false));
     const {
-      selectedMessageData: { data }
+      selectedMessageData: { data }, chatMessages,
     } = this.props;
     const { contactsToForward } = this.state;
+    const messageEditedData = this.props.messageEditedData.data;
+    let editedmsgIds = [];
     let msgIds = data.sort((a, b) => (b.timestamp > a.timestamp ? -1 : 1)).map((el) => el.msgId);
+    const indexLength = msgIds.length;
+      let isForwardNormal = true;
+      for (let i = 0; i < indexLength; i++) {
+        const filtedItem = chatMessages?.find((ele) => ele.msgId === msgIds[i]);
+        let filteredItemFromEditedStore = filtedItem;
+
+        if(filteredItemFromEditedStore?.editMessageId === undefined && filteredItemFromEditedStore?.editedStatus === 1) {
+          filteredItemFromEditedStore = messageEditedData?.filter((item) => {
+            if (item.msgId === filtedItem.msgId) {
+              return true;
+            }
+          });
+          const matchedItem = filteredItemFromEditedStore[filteredItemFromEditedStore.length -1];
+          filteredItemFromEditedStore = matchedItem;
+        }
+        
+        if(filtedItem && filtedItem.editedStatus === 1 && filtedItem.msgId !== 
+          filteredItemFromEditedStore?.editMessageId) {
+          editedmsgIds.push(filteredItemFromEditedStore?.editMessageId);
+          isForwardNormal = false;
+        } else {
+          editedmsgIds.push(filteredItemFromEditedStore?.msgId);
+        }
+      }
+
 
     let newMsgIds = [];
     let mentionedUserIds = []
     let totalLength = data.length * contactsToForward.length;
     for (let i = 0; i < totalLength; i++) newMsgIds.push(uuidv4());
-    SDK.forwardMessagesToMultipleUsers(contactsToForward, msgIds, true, newMsgIds, mentionedUserIds);
+    SDK.forwardMessagesToMultipleUsers(contactsToForward, isForwardNormal ? msgIds : editedmsgIds, true, newMsgIds, mentionedUserIds);
     const chatToOpen = contactsToForward[contactsToForward.length - 1];
     const response = this.findLastChat(chatToOpen);
     const { recent: { chatType } = {} } = response[0];
@@ -297,9 +324,9 @@ class ForwardPopUp extends Component {
       recentChatData: {
         rosterData: { recentChatItems }
       }
-    } = this.props;   
-    let filteredRecentUserIds = []; 
-    recentChatItems.forEach(element => {
+    } = this.props;
+    let filteredRecentUserIds = [];
+    recentChatItems?.forEach(element => {
       if (element?.recent?.chatType === "chat") filteredRecentUserIds.push(element?.roster?.userId)
     });
     if (this.state.userList.length > 0) {
@@ -536,7 +563,8 @@ const mapStateToProps = (state, props) => {
     groupsData: state.groupsData,
     vCardData: state.vCardData,
     isAppOnline: state?.appOnlineStatus?.isOnline,
-
+    chatConversationHistory: state.chatConversationHistory,
+    messageEditedData: state.messageEditedData
   };
 };
 

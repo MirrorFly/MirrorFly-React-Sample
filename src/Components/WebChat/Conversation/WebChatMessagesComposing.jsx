@@ -18,7 +18,7 @@ import { setCaretPosition } from "../../../Helpers/Chat/ContentEditableEle";
 import Camera from "../Camera";
 import { getCameraPermission } from "./Templates/Common/Media";
 import { TYPE_DELAY_TIME } from "../../../Helpers/Constants";
-import { blockOfflineMsgAction, isBoxedLayoutEnabled, placeCaretAtEnd } from "../../../Helpers/Utility";
+import { blockOfflineAction, blockOfflineMsgAction, isAppOnline, isBoxedLayoutEnabled, placeCaretAtEnd } from "../../../Helpers/Utility";
 import { get as _get } from "lodash";
 import Store from "../../../Store";
 import { UpdateTypedMessage } from "../../../Actions/ChatHistory";
@@ -60,7 +60,12 @@ class WebChatMessagesComposing extends Component {
       featuresAvailable: {},
       mentionedData: {},
       mentionedUsersIds: [],
-      searchEmoji: ""
+      mentionedIdsForEditableField: [],
+      searchEmoji: "",
+      messageDetails: {},
+      editableDetails: {
+        [this.props?.activeChatData?.data?.chatId]: {isEditable: false, editMsgId: "", editTypedMessage: "", editTypedOriginalMsg: ""}
+      },
     };
     this.position = 0;
     this.timeout = 0;
@@ -68,6 +73,7 @@ class WebChatMessagesComposing extends Component {
     encryptAndStoreInLocalStorage("recordingStatus", true);
     this.cameraPermissionTracks = [];
     this.chatScreenName = "conversationScreen";
+    this.pasteEventListener = this.handleImagePasteFiles.bind(this);
   }
 
   componentDidMount() {
@@ -91,24 +97,116 @@ class WebChatMessagesComposing extends Component {
     }
   }
 
-  componentDidUpdate(prevProps = {}) {
-    const { sendMessgeType, dragOnContainer: { draggedId = "" } = {} } = this.props;
+  componentDidUpdate(prevProps, prevState) {
+    const { 
+      sendMessgeType,
+      messageEditDetails, 
+      messageDeletedData, 
+      chatEditStatus, 
+      closeReplyAction, 
+      otherActionClick, 
+      handleOtherMessageActionClick, 
+      editedDetailsArr, 
+      dragOnContainer: { draggedId = "" } = {} 
+    } = this.props;
+    const { isCurrentMsgDeleted = {} } = messageDeletedData;
+    const { chatId = "" } = _get(this.props, "activeChatData.data", {});
+    const { chatId: prevChatId = "" } = _get(prevProps, "activeChatData.data", {});
+    const messageContent = document.getElementById("typingContainer");
     if (draggedId && prevProps?.dragOnContainer?.draggedId !== draggedId) {
       this.setState({
         showPreview: true
       });
       return;
     }
-    const messageContent = document.getElementById("typingContainer");
+
+    if (sendMessgeType === 'Edit' && this.state.editableDetails[chatId]?.isEditable && 
+    (chatEditStatus[editedDetailsArr[chatId]?.messageEditDetails?.msgId] === false || isCurrentMsgDeleted[messageEditDetails?.msgId] === true
+      || otherActionClick === true || this.props.isEditDisabled === true)) {
+      this.setState({
+        editableDetails: {
+          [chatId]: {
+            ...prevState.editableDetails[chatId],
+            editMsgId: "",
+            editTypedMessage: "",
+            editTypedOriginalMsg: ""
+          }
+        },
+        typingMessage: "",
+        messageDetails: {},
+        mentionedIdsForEditableField: [],
+      });
+      closeReplyAction(chatId);
+      Store.dispatch(UpdateTypedMessage({ chatId: chatId, message: "" }));
+      otherActionClick === true && handleOtherMessageActionClick(false);
+    }
+
+    const { typedMessage = "" } = this.props.chatConversationHistory.data[chatId] || {};
+    const mentionedUsersIdsLength = editedDetailsArr[chatId]?.messageEditDetails?.msgBody?.mentionedUsersIds?.length || 0;
+
+
+    if (((prevProps.sendMessgeType === 'Edit' && sendMessgeType === 'Edit') && 
+     (prevProps.editedDetailsArr[chatId]?.existingMessageData !== editedDetailsArr[chatId]?.existingMessageData))
+     || ((prevProps.sendMessgeType === 'Edit' && sendMessgeType === 'Edit') && 
+     (prevProps.editedDetailsArr[chatId]?.timer !== editedDetailsArr[chatId]?.timer)
+     )) {
+      const { typedMessage = "" } = this.props.chatConversationHistory.data[chatId] || {};
+      this.setCursorPosition(typedMessage.length);
+      this.setState({
+        editableDetails: {
+          [chatId]: {
+            isEditable: editedDetailsArr[chatId]?.isEditable || false,
+            editMsgId: editedDetailsArr[chatId]?.messageEditDetails?.msgId,
+            editTypedMessage: typedMessage,
+            editTypedOriginalMsg: editedDetailsArr[chatId]?.messageEditDetails?.msgBody?.message,
+          }
+        },
+        messageDetails: editedDetailsArr[chatId]?.messageEditDetails,
+        typingMessage: typedMessage,
+        mentionedIdsForEditableField: [],
+        },() => {
+          (mentionedUsersIdsLength > 0) && this.handleMentionEditable(editedDetailsArr[chatId]?.messageEditDetails, typedMessage);
+          messageContent && placeCaretAtEnd(messageContent);
+      });    
+    }
+
     if (prevProps.sendMessgeType !== sendMessgeType) {
+      if (sendMessgeType === 'Edit') {
+        this.setCursorPosition(typedMessage.length);
+        this.setState({
+          editableDetails: {
+            [chatId]: {
+              isEditable: editedDetailsArr[chatId]?.isEditable || false,
+              editMsgId: editedDetailsArr[chatId]?.messageEditDetails?.msgId,
+              editTypedMessage: typedMessage,
+              editTypedOriginalMsg: editedDetailsArr[chatId]?.messageEditDetails?.msgBody?.media?.caption || editedDetailsArr[chatId]?.messageEditDetails?.msgBody?.message,
+            }
+          },
+          messageDetails: editedDetailsArr[chatId]?.messageEditDetails,
+          typingMessage: typedMessage,
+          },() => {
+            (mentionedUsersIdsLength > 0) && this.handleMentionEditable(editedDetailsArr[chatId]?.messageEditDetails, typedMessage);
+            messageContent && placeCaretAtEnd(messageContent);
+        });       
+      } else {
+        this.setState({
+          editableDetails: {[chatId]: {
+            isEditable: false,
+            editMsgId: "",
+            editTypedMessage: "",
+            editTypedOriginalMsg: ""
+          }},
+          messageDetails: {},
+          mentionedIdsForEditableField: [],
+        })
+      }
       messageContent && placeCaretAtEnd(messageContent);
       return;
     }
 
-    const { chatId = "" } = _get(this.props, "activeChatData.data", {});
-    const { chatId: prevChatId = "" } = _get(prevProps, "activeChatData.data", {});
 
     if (prevChatId !== chatId) {
+      const { typedMessage = "" } = this.props.chatConversationHistory.data[chatId] || {};
       typing = false;
       clearTimeout(this.timeout);
       if (messageContent && prevChatId) {
@@ -118,7 +216,6 @@ class WebChatMessagesComposing extends Component {
         }
       }
 
-      const { typedMessage = "" } = this.props.chatConversationHistory.data[chatId] || {};
       this.setState(
         {
           typingMessage: typedMessage,
@@ -129,15 +226,57 @@ class WebChatMessagesComposing extends Component {
           messageContent && placeCaretAtEnd(messageContent);
         }
       );
+
+      if (this.state.editableDetails[chatId] && this.state.editableDetails[chatId]?.isEditable && editedDetailsArr[chatId] &&
+        editedDetailsArr[chatId]?.sendMessgeType === 'Edit' && editedDetailsArr[chatId]?.isEditable && 
+        (this.state.editableDetails[chatId]?.editMsgId === editedDetailsArr[chatId]?.messageEditDetails?.msgId)) {
+          closeReplyAction(chatId);
+          this.setState({
+            typingMessage: "",
+            typingMessageOriginal: "",
+            mentionedIdsForEditableField: [],
+          },
+          () => {
+            Store.dispatch(UpdateTypedMessage({ chatId: this.props.jid, message: "" }));
+            messageContent && placeCaretAtEnd(messageContent);
+          });
+      }
     }
 
+  }
+
+  //Handled mentioned Users when editable
+  handleMentionEditable = (messageEditDetails) => {
+    const mentionedUsers = messageEditDetails?.msgBody?.mentionedUsersIds || [];
+    let originalMessage = messageEditDetails?.msgBody?.media?.caption || messageEditDetails?.msgBody?.message;
+    if (originalMessage.endsWith('@[?]') === true) {
+      originalMessage = originalMessage+" ";
+    }
+    const pattern = /\@\[\?]\s/g;
+    let counter = 0;
+    // Replace each @[?] with new span
+    let replacedText = "";
+    replacedText = originalMessage.replace(pattern, () => {
+      const index = counter++;
+      const userId = mentionedUsers[index];
+      let rosterData = getUserDetails(userId);
+      let displayName = rosterData.displayName;
+      const uiHtml = `<span data-mentioned="${userId}" class="mentioned blue" contenteditable="true">@${displayName}</span> `;
+      return uiHtml;
+    });
+    const messageContent = document.getElementById("typingContainer");
+    messageContent.innerHTML = replacedText;
+    this.setState({
+      mentionedIdsForEditableField: mentionedUsers
+    })
+    Store.dispatch(UpdateTypedMessage({ chatId: this.props.jid, message: replacedText }));
   }
 
   componentWillUnmount() {
     clearTimeout(this.timeout);
   }
 
-  handleMessage = (event = {}) => {
+  handleMessage = (event = {}, isClickedTypingField = false) => {
     const { value = "" } = _get(event, "target", {});
     let temp = document.createElement("div");
     temp.innerHTML = value.trim();
@@ -151,6 +290,7 @@ class WebChatMessagesComposing extends Component {
     // consider as single text not two chars. That's when value length 1 &
     // value is '\n', set empty data to typingMessage to display the mic button
     // instead of send message button
+    const { chatId = "" } = _get(this.props, "activeChatData.data", {});
     this.setState(
       {
         typingMessage:
@@ -158,16 +298,32 @@ class WebChatMessagesComposing extends Component {
             (value.length === 1 && value === "\n")
             ? ""
             : value,
-        typingMessageOriginal: typingMessageOriginal,
+        typingMessageOriginal: typingMessageOriginal.trim(),
       },
       () => {
-        Store.dispatch(UpdateTypedMessage({ chatId: this.props.jid, message: this.state.typingMessage }));
+        if (this.state.editableDetails[chatId]?.isEditable === false) {
+          Store.dispatch(UpdateTypedMessage({ chatId: this.props.jid, message: this.state.typingMessage }));
+        }
       }
     );
+    if (this.state.editableDetails[chatId] && this.state.editableDetails[chatId]?.isEditable === true && 
+      isClickedTypingField === false) {
+      this.setState({
+        editableDetails: {
+          [chatId]: {
+            ...this.state.editableDetails[chatId],
+            editTypedMessage: value,
+            editTypedOriginalMsg: typingMessageOriginal.trim()
+          }
+        },
+        mentionedIdsForEditableField: this.state.mentionedIdsForEditableField,
+      })
+    }
   };
 
   handleEmojiText = (emojiObject = "") => {
     const messageContent = document.getElementById("typingContainer");
+    const { chatId = "" } = _get(this.props, "activeChatData.data", {});
     let position;
     let text;
     // When user select all the text & choose emoji means,
@@ -185,6 +341,19 @@ class WebChatMessagesComposing extends Component {
     }
     let updatedText = text.replace("&amp;", "&");
     let filteredHtml = "";
+
+    //handle editable content
+    if (this.state.editableDetails[chatId] && this.state.editableDetails[chatId]?.isEditable === true) {
+      this.setState({
+        editableDetails: {
+          [chatId]: {
+            ...this.state.editableDetails[chatId],
+            editTypedMessage: text,
+            editTypedOriginalMsg: text
+          }
+        },
+      })
+    }
     this.setState(
       {
         typingMessage: text,
@@ -238,27 +407,56 @@ class WebChatMessagesComposing extends Component {
   };
 
   handleEmptyContent = () => {
+    const { editableDetails } = this.state;
+    const { chatId = "" } = _get(this.props, "activeChatData.data", {});
+    if (editableDetails[chatId] && editableDetails[chatId]?.isEditable === true && !isAppOnline()) {
+      return;
+    }
+    if ((this.state.editableDetails[chatId]?.isEditable && this.state.editableDetails[chatId]?.editTypedOriginalMsg.length > 0 && 
+      (this.props.editedDetailsArr[chatId]?.messageEditDetails?.chatType === 'groupchat' ? 
+      this.state.editableDetails[chatId]?.editTypedMessage : this.state.editableDetails[chatId]?.editTypedOriginalMsg) === this.props.editedDetailsArr[chatId]?.existingMessageData)) {//this.state.editableDetails[chatId]?.editTypedMessage
+        return;
+    }
     this.setState({
       typingMessage: "",
       typingMessageOriginal: ""
     })
   }
 
-  handleSendMsg = (messageType, messageContent, mentionedUsersId) => {
-    let message;
+  handleSendMsg = (messageType, content, mentionedUsersId = []) => {
+    let message, messageContent, editMessageId = "";
+    messageContent = content;
     const { loaderStatus, handleSendMsg } = this.props;
+    const { messageDetails, editableDetails } = this.state;
+    const { chatId = "" } = _get(this.props, "activeChatData.data", {});
+    if (editableDetails[chatId] && editableDetails[chatId]?.editMsgId === messageDetails?.msgId) {
+      if (!isAppOnline()) {
+        blockOfflineAction();
+        return;
+      }
+      editMessageId = editableDetails[chatId]?.editMsgId || "";
+      messageContent = editableDetails[chatId]?.editTypedOriginalMsg || "";
+    }
     if (loaderStatus) return;
+
+    let type = "text";
+    if (editableDetails[chatId]?.editMsgId && messageDetails && messageDetails?.msgBody?.media?.caption !== undefined && 
+      messageDetails?.msgBody?.media?.caption !== "") {
+      type = "media";
+    } 
     if (messageType === "text") {
       message = {
-        type: "text",
+        type: type,
         content: messageContent,
-        mentionedUsersIds: this.state.mentionedUsersIds
+        mentionedUsersIds: editableDetails[chatId]?.isEditable ? this.state.mentionedIdsForEditableField : this.state.mentionedUsersIds,
+        editMessageId: editMessageId
       };
     } else if (messageType === "media") {
       message = {
         type: "media",
         content: messageContent,
-        mentionedUsersIds: mentionedUsersId
+        mentionedUsersIds: mentionedUsersId,
+        editMessageId: ""
       };
     }
     const showEmoji = this.state.showEmoji;
@@ -271,23 +469,32 @@ class WebChatMessagesComposing extends Component {
         seletedFiles: {},
         mentionedUsersIds: [],
         chatType: this.props.chatType,
+        editableDetails: {}
       },
       () => {
-        handleSendMsg(message);
+        handleSendMsg(message, messageDetails);
         showEmoji && this.updateEmojiPopUpState();
+        window.removeEventListener('paste', this.pasteEventListener);
       }
     );
     setTimeout(() => {
-      this.setState({ typingMessage: "" })
+      this.setState({ typingMessage: "", mentionedIdsForEditableField: [] })
     }, 250);
   };
 
   handleSendTextMsg = () => {
-    this.handleSendMsg("text", this.state.typingMessageOriginal, true, this.state.mentionedList);
+    const { chatId = "" } = _get(this.props, "activeChatData.data", {});
+    if ((this.state.editableDetails[chatId]?.isEditable && this.state.editableDetails[chatId]?.editTypedOriginalMsg.length > 0 && 
+      (this.props.editedDetailsArr[chatId]?.messageEditDetails?.chatType === 'groupchat' ? 
+      this.state.editableDetails[chatId]?.editTypedMessage : this.state.editableDetails[chatId]?.editTypedOriginalMsg) === 
+      this.props.editedDetailsArr[chatId]?.existingMessageData)) {
+        return;
+    }
+    this.handleSendMsg("text", this.state.typingMessageOriginal);
   };
 
-  handleSendMediaMsg = (Media) => {
-    this.handleSendMsg("media", Media);
+  handleSendMediaMsg = (media) => {
+    this.handleSendMsg("media", media);
   };
 
   toggleAttachement = () => {
@@ -315,10 +522,10 @@ class WebChatMessagesComposing extends Component {
       showPreview: !this.state.showPreview,
       seletedFiles: {}
     });
+    window.removeEventListener('paste', this.pasteEventListener);
   };
 
   selectFile = (event, mediaType) => {
-
     this.setState({
       showPreview: true,
       seletedFiles: {
@@ -335,6 +542,8 @@ class WebChatMessagesComposing extends Component {
     this.setState({
       recordingStatus: status
     });
+    const messageContent = document.getElementById("typingContainer");
+    messageContent && placeCaretAtEnd(messageContent);
   };
 
   handleShowEmojis = () => {
@@ -347,8 +556,8 @@ class WebChatMessagesComposing extends Component {
       },
       () => {
         this.updateEmojiPopUpState();
-        if(this.state.typingMessage.includes("&amp;") === true) {
-          if(this.position === this.state.typingMessage.length) {
+        if (this.state.typingMessage.includes("&amp;") === true) {
+          if (this.position === this.state.typingMessage.length) {
           placeCaretAtEnd(messageContent)
           }
         } else {
@@ -390,7 +599,9 @@ class WebChatMessagesComposing extends Component {
 
   typingStarted = function () {
     typing = true;
-    if (this.state.typingMessage.length + 1 !== 0 && Date.now() - lastTypingTime > TYPE_DELAY_TIME) {
+    const { chatId = "" } = _get(this.props, "activeChatData.data", {});
+    if ((this.state.typingMessage.length + 1 !== 0 && Date.now() - lastTypingTime > TYPE_DELAY_TIME) && 
+     (this.state.editableDetails[chatId]?.isEditable && this.state.editableDetails[chatId]?.isEditable === false)) {
       lastTypingTime = Date.now();
       this.sentTypingstatus();
     }
@@ -424,7 +635,8 @@ class WebChatMessagesComposing extends Component {
     this.state.showAttachement && this.setState({ showAttachement: false });
   };
 
-  isTypingMessageHasData = () => {
+  isTypingMessageHasData = (isEditable = false) => {
+    if (isEditable) return;
     const { typingMessage = "" } = this.state || {};
     return (typingMessage || "").trim().length > 0;
   };
@@ -515,6 +727,7 @@ class WebChatMessagesComposing extends Component {
   };
 
   handleMentionedData = (userId, chatName) => {
+    const { chatId = "" } = _get(this.props, "activeChatData.data", {});
     let rosterData = getUserDetails(userId);
     let displayName = rosterData.displayName;
     let position;
@@ -523,7 +736,7 @@ class WebChatMessagesComposing extends Component {
     let start = messageContent?.innerHTML?.substring(0, this.position);
     start = start.substring(0, start.lastIndexOf("@"));
     const end = messageContent?.innerHTML?.substring(this.position);
-    const uihtml = `<span data-mentioned="${userId}" class="mentioned blue" contenteditable="false">@${displayName}</span> `;
+    const uihtml = `<span data-mentioned="${userId}" class="mentioned blue" contenteditable="true">@${displayName}</span> `;
     text = start + uihtml + end;
     position = this.position + _get(uihtml, "length", 0) -1;
     let temp = document.createElement("div");
@@ -534,17 +747,41 @@ class WebChatMessagesComposing extends Component {
     });
     let typingMessageOriginal = temp.textContent || temp.innerText;
     let mentionedUsersIds = [...this.state.mentionedUsersIds];
-    mentionedUsersIds.push(userId);
+    let mentionedUsersIdsEdit;
+    if (this.state.editableDetails[chatId] && this.state.editableDetails[chatId]?.isEditable === true) {// when edit is enabled
+      mentionedUsersIdsEdit = [...this.state.mentionedIdsForEditableField];
+      mentionedUsersIdsEdit.push(userId);
+    } else {//normal case
+      mentionedUsersIds.push(userId);
+    }
+    //handle editable content
+    if (this.state.editableDetails[chatId] && this.state.editableDetails[chatId]?.isEditable === true) {
+      this.setState({
+        editableDetails: {
+          [chatId]: {
+            ...this.state.editableDetails[chatId],
+            editTypedMessage: text,
+            editTypedOriginalMsg: typingMessageOriginal.trim(),
+          }
+        },
+      })
+    } else {
+      this.setState({
+        mentionedUsersIds: mentionedUsersIds,
+      })
+    }
     this.setState({
       typingMessage: text,
       showMention: false,
-      typingMessageOriginal: typingMessageOriginal,
-      mentionedUsersIds: mentionedUsersIds
+      typingMessageOriginal: typingMessageOriginal.trim(),
+      mentionedIdsForEditableField: mentionedUsersIdsEdit,
     }, () => {
       this.setCursorPosition(position);
       setCaretPosition(messageContent, position);
       chatName === this.chatScreenName && placeCaretAtEnd(messageContent)
-      Store.dispatch(UpdateTypedMessage({ chatId: this.props.jid, message: this.state.typingMessage }));
+      if (this.state.editableDetails[chatId]?.isEditable !== true) {
+        Store.dispatch(UpdateTypedMessage({ chatId: this.props.jid, message: this.state.typingMessage }));
+      }
     });
   };
 
@@ -556,12 +793,23 @@ class WebChatMessagesComposing extends Component {
     return arr;
   }
 
+  //Handled Deletion of mentionedUsers from TextField
   handleDeleteMentionedUser = (ele) => {
+    const { chatId = "" } = _get(this.props, "activeChatData.data", {});
     let mentionedId = ele.dataset.mentioned;
-    let mentionedUsersIds = [this.state.mentionedUsersIds];
-    this.setState({
-      mentionedUsersIds: this.removeMentionedUserId(mentionedUsersIds[0], mentionedId),
-    })
+    let mentionedUsersIds;
+    if (this.state.editableDetails[chatId] && this.state.editableDetails[chatId]?.isEditable === true) {
+      mentionedUsersIds = [this.state.mentionedIdsForEditableField];
+      const deleteItem = this.removeMentionedUserId(mentionedUsersIds[0], mentionedId)
+      this.setState({
+        mentionedIdsForEditableField: deleteItem,
+      })
+    } else {
+      mentionedUsersIds = [this.state.mentionedUsersIds];
+      this.setState({
+        mentionedUsersIds: this.removeMentionedUserId(mentionedUsersIds[0], mentionedId),
+      })
+    }
   }
 
   groupMemberSearchList = (searchWith) => {
@@ -608,6 +856,7 @@ class WebChatMessagesComposing extends Component {
     return { autoReplay: autoReplay, autoMsgfind: replyMessages };
   };
 
+
   renderCameraPopup = () => {
     return (
       <div className="camera-container mediaAttachCamera">
@@ -645,20 +894,27 @@ class WebChatMessagesComposing extends Component {
     );
   };
 
-  handleImgaePaste = (event) => {
+  handleImagePaste = (e) => {
+    const { chatId = "" } = _get(this.props, "activeChatData.data", {});
+    if (this.state.editableDetails[chatId]?.isEditable === true) {
+      return;
+    }
+    window.addEventListener('paste', this.pasteEventListener);
+  }
+
+  //Handled Mediapreview enable when paste in textField
+  handleImagePasteFiles = (e) => {
     const mediaType = "imageVideo";
-    window.addEventListener('paste', e => {
-      if (e.clipboardData.files.length > 0) {
-        this.setState({
-          showPreview: true,
-          seletedFiles: {
-            filesId: uuidv4(),
-            files: e.clipboardData.files,
-            mediaType
-          }
-        });
-      }
-    })
+    if (e.clipboardData.files.length > 0) {
+      this.setState({
+        showPreview: true,
+        seletedFiles: {
+          filesId: uuidv4(),
+          files: e.clipboardData.files,
+          mediaType
+        }
+      });
+    }
   }
 
   render() {
@@ -674,7 +930,8 @@ class WebChatMessagesComposing extends Component {
       showCamera,
       cameraPermission,
       featuresAvailable,
-      GroupParticiapantsList = {}
+      GroupParticiapantsList = [],
+      editableDetails
     } = this.state;
     let {
       isAttachmentEnabled = false,
@@ -723,7 +980,7 @@ class WebChatMessagesComposing extends Component {
               chatScreenName={"conversationScreen"} />
         )}
 
-        {recordingStatus && Config.attachement && showAttachement && (
+        {recordingStatus && Config.attachement && showAttachement && editableDetails[chatId]?.isEditable !== true && (
           <Attachement
             attachment={featuresAvailable}
             selectFile={this.selectFile}
@@ -801,10 +1058,11 @@ class WebChatMessagesComposing extends Component {
                 setSelectedText={this.setSelectedText}
                 handleEmptyContent={this.handleEmptyContent}
                 handleDeleteMentionedUser={this.handleDeleteMentionedUser}
-                handleImagePaste = {this.handleImgaePaste}
+                handleImagePaste = {this.handleImagePaste}
               />
             <div className="intraction icon">
-              {recordingStatus && Config.attachement && isAttachmentEnabled && isAttachment && (
+              {recordingStatus && Config.attachement && isAttachmentEnabled && isAttachment && 
+              editableDetails[chatId]?.isEditable !== true && (
                 <i
                   title="Attachment"
                   className={showAttachement ? "attachment open" : "attachment"}
@@ -816,15 +1074,19 @@ class WebChatMessagesComposing extends Component {
               )}
             </div>
           </div>
-          {!this.isTypingMessageHasData() && isAudioAttachmentEnabled && (
+          {((!this.isTypingMessageHasData() && isAudioAttachmentEnabled) || (editableDetails[chatId]?.isEditable === true && !recordingStatus)) && (
             <AudioRecorder
               jid={this.props.jid}
               handleSendMediaMsg={this.handleSendMediaMsg}
               recordingStatus={this.recordingStatus}
               avoidRecord={this.props.avoidRecord}
+              isEditable={editableDetails[chatId]?.isEditable}
             />
           )}
-          {this.isTypingMessageHasData() && (
+          {(this.isTypingMessageHasData(this.state.editableDetails[chatId]?.isEditable ) || 
+          (this.state.editableDetails[chatId]?.isEditable && this.state.editableDetails[chatId]?.editTypedOriginalMsg.length > 0 && 
+            (this.props.editedDetailsArr[chatId]?.messageEditDetails?.chatType === "groupchat" ? this.state.editableDetails[chatId]?.editTypedMessage :
+             this.state.editableDetails[chatId]?.editTypedOriginalMsg) !== this.props.editedDetailsArr[chatId]?.existingMessageData)) && (
             <div className="formbtns">
               <a type="submit" className="send">
                 <i title="Send" className="send" onClick={this.handleSendTextMsg}>
@@ -845,8 +1107,8 @@ const mapStateToProps = (state) => {
     conversationState: state.conversationState,
     chatConversationHistory: state.chatConversationHistory,
     activeChatData: state.activeChatData,
-    groupsMemberListData: state.groupsMemberListData
-
+    groupsMemberListData: state.groupsMemberListData,
+    chatEditStatus: state.chatEditStatus,
   };
 };
 

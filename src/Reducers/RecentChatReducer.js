@@ -73,7 +73,7 @@ const updateRecentUnreadCount = (data, stateData) => {
 };
 
 const updateRecentChatMessageStatus = (data, stateData) => {
-  return stateData.map((element) => {
+  return stateData?.map((element) => {
     if (element.fromUserId === data.fromUserId && element.msgId === data.msgId) {
       element.msgStatus = getMsgStatusInOrder(element.msgStatus, data.msgStatus);
     }
