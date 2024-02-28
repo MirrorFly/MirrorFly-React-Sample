@@ -305,10 +305,9 @@ class WebRtcCall extends React.Component {
         let remoteAudioMuted = this.props.remoteAudioMuted;
         let remoteVideoMuted = this.props.remoteVideoMuted;
         let vcardData = {...this.props.vCardData.data};
-        const renderUIStreams = this.renderUIStreams(remoteStreams)
-        
-        if (_get(renderUIStreams,"length",0) > 0 ) {
-            return renderUIStreams.map((remoteStream, index) => {
+
+        if (_get(remoteStreams,"length",0) > 0 ) {
+            return remoteStreams.map((remoteStream, index) => {
                 let id = remoteStream.fromJid;
                 id = id.includes("@") ? id.split("@")[0] : id;
                 if(id !== vcardData.fromUser){
@@ -369,7 +368,7 @@ class WebRtcCall extends React.Component {
                             callStatus={callStatus}
                             userStatus={remoteStream.status}
                             inverse={false}
-                            usersCount={renderUIStreams.length}
+                            usersCount={remoteStreams.length}
                             tileView={this.state.tileView}
                             tileViewStyle={this.state.tileViewStyle}
                             videoTrackId={videoTrackId}
@@ -468,7 +467,6 @@ class WebRtcCall extends React.Component {
             }
 
             const videoMuteResult = await SDK.muteVideo(videoMute);
-            console.log('Call videoMuteResult :>> ', videoMuteResult?.statusCode, this.props.showConfrenceData?.data?.localVideoMuted, videoMute);
             if (videoMuteResult?.statusCode === 200) {
                 muteLocalVideo(videoMute);
                 this.setState({ localVideoMuted: videoMute })
@@ -538,15 +536,6 @@ class WebRtcCall extends React.Component {
         return user && user.status;
     }
 
-    renderUIStreams = (remoteStreamDatas) =>{
-        let vcardData = getLocalUserDetails();
-        const localUserJid = formatUserIdToJid(vcardData.userId)
-        const filteredLocalStream = remoteStreamDatas.filter(item => item.fromJid === localUserJid);
-        const filteredOtherUsersStream = remoteStreamDatas.filter(item => item.hasOwnProperty('stream') && (item.status != CALL_STATUS_DISCONNECTED) && (item.status != CALL_STATUS_ENDED));
-        const filteredRemoteUserStream = [...filteredLocalStream, ...filteredOtherUsersStream];
-        return filteredRemoteUserStream
-    }
-
     /**
      * Calculate the thumbnail view overlap with control buttons
      */
@@ -576,15 +565,14 @@ class WebRtcCall extends React.Component {
         let vcardData = {...this.props.vCardData.data};
         let remoteAudioMuted = this.props.remoteAudioMuted;
         let remoteVideoMuted = this.props.remoteVideoMuted;
-        const renderUIStreams = this.renderUIStreams(remoteStreamDatas)
-        const currentUserData = renderUIStreams.filter((e) => {
+        const currentUserData = remoteStreamDatas.filter((e) => {
             let id = e.fromJid;
             id = id.includes("@") ? id.split("@")[0] : id;
             if(id === vcardData.fromUser){
                 return e;
             }
         });
-        const otherUsersData = renderUIStreams.map((e) => {
+        const otherUsersData = remoteStreamDatas.map((e) => {
             let id = e.fromJid;
             id = id.includes("@") ? id.split("@")[0] : id;
             if(id !== vcardData.fromUser){
@@ -621,9 +609,7 @@ class WebRtcCall extends React.Component {
     }
 
 
-    renderOptionButtonGroup(callStatus, tileView) {
-        const participantDatas = [...this.props.remoteStream]
-        const updatedParticipants = this.renderUIStreams(participantDatas)
+    renderOptionButtonGroup(callStatus, tileView, remoteStreamDatas) {
         return (
             <div className="optionBtnGroup">
             <span
@@ -638,14 +624,14 @@ class WebRtcCall extends React.Component {
                 </i>
             </span>
 
-            {callStatus && callStatus.toLowerCase() !== CALL_STATUS_DISCONNECTED && updatedParticipants.length > 2 && 
+            {callStatus && callStatus.toLowerCase() !== CALL_STATUS_DISCONNECTED && remoteStreamDatas.length > 2 && 
                 <OutsideClickHandler
                     onOutsideClick={() => {
                         this.setState({ ParticipantListPopup: false });
                     }}>
                 <span className="participant-list" title="">
                 <i className="invite" onClick={(e) => this.handleParticipantListPopup(e)}>
-                    <span className="count-badge">{updatedParticipants.length}</span>
+                    <span className="count-badge">{remoteStreamDatas.length}</span>
                     <IconParticiants/>
                 </i>
                 {
@@ -691,6 +677,10 @@ class WebRtcCall extends React.Component {
         let vcardData = getLocalUserDetails();
         let audioControl = true;
         let videoControl = true;
+        const localUserJid = formatUserIdToJid(vcardData.userId)
+        const filteredLocalStream = remoteStreamDatas.filter(item => item.fromJid === localUserJid);
+        const filteredOtherUsersStream = remoteStreamDatas.filter(item => item.fromJid !== localUserJid && (item.status != CALL_STATUS_DISCONNECTED) && (item.status != CALL_STATUS_ENDED));
+        const filteredRemoteUserStream = [...filteredLocalStream, ...filteredOtherUsersStream];
         const behaviour = this.handleCallBehaviour();
         if (callConnectionData) {
             let anotherUser = "";
@@ -755,7 +745,7 @@ class WebRtcCall extends React.Component {
                                         <i className="backIcon"><span className="toggleAnimation"></span><BackToChat /></i>
                                     </span>
                                 </div>
-                                {this.renderOptionButtonGroup(callStatus, tileView)}
+                                {this.renderOptionButtonGroup(callStatus, tileView, filteredRemoteUserStream)}
                             </div>
 
                             <div className={`${this.state.fullView ? "fullView" : ""} content-body`}>
