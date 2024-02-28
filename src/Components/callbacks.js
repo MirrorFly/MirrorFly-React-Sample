@@ -100,7 +100,8 @@ import {
     CALL_TYPE_VIDEO,
     CALL_STATUS_RECONNECT,
     CALL_STATUS_HOLD,
-    CALL_STATUS_ENDED
+    CALL_STATUS_ENDED,
+    CALL_STATUS_ATTENDED
 } from '../Helpers/Call/Constant';
 import uuidv4 from 'uuid/v4';
 import browserNotify from '../Helpers/Browser/BrowserNotify';
@@ -213,9 +214,10 @@ const updatingUserStatusInRemoteStream = (usersStatus) => {
     usersStatus.map((user) => {
         const index = remoteStream.findIndex(item => item.fromJid === user.userJid);
         if (index > -1) {
+            const status = user.status ? user.status.toLowerCase() : "";
             remoteStream[index] = {
                 ...remoteStream[index],
-                status: user.status
+                status: (remoteStream[index].status === CALL_STATUS_RECONNECT && status === CALL_STATUS_ATTENDED) ? remoteStream[index].status : status
             };
             remoteVideoMuted[user.userJid] = user.videoMuted;
             remoteAudioMuted[user.userJid] = user.audioMuted;
@@ -390,11 +392,13 @@ const connected = (res) => {
             showComponent,
             showStreamingComponent,
             remoteStream,
+            localStream,
             status: res.callStatus,
             localVideoMuted: localVideoMuted,
             localAudioMuted: localAudioMuted,
             remoteVideoMuted: remoteVideoMuted,
-            remoteAudioMuted: remoteAudioMuted
+            remoteAudioMuted: remoteAudioMuted,
+            callStatusText: CALL_STATUS_CONNECTED
         }));
     }
 }
@@ -592,19 +596,37 @@ const reconnecting = (res) => {
     const {
         data
     } = showConfrenceData;
-    Store.dispatch(showConfrence({
-        showCallingComponent: false,
-        ...(data || {}),
-        localStream: localStream,
-        remoteStream: remoteStream,
-        fromJid: res.userJid,
-        status: "REMOTESTREAM",
-        localVideoMuted: localVideoMuted,
-        localAudioMuted: localAudioMuted,
-        remoteVideoMuted: remoteVideoMuted,
-        remoteAudioMuted: remoteAudioMuted,
-        callStatusText: CALL_STATUS_RECONNECT,
-    }))
+    let vcardData = getLocalUserDetails();
+    let currentUser = vcardData?.fromUser + "@" + REACT_APP_XMPP_SOCKET_HOST;
+    if (currentUser === res.userJid) {
+        Store.dispatch(showConfrence({
+            showCallingComponent: false,
+            ...(data || {}),
+            localStream: localStream,
+            remoteStream: remoteStream,
+            fromJid: res.userJid,
+            status: "REMOTESTREAM",
+            localVideoMuted: localVideoMuted,
+            localAudioMuted: localAudioMuted,
+            remoteVideoMuted: remoteVideoMuted,
+            remoteAudioMuted: remoteAudioMuted,
+            callStatusText: CALL_STATUS_RECONNECT,
+        }))
+    } else {
+        Store.dispatch(showConfrence({
+            showCallingComponent: false,
+            ...(data || {}),
+            localStream: localStream,
+            remoteStream: remoteStream,
+            fromJid: res.userJid,
+            status: "REMOTESTREAM",
+            localVideoMuted: localVideoMuted,
+            localAudioMuted: localAudioMuted,
+            remoteVideoMuted: remoteVideoMuted,
+            remoteAudioMuted: remoteAudioMuted
+        }))
+    }
+    
 }
 
 const speaking = (res) => {
@@ -817,7 +839,6 @@ export const callbacks = {
             const roomName = getFromLocalStorageAndDecrypt('roomName');
             if (roomName === "" || roomName == null || roomName == undefined) { 
                 const { roomId = "" } = SDK.getCallInfo();
-                console.log('localStorage roomId :>> ', roomId);
                 encryptAndStoreInLocalStorage('roomName', roomId);
             }
 
@@ -1151,7 +1172,6 @@ export const callbacks = {
         // & attended the group call, then try to invite the new user from group, then need to show the
         // Group member list in invite user popup. So in this situation, Current chat screen & call group is
         // different, to avoid the group override maintain the separate groups for call & chat.
-        console.log(res, communicationType);
         if (communicationType !== 'call') {
             Store.dispatch(GroupsMemberListAction(res));
         }

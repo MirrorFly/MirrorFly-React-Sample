@@ -11,7 +11,7 @@ import { capitalizeFirstLetter } from '../../Helpers/Utility';
 import {
     CALL_BUSY_STATUS_MESSAGE, CALL_ENGAGED_STATUS_MESSAGE,
     CALL_STATUS_DISCONNECTED, CALL_STATUS_ENGAGED, CALL_STATUS_HOLD,
-    CALL_HOLD_STATUS_MESSAGE, CALL_STATUS_BUSY, CALL_STATUS_CONNECTED, CALL_STATUS_CALLING, CALL_STATUS_CONNECTING, CALL_STATUS_RINGING, CALL_STATUS_ENDED,
+    CALL_HOLD_STATUS_MESSAGE, CALL_STATUS_BUSY, CALL_STATUS_CONNECTED, CALL_STATUS_CALLING, CALL_STATUS_CONNECTING, CALL_STATUS_RINGING, CALL_STATUS_ENDED, CALL_STATUS_RECONNECT,
 } from '../../Helpers/Call/Constant';
 import { IconPin, IconPinActive } from '../../assets/images';
 import { handleAudioClasses } from '../../Helpers/Call/Call';
@@ -75,6 +75,8 @@ class SmallVideo extends React.Component {
                 userStatusDisplay = capitalizeFirstLetter(userStatus.toLowerCase())
             } else if (userStatus.toLowerCase() === CALL_STATUS_ENDED) {
                 userStatusDisplay = capitalizeFirstLetter(CALL_STATUS_DISCONNECTED)
+            } else if (userStatus.toLowerCase() === CALL_STATUS_RECONNECT) {
+                userStatusDisplay = capitalizeFirstLetter(CALL_STATUS_RECONNECT)
             }
         }
 
@@ -122,6 +124,7 @@ class SmallVideo extends React.Component {
                     }
                     <>
                     {!audioMuted && this.props.callStatus.toLowerCase() !== CALL_STATUS_DISCONNECTED &&
+                     this.props.callStatus.toLowerCase() !== CALL_STATUS_RECONNECT &&
                         <div className={`audio_indication left height_adjust transistion_adjust ${handleAudioClasses(60)}`}>
                             <div className="audio_indicator audio_indicator_1"></div>
                             <div className="audio_indicator audio_indicator_2"></div>

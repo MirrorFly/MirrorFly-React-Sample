@@ -133,7 +133,6 @@ const MeetingScreenJoin = (props = {}) => {
 
   const handleVideoMute = async () => {
     const videoMuteResult = await SDK.muteVideo(!videoMute);
-    console.log("Intermediate videoMuteResult :>> ", videoMuteResult?.statusCode);
     if (videoMuteResult?.statusCode === 200) {
       muteLocalVideo(!videoMute);
       setVideoMute(!videoMute);

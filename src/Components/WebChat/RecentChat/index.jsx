@@ -145,8 +145,8 @@ class RecentChatSection extends Component {
 
     const isRefreshed = isArchived !== prevProps?.commonData?.data?.isArchived;
 
-    if (prevProps.rosterData.id !== rosterId || prevProps.recentChatData.id !== recentchatId || isRefreshed) {
-      if (!rosterId || !recentchatId) return;
+    if ((prevProps.rosterData.id !== rosterId) || ((!prevProps.recentChatData.id && recentchatId) || (prevProps.recentChatData.id !== recentchatId))|| isRefreshed) {
+      if (!recentchatId) return;
       let { recentChatItems,recentChatNames } = this.getRecentChatsItems();
       this.setState(
         {

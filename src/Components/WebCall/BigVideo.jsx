@@ -1,7 +1,7 @@
 import React from 'react';
 import Video from './Video';
 import ProfileImage from '../../Components/WebChat/Common/ProfileImage'
-import { CALL_STATUS_CONNECTED, CALL_STATUS_DISCONNECTED, CALL_STATUS_HOLD } from '../../Helpers/Call/Constant';
+import { CALL_STATUS_CONNECTED, CALL_STATUS_DISCONNECTED, CALL_STATUS_HOLD, CALL_STATUS_RECONNECT } from '../../Helpers/Call/Constant';
 import { AudioOff, DropdownArrow, IconPinActive, VideoOff } from '../../assets/images';
 import { initialNameHandle } from '../../Helpers/Chat/User';
 import { handleAudioClasses } from '../../Helpers/Call/Call';
@@ -42,6 +42,7 @@ class BigVideo extends React.Component {
                         <i title="Participant is muted" className="AudioOffRemote"><AudioOff /></i>
                     }
                         {!audioMuted && this.props.callStatus.toLowerCase() !== CALL_STATUS_DISCONNECTED && 
+                        this.props.callStatus.toLowerCase() !== CALL_STATUS_RECONNECT && 
                                <div className={`audio_indication left height_adjust transistion_adjust ${handleAudioClasses(60)}`}>
                                 <div className="audio_indicator audio_indicator_1"></div>
                                 <div className="audio_indicator audio_indicator_2"></div>
@@ -68,7 +69,8 @@ class BigVideo extends React.Component {
                         {audioMuted &&
                             <i title="Participant is muted" className="AudioOffRemote"><AudioOff /></i>
                         }
-                         {!audioMuted && this.props.callStatus.toLowerCase() !== CALL_STATUS_DISCONNECTED && 
+                         {!audioMuted && this.props.callStatus.toLowerCase() !== CALL_STATUS_DISCONNECTED &&
+                         this.props.callStatus.toLowerCase() !== CALL_STATUS_RECONNECT && 
                                <div className={`audio_indication left height_adjust transistion_adjust ${handleAudioClasses(60)}`}>
                                 <div className="audio_indicator audio_indicator_1"></div>
                                 <div className="audio_indicator audio_indicator_2"></div>

@@ -78,7 +78,7 @@ const addNewRoster = (state, newData = {}) => {
 
 const ROSTER_DEFAULT_STATE = {
   isFetchingUserList: false,
-  rosterNames: {},
+  rosterNames: new Map(),
   data: []
 }
 

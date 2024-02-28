@@ -28,7 +28,7 @@ import { hideModal } from '../../../Actions/PopUp';
 import { messageInfoAction } from "../../../Actions/MessageActions";
 import { GroupsDataAction } from "../../../Actions/GroupsAction";
 import { setGroupParticipants, setGroupParticipantsByGroupId } from "../../../Helpers/Chat/Group";
-import { RosterData, RosterPermissionAction } from "../../../Actions/RosterActions";
+import { RosterPermissionAction } from "../../../Actions/RosterActions";
 import { FeatureEnableState } from "../../../Actions/FeatureAction";
 import { REACT_APP_CONTACT_SYNC } from "../../processENV";
 
@@ -178,7 +178,6 @@ export async function login() {
         Store.dispatch(FeatureEnableState(featureData));
         encryptAndStoreInLocalStorage("featureRestrictionFlags", featureData);
       }
-      Store.dispatch(RosterData([]));
 
       if (featureData.isGroupChatEnabled) {
         const groupListRes = await SDK.getGroupsList();

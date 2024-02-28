@@ -1504,7 +1504,7 @@ export const sendNotification = (displayName = "", imageUrl = "", messageBody = 
 };
 
 export const validEmail = (email = "") => {
-  const regex = /^\s*([\w+-]+\.)*[\w+]+@([\w+-]+\.)*([\w+-]+\.[a-zA-Z]{2,6})+\s*$/;
+  const regex = /^([_a-zA-Z0-9-!#$%&+]+(\.[_a-zA-Z0-9-!#$%&+]+)*@[a-zA-Z0-9-]+(\.[a-zA-Z]{2,6})+)$/;
   return regex.test(email);
 }
 
