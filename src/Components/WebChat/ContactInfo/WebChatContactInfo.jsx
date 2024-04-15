@@ -333,7 +333,6 @@ class WebChatContactInfo extends React.Component {
             }
         } = this.props;
         if (open && modelType === "participants" && this.addNewParticipantsPopOpen) {
-            console.log("handleCloseAddNewParticipantsPopup", "close the popup");
             this.addNewParticipantsPopOpen = false;
             this.props.closePopup();
             this.setState({ contactPermissionPopup: true });

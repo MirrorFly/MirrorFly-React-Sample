@@ -1,19 +1,17 @@
 import React, { Component } from 'react';
 import SDK from '../SDK';
 import { connect } from 'react-redux';
-import {showConfrence} from '../../Actions/CallAction';
-import Store from '../../Store';
 import callLogs from './CallLogs/callLog';
 import NetworkError from './NetworkError/NetworkError'
 import { ReactComponent as BackToChat } from '../../assets/images/webcall/backToChat.svg';
 import CallControlButtons from './CallControlButtons';
 import { CALL_SESSION_STATUS_CLOSED } from '../../Helpers/Call/Constant';
 import  Logo from '../../assets/images/new-images/logoNew.png';
-import  { resetCallData } from '../../Components/callbacks';
+import  { dispatchCommon, localstoreCommon, resetCallData } from '../../Components/callbacks';
 import { getGroupData } from '../../Helpers/Chat/Group';
 import { getUserDetails,initialNameHandle } from '../../Helpers/Chat/User';
 import ProfileImage from '../WebChat/Common/ProfileImage';
-import { getFromLocalStorageAndDecrypt, encryptAndStoreInLocalStorage, deleteItemFromLocalStorage} from '../WebChat/WebChatEncryptDecrypt';
+import { getFromLocalStorageAndDecrypt} from '../WebChat/WebChatEncryptDecrypt';
 
 let timer;
 
@@ -36,7 +34,6 @@ class Connecting extends Component{
     startTimer(){
         timer = setTimeout(() => {
             this.setState({connectingIssue: true, loading: false});
-            this.endCall()
         }, 30000);
     }
 
@@ -52,15 +49,8 @@ class Connecting extends Component{
             "endTime": callLogs.initTime(),
             "sessionStatus": CALL_SESSION_STATUS_CLOSED
         });
-
-        encryptAndStoreInLocalStorage('callingComponent',false)
-        deleteItemFromLocalStorage('roomName')
-        deleteItemFromLocalStorage('callType')
-        deleteItemFromLocalStorage('call_connection_status')
-        Store.dispatch(showConfrence({
-            showComponent: false,
-            showCalleComponent:false
-        }))
+        localstoreCommon();
+        dispatchCommon();
     }
 
     handleHideCallScreen = e => {

@@ -186,12 +186,8 @@ export const resetCallData = () => {
     } else {
         Store.dispatch(resetCallIntermediateScreen());
     }
-    Store.dispatch(callDurationTimestamp());
-    Store.dispatch(resetConferencePopup());
     resetData();
-    setTimeout(() => {
-        Store.dispatch(isMuteAudioAction(false));
-    }, 1000)
+    Store.dispatch(isMuteAudioAction(false));
 };
 
 export const muteLocalVideo = (isMuted) => {
@@ -232,25 +228,6 @@ const updatingUserStatusInRemoteStream = (usersStatus) => {
             remoteAudioMuted[user.userJid] = user.audioMuted;
         }
     });
-}
-
-const initiateDisconnectedScreenTimer = (res) => {
-    setTimeout(() => {
-        Store.dispatch(showConfrence({
-            showComponent: false,
-            showStreamingComponent: true,
-            showCallingComponent: false,
-            localStream: localStream,
-            remoteStream: remoteStream,
-            fromJid: "",
-            status: "REMOTESTREAM",
-            localVideoMuted: localVideoMuted,
-            localAudioMuted: localAudioMuted,
-            remoteVideoMuted: remoteVideoMuted,
-            remoteAudioMuted: remoteAudioMuted
-        }))
-        resetPinAndLargeVideoUser(res.userJid);
-    }, DISCONNECTED_SCREEN_DURATION);
 }
 
 const removingRemoteStream = (res) => {
@@ -446,15 +423,16 @@ const disconnected = (res) => {
     }
 }
 
-const localstoreCommon = () => {
+export const localstoreCommon = () => {
     encryptAndStoreInLocalStorage('callingComponent', false)
     deleteItemFromLocalStorage('roomName');
     deleteItemFromLocalStorage('callType');
     deleteItemFromLocalStorage('call_connection_status');
+    deleteItemFromLocalStorage('inviteStatus');
     encryptAndStoreInLocalStorage("hideCallScreen", false);
 };
 
-const dispatchCommon = () => {
+export const dispatchCommon = () => {
     Store.dispatch(showConfrence({
         callStatusText: null,
         showComponent: false,
@@ -464,6 +442,8 @@ const dispatchCommon = () => {
     }));
     Store.dispatch(callConversion());
     Store.dispatch(hideModal());
+    Store.dispatch(callDurationTimestamp());
+    Store.dispatch(resetConferencePopup());
     resetCallData();
 };
 
@@ -477,10 +457,7 @@ const handleEngagedOrBusyStatus = (res) => {
         });
         const callStatusMsg = res.status === "engaged" ? CALL_ENGAGED_STATUS_MESSAGE : CALL_BUSY_STATUS_MESSAGE;
         dispatchDisconnected(callStatusMsg);
-        setTimeout(() => {
-            localstoreCommon();
-            dispatchCommon();
-        }, DISCONNECTED_SCREEN_DURATION);
+        localCallDataClearAndDiscardUi();
     } else {
         if (remoteStream && Array.isArray(remoteStream) && remoteStream.length < 1) {
             return;
@@ -736,6 +713,9 @@ export const callbacks = {
         }
     },
     incomingCallListener: (res) => {
+        localstoreCommon();
+        resetCallData();
+        resetLocalCallDataClearAndDiscardUiTimer();
         strophe = true;
         remoteStream = [];
         localStream = null;
@@ -1336,3 +1316,14 @@ export const callbacks = {
         }));
     }
 }
+
+let localCallDataClearAndDiscardUiTimer = null;
+
+export const localCallDataClearAndDiscardUi = () => {
+    localCallDataClearAndDiscardUiTimer = setTimeout(() => {
+        localstoreCommon();
+        dispatchCommon();
+    }, DISCONNECTED_SCREEN_DURATION);
+}
+
+export const resetLocalCallDataClearAndDiscardUiTimer = () =>  clearTimeout(localCallDataClearAndDiscardUiTimer);

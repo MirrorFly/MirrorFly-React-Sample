@@ -8,11 +8,11 @@ import WebChatProfileImg from '../WebChat/Profile/WebChatProfileImg';
 import callLogs from './CallLogs/callLog';
 import { showModal } from '../../Actions/PopUp'
 import { capitalizeFirstLetter } from '../../Helpers/Utility';
-import { CALL_SESSION_STATUS_CLOSED, DISCONNECTED_SCREEN_DURATION, CALL_STATUS_DISCONNECTED, COMMON_ERROR_MESSAGE, PERMISSION_DENIED } from '../../Helpers/Call/Constant';
+import { CALL_SESSION_STATUS_CLOSED, CALL_STATUS_DISCONNECTED } from '../../Helpers/Call/Constant';
 import { clearMissedCallNotificationTimer, dispatchDisconnected, getCallDisplayDetailsForOnetoManyCall } from '../../Helpers/Call/Call';
 import  Logo  from '../../assets/images/new-images/logoNew.png';
 import { getGroupData } from '../../Helpers/Chat/Group';
-import  { resetCallData } from '../callbacks';
+import  { localCallDataClearAndDiscardUi, resetCallData } from '../callbacks';
 import { getUserDetails, initialNameHandle } from '../../Helpers/Chat/User';
 import { toast } from 'react-toastify';
 import CallerProfileList from "./CallerProfileList";
@@ -27,6 +27,7 @@ class CalleScreen extends Component {
         this.preventMultipleClick = false;
         this.audio.autoplay = true;
         this.audio.muted = true;
+        this.premissionConst = "permission denied";
     }
     componentDidMount = () => {
 
@@ -64,26 +65,13 @@ class CalleScreen extends Component {
     endCall = async () => {
         clearTimeout(this.callingTimer);
         const {callConnectionDate} = this.props;
-        SDK.endCall();
         dispatchDisconnected();
         resetCallData();
         callLogs.update(callConnectionDate.data.roomId, {
             "endTime": callLogs.initTime(),
             "sessionStatus": CALL_SESSION_STATUS_CLOSED
         });
-        setTimeout(() => {
-            encryptAndStoreInLocalStorage('callingComponent',false)
-            deleteItemFromLocalStorage('roomName')
-            deleteItemFromLocalStorage('callType')
-            deleteItemFromLocalStorage('call_connection_status')
-            encryptAndStoreInLocalStorage("hideCallScreen", false);
-            Store.dispatch(showConfrence({
-                showComponent: false,
-                showCalleComponent:false,
-                stopSound: true,
-                callStatusText: null
-            }))
-        }, DISCONNECTED_SCREEN_DURATION);
+        localCallDataClearAndDiscardUi();
     }
 
     attendCall = async ()=>{
@@ -98,10 +86,9 @@ class CalleScreen extends Component {
             const {callConnectionDate} = this.props
             let call = {};
                 call = await SDK.answerCall()
-                console.log("attend call", call);
                 if(call.statusCode !== 200) {
-                    if(call.message !== PERMISSION_DENIED){
-                        toast.error(COMMON_ERROR_MESSAGE);
+                    if (!call.message.includes(this.premissionConst)) {
+                        toast.error(call.message);
                     }
                     deleteItemFromLocalStorage('roomName')
                     deleteItemFromLocalStorage('callType')
@@ -141,18 +128,8 @@ class CalleScreen extends Component {
                     "sessionStatus": CALL_SESSION_STATUS_CLOSED
                 });
                 dispatchDisconnected();
-                setTimeout(() => {
-                    deleteItemFromLocalStorage('roomName')
-                    deleteItemFromLocalStorage('callType')
-                    deleteItemFromLocalStorage('call_connection_status')
-                    encryptAndStoreInLocalStorage("hideCallScreen", false);
-                    Store.dispatch(showConfrence({
-                        showComponent: false,
-                        showCalleComponent:false,
-                        callStatusText: null
-                    }))
-                    resetCallData();
-                }, DISCONNECTED_SCREEN_DURATION);
+                resetCallData();
+                localCallDataClearAndDiscardUi();
             } else {
                 console.log("Error occured ", call.errorMessage)
             }

@@ -82,7 +82,7 @@ export default React.memo(({ msgId, viewOriginalMessage, groupMemberDetails, cha
             const { rosterData } = replyMessageDetail || {}
             return filterProfileFromRoster(rosterData, messageFrom)
         }
-        const { nameToDisplay } = getDisplayNameFromGroup(messageFromGroup, groupMemberDetails);
+        const { nameToDisplay } = getDisplayNameFromGroup(messageFrom ? messageFrom : messageFromGroup, groupMemberDetails);
         return nameToDisplay;
     }
     const fileExtension = getExtension(fileName);

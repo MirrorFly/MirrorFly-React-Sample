@@ -150,7 +150,6 @@ class IndexedDb {
             .then(async(blob) => {
                 if (!blob) {
                     let result = await this.makeHttpRequest(keyString, storeName, fileKey, msgId)
-                    console.log("result", result);
                     return result;
                 }
                 return blob;

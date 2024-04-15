@@ -28,6 +28,9 @@ import {
 } from '../../Components/processENV';
 import SDK from '../../Components/SDK';
 import {
+    dispatchCommon,
+    localCallDataClearAndDiscardUi,
+    localstoreCommon,
     removeRemoteStream,
     resetCallData
 } from '../../Components/callbacks';
@@ -35,7 +38,7 @@ import browserNotify from '../Browser/BrowserNotify';
 import {
     callLinkToast
 } from '../../Components/ToastServices/CustomToast';
-import { getFromLocalStorageAndDecrypt, encryptAndStoreInLocalStorage, deleteItemFromLocalStorage} from '../../Components/WebChat/WebChatEncryptDecrypt';
+import { getFromLocalStorageAndDecrypt, encryptAndStoreInLocalStorage } from '../../Components/WebChat/WebChatEncryptDecrypt';
 
 let callingRemoteStreamRemovalTimer = null;
 let missedCallNotificationTimer = null;
@@ -199,30 +202,23 @@ export function dispatchDisconnected(statusMessage, remoteStreams = []) {
     }))
 }
 
-export const disconnectCallConnection = (remoteStreams = []) => {
+export const disconnectCallConnection = (remoteStreams = [], sendEndCall = true) => {
     const callConnectionData = JSON.parse(getFromLocalStorageAndDecrypt('call_connection_status'))
-    SDK.endCall();
+    if (sendEndCall) {
+        SDK.endCall();
+    }
     dispatchDisconnected(CALL_STATUS_DISCONNECTED, remoteStreams);
+    resetCallData();
     callLogs.update(callConnectionData.roomId, {
         "endTime": callLogs.initTime(),
         "sessionStatus": CALL_SESSION_STATUS_CLOSED
     });
-    let timeOut = getFromLocalStorageAndDecrypt("isNewCallExist") === true ? 0 : DISCONNECTED_SCREEN_DURATION;
-    setTimeout(() => {
-        encryptAndStoreInLocalStorage('callingComponent', false)
-        deleteItemFromLocalStorage('roomName')
-        deleteItemFromLocalStorage('callType')
-        deleteItemFromLocalStorage('call_connection_status');
-        deleteItemFromLocalStorage('inviteStatus');
-        encryptAndStoreInLocalStorage("hideCallScreen", false);
-        resetCallData();
-        Store.dispatch(showConfrence({
-            showComponent: false,
-            showCalleComponent: false,
-            callStatusText: null,
-            showStreamingComponent: false
-        }))
-    }, timeOut);
+    if (getFromLocalStorageAndDecrypt("isNewCallExist") === true) {
+        localstoreCommon();
+        dispatchCommon();
+    } else {
+        localCallDataClearAndDiscardUi();
+    }
 }
 
 export function getCallDuration(timerTime) {
@@ -321,7 +317,7 @@ export const startCallingTimer = () => {
                         remoteStream: remoteStreamsUpdated
                     }));
                 } else {
-                    disconnectCallConnection(remoteStreams);
+                    disconnectCallConnection(remoteStreams, false);
                 }
             }
         }

@@ -5,7 +5,8 @@ import Loader from './Components/Layouts/Loader';
 import SDK from './Components/SDK'
 import "./assets/scss/common.scss";
 import { getLocalUserDetails } from './Helpers/Chat/User';
-import { deleteItemFromLocalStorage, deleteItemFromSessionStorage, encryptAndStoreInLocalStorage, getFromLocalStorageAndDecrypt, getFromSessionStorageAndDecrypt } from './Components/WebChat/WebChatEncryptDecrypt';
+import { deleteItemFromLocalStorage, deleteItemFromSessionStorage, getFromLocalStorageAndDecrypt, getFromSessionStorageAndDecrypt } from './Components/WebChat/WebChatEncryptDecrypt';
+import { localstoreCommon } from './Components/callbacks';
 
 window.addEventListener("DOMContentLoaded", function() {
   deleteItemFromLocalStorage("new_recent_chat_data");
@@ -19,16 +20,10 @@ window.onbeforeunload = function() {
         let userJid = callConnectionData.userJid ? callConnectionData.userJid : callConnectionData.from;
         userJid = userJid.includes("@") ? userJid.split('@')[0] : userJid;
         if (userJid === vcardData.fromUser){
-          console.log("call data ending call in the browser refresh");
           SDK.endCall();
         }
       }
-      deleteItemFromLocalStorage('roomName');
-      deleteItemFromLocalStorage('callType');
-      deleteItemFromLocalStorage('call_connection_status');
-      deleteItemFromLocalStorage('inviteStatus');
-      deleteItemFromLocalStorage('connecting');
-      encryptAndStoreInLocalStorage('callingComponent',false);
+      localstoreCommon();
     }
 
 };

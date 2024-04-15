@@ -456,7 +456,6 @@ class WebChatConversationHistory extends Component {
     const optionType = targetElement.closest("li").getAttribute("title");
     const { fromUser } = this.props.vCardData?.data;
     const isSender = senderId && senderId.indexOf(fromUser) !== -1;
-
     if (optionType === "Reply") {
       const {
         activeChatData: { data = {} }

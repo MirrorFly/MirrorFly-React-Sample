@@ -27,7 +27,6 @@ class WebChatEmoji extends React.Component {
    * handleShowEmojis() method to show emoji picker.
    */
   handleShowEmojis = e => {
-      console.log("webchatemoji comp---showEmoji() triggers")
       const { closeParentMenu } = this.props
       this.setState(
         {

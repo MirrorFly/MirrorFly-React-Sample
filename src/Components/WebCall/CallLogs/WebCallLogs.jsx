@@ -6,7 +6,7 @@ import { getFromLocalStorageAndDecrypt, encryptAndStoreInLocalStorage, deleteIte
 import Search from './Search';
 import "../../../assets/scss/minEmoji.scss";
 import loaderSVG from '../../../assets/images/loader.svg';
-import { PERMISSION_DENIED, REACT_APP_CONTACT_SYNC, REACT_APP_XMPP_SOCKET_HOST } from '../../processENV';
+import { REACT_APP_CONTACT_SYNC, REACT_APP_XMPP_SOCKET_HOST } from '../../processENV';
 import { displayNameFromRencentChat, handleParticipantList } from '../../../Helpers/Chat/ChatHelper'
 import { getFormatPhoneNumber, getPhoneNumberFromJid, getUserIdFromJid } from '../../../Helpers/Utility';
 import { toast } from 'react-toastify';
@@ -18,7 +18,7 @@ import CallLogView from './CallLogView';
 import { NO_INTERNET } from '../../../Helpers/Constants';
 import { formatUserIdToJid, getDataFromRoster, getLocalUserDetails, getUserDetails, initialNameHandle } from '../../../Helpers/Chat/User';
 import { getGroupData } from '../../../Helpers/Chat/Group';
-import { muteLocalVideo } from "../../callbacks";
+import { muteLocalVideo, resetCallData, resetLocalCallDataClearAndDiscardUiTimer } from "../../callbacks";
 import { COMMON_ERROR_MESSAGE, FEATURE_RESTRICTION_ERROR_MESSAGE } from '../../../Helpers/Call/Constant';
 import FloatingCallOption from './FloatingCallOption/FloatingCallOption';
 import { FloatingCallActionSm, ArrowBack, EmptyCallLog } from '../../../assets/images';
@@ -44,6 +44,7 @@ class WebChatCallLogs extends React.Component {
         }
         this.handleOnBack = this.handleOnBack.bind(this);
         this.preventMultipleClick = false;
+        this.premissionConst = "permission denied";
     }
 
     getCallLogs = (props) => {
@@ -231,10 +232,56 @@ class WebChatCallLogs extends React.Component {
         Store.dispatch(hideModal());
     }
 
+    handleMakeCallSuccessError = (callConnectionStatus, success, err) => {
+        if (err) {
+            if (!err.message.includes(this.premissionConst)) {
+                toast.error(err.message);
+            }
+            setTimeout(() => {
+                deleteItemFromLocalStorage('roomName')
+                deleteItemFromLocalStorage('callType')
+                deleteItemFromLocalStorage('call_connection_status')
+                encryptAndStoreInLocalStorage("hideCallScreen", false);
+                encryptAndStoreInLocalStorage('callingComponent', false)
+                encryptAndStoreInLocalStorage("hideCallScreen", false);
+                Store.dispatch(showConfrence({
+                    showComponent: false,
+                    showCalleComponent: false,
+                    stopSound: true,
+                    callStatusText: null
+                }))
+                resetCallData();
+            }, 1000);
+        }
+        if (success) {
+            let roomId = success.roomId;
+            callLogs.insert({
+                "callMode": callConnectionStatus.callMode,
+                "callState": 1,
+                "callTime": callLogs.initTime(),
+                "callType": callConnectionStatus.callType,
+                "fromUser": callConnectionStatus.from,
+                "roomId": roomId,
+                "userList": callConnectionStatus.userList,
+                ...(callConnectionStatus.callMode === "onetomany" && {
+                    "groupId": callConnectionStatus.groupId
+                })
+            });
+            encryptAndStoreInLocalStorage('roomName', roomId)
+            let callConnectionStatusNew = {
+                ...callConnectionStatus,
+                roomId: roomId
+            }
+            encryptAndStoreInLocalStorage('call_connection_status', JSON.stringify(callConnectionStatusNew))
+            Store.dispatch(CallConnectionState(callConnectionStatusNew));
+            startCallingTimer();
+        }
+    }
+
     makeCall = async (callMode, callType, groupCallMemberDetails, groupId = null) => {
         let connectionStatus = getFromLocalStorageAndDecrypt("connection_status")
         if (connectionStatus === "CONNECTED") {
-            let users = [], roomId = "", call = null, image = "";
+            let users = [], image = "";
             const vcardData = getLocalUserDetails();
             let fromuser = formatUserIdToJid(vcardData.fromUser);
 
@@ -287,66 +334,18 @@ class WebChatCallLogs extends React.Component {
                 showComponent: true,
                 callStatusText: 'Calling'
             }))
-            try {
-                if (callType === "audio") {
-                    muteLocalVideo(true);
-                    call = await SDK.makeVoiceCall(users, groupId);
-                } else if (callType === "video") {
-                    muteLocalVideo(false);
-                    call = await SDK.makeVideoCall(users, groupId);
-                }
-                if (call.statusCode !== 200 && call.message === PERMISSION_DENIED) {
-                    deleteItemFromLocalStorage('roomName')
-                    deleteItemFromLocalStorage('callType')
-                    deleteItemFromLocalStorage('call_connection_status')
-                    encryptAndStoreInLocalStorage("hideCallScreen", false);
-                    encryptAndStoreInLocalStorage('callingComponent', false)
-                    encryptAndStoreInLocalStorage("hideCallScreen", false);
-                    Store.dispatch(showConfrence({
-                        showComponent: false,
-                        showCalleComponent: false,
-                        stopSound: true,
-                        callStatusText: null
-                    }))
-                } else {
-                    roomId = call.roomId;
-                    callLogs.insert({
-                        "callMode": callConnectionStatus.callMode,
-                        "callState": 1,
-                        "callTime": callLogs.initTime(),
-                        "callType": callConnectionStatus.callType,
-                        "fromUser": callConnectionStatus.from,
-                        "roomId": roomId,
-                        "userList": callConnectionStatus.userList,
-                        ...(callMode === "onetomany" && {
-                            "groupId": groupId
-                        })
-                    });
-                    encryptAndStoreInLocalStorage('roomName', roomId)
-                    let callConnectionStatusNew = {
-                        ...callConnectionStatus,
-                        roomId: roomId
-                    }
-                    encryptAndStoreInLocalStorage('call_connection_status', JSON.stringify(callConnectionStatusNew))
-                    Store.dispatch(CallConnectionState(callConnectionStatusNew));
-                    startCallingTimer();
-                }
-            } catch (error) {
-                console.log("Error in making call", error);
-                if (error.message === PERMISSION_DENIED) {
-                    deleteItemFromLocalStorage('roomName')
-                    deleteItemFromLocalStorage('callType')
-                    deleteItemFromLocalStorage('call_connection_status')
-                    encryptAndStoreInLocalStorage("hideCallScreen", false);
-                    encryptAndStoreInLocalStorage('callingComponent', false)
-                    encryptAndStoreInLocalStorage("hideCallScreen", false);
-                    Store.dispatch(showConfrence({
-                        showComponent: false,
-                        showCalleComponent: false,
-                        stopSound: true,
-                        callStatusText: null
-                    }))
-                }
+            if (callType === "audio") {
+                muteLocalVideo(true);
+                resetLocalCallDataClearAndDiscardUiTimer();
+                SDK.makeVoiceCall(users, groupId, (success, err) => {
+                    this.handleMakeCallSuccessError(callConnectionStatus, success, err);
+                });
+            } else if (callType === "video") {
+                muteLocalVideo(false);
+                resetLocalCallDataClearAndDiscardUiTimer();
+                SDK.makeVideoCall(users, groupId, (success, err) => {
+                    this.handleMakeCallSuccessError(callConnectionStatus, success, err);
+                });
             }
             this.preventMultipleClick = false;
         } else {
