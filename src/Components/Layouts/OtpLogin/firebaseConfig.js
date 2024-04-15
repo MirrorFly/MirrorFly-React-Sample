@@ -3,10 +3,10 @@ import 'firebase/firestore';
 import 'firebase/auth';
 
 const firebaseConfig = {
-    "apiKey": process.env.REACT_APP_FIREBASE_API_KEY,
-    "authDomain": "mirrorfly-webuikit.firebaseapp.com",
+    "apiKey": "AIzaSyBsDgqVCPQkReMH5BlmXGxRirPYzKgSdE0",
+    "authDomain": "mirrorfly-uikit.firebaseapp.com",
     "databaseURL": "",
-    "projectId": "mirrorfly-webuikit",
+    "projectId": "mirrorfly-uikit",
     "storageBucket": "",
     "messagingSenderId": ""
 };
