@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
-import { toast } from "react-toastify";
 import {
   AudioOff,
   AudioOn,
@@ -66,7 +65,6 @@ const MeetingScreenJoin = (props = {}) => {
 
     if (roomLink && vcardData.nickName) {
       SDK.subscribeCall(roomLink, vcardData.nickName, (response, error) => {
-        console.log("subscribeCall :>> ", response, error);
         const behaviorResponse = SDK.getCallBehaviour();
         let behavior = "call";
         if (behaviorResponse.statusCode === 200) {
@@ -80,6 +78,8 @@ const MeetingScreenJoin = (props = {}) => {
           } else if (error.statusCode === 100603) {
             updateObj.readyToJoin = false;
             updateObj.maxParticipants = true;
+          } else {
+            updateObj.serverError = true;
           }
         } else {
           if (response.statusCode === 100500) {
@@ -109,7 +109,6 @@ const MeetingScreenJoin = (props = {}) => {
 
   const handleAudioMute = async () => {
     const audioMuteResult = await SDK.muteAudio(!audioMute);
-    console.log("Intermediate audioMuteResult :>> ", audioMuteResult?.statusCode);
     if (audioMuteResult?.statusCode === 200) {
       muteLocalAudio(!audioMute);
       setAudioMute(!audioMute);
@@ -177,7 +176,6 @@ const MeetingScreenJoin = (props = {}) => {
         loading: true
       });
       SDK.joinCall((response, error) => {
-        console.log("joinCall result :>> ", response, error);
         if (error) {
           const updateObj = {
             ...activeScreen,
@@ -189,8 +187,9 @@ const MeetingScreenJoin = (props = {}) => {
           } else if (error.statusCode === 100603) {
             updateObj.readyToJoin = false;
             updateObj.maxParticipants = true;
-          } else if (error.statusCode === 100605) {
-            toast.error("The server is not responding. Please try again later");
+          } else {
+            updateObj.readyToJoin = false;
+            updateObj.serverError = true;
           }
           setActiveScreen(updateObj);
         }
@@ -201,7 +200,7 @@ const MeetingScreenJoin = (props = {}) => {
     }
   };
 
-  const { loading, readyToJoin, callEnd, invalidLink, maxParticipants, behavior } = activeScreen;
+  const { loading, readyToJoin, callEnd, invalidLink, maxParticipants, behavior, serverError } = activeScreen;
 
   return (
     <div className="join_meeting_wrapper">
@@ -283,7 +282,7 @@ const MeetingScreenJoin = (props = {}) => {
           </>
         )}
         {maxParticipants && <MaxParticipants />}
-        {(callEnd || invalidLink) && <CallLinkStatus handleBack={handleBackButton} callEndScreen={callEnd} />}
+        {(callEnd || invalidLink || serverError) && <CallLinkStatus handleBack={handleBackButton} callEndScreen={callEnd} serverError={serverError} invalidLink={invalidLink}/>}
       </div>
     </div>
   );

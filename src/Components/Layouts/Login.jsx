@@ -38,7 +38,7 @@ import { NO_INTERNET_TOAST } from "../../Helpers/Constants";
 import { formatUserIdToJid } from "../../Helpers/Chat/User";
 import OtpLogin from "./OtpLogin/index";
 import MeetingScreenJoin from "../WebCall/MeetingScreenJoin/";
-import { resetCallData } from "../callbacks";
+import { localstoreCommon, resetCallData } from "../callbacks";
 import ActionInfoPopup from '../ActionInfoPopup';
 import BlockedFromApplication from "../BlockedFromApplication";
 import { adminBlockStatusUpdate } from "../../Actions/AdminBlockAction";
@@ -108,11 +108,7 @@ class Login extends React.Component {
 
   endOngoingCall = () => {
     SDK.endCall();
-    encryptAndStoreInLocalStorage('callingComponent', false)
-    deleteItemFromLocalStorage('roomName')
-    deleteItemFromLocalStorage('callType')
-    deleteItemFromLocalStorage('call_connection_status');
-    encryptAndStoreInLocalStorage("hideCallScreen", false);
+    localstoreCommon();
     resetCallData();
   }
 
@@ -373,7 +369,6 @@ class Login extends React.Component {
     encryptAndStoreInLocalStorage("auth_user", loginResponse);
     SDK.connect(response.username, response.password, forceLogin)
       .then(async (res) => {
-        console.log("handleLogin success",res);
         if (res.statusCode === 200) {
           updateSessionId(tabId);
           this.handleLoginToken(loginResponse);
@@ -745,10 +740,8 @@ class Login extends React.Component {
       let currentTabId = getFromSessionStorageAndDecrypt("sessionId");
       encryptAndStoreInLocalStorage("sessionId", currentTabId);
       updateFavicon("");
-      console.log("getFromLocalStorageAndDecrypt", getFromLocalStorageAndDecrypt("auth_user"))
       if (getFromLocalStorageAndDecrypt("auth_user") !== null) {
         let decryptResponse = getFromLocalStorageAndDecrypt("auth_user");
-        console.log("decryptResponse", decryptResponse);
         this.setState({ webChatStatus: true, newSession: false }, () => {
           resetStoreData();
           this.handleLogin(decryptResponse, true);

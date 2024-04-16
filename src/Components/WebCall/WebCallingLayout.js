@@ -1,22 +1,19 @@
 import React, { Component } from 'react';
 import SDK from '../SDK';
 import { connect } from 'react-redux';
-import { showConfrence } from '../../Actions/CallAction';
-import Store from '../../Store';
 import WebChatProfileImg from '../WebChat/Profile/WebChatProfileImg';
 import { getFormatPhoneNumber, capitalizeFirstLetter } from '../../Helpers/Utility';
 import callLogs from '../WebCall/CallLogs/callLog'
 import { ReactComponent as BackToChat } from '../../assets/images/webcall/backToChat.svg';
 import CallControlButtons from './CallControlButtons';
-import { CALL_ENGAGED_STATUS_MESSAGE, CALL_SESSION_STATUS_CLOSED, DISCONNECTED_SCREEN_DURATION } from '../../Helpers/Call/Constant';
+import { CALL_ENGAGED_STATUS_MESSAGE, CALL_SESSION_STATUS_CLOSED } from '../../Helpers/Call/Constant';
 import { dispatchDisconnected, getCallDisplayDetailsForOnetoManyCall } from '../../Helpers/Call/Call';
 import { getUserDetails, initialNameHandle } from '../../Helpers/Chat/User';
 import Logo from '../../assets/images/new-images/logoNew.png';
-import { resetCallData } from '../../Components/callbacks';
+import { localCallDataClearAndDiscardUi, resetCallData } from '../../Components/callbacks';
 import { getGroupData } from '../../Helpers/Chat/Group';
 import SmallVideo from './SmallVideo';
 import CallerProfileList from "./CallerProfileList";
-import { deleteItemFromLocalStorage, encryptAndStoreInLocalStorage} from '../WebChat/WebChatEncryptDecrypt';
 
 class WebCallingLayout extends Component {
     audio = new Audio('sounds/outgoingRinging.wav');
@@ -44,9 +41,6 @@ class WebCallingLayout extends Component {
                 callingUiStatus: "User seems to be offline, Trying to connect"
             });
         }, 10000);
-        this.timer = setTimeout(() => {
-            this.endCall()
-        }, 30000);
     }
 
     componentDidUpdate(prevProps){
@@ -66,21 +60,7 @@ class WebCallingLayout extends Component {
             "endTime": callLogs.initTime(),
             "sessionStatus": CALL_SESSION_STATUS_CLOSED
         });
-        setTimeout(() => {
-            deleteItemFromLocalStorage('roomName')
-            deleteItemFromLocalStorage('callType')
-            deleteItemFromLocalStorage('call_connection_status')
-            encryptAndStoreInLocalStorage("hideCallScreen", false);
-            encryptAndStoreInLocalStorage('callingComponent', false)
-            encryptAndStoreInLocalStorage("hideCallScreen", false);
-            Store.dispatch(showConfrence({
-                showComponent: false,
-                showCalleComponent: false,
-                stopSound: true,
-                callStatusText: null
-            }))
-            this.setState({ sendEnd: true })
-        }, DISCONNECTED_SCREEN_DURATION);
+        localCallDataClearAndDiscardUi();
     }
 
     playAudio(roomId) {

@@ -1,6 +1,5 @@
 // Display DISCONNECTED text duration in milli seconds
 export const DISCONNECTED_SCREEN_DURATION = 3000;
-export const MISSEDCALL_SCREEN_DURATION = 3000;
 // Call Ringing duration in milli seconds
 export const CALL_RINGING_DURATION = 30000;
 // CALL SESSION STATUS

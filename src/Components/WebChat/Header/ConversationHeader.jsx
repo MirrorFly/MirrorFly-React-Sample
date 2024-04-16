@@ -16,7 +16,7 @@ import WebChatContactInfo from '../ContactInfo/WebChatContactInfo';
 import { resetPinAndLargeVideoUser, startCallingTimer } from '../../../Helpers/Call/Call';
 import { CONNECTED, NO_INTERNET } from '../../../Helpers/Constants';
 import { formatUserIdToJid, getContactNameFromRoster, getIdFromJid, initialNameHandle } from '../../../Helpers/Chat/User';
-import { muteLocalVideo } from "../../callbacks";
+import { muteLocalVideo, resetCallData, resetLocalCallDataClearAndDiscardUiTimer } from "../../callbacks";
 import { isGroupChat, isSingleChat } from '../../../Helpers/Chat/ChatHelper';
 import { isAppOnline } from '../../../Helpers/Utility';
 
@@ -40,7 +40,7 @@ class ConversationHeader extends React.Component {
             schedulePopup: false
         }
         this.preventMultipleClick = false;
-        this.premissionConst = "Permission denied";
+        this.premissionConst = "permission denied";
         this.disableEdit = false;
     }
 
@@ -136,6 +136,37 @@ class ConversationHeader extends React.Component {
             stopSound: true,
             callStatusText: null
         }));
+        resetCallData();
+    }
+
+    handleOne2OneAVCallSuccessError = (callConnectionStatus, success, err) => {
+        if (err){
+            if (!err.message.includes(this.premissionConst)) {
+                toast.error(err.message);
+            }
+            setTimeout(() => {
+                this.deleteAndDispatchAction();
+            }, 1000);
+        }
+        if (success) {
+            let roomId = success.roomId;
+            encryptAndStoreInLocalStorage('roomName', roomId)
+            callLogs.insert({
+                "callMode": callConnectionStatus.callMode,
+                "callState": 1,
+                "callTime": callLogs.initTime(),
+                "callType": callConnectionStatus.callType,
+                "fromUser": callConnectionStatus.from,
+                "roomId": roomId,
+                "userList": callConnectionStatus.userList
+            });
+            let callConnectionStatusNew = { ...callConnectionStatus, roomId: roomId };
+            encryptAndStoreInLocalStorage('call_connection_status', JSON.stringify(callConnectionStatusNew));
+            const callConnectionDate = Store.getState().callConnectionDate;
+            if(callConnectionDate?.data?.roomId) return;
+            Store.dispatch(CallConnectionState(callConnectionStatusNew));
+            startCallingTimer();
+        }
     }
 
     makeOne2OneCall = async (callType) => {
@@ -155,9 +186,7 @@ class ConversationHeader extends React.Component {
         if (connectionStatus === CONNECTED) {
             let fromuser = this.props?.vCardData?.data?.fromUser;
             let { activeChatId, userData: { data: { roster } } } = this.props
-            let roomId = "";
             activeChatId = activeChatId + "@" + REACT_APP_XMPP_SOCKET_HOST
-            let call = null;
             resetPinAndLargeVideoUser();
             let callMode = "onetoone";
             fromuser = fromuser + "@" + REACT_APP_XMPP_SOCKET_HOST;
@@ -171,7 +200,6 @@ class ConversationHeader extends React.Component {
                 userList: activeChatId,
                 userAvatar: (thumbImage && thumbImage !== "") ? thumbImage : image
             }
-            console.log("make call callConnectionStatus", callConnectionStatus);
             encryptAndStoreInLocalStorage('call_connection_status', JSON.stringify(callConnectionStatus));
             encryptAndStoreInLocalStorage('callType', callType)
             encryptAndStoreInLocalStorage('callingComponent', true)
@@ -192,31 +220,18 @@ class ConversationHeader extends React.Component {
             try {
                 if (callType === "audio") {
                     muteLocalVideo(true);
-                    call = await SDK.makeVoiceCall([activeChatId], null);
+                    resetLocalCallDataClearAndDiscardUiTimer();
+                    SDK.makeVoiceCall([activeChatId], null, (success, err) => {
+                        this.handleOne2OneAVCallSuccessError(callConnectionStatus, success, err);
+                    });
                 } else if (callType === "video") {
                     muteLocalVideo(false);
-                    call = await SDK.makeVideoCall([activeChatId], null);
-                }
-                if (call.statusCode !== 200 && call.message === this.premissionConst) {
-                    this.deleteAndDispatchAction();
-                } else {
-                    roomId = call.roomId;
-                    encryptAndStoreInLocalStorage('roomName', roomId)
-                    callLogs.insert({
-                        "callMode": callConnectionStatus.callMode,
-                        "callState": 1,
-                        "callTime": callLogs.initTime(),
-                        "callType": callConnectionStatus.callType,
-                        "fromUser": callConnectionStatus.from,
-                        "roomId": roomId,
-                        "userList": callConnectionStatus.userList
+                    resetLocalCallDataClearAndDiscardUiTimer();
+                    SDK.makeVideoCall([activeChatId], null, (success, err) => {
+                        this.handleOne2OneAVCallSuccessError(callConnectionStatus, success, err);
                     });
-                    let callConnectionStatusNew = { ...callConnectionStatus, roomId: roomId };
-                    encryptAndStoreInLocalStorage('call_connection_status', JSON.stringify(callConnectionStatusNew));
-                    Store.dispatch(CallConnectionState(callConnectionStatusNew));
-                }
+                }                
             } catch (error) {
-                console.log("Error in making call", error);
                 if (error.message !== this.premissionConst) {
                     this.deleteAndDispatchAction();
                 }
@@ -286,6 +301,40 @@ class ConversationHeader extends React.Component {
         }
     }
 
+    handleGroupAVCallSuccessError = (callConnectionStatus, success, err) => {
+        if (err){
+            if (!err.message.includes(this.premissionConst)) {
+                toast.error(err.message);
+            }
+            setTimeout(() => {
+                this.deleteAndDispatchAction();
+            }, 1000);
+        }
+        if (success) {
+            let roomId = success.roomId;
+            encryptAndStoreInLocalStorage('roomName', roomId)
+            callLogs.insert({
+                "callMode": callConnectionStatus.callMode,
+                "callState": 1,
+                "callTime": callLogs.initTime(),
+                "callType": callConnectionStatus.callType,
+                "fromUser": callConnectionStatus.from,
+                "roomId": roomId,
+                "userList": callConnectionStatus.userList,
+                "groupId": callConnectionStatus.groupId
+            });
+            let callConnectionStatusNew = {
+                ...callConnectionStatus,
+                roomId: roomId
+            }
+            const callConnectionDate = Store.getState().callConnectionDate;
+            if(callConnectionDate?.data?.roomId) return;
+            Store.dispatch(CallConnectionState(callConnectionStatusNew));
+            encryptAndStoreInLocalStorage('call_connection_status', JSON.stringify(callConnectionStatusNew))
+            startCallingTimer();
+        }
+    }
+
     makeGroupCall = async (callType, groupCallMemberDetails) => {
         let connectionStatus = getFromLocalStorageAndDecrypt("connection_status")
         if (connectionStatus === "CONNECTED") {
@@ -307,8 +356,6 @@ class ConversationHeader extends React.Component {
             } else {
                 users = [activeChatId];
             }
-            let roomId = "";
-            let call = null;
             resetPinAndLargeVideoUser();
             let callConnectionStatus = {
                 callMode: callMode,
@@ -338,36 +385,18 @@ class ConversationHeader extends React.Component {
             try {
                 if (callType === "audio") {
                     muteLocalVideo(true);
-                    call = await SDK.makeVoiceCall(users, groupId);
+                    resetLocalCallDataClearAndDiscardUiTimer()
+                    SDK.makeVoiceCall(users, groupId, (success, error) => {
+                        this.handleGroupAVCallSuccessError(callConnectionStatus, success, error)
+                    });
                 } else if (callType === "video") {
                     muteLocalVideo(false);
-                    call = await SDK.makeVideoCall(users, groupId);
-                }
-                if (call.statusCode !== 200 && call.message !== this.premissionConst) {
-                    this.deleteAndDispatchAction();
-                } else {
-                    roomId = call.roomId;
-                    encryptAndStoreInLocalStorage('roomName', roomId)
-                    callLogs.insert({
-                        "callMode": callConnectionStatus.callMode,
-                        "callState": 1,
-                        "callTime": callLogs.initTime(),
-                        "callType": callConnectionStatus.callType,
-                        "fromUser": callConnectionStatus.from,
-                        "roomId": roomId,
-                        "userList": callConnectionStatus.userList,
-                        "groupId": callConnectionStatus.groupId
+                    resetLocalCallDataClearAndDiscardUiTimer();
+                    SDK.makeVideoCall(users, groupId, (success, error) => {
+                        this.handleGroupAVCallSuccessError(callConnectionStatus, success, error)
                     });
-                    let callConnectionStatusNew = {
-                        ...callConnectionStatus,
-                        roomId: roomId
-                    }
-                    Store.dispatch(CallConnectionState(callConnectionStatusNew));
-                    encryptAndStoreInLocalStorage('call_connection_status', JSON.stringify(callConnectionStatusNew))
-                    startCallingTimer();
                 }
             } catch (error) {
-                console.log("Error in making call", error);
                 if (error.message === this.premissionConst) {
                     this.deleteAndDispatchAction();
                 }
