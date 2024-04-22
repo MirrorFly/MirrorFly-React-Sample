@@ -236,6 +236,7 @@ export const getUserDetailsForMention = (userJid = "") => {
 }
 
 export const getUserDetails = (userJid = "") => {
+    userJid = userJid || "";
     let rosterData = {};
     let user = userJid.includes("@") ? userJid.split('@')[0] : userJid;
     let vcardData = getLocalUserDetails() || {};
