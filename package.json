@@ -28,7 +28,7 @@
     "crypto-hash": "^2.0.1",
     "crypto-js": "^4.1.1",
     "crypto-random-string": "^5.0.0",
-    "emoji-mart": "^5.5.2",
+    "emoji-mart": "5.3.2",
     "env-cmd": "^10.1.0",
     "firebase": "^8.10.0",
     "google-libphonenumber": "^3.2.10",
