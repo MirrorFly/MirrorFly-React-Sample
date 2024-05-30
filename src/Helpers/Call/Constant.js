@@ -24,6 +24,7 @@ export const CALL_STATUS_ENGAGED = 'engaged';
 export const CALL_STATUS_RINGING = 'ringing';
 export const CALL_STATUS_HOLD = 'hold';
 export const CALL_STATUS_ATTENDED = 'attended';
+export const CALL_STATUS_RECEIVED = 'received';
 
 // MESSAGE BASED ON CALL STATUS
 export const CALL_BUSY_STATUS_MESSAGE = 'User is busy...';

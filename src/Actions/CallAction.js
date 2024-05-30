@@ -8,7 +8,10 @@ import {
     AUDIO_CALL_MUTE,
     CALL_INTERMEDIATE_SCREEN,
     RESET_CALL_INTERMEDIATE_SCREEN,
-    RESET_CONFRENCE_POPUP_STATUS
+    RESET_CONFRENCE_POPUP_STATUS,
+    CALL_POOR_CONNECTION_STATUS_POPUP,
+    CALL_POOR_CONNECTION_STATUS_ICON,
+    CALL_QUALITY
 } from './Constants';
 import uuidv4 from 'uuid/v4';
 import { getLocalUserDetails } from '../Helpers/Chat/User';
@@ -235,6 +238,36 @@ export const resetCallIntermediateScreen = () => {
         type: RESET_CALL_INTERMEDIATE_SCREEN,
         payload: {
             id: uuidv4()
+        }
+    }
+}
+
+export const setCallQuality = (data) => {
+    return {
+        type: CALL_QUALITY,
+        payload: {
+            id: uuidv4(),
+            data
+        }
+    }
+}
+
+export const setPoorConnectionPopUp = (data) => {
+    return {
+        type: CALL_POOR_CONNECTION_STATUS_POPUP,
+        payload: {
+            id: uuidv4(),
+            data
+        }
+    }
+}
+
+export const setPoorConnectionIcon = (data) => {
+    return {
+        type: CALL_POOR_CONNECTION_STATUS_ICON,
+        payload: {
+            id: uuidv4(),
+            data
         }
     }
 }

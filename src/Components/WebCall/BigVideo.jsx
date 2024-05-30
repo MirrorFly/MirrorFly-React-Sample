@@ -2,7 +2,7 @@ import React from 'react';
 import Video from './Video';
 import ProfileImage from '../../Components/WebChat/Common/ProfileImage'
 import { CALL_STATUS_CONNECTED, CALL_STATUS_DISCONNECTED, CALL_STATUS_HOLD, CALL_STATUS_RECONNECT } from '../../Helpers/Call/Constant';
-import { AudioOff, DropdownArrow, IconPinActive, VideoOff } from '../../assets/images';
+import { AudioOff, DropdownArrow, IconPinActive, VideoOff, IconNetwork } from '../../assets/images';
 import { initialNameHandle } from '../../Helpers/Chat/User';
 import { handleAudioClasses } from '../../Helpers/Call/Call';
 import {getFromLocalStorageAndDecrypt} from '../WebChat/WebChatEncryptDecrypt';
@@ -22,11 +22,12 @@ class BigVideo extends React.Component {
             nextProps.callStatus !== this.props.callStatus ||
             nextProps.pinUserJid !== this.props.pinUserJid ||
             nextProps.setPinUser !== this.props.setPinUser ||
+            nextProps.showPoorNetworkIcon !== this.props.showPoorNetworkIcon ||
             nextProps.jid !== this.props.jid)
     }
 
     render() {
-        let { audioMuted, videoMuted, rosterData, stream, volumeLevel, showVoiceDetect, inverse, remoteStreamLength, vcardData } = this.props;
+        let { audioMuted, videoMuted, rosterData, stream, volumeLevel, showVoiceDetect, inverse, remoteStreamLength, vcardData, showPoorNetworkIcon } = this.props;
         const token = getFromLocalStorageAndDecrypt('token');
         const initial = initialNameHandle(rosterData, rosterData.initialName);
         return (
@@ -49,6 +50,7 @@ class BigVideo extends React.Component {
                                 <div className="audio_indicator audio_indicator_3"></div>
                             </div>
                         }
+                        { this.props.callStatus.toLowerCase() !== CALL_STATUS_RECONNECT && showPoorNetworkIcon && <i title="Poor Network" className="AudioOffRemote"><IconNetwork /></i> }
                         </>                        
                         </div>
                             <Video stream={stream.video} muted={false} id={stream.video.id} inverse={inverse}/>
@@ -80,6 +82,7 @@ class BigVideo extends React.Component {
                         {(this.props.setPinUser && this.props.jid === this.props.pinUserJid) &&
                             <i className="pinned"><IconPinActive /></i>
                         }
+                        { this.props.callStatus.toLowerCase() !== CALL_STATUS_RECONNECT && showPoorNetworkIcon && <i title="Poor Network" className="AudioOffRemote"><IconNetwork /></i> }
                     </div>
                     <div className="avatar" id="dominantSpeakerAvatar">
                          <div className={"avatar-info " + (showVoiceDetect ? " v-detect" : "")}>

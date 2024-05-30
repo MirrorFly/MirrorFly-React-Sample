@@ -26,6 +26,7 @@ import CallParticipantList from './CallParticipantList/index';
 import OutsideClickHandler from 'react-outside-click-handler';
 import {deleteItemFromLocalStorage, encryptAndStoreInLocalStorage, getFromLocalStorageAndDecrypt} from '../WebChat/WebChatEncryptDecrypt';
 import userList from '../WebChat/RecentChat/userList';
+import NetworkErrorStatus from './NetworkErrorStatus';
 
 let remoteStreamDatas = [];
 
@@ -219,6 +220,7 @@ class WebRtcCall extends React.Component {
         let vcardData = {...this.props.vCardData.data};
         const isThumbnailViewOverlap = this.isThumbnailViewOverlap();
         let behaviour = this.handleCallBehaviour();
+        let callQualityIcon = this.props.callQualityIcon;
         
         let videoWrapperClass = (behaviour == "meet" && remoteStreamLength == 1) || (behaviour === "call" && remoteStreamLength == 1) ? "" : "RemoteVideo-wrapper";
         if (this.state.visible) {
@@ -266,7 +268,10 @@ class WebRtcCall extends React.Component {
             }
             callStatus = this.getCallStatus(fromJid);
         }
-        
+        let userJidWithoutDomain = fromJid.includes("@") ? fromJid.split('@')[0] : fromJid;
+        if(userJidWithoutDomain !== vcardData.fromUser) {
+            callQualityIcon = false;
+        }
         return (
             <>
                 {!this.state.tileView && <BigVideo
@@ -287,6 +292,7 @@ class WebRtcCall extends React.Component {
                     pinUserJid={this.props.pinUserJid}
                     setPinUser={pinUser}
                     vcardData={vcardData}
+                    showPoorNetworkIcon={callQualityIcon}
                 />}
                 {(callMode === "onetoone") && remoteStream && remoteStream.stream && remoteStream.stream.audio && <AudioComponent stream={remoteStream.stream.audio} id={remoteStream.stream.audio.id} muted={false}/>}
                 <div className={videoWrapperClass}>
@@ -384,7 +390,7 @@ class WebRtcCall extends React.Component {
     }
 
     renderLocalVideoStream = (pinUser, behaviour, remoteStreamLength) => {
-        const { callLogData: { callAudioMute = false } = {} } = this.props;
+        const { callLogData: { callAudioMute = false } = {}, callQualityIcon = false } = this.props;
         let stream = this.props.localStream;
         let vcardData = {...this.props.vCardData.data};
         vcardData.nickname = "You";
@@ -412,6 +418,7 @@ class WebRtcCall extends React.Component {
                 tileViewStyle={this.state.tileViewStyle}
                 videoTrackId={videoTrackId}
                 audioTrackId={audioTrackId}
+                showPoorNetworkIcon={callQualityIcon}
             />
         )
     }
@@ -460,7 +467,7 @@ class WebRtcCall extends React.Component {
             const callMode = (callConnectionData && callConnectionData.callMode) || '';
             const allUsersVideoMuted = await SDK.isAllUsersVideoMuted();
             const behaviour = this.handleCallBehaviour();
-            if (allUsersVideoMuted && callMode === "onetoone" && behaviour != "meet") {
+            if (allUsersVideoMuted && callMode === "onetoone" && behaviour != "meet" && remoteStreamDatas.length <= 2) {
                 this.setState({ localVideoMuted: this.props.showConfrenceData?.data?.localVideoMuted })
                 Store.dispatch(callConversion({ status: 'request_init' }));
                 return;
@@ -669,9 +676,8 @@ class WebRtcCall extends React.Component {
 
     render() {
         const { tileView } = this.state;
-        const { callLogData: { callAudioMute = false } = {}, showConfrenceData: { data: { videoPermissionDisabled = false } = {}} = {} } = this.props;
-
-        let { invite, callState} = this.state;
+        const { callLogData: { callAudioMute = false } = {}, showConfrenceData: { data: { videoPermissionDisabled = false } = {}} = {}, callQualityPopup = false } = this.props;
+        let { invite, callState } = this.state;
         const callConnectionData = JSON.parse(getFromLocalStorageAndDecrypt('call_connection_status'))
         let rosterData = {};
         let vcardData = getLocalUserDetails();
@@ -753,6 +759,7 @@ class WebRtcCall extends React.Component {
                             </div>
 
                             <div data-overlap-id="call-controll-buttons" className={this.state.visible ? "button-group visible" : "button-group"}>
+                                { callStatus && callStatus.toLowerCase() !== CALL_STATUS_RECONNECT && callQualityPopup && <NetworkErrorStatus /> }
                                 <CallControlButtons
                                     cssClassName={callStatus && callStatus.toLowerCase() === CALL_STATUS_RECONNECT ? "disabled-btn" : ""}
                                     videoMute={this.state.localVideoMuted}
@@ -794,7 +801,9 @@ const mapStateToProps = state => {
         popUpData: state.popUpData,
         vCardData: state.vCardData,
         callLogData: state.callLogData,
-        rosterData: state.rosterData
+        callQuality: state.callQualityData.data,
+        callQualityPopup: state.callQualityPopup.data,
+        callQualityIcon: state.callQualityIcon.data
     }
 }
 

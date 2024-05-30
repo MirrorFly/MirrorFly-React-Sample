@@ -14,6 +14,7 @@ import {
     CALL_SESSION_STATUS_CLOSED,
     CALL_STATUS_CALLING,
     CALL_STATUS_DISCONNECTED,
+    CALL_STATUS_RECEIVED,
     CALL_STATUS_RINGING,
     DISCONNECTED_SCREEN_DURATION
 } from '../../Helpers/Call/Constant';
@@ -42,6 +43,7 @@ import { getFromLocalStorageAndDecrypt, encryptAndStoreInLocalStorage } from '..
 
 let callingRemoteStreamRemovalTimer = null;
 let missedCallNotificationTimer = null;
+let callUiStatus = "Trying to connect";
 
 /**
  * Determines whether a specific string is a valid room name.
@@ -197,9 +199,9 @@ export function dispatchDisconnected(statusMessage, remoteStreams = []) {
     dispatch(showConfrence({
         ...(data || {}),
         callStatusText: statusMessage,
-        remoteStream: remoteStreams.length > 1 ? remoteStreams : data.remoteStream,
+        remoteStream: remoteStreams.length > 1 ? remoteStreams : data.remoteStream || [],
         stopSound: true
-    }))
+    }));
 }
 
 export const disconnectCallConnection = (remoteStreams = [], sendEndCall = true) => {
@@ -298,7 +300,7 @@ export const startCallingTimer = () => {
             let remoteStreamsUpdated = [...data.remoteStream];
             if (remoteStreams) {
                 remoteStreams.forEach((stream) => {
-                    if (stream.status && (stream.status.toLowerCase() === CALL_STATUS_CALLING || stream.status.toLowerCase() === CALL_STATUS_RINGING)) {
+                    if (stream.status && (stream.status.toLowerCase() === CALL_STATUS_CALLING || stream.status.toLowerCase() === CALL_STATUS_RINGING || stream.status.toLowerCase() === CALL_STATUS_RECEIVED)) {
                       removeRemoteStream(stream.fromJid);
                       remoteStreamsUpdated = remoteStreamsUpdated.map((ele) => {
                         if (ele.fromJid !== stream.fromJid) {
@@ -450,3 +452,9 @@ export const handleAudioClasses = (volumeVdo = 0) => {
         return "audio_hidden";
     }
 }
+
+export const setCallUiStatus = (data) => {
+    callUiStatus = data;
+}
+
+export const getCallUiStatus = () => callUiStatus;

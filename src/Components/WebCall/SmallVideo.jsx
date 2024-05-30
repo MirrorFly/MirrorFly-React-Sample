@@ -13,7 +13,7 @@ import {
     CALL_STATUS_DISCONNECTED, CALL_STATUS_ENGAGED, CALL_STATUS_HOLD,
     CALL_HOLD_STATUS_MESSAGE, CALL_STATUS_BUSY, CALL_STATUS_CONNECTED, CALL_STATUS_CALLING, CALL_STATUS_CONNECTING, CALL_STATUS_RINGING, CALL_STATUS_ENDED, CALL_STATUS_RECONNECT,
 } from '../../Helpers/Call/Constant';
-import { IconPin, IconPinActive } from '../../assets/images';
+import { IconNetwork, IconPin, IconPinActive } from '../../assets/images';
 import { handleAudioClasses } from '../../Helpers/Call/Call';
 import {getFromLocalStorageAndDecrypt} from '../WebChat/WebChatEncryptDecrypt';
 
@@ -43,12 +43,13 @@ class SmallVideo extends React.Component {
             nextProps.audioTrackId !== this.props.audioTrackId ||
             nextProps.pinUserJid !== this.props.pinUserJid ||
             nextProps.setPinUser !== this.props.setPinUser ||
-            nextProps.jid !== this.props.jid
+            nextProps.jid !== this.props.jid ||
+            nextProps.showPoorNetworkIcon !== this.props.showPoorNetworkIcon
           );          
     }
 
     render() {
-        let { videoMuted, audioMuted, stream, rosterData, pinUserJid, userStatus, inverse } = this.props;
+        let { videoMuted, audioMuted, stream, rosterData, pinUserJid, userStatus, inverse, showPoorNetworkIcon } = this.props;
         let displayName = rosterData.displayName !== undefined && rosterData.displayName !== null ? rosterData.displayName : rosterData.nickname;
         let jid = (rosterData.username) ? rosterData.username : rosterData.fromUser;
         let vcardData = getLocalUserDetails();
@@ -133,6 +134,10 @@ class SmallVideo extends React.Component {
                      }
                     </>
                 </div>
+                { this.props.callStatus.toLowerCase() !== CALL_STATUS_RECONNECT && showPoorNetworkIcon && <div className='network_status'>
+                    <IconNetwork />
+                </div>
+                }
                 {!this.props.tileView && (
                     <>
                         {this.props.setPinUser && (

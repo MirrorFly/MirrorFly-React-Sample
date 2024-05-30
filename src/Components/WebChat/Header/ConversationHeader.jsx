@@ -16,7 +16,7 @@ import WebChatContactInfo from '../ContactInfo/WebChatContactInfo';
 import { resetPinAndLargeVideoUser, startCallingTimer } from '../../../Helpers/Call/Call';
 import { CONNECTED, NO_INTERNET } from '../../../Helpers/Constants';
 import { formatUserIdToJid, getContactNameFromRoster, getIdFromJid, initialNameHandle } from '../../../Helpers/Chat/User';
-import { muteLocalVideo, resetCallData, resetLocalCallDataClearAndDiscardUiTimer } from "../../callbacks";
+import { muteLocalVideo, resetCallData, resetLocalCallDataClearAndDiscardUiTimer, setLocalUserOnCall } from "../../callbacks";
 import { isGroupChat, isSingleChat } from '../../../Helpers/Chat/ChatHelper';
 import { isAppOnline } from '../../../Helpers/Utility';
 
@@ -221,15 +221,19 @@ class ConversationHeader extends React.Component {
                 if (callType === "audio") {
                     muteLocalVideo(true);
                     resetLocalCallDataClearAndDiscardUiTimer();
+                    setLocalUserOnCall(true);
                     SDK.makeVoiceCall([activeChatId], null, (success, err) => {
                         this.handleOne2OneAVCallSuccessError(callConnectionStatus, success, err);
                     });
+                    startCallingTimer();
                 } else if (callType === "video") {
                     muteLocalVideo(false);
                     resetLocalCallDataClearAndDiscardUiTimer();
+                    setLocalUserOnCall(true);
                     SDK.makeVideoCall([activeChatId], null, (success, err) => {
                         this.handleOne2OneAVCallSuccessError(callConnectionStatus, success, err);
                     });
+                    startCallingTimer();
                 }                
             } catch (error) {
                 if (error.message !== this.premissionConst) {
@@ -385,16 +389,20 @@ class ConversationHeader extends React.Component {
             try {
                 if (callType === "audio") {
                     muteLocalVideo(true);
-                    resetLocalCallDataClearAndDiscardUiTimer()
+                    resetLocalCallDataClearAndDiscardUiTimer();
+                    setLocalUserOnCall(true);
                     SDK.makeVoiceCall(users, groupId, (success, error) => {
                         this.handleGroupAVCallSuccessError(callConnectionStatus, success, error)
                     });
+                    startCallingTimer();
                 } else if (callType === "video") {
                     muteLocalVideo(false);
                     resetLocalCallDataClearAndDiscardUiTimer();
+                    setLocalUserOnCall(true);
                     SDK.makeVideoCall(users, groupId, (success, error) => {
                         this.handleGroupAVCallSuccessError(callConnectionStatus, success, error)
                     });
+                    startCallingTimer();
                 }
             } catch (error) {
                 if (error.message === this.premissionConst) {

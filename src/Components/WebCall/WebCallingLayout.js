@@ -6,8 +6,8 @@ import { getFormatPhoneNumber, capitalizeFirstLetter } from '../../Helpers/Utili
 import callLogs from '../WebCall/CallLogs/callLog'
 import { ReactComponent as BackToChat } from '../../assets/images/webcall/backToChat.svg';
 import CallControlButtons from './CallControlButtons';
-import { CALL_ENGAGED_STATUS_MESSAGE, CALL_SESSION_STATUS_CLOSED } from '../../Helpers/Call/Constant';
-import { dispatchDisconnected, getCallDisplayDetailsForOnetoManyCall } from '../../Helpers/Call/Call';
+import { CALL_BUSY_STATUS_MESSAGE, CALL_ENGAGED_STATUS_MESSAGE, CALL_SESSION_STATUS_CLOSED, CALL_STATUS_CALLING, CALL_STATUS_DISCONNECTED, CALL_STATUS_RECONNECT, CALL_STATUS_RINGING } from '../../Helpers/Call/Constant';
+import { dispatchDisconnected, getCallDisplayDetailsForOnetoManyCall, getCallUiStatus, setCallUiStatus } from '../../Helpers/Call/Call';
 import { getUserDetails, initialNameHandle } from '../../Helpers/Chat/User';
 import Logo from '../../assets/images/new-images/logoNew.png';
 import { localCallDataClearAndDiscardUi, resetCallData } from '../../Components/callbacks';
@@ -207,11 +207,33 @@ class WebCallingLayout extends Component {
         if (callType === "Audio") {
             videoControl = false;
         }
-        let callingUiStatus = this.state.callingUiStatus;
+        let callingUiStatus = "";
         vcardData.nickname = "You";
         let localVideoMuted = this.props.showConfrenceData.data.localVideoMuted;
         let localAudioMuted = this.props.showConfrenceData.data.localAudioMuted;
         let localStream = this.props.showConfrenceData.data.localStream;
+
+        switch (callStatus.toLowerCase()) {
+            case CALL_STATUS_CALLING.toLowerCase():
+                callingUiStatus = this.state.callingUiStatus; // This line seems redundant as it's assigning the value to itself
+                break;
+            case CALL_ENGAGED_STATUS_MESSAGE.toLowerCase():
+                callingUiStatus = capitalizeFirstLetter(CALL_ENGAGED_STATUS_MESSAGE);
+                break;
+            case CALL_BUSY_STATUS_MESSAGE.toLowerCase():
+                callingUiStatus = capitalizeFirstLetter(CALL_BUSY_STATUS_MESSAGE);
+                break;
+            case CALL_STATUS_DISCONNECTED.toLowerCase():
+                callingUiStatus = capitalizeFirstLetter(CALL_STATUS_DISCONNECTED);
+                break;
+            case CALL_STATUS_RECONNECT.toLowerCase():
+                callingUiStatus = getCallUiStatus();
+                break;
+            default:
+                callingUiStatus = capitalizeFirstLetter(CALL_STATUS_RINGING);
+                break;
+        }
+        setCallUiStatus(callingUiStatus);
 
         return (
             <div className="calling-Popup webcall-calling">
@@ -246,7 +268,7 @@ class WebCallingLayout extends Component {
                         </div>
                         <span className="callingStatus">
                             <span>
-                                {callStatus === "Calling" ? callingUiStatus : capitalizeFirstLetter(callStatus)} {(callStatus === 'Calling' || callStatus === 'Ringing') &&
+                                {callingUiStatus} {(callingUiStatus === 'Trying to connect' || callingUiStatus === 'User seems to be offline, Trying to connect' || callingUiStatus === 'Ringing') &&
                                     <div className="callingAnimation call">
                                         <span className="dot"></span>
                                         <span className="dot"></span>
@@ -288,8 +310,8 @@ class WebCallingLayout extends Component {
                                 }
                                 </div>
                                 <span className="callingStatus">
-                                    <span className={`${callStatus === CALL_ENGAGED_STATUS_MESSAGE ? "call-state-busy": ""} call-status`}>
-                                        {callStatus === "Calling" ? callingUiStatus : capitalizeFirstLetter(callStatus)} {(callStatus === 'Calling' || callStatus === 'Ringing') &&
+                                    <span className={`${(callStatus === CALL_ENGAGED_STATUS_MESSAGE || callStatus === CALL_BUSY_STATUS_MESSAGE) ? "call-state-busy": ""} call-status`}>
+                                    {callingUiStatus} {(callingUiStatus === 'Trying to connect' || callingUiStatus === 'User seems to be offline, Trying to connect' || callingUiStatus === 'Ringing') &&
                                             <div className="callingAnimation call">
                                                 <span className="dot"></span>
                                                 <span className="dot"></span>

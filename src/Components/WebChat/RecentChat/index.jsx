@@ -119,8 +119,8 @@ class RecentChatSection extends Component {
   }
 
   componentDidMount() {
-    let {recentChatItems, recentChatNames, recentchatId} = this.getRecentChatsItems();
-    if (recentchatId) {
+    let {recentChatItems, recentChatNames, rosterId, recentchatId} = this.getRecentChatsItems();
+    if (rosterId && recentchatId) {
       if(recentChatItems.length > 0){
         this.setState({
           recentChatItems: recentChatItems,

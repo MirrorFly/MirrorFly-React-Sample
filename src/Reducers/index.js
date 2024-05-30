@@ -6,7 +6,10 @@ import {
   callConversionReducer,
   pinUserReducer,
   largeVideoUserReducer,
-  callDurationTimestampReducer
+  callDurationTimestampReducer,
+  callQualityReducer,
+  callQualityPopupReducer,
+  callQualityIconReducer
 } from "./CallReducer";
 import { showConfrenceReducer } from "./confrenceReducer";
 import { ConnectionStateReducer } from "./ConnectionStateReducer";
@@ -118,5 +121,8 @@ export default combineReducers({
   selectedMessageInfoReducer: selectedMessageInfoReducer,
   mediaDownloadData: MediaDownloadStateReducer,
   mediaDropDownData: MediaDropdownStatusReducer,
-  mediaImageThumbData : MediaImageThumbDataReducer
+  mediaImageThumbData : MediaImageThumbDataReducer,
+  callQualityData: callQualityReducer,
+  callQualityPopup: callQualityPopupReducer,
+  callQualityIcon: callQualityIconReducer
 });
