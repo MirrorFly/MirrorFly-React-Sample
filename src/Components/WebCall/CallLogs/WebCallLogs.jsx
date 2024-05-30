@@ -18,7 +18,7 @@ import CallLogView from './CallLogView';
 import { NO_INTERNET } from '../../../Helpers/Constants';
 import { formatUserIdToJid, getDataFromRoster, getLocalUserDetails, getUserDetails, initialNameHandle } from '../../../Helpers/Chat/User';
 import { getGroupData } from '../../../Helpers/Chat/Group';
-import { muteLocalVideo, resetCallData, resetLocalCallDataClearAndDiscardUiTimer } from "../../callbacks";
+import { muteLocalVideo, resetCallData, resetLocalCallDataClearAndDiscardUiTimer, setLocalUserOnCall } from "../../callbacks";
 import { COMMON_ERROR_MESSAGE, FEATURE_RESTRICTION_ERROR_MESSAGE } from '../../../Helpers/Call/Constant';
 import FloatingCallOption from './FloatingCallOption/FloatingCallOption';
 import { FloatingCallActionSm, ArrowBack, EmptyCallLog } from '../../../assets/images';
@@ -337,12 +337,14 @@ class WebChatCallLogs extends React.Component {
             if (callType === "audio") {
                 muteLocalVideo(true);
                 resetLocalCallDataClearAndDiscardUiTimer();
+                setLocalUserOnCall(true);
                 SDK.makeVoiceCall(users, groupId, (success, err) => {
                     this.handleMakeCallSuccessError(callConnectionStatus, success, err);
                 });
             } else if (callType === "video") {
                 muteLocalVideo(false);
                 resetLocalCallDataClearAndDiscardUiTimer();
+                setLocalUserOnCall(true);
                 SDK.makeVideoCall(users, groupId, (success, err) => {
                     this.handleMakeCallSuccessError(callConnectionStatus, success, err);
                 });

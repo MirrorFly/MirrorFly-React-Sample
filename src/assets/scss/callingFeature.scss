@@ -1112,3 +1112,17 @@
 	font: normal normal 0.875rem/1rem var(--semibold);
 	letter-spacing: 0px;
 }
+.network_status {
+    display: flex;
+    padding: 6px 11px;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    position: absolute;
+    left: 0.5em;
+    top: 0.625em;
+    background-color: #454F64;
+    border-radius: 38.4px;
+	width: 34px;
+	height: 24px;
+}

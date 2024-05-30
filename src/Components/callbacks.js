@@ -12,7 +12,10 @@ import {
     resetData,
     callIntermediateScreen,
     resetCallIntermediateScreen,
-    resetConferencePopup
+    resetConferencePopup,
+    setPoorConnectionPopUp,
+    setPoorConnectionIcon,
+    setCallQuality
 } from '../Actions/CallAction';
 import {
     WebChatConnectionState
@@ -87,7 +90,8 @@ import {
     startMissedCallNotificationTimer,
     clearMissedCallNotificationTimer,
     handleCallParticipantToast,
-    disconnectCallConnection
+    disconnectCallConnection,
+    clearOldCallingTimer
 } from '../Helpers/Call/Call';
 import {
     CALL_CONVERSION_STATUS_CANCEL,
@@ -168,13 +172,15 @@ export let strophe = false;
 let localStream = null,
     localVideoMuted = false,
     localAudioMuted = false,
-    onCall = false;
+    onCall = false,
+    localUserOnCall = false;
 let remoteVideoMuted = [],
     remoteStream = [],
     remoteAudioMuted = [];
 
 export const resetCallData = () => {
     onCall = false;
+    localUserOnCall = false;
     remoteStream = [];
     localStream = null;
     remoteVideoMuted = [];
@@ -187,7 +193,11 @@ export const resetCallData = () => {
         Store.dispatch(resetCallIntermediateScreen());
     }
     resetData();
+    clearOldCallingTimer();
     Store.dispatch(isMuteAudioAction(false));
+    Store.dispatch(setCallQuality("GOOD"));
+    Store.dispatch(setPoorConnectionIcon(false));
+    Store.dispatch(setPoorConnectionPopUp(false));
 };
 
 export const muteLocalVideo = (isMuted) => {
@@ -309,7 +319,7 @@ const connecting = (res) => {
     // If 'data.showStreamingComponent' property value is TRUE means, already call is connected &
     // Streaming data has been shared between users. That's why we check condition here,
     // If 'data.showStreamingComponent' is FALSE, then set the 'CONNECTING' state to display.
-    if (data && !data.showStreamingComponent && remoteStream.length === 0) {
+    if (data && !data.showStreamingComponent) {
         remoteStream = [];
         encryptAndStoreInLocalStorage("connecting", true);
         Store.dispatch(showConfrence({
@@ -770,6 +780,7 @@ export const callbacks = {
             "userList": res.userList,
             "groupId": res.callMode === "onetoone" ? '' : res.groupId
         });
+        setLocalUserOnCall(true);
         startCallingTimer();
     },
     callStatusListener: (res) => {
@@ -832,7 +843,6 @@ export const callbacks = {
             }));
 
         } else {
-            onCall = true;
             encryptAndStoreInLocalStorage('callingComponent', false);
             const streamType = res.trackType;
             let mediaStream = null;
@@ -893,8 +903,19 @@ export const callbacks = {
                 remoteVideoMuted: remoteVideoMuted,
                 remoteAudioMuted: remoteAudioMuted,
                 callStatusText: CALL_STATUS_CONNECTED
-            }))
-
+            }));
+            if (!onCall) {
+                const { callQualityData } = Store.getState();
+                if (callQualityData.data === "POOR") {
+                    Store.dispatch(setPoorConnectionIcon(false));
+                    Store.dispatch(setPoorConnectionPopUp(true));
+                    setTimeout(() => {
+                        Store.dispatch(setPoorConnectionIcon(true));
+                        Store.dispatch(setPoorConnectionPopUp(false));
+                    }, 5000);
+                }
+            }
+            onCall = true;
             // Need to hide the call converison request & response screen when more than one remote
             // users joined in call
             if (remoteStream.length >= 3) {
@@ -1314,6 +1335,20 @@ export const callbacks = {
             displayName: "Deleted User",
             status: ""
         }));
+    },
+    callConnectionQualityListener: (data) => {
+        Store.dispatch(setCallQuality(data.quality));
+        if (data.quality === "POOR") {
+            Store.dispatch(setPoorConnectionPopUp(true));
+            setTimeout(() => {
+                Store.dispatch(setPoorConnectionIcon(true));
+                Store.dispatch(setPoorConnectionPopUp(false));
+            }, 5000);
+        }
+        if (data.quality === "AVERAGE" || data.quality === "GOOD") {
+            Store.dispatch(setPoorConnectionIcon(false));
+            Store.dispatch(setPoorConnectionPopUp(false));
+        }
     }
 }
 
@@ -1327,3 +1362,9 @@ export const localCallDataClearAndDiscardUi = () => {
 }
 
 export const resetLocalCallDataClearAndDiscardUiTimer = () =>  clearTimeout(localCallDataClearAndDiscardUiTimer);
+
+export const setLocalUserOnCall = (data) => {
+    localUserOnCall = data;
+}
+
+export const isLocalUserOnCall = () => localUserOnCall;

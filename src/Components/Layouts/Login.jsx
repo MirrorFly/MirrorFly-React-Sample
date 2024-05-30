@@ -233,6 +233,7 @@ class Login extends React.Component {
   handleSDKIntialize = async (registerData) => {
     const initializeObj = getInitializeObj();
     const response = await SDK.initializeSDK(initializeObj);
+    SDK.enableDebugLogs();
     let responseCall = { statusCode: 200 };
 
     if (response.statusCode === 200 && responseCall.statusCode === 200) {

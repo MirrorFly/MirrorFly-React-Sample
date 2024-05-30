@@ -12,7 +12,7 @@ import { CALL_SESSION_STATUS_CLOSED, CALL_STATUS_DISCONNECTED } from '../../Help
 import { clearMissedCallNotificationTimer, dispatchDisconnected, getCallDisplayDetailsForOnetoManyCall } from '../../Helpers/Call/Call';
 import  Logo  from '../../assets/images/new-images/logoNew.png';
 import { getGroupData } from '../../Helpers/Chat/Group';
-import  { localCallDataClearAndDiscardUi, resetCallData } from '../callbacks';
+import  { isLocalUserOnCall, localCallDataClearAndDiscardUi, resetCallData } from '../callbacks';
 import { getUserDetails, initialNameHandle } from '../../Helpers/Chat/User';
 import { toast } from 'react-toastify';
 import CallerProfileList from "./CallerProfileList";
@@ -103,15 +103,17 @@ class CalleScreen extends Component {
                         callStatusText: null
                     }))
                 } else {
-                    encryptAndStoreInLocalStorage('connecting',true)
-                    Store.dispatch(showConfrence({
-                        showComponent: true,
-                        showCalleComponent:false
-                    }))
-                    callLogs.update(callConnectionDate.data.roomId, {
-                        "startTime": callLogs.initTime(),
-                        "callState": 2
-                    });
+                    if(isLocalUserOnCall()) {
+                        encryptAndStoreInLocalStorage('connecting',true)
+                        Store.dispatch(showConfrence({
+                            showComponent: true,
+                            showCalleComponent:false
+                        }))
+                        callLogs.update(callConnectionDate.data.roomId, {
+                            "startTime": callLogs.initTime(),
+                            "callState": 2
+                        });
+                    }
                 }
         }
     }
