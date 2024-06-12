@@ -77,6 +77,9 @@ const updateRecentChatMessageStatus = (data, stateData) => {
     if (element.fromUserId === data.fromUserId && element.msgId === data.msgId) {
       element.msgStatus = getMsgStatusInOrder(element.msgStatus, data.msgStatus);
     }
+    if(!element.msgType || element.msgType == undefined){
+      element.msgType = element.msgBody.message_type
+    }
     return element;
   });
 };

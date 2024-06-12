@@ -244,7 +244,7 @@ class WebChatContactInfo extends React.Component {
         if (this.props.rosterName !== groupName) {
             let groupImage = this.props.rosterImage;
             const groupJid = getActiveConversationChatJid();
-            SDK.setGroupProfile(groupJid, groupName, groupImage);
+            SDK.setGroupProfile(groupJid, groupName, groupImage, true);
         }
         this.setState({ viewEdit: true, groupName })
     }

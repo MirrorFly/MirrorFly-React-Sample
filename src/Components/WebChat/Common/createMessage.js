@@ -18,7 +18,8 @@ import {
   isSingleChat,
   isGroupChat,
   getChatHistoryMessagesData,
-  getRecentChatMessagesData
+  getRecentChatMessagesData,
+  getActiveConversationGroupId
 } from "../../../Helpers/Chat/ChatHelper";
 import { UnreadCountUpdate, UnreadCountDelete } from "../../../Actions/UnreadCount";
 import { ChatMessageHistoryDataAction } from "../../../Actions/ChatHistory";
@@ -223,7 +224,9 @@ export const updateMessageUnreadCount = (messgeObject, stateObject) => {
     ((shouldHideNotification()&& browserNotify.isPageHidden ) || !isActiveConversationUserOrGroup(fromUserId, chatType)) &&    GROUP_UPDATE_ACTIONS.indexOf(profileUpdatedStatus) > -1 &&
     !isLocalUser(publisherId) && editedStatus === 0)
   {
-    Store.dispatch(UnreadCountUpdate({ fromUserId }));
+    if(getActiveConversationGroupId() != fromUserId ){
+      Store.dispatch(UnreadCountUpdate({ fromUserId }));
+    }
   }
 
   if ([MSG_SENT_SEEN_STATUS_CARBON].indexOf(msgType) > -1) {

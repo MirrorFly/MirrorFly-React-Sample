@@ -20,7 +20,7 @@ import { getMessageTimeElement } from "../../../Helpers/UIElements";
 import { callOriginStrMsgAction, RemoveAllStarredMessages } from "../../../Actions/StarredAction";
 import SDK from "../../SDK";
 import Store from "../../../Store";
-import { RemoveAllStarredMessagesHistory } from "../../../Actions/ChatHistory";
+import { ChatMessageHistoryDataAction, LoadMoreHistoryAction, RemoveAllStarredMessagesHistory } from "../../../Actions/ChatHistory";
 import TextComponent from "../Conversation/Templates/Chat/TextComponent";
 import ImageComponent from "../Conversation/Templates/Chat/ImageComponent";
 import VideoComponent from "../Conversation/Templates/Chat/VideoComponent";
@@ -50,7 +50,7 @@ const StarredMessages = (props = {}) => {
  const [starredMessages, setStarredMessages] = useState([]);
  const [seletedData, setSeletedData] = useState({});
  const { starProfileData  } = useSelector((state) => state.rosterData);
-
+ 
  useEffect(() => {
    const sortedData = starData.sort((x, y) => new Date(y.favDate).getTime() - new Date(x.favDate).getTime());
    const addReplyIsEsisting = sortedData.map((ele) => {
@@ -246,35 +246,48 @@ const StarredMessages = (props = {}) => {
    }, 300);
   }
  
- const getMsgId = async (msgItem = {}) => {
-   const storeData = Store.getState();
-   const { recentChatData: { rosterData: { recentChatItems = [] } = {} } = {} } = storeData || {};
-   const dataFind = recentChatItems.filter((ele) => ele.recent.fromUserId === msgItem.fromUserId);
-   if (dataFind.length >= 1) {
-     dataFind[0].chatId = msgItem.fromUserId;
-     dataFind[0].chatType = msgItem.chatType;
-     dataFind[0].chatJid = msgItem.fromUserJid;
-     if (dataFind[0]?.roster?.groupId != null && dataFind[0]?.roster?.isAdminBlocked) {
-        toast.info("This group is no longer available")
+  const getMsgId = async (msgItem = {}, position = "down") => {
+    const storeData = Store.getState();
+    const { recentChatData: { rosterData: { recentChatItems = [] } = {} } = {} } = storeData || {};
+    const dataFind = recentChatItems.filter((ele) => ele.recent.fromUserId === msgItem.fromUserId);
+    
+    if (dataFind.length >= 1) {
+      dataFind[0].chatId = msgItem.fromUserId;
+      dataFind[0].chatType = msgItem.chatType;
+      dataFind[0].chatJid = msgItem.fromUserJid;
+      
+      if (dataFind[0]?.roster?.groupId != null && dataFind[0]?.roster?.isAdminBlocked) {
+        toast.info("This group is no longer available");
         return;
-     }
-     const dataMsgHistory = getChatMessageHistoryById(msgItem.fromUserId);
-     if (dataMsgHistory.length === 0) {
-        Store.dispatch(ActiveChatAction(dataFind[0]));//open recent chat
-        setSeletedData(msgItem)
-      } else {
-       const findListMagId = dataMsgHistory.find((ele) => ele.msgId === msgItem.msgId);
-       Store.dispatch(ActiveChatAction(dataFind[0]));
-       if (findListMagId) {
-         scrollToMsg(findListMagId.msgId);
-       } else {
-         Store.dispatch(callOriginStrMsgAction(
-           { fromPage: "starPage", callOriginStrMsg: true, callOriginStrMsgId: msgItem, }
-         ));
-       }
       }
-   }
- };
+      
+      const dataMsgHistory = getChatMessageHistoryById(msgItem.fromUserId);
+      const lastMsgObject = dataMsgHistory && dataMsgHistory[0];
+      const lastMsgId = dataMsgHistory.length == 0 ? msgItem.msgId : lastMsgObject.msgId;
+      const findListMagId = dataMsgHistory.find((ele) => ele.msgId === msgItem.msgId);
+      if (findListMagId) {
+        scrollToMsg(findListMagId.msgId);
+      } else {
+        Store.dispatch(LoadMoreHistoryAction(true));
+        const chatMessageRes = await SDK.getChatMessages({ toJid: msgItem.fromUserJid, position: position, lastMessageId: lastMsgId, limit: 20 });
+        if (chatMessageRes.statusCode == 200) {
+          Store.dispatch(ActiveChatAction(dataFind[0]));
+          Store.dispatch(callOriginStrMsgAction({ fromPage: "starPage", callOriginStrMsg: true, callOriginStrMsgId: msgItem }));
+          Store.dispatch(ChatMessageHistoryDataAction(chatMessageRes));
+        }
+        const updatedDataMsgHistory = getChatMessageHistoryById(msgItem.fromUserId);
+        const findListMagIdAfterFetch = updatedDataMsgHistory.find((ele) => ele.msgId === msgItem.msgId);
+        if (findListMagIdAfterFetch) {
+          setTimeout(()=>{
+            Store.dispatch(LoadMoreHistoryAction(false));
+            scrollToMsg(findListMagIdAfterFetch.msgId);
+          },500)
+        } else {
+          await getMsgId(msgItem, "up"); 
+        }
+      }
+    }
+  };
  
  const requestReplyMessage = (grmsgid, replyTo, chatType) => {
     if (isAppOnline()) {

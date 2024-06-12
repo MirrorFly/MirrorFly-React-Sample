@@ -157,7 +157,7 @@ class ContactInfoProfileUpdate extends React.Component {
     handleSaveImage = async (image) => {
         try {
             const groupImage = image;
-            const response = await SDK.setGroupProfile(formatGroupIdToJid(this.props.jid), this.props.groupName, groupImage);
+            const response = await SDK.setGroupProfile(formatGroupIdToJid(this.props.jid), this.props.groupName, groupImage, true);
             if (response.statusCode !== 200) {
                 let message = response.message;
                 // To get the internet offline status,
@@ -222,7 +222,7 @@ class ContactInfoProfileUpdate extends React.Component {
      */
     removeProfileImage = async (e) => {
         if (blockOfflineAction()) return;
-        let response = await SDK.setGroupProfile(formatGroupIdToJid(this.props.jid), this.props.groupName, "");
+        let response = await SDK.setGroupProfile(formatGroupIdToJid(this.props.jid), this.props.groupName, "", true);
         if (response.statusCode === 200) {
             this.setState({
                 imageToken: "",

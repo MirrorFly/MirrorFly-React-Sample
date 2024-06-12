@@ -99,7 +99,8 @@ class WebChatConversationHistory extends Component {
       originalMessageDeleted: false,
       messageDeletedData: {},
       otherActionClick : false,
-      editedDetailsArr: {}
+      editedDetailsArr: {},
+      prevFetchChatMessageId : ""
     };
     this.activeTimer = 0;
     this.rosterConst = "roster.userId";
@@ -160,6 +161,10 @@ class WebChatConversationHistory extends Component {
 
     }
 
+    if(prevProps.LoadMoreChatsMessages.loadMoreChats !== this.props.LoadMoreChatsMessages.loadMoreChats){ 
+        this.loadMoreUpdate(false);
+    }
+
     if (prevProps.activeChatId !== activeChatId) {
       this.handleBlockUserData();
       setTimeout(() => {
@@ -215,7 +220,8 @@ class WebChatConversationHistory extends Component {
     direction = null,
     messageId = null,
     limit = CHAT_HISTORY_LIMIT,
-    rowId = null
+    rowId = null,
+    chatMsgId = null
   ) => {
     const activeChatMessages = getActiveChatMessages();
     const activeChatFirstMessage = activeChatMessages && activeChatMessages[0];
@@ -236,8 +242,7 @@ class WebChatConversationHistory extends Component {
       let chatJid = getActiveConversationUserJid(),
         activeConversationId = getActiveConversationChatId();
       if (!chatJid) return true;
-      
-      const chatMessageRes = await SDK.getChatMessages(chatJid, direction, rowId, limit);
+      const chatMessageRes = await SDK.getChatMessages({toJid: chatJid, position: direction, lastMessageId: chatMsgId, limit: limit});
       // User may switch another user chat conversation screen when clicked user chat request is in process
       // That's why we check condition(compare userJid from response) here to avoid load the previous user chat history to current users.
       if (chatMessageRes && chatMessageRes.statusCode === 200) {
@@ -284,9 +289,9 @@ class WebChatConversationHistory extends Component {
       const { messages: currentChatHistory, isScrollNeeded } = data[chatId];
       if (isScrollNeeded) {
         this.loadMoreUpdate(true);
-        const firstMessageId = Object.keys(currentChatHistory)[0];
-        const firstMessageData = currentChatHistory[firstMessageId];
-        await this.requestChatMessages(chatType, "up", firstMessageId, CHAT_HISTORY_LIMIT, firstMessageData?.rowId);
+        const oldestMessageId = Object.keys(currentChatHistory)[0];
+        const oldestMessageData = currentChatHistory[oldestMessageId];
+        await this.requestChatMessages(chatType, "up", oldestMessageId, CHAT_HISTORY_LIMIT, oldestMessageData?.rowId, oldestMessageData?.msgId);
         this.loadMoreUpdate(false);
       }
     }
@@ -342,14 +347,31 @@ class WebChatConversationHistory extends Component {
     }
     if (chatMessages.length && !this.state.originalMessageDeleted) { 
       this.loadMoreUpdate(true);
-      await this.requestChatMessages(chatType, "up", chatMessages[0].msgId, RECONNECT_GET_CHAT_LIMIT);
+      if(this.state.prevFetchChatMessageId == msgId){
+        this.scrollToBottom();
+        this.loadMoreUpdate(false);
+        return;
+      }
+      await this.requestChatMessages(chatType, "up", chatMessages[0].msgId, RECONNECT_GET_CHAT_LIMIT, null, chatMessages[0].msgId);
+      const updatedChatMessages = getActiveChatMessages();
+      const isExistAfterFetch = updatedChatMessages.find((message) => message.msgId === messageId);
+      this.setState({
+        prevFetchChatMessageId: msgId
+      })
+      if (isExistAfterFetch) {
+        setTimeout(() =>{
+          this.smoothScroll(messageId);
+          this.loadMoreUpdate(false);
+        },1000) 
+      } else {
+        await this.viewOriginalMessage(messageId, msgId); 
+      }
       setTimeout(() => {
         this.loadMoreUpdate(false);
-        this.viewOriginalMessage(messageId, msgId);
-      }, 100);
-    } else {
-      this.setState({originalMessageDeleted:false})
+        this.viewOriginalMessage(messageId, chatMessages[0].msgId);
+      }, 1000);
     }
+    this.setState({ originalMessageDeleted: false });
   };
 
   prepareJid = () => {
@@ -1217,7 +1239,7 @@ class WebChatConversationHistory extends Component {
   };
 
   loadMoreUpdate = (value) => {
-    this.loadMore.current.style.display = value ? "block" : "none";
+    this.loadMore.current.style.display = (value || this.props.LoadMoreChatsMessages.loadMoreChats) ? "block" : "none";
     return true;
   };
 
@@ -1497,7 +1519,8 @@ const mapStateToProps = (state) => {
     selectedMessageData: state.selectedMessageData,
     addMentionedDataReducer: state.addMentionedDataReducer,
     replyMessageData: state.replyMessageData,
-    messageEditedData: state.messageEditedData
+    messageEditedData: state.messageEditedData,
+    LoadMoreChatsMessages: state.LoadMoreChatsMessages
   };
 };
 
