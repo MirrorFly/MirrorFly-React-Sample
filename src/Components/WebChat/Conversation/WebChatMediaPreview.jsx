@@ -36,6 +36,9 @@ import {
 import { INITIAL_LOAD_MEDIA_LIMIT, LOAD_MORE_MEDIA_LIMIT, PREVIEW_MEDIA_TYPES } from "../../../Helpers/Constants";
 import { formatUserIdToJid } from "../../../Helpers/Chat/User";
 import Spinner from "./Templates/Common/Spinner";
+import Store from "../../../Store";
+import { MediaDownloadDataAction } from "../../../Actions/Media";
+import "./Templates/Common/Spinner/Spinner.scss"
 
 const CAPTION_MARGIN = 30;
 class WebChatMediaPreview extends React.Component {
@@ -45,6 +48,8 @@ class WebChatMediaPreview extends React.Component {
       mediaList: [],
       previewData: [],
       previewLoadedVideosIndex:[],
+      previewLoadedImagesIndex:[],
+      previewLoadedAudioIndex:[],
       selectedItem: 0,
       loadMore: false,
       lastTranslateX: false,
@@ -72,6 +77,7 @@ class WebChatMediaPreview extends React.Component {
       if (type === "video") {
         await SDK.downloadMedia(msgId, () => {
         }, (response) => {
+          Store.dispatch(MediaDownloadDataAction({ msgId, progress: null }));   
           resolve(response.blobUrl);
         }, () => {
           console.log("error in loading media file");
@@ -127,14 +133,16 @@ class WebChatMediaPreview extends React.Component {
 
         switch (message_type) {
           case "image":
-            const imageSrc = is_uploading === 1 ? file_url : await this.getFile(msgId, file_url, "image", thumb_image, file_key, fileExtensionSlice);
-            if (!imageSrc || imageSrc === "") {
+            let imageUrl = thumb_image;
+            if (this.state.initialRender && index === this.tempSelectedItem) {
+              imageUrl = is_uploading === 1 ? file_url : await this.getFile(msgId, file_url, "image", thumb_image, file_key, fileExtensionSlice);
+            }
+            if (!imageUrl || imageUrl === "") {
               break;
             }
             mediaData = {
               class: "type-image",
-              imageURL: imageSrc,
-              fileName: fileName,
+              imageURL: thumb_image,
               media: (
                 <>
                   <div className="imageZoomWrapper">
@@ -153,7 +161,14 @@ class WebChatMediaPreview extends React.Component {
                             </button>
                           </div>
                           <TransformComponent>
-                            <img src={imageSrc} alt="" />
+                            <img src={imageUrl} alt="" />
+                            {imageUrl.search("blob:") === -1 && (
+                              <div style={{ zIndex: 3 }}>
+                                <div className="spiner" style={{ display: "flex", alignItems: "center" }}>
+                                  <div className="spin"></div>
+                                </div>
+                              </div>
+                            )}
                           </TransformComponent>
                         </React.Fragment>
                       )}
@@ -181,23 +196,35 @@ class WebChatMediaPreview extends React.Component {
             break;
 
           case "audio":
-            const audioSrc = is_uploading === 1 ? file_url : await this.getFile(msgId, file_url, "audio", {}, file_key, fileExtensionSlice);
-            if (!audioSrc || audioSrc === "") {
-              break;
+            let audioSrc;
+            if(this.state.initialRender && index === this.tempSelectedItem ){
+              audioSrc = is_uploading === 1 ? file_url : await this.getFile(msgId, file_url, "audio", {}, file_key, fileExtensionSlice);
             }
             mediaData = {
               class: "type-media audio",
               imageURL: audioType !== "recording" ? AudioFile : AudioRecord,
               media: (
                 <div className="video-wrapper1" duration={millisToMinutesAndSeconds(duration)}>
-                  <VideoPlayer
-                    {...this.videoControls(audioSrc, msgId, this.props.selectedMessageData.msgId === msgId)}
-                    fileType={"audio"}
-                    handlePlay={this.handlePlayPause}
-                    audioDuration={millisToMinutesAndSeconds(duration)}
-                    audioType={audioType}
-                    palyStatus={this.state.palyStatus}
-                  />
+                  {audioSrc ? (
+                    <VideoPlayer
+                      {...this.videoControls(audioSrc, msgId, this.props.selectedMessageData.msgId === msgId)}
+                      fileType={"audio"}
+                      handlePlay={this.handlePlayPause}
+                      audioDuration={millisToMinutesAndSeconds(duration)}
+                      audioType={audioType}
+                      palyStatus={this.state.palyStatus}
+                    />
+                  ) : (
+                    <>
+                     <img src={audioType !== "recording" ? AudioFile : AudioRecord} alt={audioType !== "recording" ? AudioFile : AudioRecord} style={{ height: originalHeight, width: "1000px" }}
+                      className="previewVideoThumbnail" />
+                      <div style={{zIndex:3}}>
+                      <div className="spiner" style={{display:"flex", alignItems:"center"}}>
+                        <div className="spin"></div>
+                      </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               )
             };
@@ -332,17 +359,27 @@ class WebChatMediaPreview extends React.Component {
   };
 
   diplayMedia = (type = "") => {
-    let media = this.state.previewData.length > 0 ? this.state.previewData : [];
+    let media = [];
     this.handleDisplayMedia().then((results) => results.forEach((result, index) => {
       if (result.status === "fulfilled") {
-        if (this.state.initialRender === false) {
-          media.push(result.value);
-        }
-        else {
+        media.push(result.value);
+        if(!this.state.initialRender){
           if (this.tempSelectedItem === index && media[index]?.props?.className == 'type-media videosThumb') {
             media[index] = result.value;
             this.setState(prevState => ({
               previewLoadedVideosIndex: [...prevState.previewLoadedVideosIndex, index]
+            }));
+          }
+          else if(this.tempSelectedItem === index && media[index]?.props?.className == 'type-image'){
+            media[index] = result.value;
+            this.setState(prevState => ({
+              previewLoadedImagesIndex: [...prevState.previewLoadedImagesIndex, index]
+            }));
+          }
+          else if(this.tempSelectedItem === index && media[index]?.props?.className == 'type-media audio'){
+            media[index] = result.value;
+            this.setState(prevState => ({
+              previewLoadedAudioIndex: [...prevState.previewLoadedAudioIndex, index]
             }));
           }
         }
@@ -371,7 +408,7 @@ class WebChatMediaPreview extends React.Component {
       SDK.getBroadcastChatMedia(jid, messageId);
     } else {
       let jid = formatUserIdToJid(msgFrom, chatType);
-      const mediaMsgRes = await SDK.getMediaMessages(jid, messageId);
+      const mediaMsgRes = await SDK.getMediaMessages({toJid : jid, lastMsgId : messageId});
       if (mediaMsgRes && mediaMsgRes.statusCode === 200 && mediaMsgRes.data.length) {
         // Filtering Media Duplicates with Message Id
         const msgIds = new Set(this.state.mediaList.map((d) => d.msgId));
@@ -473,7 +510,7 @@ class WebChatMediaPreview extends React.Component {
   componentDidMount() {
     this.commonForDidMountAndFailedDidMount();
     setTimeout(() =>{
-      this.setState({ initialRender:true }, () => {
+    this.setState({ initialRender:true }, () => {
         this.diplayMedia();
       });
     },500)
@@ -497,14 +534,8 @@ class WebChatMediaPreview extends React.Component {
         // Load More Data if the Inital Fetched Media Count is Less than the Config Value
         selectedItem <= INITIAL_LOAD_MEDIA_LIMIT && this.loadMoreMedia();
       });
-      if (isFailed === false) {
-        if (this.state.previewData.length === 0) { this.failedComponentDidMount() }
-      }
     } else {
       this.handleGetMedia();
-      if (isFailed === false) {
-        if (this.state.previewData.length === 0) { this.failedComponentDidMount() }
-      }
     }
   }
 
@@ -543,11 +574,9 @@ class WebChatMediaPreview extends React.Component {
       }
     }
 
-    if (this.state.initialRender === true && prevState.selectedMediaIndex !== this.state.selectedMediaIndex && this.state.mediaList[this.state.selectedMediaIndex].msgBody?.message_type == 'video') {
-       if(!this.state.previewLoadedVideosIndex.includes(this.state.selectedMediaIndex)){
-        this.diplayMedia();
-       }
-    }
+    if (this.state.initialRender && (prevState.selectedMediaIndex !== this.state.selectedMediaIndex)){
+      this.diplayMedia();
+     }
   }
 
   componentWillUnmount() {
@@ -652,9 +681,6 @@ class WebChatMediaPreview extends React.Component {
     SDK.updateFavouriteStatus(formatUserIdToJid(this.props.jid, this.props.chatType), [seletedMsgId], !starStatusCheck);
     this.setState({ starStatusCheck: !starStatusCheck })
   };
-  failedComponentDidMount() {
-    this.commonForDidMountAndFailedDidMount(true);
-  }
 
   render() {
     const { previewData, selectedItem, starStatusCheck = false, previewLoading } = this.state;

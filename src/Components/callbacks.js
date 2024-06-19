@@ -141,11 +141,13 @@ import {
     formatUserIdToJid,
     getDataFromRoster,
     getLocalUserDetails,
+    getLocalUserId,
     getUserDetails,
     isLocalUser,
     isSingleChatJID
 } from '../Helpers/Chat/User';
 import {
+    ChatMessageHistoryDataAction,
     ClearChatHistoryAction,
     ClearChatHistoryActionCommon,
     DeleteChatHistoryAction,
@@ -1137,6 +1139,14 @@ export const callbacks = {
                 setGroupParticipantsByGroupId(res.groupJid, groupPartRes.data.participants);
             }
             handleTempArchivedChats(res.groupJid, CHAT_TYPE_GROUP);
+            if(groupData && res.msgType === GROUP_USER_ADDED && res.newUserId == getLocalUserId() && (groupData.historyEnabled == 1)){
+                const chatMessageRes = await SDK.getChatMessages({ toJid: res.groupJid});
+                if (chatMessageRes.statusCode == 200) {
+                  let updatedChatMessages = chatMessageRes
+                  updatedChatMessages.data.historyEnabledUser = 1; 
+                  Store.dispatch(ChatMessageHistoryDataAction(updatedChatMessages));
+                }
+            }
             if (groupData && isActiveConversationUserOrGroup(res.groupJid)) {
                 // Fetch the group participants details
                 if (
@@ -1158,10 +1168,13 @@ export const callbacks = {
                     if (groupListRes && groupListRes.statusCode === 200) {
                         Store.dispatch(GroupsDataAction(groupListRes.data));
                     }
-                    const recentChatsRes = await SDK.getRecentChats();
-                    if (recentChatsRes && recentChatsRes.statusCode === 200) {
-                        Store.dispatch(RecentChatAction(recentChatsRes.data));
-                    }
+                    setTimeout(async() =>{
+                        const recentChatsRes = await SDK.getRecentChats();
+                        if (recentChatsRes && recentChatsRes.statusCode === 200) {
+                            Store.dispatch(RecentChatAction(recentChatsRes.data));
+                        }
+                    },1000)
+                    
                 }
             }
             Store.dispatch(GroupDataUpdateAction(res));

@@ -14,7 +14,8 @@ import {
   TRANSLATE_MESSAGE,
   CLEAR_CHAT_HISTORY_ACTION_COMMON,
   CANCEL_MEDIA_DOWNLOAD,
-  CHAT_MESSAGE_EDIT
+  CHAT_MESSAGE_EDIT,
+  LOAD_MORE_CHATMESSAGES
 } from "./Constants";
 
 export const ChatMessageHistoryDataAction = (data) => {
@@ -158,6 +159,16 @@ export const RemoveAllStarredMessagesHistory = (data) => {
 export const TranslateMessageHistory = (data) => {
   return {
     type: TRANSLATE_MESSAGE,
+    payload: {
+      id: uuidv4(),
+      data
+    }
+  };
+};
+
+export const LoadMoreHistoryAction = (data) => {
+  return {
+    type: LOAD_MORE_CHATMESSAGES,
     payload: {
       id: uuidv4(),
       data

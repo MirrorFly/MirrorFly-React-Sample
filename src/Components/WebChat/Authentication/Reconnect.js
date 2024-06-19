@@ -18,7 +18,6 @@ import {
   arrayToObject
 } from "../../../Helpers/Chat/ChatHelper";
 import { getIdFromJid, formatUserIdToJid, isLocalUser } from "../../../Helpers/Chat/User";
-import { RECONNECT_GET_CHAT_LIMIT } from "../../../Helpers/Constants";
 import { ChatMessageHistoryDataAction, UpdateFavouriteStatus } from "../../../Actions/ChatHistory";
 import { StarredMessagesList } from "../../../Actions/StarredAction";
 import { chatSeenPendingMsg } from "../../../Actions/SingleChatMessageActions";
@@ -47,16 +46,9 @@ const handleBlockMethods = async () => {
 };
 
 const getAndUpdateChatMessages = async (chatId, chatType, rowId) => {
-  let position = rowId ? "down" : "up";
-  const chatMessageRes = await SDK.getChatMessages(
-    formatUserIdToJid(chatId, chatType),
-    position,
-    rowId,
-    RECONNECT_GET_CHAT_LIMIT,
-    false
-  );
-
+  const chatMessageRes = await SDK.getChatMessages({toJid: formatUserIdToJid(chatId, chatType)});
   if (chatMessageRes && chatMessageRes.statusCode === 200) {
+    chatMessageRes.data.reconnectFetch = 1
     chatMessageRes.chatType = chatType;
     delete chatMessageRes.statusCode;
     delete chatMessageRes.message;

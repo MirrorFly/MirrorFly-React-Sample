@@ -217,7 +217,7 @@ class NewParticipants extends Component {
             participantToAdd.forEach(el => participantJid.push(el.userJid));
 
             const groupImgBlob = await this.getBlobfromUrl();
-            const result = await SDK.createGroup(typingMessage, participantJid, groupImgBlob || "");
+            const result = await SDK.createGroup(typingMessage, participantJid, groupImgBlob || "", true);
 
             if (result.statusCode === 200) {
                 this.setState({

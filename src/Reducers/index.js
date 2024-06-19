@@ -50,7 +50,7 @@ import { VCardContactReducer, VCardReducer } from "./VCardReducer";
 import { callLogReducer } from "./CallLogReducer";
 import { browserNotifyReducer, browserTabReducer, appOnlineStatusReducer, webLocalStorageSettingReducer } from "./BrowserReducer";
 import { scrollBottomChatHistoryReducer } from "./ScrollReducer";
-import { ChatConversationHistoryReducer, EditStatusReducer } from "./ChatHistory";
+import { ChatConversationHistoryReducer, EditStatusReducer, LoadMoreChatsMessagesReducer } from "./ChatHistory";
 import { MediaDownloadStateReducer, MediaDropdownStatusReducer, MediaImageThumbDataReducer, UpdateMediaDownloadStateReducer, UpdateMediaUploadStateReducer } from "./Media";
 import { StarredMessagesReducer } from "./StarredReducer";
 import { TranslateLanguage } from "./TranslateLanguage";
@@ -122,6 +122,7 @@ export default combineReducers({
   mediaDownloadData: MediaDownloadStateReducer,
   mediaDropDownData: MediaDropdownStatusReducer,
   mediaImageThumbData : MediaImageThumbDataReducer,
+  LoadMoreChatsMessages: LoadMoreChatsMessagesReducer,
   callQualityData: callQualityReducer,
   callQualityPopup: callQualityPopupReducer,
   callQualityIcon: callQualityIconReducer

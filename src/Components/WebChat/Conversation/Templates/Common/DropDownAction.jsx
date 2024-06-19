@@ -154,7 +154,7 @@ const DropDownComponent = (props = {}) => {
           </Fragment>
         )}
 
-        {isDeleteMessageEnabled &&
+        {isDeleteMessageEnabled && !messageObject?.isPreviousMessage &&
           <li className="delete" title="Delete">
             <i>
               <DeleteMessage />

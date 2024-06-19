@@ -530,7 +530,7 @@ export const getChatHistoryData = (data, stateData) => {
     // To Avoid Unnecessary Looping, We are Using Key Value Pair for Chat and Messages
     // Eg: userId: {} or groupId: {} or msgId: {}
     const chatId = getUserIdFromJid(data.userJid || data.groupJid);
-    const state = Object.keys(stateData).length > 0 ? stateData[chatId]?.messages || {} : {};
+    const state = Object.keys(stateData).length > 0 && (data.data.historyEnabledUser != 1 && data.data.reconnectFetch != 1 ) ? stateData[chatId]?.messages || {} : {};
     const sortedData = concatMessageArray(data.data, Object.values(state), "msgId", "timestamp");
     const lastMessage = sortedData[sortedData.length - 1];
     let newSortedData;

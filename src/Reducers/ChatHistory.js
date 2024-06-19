@@ -15,7 +15,8 @@ import {
   CLEAR_ALL_CHAT,
   CLEAR_CHAT_HISTORY_ACTION_COMMON,
   CANCEL_MEDIA_DOWNLOAD,
-  CHAT_MESSAGE_EDIT
+  CHAT_MESSAGE_EDIT,
+  LOAD_MORE_CHATMESSAGES
 } from "../Actions/Constants";
 import {
   clearChatHistoryOffline,
@@ -33,6 +34,11 @@ const initialState = {
   id: null,
   data: {}
 };
+
+const chatMessagesLoad = {
+  id: null,
+  loadMoreChats: false
+}
 
 export function ChatConversationHistoryReducer(state = initialState, action = {}) {
   const { id, data } = action.payload || {};
@@ -185,6 +191,16 @@ export function EditStatusReducer(state = {}, action = {}){
       return {
         ...state,
         [action.payload.msgId]: action.payload.data
+      }
+  }
+  return state;
+}
+
+export function LoadMoreChatsMessagesReducer(state = chatMessagesLoad, action = {}){
+  if (action.type === LOAD_MORE_CHATMESSAGES) {
+      return {
+        ...state,
+        loadMoreChats: action.payload.data
       }
   }
   return state;
