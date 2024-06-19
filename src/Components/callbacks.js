@@ -1168,10 +1168,13 @@ export const callbacks = {
                     if (groupListRes && groupListRes.statusCode === 200) {
                         Store.dispatch(GroupsDataAction(groupListRes.data));
                     }
-                    const recentChatsRes = await SDK.getRecentChats();
-                    if (recentChatsRes && recentChatsRes.statusCode === 200) {
-                        Store.dispatch(RecentChatAction(recentChatsRes.data));
-                    }
+                    setTimeout(async() =>{
+                        const recentChatsRes = await SDK.getRecentChats();
+                        if (recentChatsRes && recentChatsRes.statusCode === 200) {
+                            Store.dispatch(RecentChatAction(recentChatsRes.data));
+                        }
+                    },1000)
+                    
                 }
             }
             Store.dispatch(GroupDataUpdateAction(res));
