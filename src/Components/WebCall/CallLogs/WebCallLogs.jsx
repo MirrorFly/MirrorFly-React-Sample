@@ -338,14 +338,14 @@ class WebChatCallLogs extends React.Component {
                 muteLocalVideo(true);
                 resetLocalCallDataClearAndDiscardUiTimer();
                 setLocalUserOnCall(true);
-                SDK.makeVoiceCall(users, groupId, (success, err) => {
+                SDK.makeVoiceCall(users, groupId, {}, (success, err) => {
                     this.handleMakeCallSuccessError(callConnectionStatus, success, err);
                 });
             } else if (callType === "video") {
                 muteLocalVideo(false);
                 resetLocalCallDataClearAndDiscardUiTimer();
                 setLocalUserOnCall(true);
-                SDK.makeVideoCall(users, groupId, (success, err) => {
+                SDK.makeVideoCall(users, groupId, {}, (success, err) => {
                     this.handleMakeCallSuccessError(callConnectionStatus, success, err);
                 });
             }

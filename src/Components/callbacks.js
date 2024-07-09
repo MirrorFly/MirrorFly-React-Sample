@@ -1264,7 +1264,8 @@ export const callbacks = {
         }));
     },
     helper: {
-        getDisplayName: () => {
+        getDisplayName: (metadata) => {
+            console.log("CallMetadata", metadata)
             let vcardData = getLocalUserDetails();
             if (vcardData && vcardData.nickName) {
                 return vcardData.nickName;

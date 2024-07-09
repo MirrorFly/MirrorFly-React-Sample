@@ -222,7 +222,7 @@ class ConversationHeader extends React.Component {
                     muteLocalVideo(true);
                     resetLocalCallDataClearAndDiscardUiTimer();
                     setLocalUserOnCall(true);
-                    SDK.makeVoiceCall([activeChatId], null, (success, err) => {
+                    SDK.makeVoiceCall([activeChatId], null, {}, (success, err) => {
                         this.handleOne2OneAVCallSuccessError(callConnectionStatus, success, err);
                     });
                     startCallingTimer();
@@ -230,7 +230,7 @@ class ConversationHeader extends React.Component {
                     muteLocalVideo(false);
                     resetLocalCallDataClearAndDiscardUiTimer();
                     setLocalUserOnCall(true);
-                    SDK.makeVideoCall([activeChatId], null, (success, err) => {
+                    SDK.makeVideoCall([activeChatId], null, {}, (success, err) => {
                         this.handleOne2OneAVCallSuccessError(callConnectionStatus, success, err);
                     });
                     startCallingTimer();
@@ -391,7 +391,7 @@ class ConversationHeader extends React.Component {
                     muteLocalVideo(true);
                     resetLocalCallDataClearAndDiscardUiTimer();
                     setLocalUserOnCall(true);
-                    SDK.makeVoiceCall(users, groupId, (success, error) => {
+                    SDK.makeVoiceCall(users, groupId, {}, (success, error) => {
                         this.handleGroupAVCallSuccessError(callConnectionStatus, success, error)
                     });
                     startCallingTimer();
@@ -399,7 +399,7 @@ class ConversationHeader extends React.Component {
                     muteLocalVideo(false);
                     resetLocalCallDataClearAndDiscardUiTimer();
                     setLocalUserOnCall(true);
-                    SDK.makeVideoCall(users, groupId, (success, error) => {
+                    SDK.makeVideoCall(users, groupId, {}, (success, error) => {
                         this.handleGroupAVCallSuccessError(callConnectionStatus, success, error)
                     });
                     startCallingTimer();
