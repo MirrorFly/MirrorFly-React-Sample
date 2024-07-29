@@ -978,6 +978,7 @@ export const downloadMediaFile = async (filemsgId, file_Url, msgType, file_name,
                 window.URL.revokeObjectURL(anchor.href);
                 document.body.removeChild(anchor);
                 Store.dispatch(DownloadingChatMedia({ downloadMediaMsgId: filemsgId, downloadingFile: file_Url, downloading: false, downloadingMediaType: msgType }));
+                Store.dispatch(MediaDownloadDataAction({ msgId: filemsgId, progress: null })); 
             }, 
             (error) => {
                 console.log("error in downloading media file", error);

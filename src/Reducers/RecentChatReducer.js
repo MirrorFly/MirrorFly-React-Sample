@@ -153,9 +153,23 @@ const clearAllRecentChat = (stateData) => {
 export function RecentChatReducer(state = [], action = {}) {
   let { payload: { id, data, filterBy, rosterData, refreshUnreadCount } = {} } = action;
   refreshUnreadCount = !!refreshUnreadCount;
+  let isServerReconnect = data?.serverReconnect ? true : false;
   switch (action.type) {
     case RECENT_CHAT_DATA:
-      return action.payload;
+      if(state.data && !isServerReconnect){
+        let newpayLoadData = action.payload.data.filter(newObj => {
+          return !state.data.some(existingObj => existingObj.msgId === newObj.msgId);
+        });
+        let constructData = [...state.data, ...newpayLoadData]
+        const latestObjects = constructData.reduce((acc, obj) => {
+          if (!acc[obj.fromUserId] || acc[obj.fromUserId].timestamp < obj.timestamp) {
+              acc[obj.fromUserId] = obj;
+          }
+          return acc;
+        }, {});
+        action.payload.data = Object.values(latestObjects);
+      }
+      return action.payload
     case RECONNECT_RECENT_CHAT_UPDATE:
       return {
         ...state,

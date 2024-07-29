@@ -1,4 +1,4 @@
-import { GROUPS_DATA, GROUPS_UPDATE_DATA, GROUPS_MEMBER_DATA, CURRENT_CALL_GROUP_MEMBERS, GROUPS_MEMBER_PARTICIPANTS_LIST_DATA } from "../Actions/Constants";
+import { GROUPS_DATA, GROUPS_UPDATE_DATA, GROUPS_MEMBER_DATA, CURRENT_CALL_GROUP_MEMBERS, GROUPS_MEMBER_PARTICIPANTS_LIST_DATA, RECONNECT_GROUPS_UPDATE_DATA } from "../Actions/Constants";
 import { GROUP_PROFILE_INFO_UPDATED } from '../Helpers/Chat/Constant';
 const initialState = {
   groupParticipants: {}
@@ -31,6 +31,15 @@ export function GroupsReducer(state = [], action = {}) {
         ...state,
         id: id,
         data: updateGroupDetails(data, state.data)
+      };
+    case RECONNECT_GROUPS_UPDATE_DATA:
+      return {
+        ...state,
+        id: id,
+        data: [
+          ...state.data,
+          data
+        ]
       };
     default:
       return state;

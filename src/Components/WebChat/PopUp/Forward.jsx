@@ -303,7 +303,7 @@ class ForwardPopUp extends Component {
     for (const oldMsgId of msgIds) {
       for (const toJid of contactsToForward) {
         const originalMsg = getMessageFromHistoryById(this.props.activeJid, oldMsgId);
-        const recentChatObj = await getRecentChatMsgObjForward(originalMsg, toJid, newMsgIds[msdIdIndex]);
+        const recentChatObj = await getRecentChatMsgObjForward(originalMsg, toJid, newMsgIds[msdIdIndex], msdIdIndex);
         await Store.dispatch(RecentChatUpdateAction(recentChatObj));
         this.handleUpdateHistory(toJid, contactsToForward, originalMsg, newMsgIds, msdIdIndex);
         if (msdIdIndex === 0) {

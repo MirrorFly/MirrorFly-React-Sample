@@ -196,3 +196,5 @@ export const sendErrorMessage = () => {
 export const validateFile = (fileArray, mediaType) => {
   return Promise.all(fileArray.map((file) => validateFileExtension(file, mediaType)));
 };
+
+export const getConnectionStatus = () => connectionStatus;

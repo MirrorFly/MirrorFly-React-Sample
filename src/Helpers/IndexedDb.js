@@ -123,6 +123,7 @@ class IndexedDb {
                     Store.dispatch(MediaDownloadDataAction(res));
                 }, (response) => {
                     return this.setImage(uniqueKey, response.blob, storeName).then(()=>{
+                        Store.dispatch(MediaDownloadDataAction({ msgId, progress: null })); 
                         resolve(this.getImageByKey(uniqueKey, storeName, fileKey, msgId));
                     });
                 }, (error) => {

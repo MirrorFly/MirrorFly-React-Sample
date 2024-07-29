@@ -65,7 +65,8 @@ import {
 import SDK from './SDK';
 import {
     login,
-    reconnect
+    reconnect,
+    serverReconnect
 } from './WebChat/Authentication/Reconnect'
 import Store from '../Store';
 import {
@@ -76,6 +77,7 @@ import {
     getFromSessionStorageAndDecrypt
 } from './WebChat/WebChatEncryptDecrypt';
 import {
+    getConnectionStatus,
     setConnectionStatus
 } from './WebChat/Common/FileUploadValidation'
 import {
@@ -117,7 +119,6 @@ import {
     GROUP_USER_LEFT,
     GROUP_PROFILE_INFO_UPDATED,
     LOGOUT,
-    SERVER_LOGOUT,
     MSG_CLEAR_CHAT,
     MSG_CLEAR_CHAT_CARBON,
     MSG_DELETE_CHAT,
@@ -699,13 +700,19 @@ const callStatus = (res) => {
 export const callbacks = {
     connectionListener: function (res) {
         const connStatus = res.status || "";
+        const prevConnectionState = getConnectionStatus(); 
         console.log('connStatus :>> ', connStatus);
         if (connStatus === "CONNECTED") {
             strophe = true;
             encryptAndStoreInLocalStorage("connection_status", connStatus);
             setConnectionStatus(connStatus)
             Store.dispatch(WebChatConnectionState(connStatus));
-            login();
+            if (prevConnectionState != "RECONNECTING") {
+                login();
+            } else {
+                serverReconnect();
+            }
+
         } else if (connStatus === "DISCONNECTED") {
             if (isSameSession() && getFromSessionStorageAndDecrypt("isLogout") === null) {
                 reconnect()
@@ -714,14 +721,17 @@ export const callbacks = {
             setConnectionStatus(connStatus)
             Store.dispatch(WebChatConnectionState(connStatus));
         } else if (connStatus === "CONNECTIONFAILED") {
-            if (res.statusCode === 401) {
-                logout();
-                return;
-            }
+            console.log("#Logout UI CONNECTIONFAILED", res)
             encryptAndStoreInLocalStorage("connection_status", connStatus);
             setConnectionStatus(connStatus)
             Store.dispatch(WebChatConnectionState(connStatus));
-            logout(SERVER_LOGOUT);
+        } else if (connStatus === "RECONNECTING") {
+            encryptAndStoreInLocalStorage("connection_status", connStatus);
+            setConnectionStatus(connStatus)
+            Store.dispatch(WebChatConnectionState(connStatus));
+        } else if (connStatus === "AUTHFAIL") {
+            logout();
+            return;
         }
     },
     incomingCallListener: (res) => {
@@ -1168,13 +1178,10 @@ export const callbacks = {
                     if (groupListRes && groupListRes.statusCode === 200) {
                         Store.dispatch(GroupsDataAction(groupListRes.data));
                     }
-                    setTimeout(async() =>{
-                        const recentChatsRes = await SDK.getRecentChats();
-                        if (recentChatsRes && recentChatsRes.statusCode === 200) {
-                            Store.dispatch(RecentChatAction(recentChatsRes.data));
-                        }
-                    },1000)
-                    
+                    const recentChatsRes = await SDK.getRecentChatsByPagination();
+                    if (recentChatsRes && recentChatsRes.statusCode === 200) {
+                        Store.dispatch(RecentChatAction(recentChatsRes.data));
+                    }
                 }
             }
             Store.dispatch(GroupDataUpdateAction(res));
