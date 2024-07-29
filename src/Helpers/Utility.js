@@ -1286,14 +1286,15 @@ export const getMessageObjForward = (originalMsg, toJid, newMsgId) => {
   };
 };
 
-export const getRecentChatMsgObjForward = (originalMsg, toJid, newMsgId) => {
+export const getRecentChatMsgObjForward = (originalMsg, toJid, newMsgId, msdIdIndex) => {
   const createdAt = changeTimeFormat(Date.now() * 1000)
   const vcardData = getLocalUserDetails();
   const senderId = vcardData.fromUser;
+  const timestamp = new Date(createdAt).getTime() + msdIdIndex;
 
   return {
     ...originalMsg,
-    timestamp: new Date(createdAt).getTime(),
+    timestamp,
     createdAt: createdAt,
     msgStatus: 3,
     msgId: newMsgId,

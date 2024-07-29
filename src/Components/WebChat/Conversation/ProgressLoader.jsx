@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Store from "../../../Store";
 import { useSelector } from "react-redux";
 import SendingFailed from "./SendingFailed";
@@ -42,10 +42,26 @@ function ProgressLoader(props = {}) {
     
   } = globalStore || {};
 
-  const getAnimateClass = () => ((data[msgId]?.progress === 100 || uploadStatus === 0 || uploadStatus === 1 || uploadStatus === 11)? "progress-animate" : "");
+  const getAnimateClass = () => ((!data[msgId]?.progress || data[msgId]?.progress < 0 || uploadStatus === 0 || uploadStatus === 11)? "progress-animate" : "");
   const getDownloadAnimateClass = () => (mediaDownloadingData?.downloadingData[msgId]?.progress > 0 && uploadStatus !== 11) ? "progress-animate active-progress" : "";
-  const getActiveProgressClass = () => (uploadStatus === 1 && data[msgId]?.progress ? "active-progress" : "");
+  const getActiveProgressClass = () => (uploadStatus === 1 && data[msgId]?.progress > 0 ? "active-progress" : "");
+  const mediauploadStatus = mediaDownloadingData?.downloadingData[msgId]?.uploadStatus;
+  const progress = mediaDownloadingData?.downloadingData[msgId]?.progress;
 
+  let progressBarClass;
+  if (mediauploadStatus !== 9) {
+    if (!progress || progress < 0) {
+      progressBarClass = "progressBar progress-animate";
+    } else {
+      progressBarClass = "progressBar active-progress";
+    }
+  }
+
+  useEffect(()=>{
+    if(!isOnline){
+      progressBarClass = "";
+    }
+  },[isOnline])
 
   const cancelMediaUploadDownload = async () => {
     try {
@@ -95,6 +111,7 @@ function ProgressLoader(props = {}) {
                 window.URL.revokeObjectURL(anchor.href);
                 document.body.removeChild(anchor);
                 Store.dispatch(Store.dispatch(DownloadingChatMedia({ downloadMediaMsgId: msgId, downloading: false })));
+                Store.dispatch(MediaDownloadDataAction({ msgId, progress: null }));   
           }, 
           (error) => {
               console.log("error in downloading media file", error);
@@ -200,8 +217,8 @@ function ProgressLoader(props = {}) {
             </div>
             <div className="loadingProgress" style={((messageType == "image" || messageType == "audio") && !downloadEnabled && isSender) || (messageType == "audio" && !isSender && !data[msgId])  ? { cursor: "auto" } : { cursor: "pointer" }} onClick={((messageType == "image" || messageType == "audio") && !downloadEnabled && isSender) || (messageType == "audio" && !isSender && !data[msgId]) ? null : cancelMediaUploadDownload}>
               <span
-                className={`progressBar ${getDownloadAnimateClass()} ${getAnimateClass()} ${getActiveProgressClass()}`}
-                style={{ width: `${data[msgId]?.progress}%` }}
+                className={data[msgId]?.progress ? `progressBar ${getDownloadAnimateClass()} ${getAnimateClass()} ${getActiveProgressClass()} ` :  progressBarClass}
+                style={{ width: `${data[msgId]?.progress ? data[msgId]?.progress : mediaDownloadingData?.downloadingData[msgId]?.progress}%` }}
               ></span>
             </div>
           </>
@@ -222,13 +239,10 @@ function ProgressLoader(props = {}) {
                 <DocumentDownload />
               )}
             </div>
-            <div className="loadingProgress" onClick={(messageType == "image" || messageType == "audio") && !downloadEnabled ? null : cancelMediaUploadDownload}>
+            <div className="loadingProgress" onClick={(messageType === "image" || messageType === "audio") && !downloadEnabled ? null : cancelMediaUploadDownload}>
               <span
-                className={
-                  mediaDownloadingData?.downloadingData[msgId]?.uploadStatus !== 9
-                    ? "progressBar progress-animate active-progress"
-                    : ""
-                }
+                className={isOnline ? progressBarClass : ""}
+                style={{ width: `${mediaDownloadingData?.downloadingData[msgId]?.progress}%` }}
               ></span>
             </div>
           </>

@@ -47,7 +47,8 @@ class RecentChatSection extends Component {
       searchValue: "",
       recentChatNames: [],
       recentChatItems: [],
-      filteredContacts: []
+      filteredContacts: [],
+      prevMessageTime:"",
     };
     this.timer = 0;
     this.chatExist = false;
@@ -111,11 +112,27 @@ class RecentChatSection extends Component {
     const {
       rosterData: { id: rosterId, data: rosterDataArray = [] } = {},
       recentChatData: { id: recentchatId, data: recentChatArray = [] } = {}
-    } = this.props;
+    } = this.props; 
     const filteredRoaster = this.filterRosterByUserNames(recentChatArray, rosterDataArray);
     let recentChatItems = this.constructRecentChatItems(recentChatArray, filteredRoaster);
     let recentChatNames = this.filterUserNameFromRecent(recentChatArray);
+    let unArchiveChats = recentChatArray.filter(obj => obj.archiveStatus === 0).length;
+    if (recentChatArray && recentChatArray.length > 0 && unArchiveChats < 15) {
+     this.fetchMoreRecentChats(recentChatArray)
+    }
     return { recentChatItems, recentChatNames, rosterId, recentchatId };
+  }
+
+  fetchMoreRecentChats = async(recentChatArray) =>{
+    let messageTime = recentChatArray && Math.min(...recentChatArray?.map(obj => obj.messageTime));
+    if (this.state.prevMessageTime == messageTime) {
+      return;
+    }
+      const recentChats = await SDK.getRecentChatsByPagination({ messageTime })
+      Store.dispatch(RecentChatAction(recentChats.data));
+      this.setState({
+        prevMessageTime: messageTime
+    });
   }
 
   componentDidMount() {
@@ -171,7 +188,7 @@ class RecentChatSection extends Component {
       prevProps.broadCastData.id !== this.props.broadCastData.id &&
       this.props.broadCastData?.data?.broadcastList?.length !== prevProps.broadCastData?.data?.broadcastList?.length
     ) {
-      const recentChatsRes = await SDK.getRecentChats();
+      const recentChatsRes = await SDK.getRecentChatsByPagination();
       if (recentChatsRes && recentChatsRes.statusCode === 200) {
         Store.dispatch(RecentChatAction(recentChatsRes.data));
       }
@@ -281,6 +298,24 @@ class RecentChatSection extends Component {
     return !(messageType && nextPropsMsgId !== id && checkExist);    
   }
 
+  handleRecentChatsScroll = async (event) => {
+    const { target } = event;
+    const { scrollTop, clientHeight, scrollHeight } = target;
+    if ((scrollTop + clientHeight + 1) >= scrollHeight) {
+        const { recentChatData: {data: recentChatArray = [] } = {} } = this.props; 
+        const messageTime = recentChatArray && Math.min(...recentChatArray?.map(obj => obj.messageTime));
+        if (this.state.prevMessageTime == messageTime) {
+            return;
+        }
+        const recentChats = await SDK.getRecentChatsByPagination({ messageTime })
+        Store.dispatch(RecentChatAction(recentChats.data));
+        this.setState({
+          prevMessageTime: messageTime
+      });
+    }
+};
+
+
   render() {
     const { recentChatItems, filteredRecentChat, searchEnable, searchValue, filteredContacts, loader } = this.state;
     const {
@@ -352,6 +387,7 @@ class RecentChatSection extends Component {
                   : ""
                 } ${pageType === "archive" ? "archive" : ""} ${pageType === "archive" && updatedRecentChat.length === 0 && !searchValue ? " no-chat-archive " : ""
                 } ${(pageType != "archive") && updatedRecentChat.length === 0 && !searchValue ? " no-chat " : ""}`}
+                onScroll={e => this.handleRecentChatsScroll(e)}
             >
               {isPermanentArchvie && pageType === "recent" && archivedChats.length > 0 && (
                 <div className="archivedWrapper" onClick={this.props.handleArchivedChatList}>

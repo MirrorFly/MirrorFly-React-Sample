@@ -25,11 +25,11 @@ import { toast } from 'react-toastify';
 import { ActiveChatResetAction, RecentChatAction } from "../../../Actions/RecentChatActions"
 import { hideModal } from '../../../Actions/PopUp';
 import { messageInfoAction } from "../../../Actions/MessageActions";
-import { GroupsDataAction } from "../../../Actions/GroupsAction";
+import { GroupsDataAction, ReConnectGroupDataUpdateAction } from "../../../Actions/GroupsAction";
 import { setGroupParticipants, setGroupParticipantsByGroupId } from "../../../Helpers/Chat/Group";
 import { RosterPermissionAction } from "../../../Actions/RosterActions";
 import { FeatureEnableState } from "../../../Actions/FeatureAction";
-import { REACT_APP_CONTACT_SYNC } from "../../processENV";
+import { REACT_APP_CONTACT_SYNC, REACT_APP_XMPP_SOCKET_HOST } from "../../processENV";
 
 const handleBlockMethods = async () => {
   const userIBlockedRes = await SDK.getUsersIBlocked();
@@ -174,29 +174,26 @@ export async function login() {
       if (featureData.isGroupChatEnabled) {
         const groupListRes = await SDK.getGroupsList();
         if (groupListRes && groupListRes.statusCode === 200) {
-          groupListRes.data.map(async (group) => {
-            const groupJid = formatUserIdToJid(group.groupId, CHAT_TYPE_GROUP);
-            const groupPartRes = await SDK.getGroupParticipants(groupJid);
-            if (groupPartRes && groupPartRes.statusCode === 200) {
-              setGroupParticipantsByGroupId(groupJid, groupPartRes.data.participants);
-              setGroupParticipants(groupPartRes.data);
-            }
-          });
           Store.dispatch(GroupsDataAction(groupListRes.data));
-
-          const { data = [] } = groupListRes
+          const { data = [] } = groupListRes;
           data.forEach(item => {
             if (isActiveConversationUserOrGroup(item?.groupId) && item?.isAdminBlocked) {
               Store.dispatch(ActiveChatResetAction());
-              toast.info("This group is no longer available")
-              Store.dispatch(hideModal())
+              toast.info("This group is no longer available");
+              Store.dispatch(hideModal());
             }
           });
+
+          // Fetch participants for the first 20 groups
+          await fetchGroupParticipants(groupListRes.data.slice(0, 20));
+
+          // Perform background fetch for the remaining group participants
+          fetchGroupParticipantsInBackground(groupListRes.data.slice(20));
         }
       }
 
       const oldRecentChatData = getRecentChatData();
-      const recentChatsRes = await SDK.getRecentChats();
+      const recentChatsRes = await SDK.getRecentChatsByPagination();
       let recentChatArr = [];
       if (recentChatsRes && recentChatsRes.statusCode === 200) {
         recentChatArr = recentChatsRes.data;
@@ -215,9 +212,85 @@ export async function login() {
   }
 }
 
+// Function to fetch group participants
+async function fetchGroupParticipants(groups) {
+  try {
+    for (const group of groups) {
+      const groupJid = formatUserIdToJid(group.groupId, CHAT_TYPE_GROUP);
+      const groupPartRes = await SDK.getGroupParticipants(groupJid);
+      if (groupPartRes && groupPartRes.statusCode === 200) {
+        setGroupParticipantsByGroupId(groupJid, groupPartRes.data.participants);
+        setGroupParticipants(groupPartRes.data);
+      }
+    }
+  } catch (error) {
+    console.log("Error fetching group participants:>> ", error);
+  }
+}
+
+// Background function to fetch remaining group participants
+async function fetchGroupParticipantsInBackground(groups) {
+  try {
+    for (const group of groups) {
+      const groupJid = formatUserIdToJid(group.groupId, CHAT_TYPE_GROUP);
+      const groupPartRes = await SDK.getGroupParticipants(groupJid);
+      if (groupPartRes && groupPartRes.statusCode === 200) {
+        setGroupParticipantsByGroupId(groupJid, groupPartRes.data.participants);
+      }
+    }
+  } catch (error) {
+    console.log("Error fetching group participants in background:>> ", error);
+  }
+}
+
 export function reconnect() {
   // Update connection status
   encryptAndStoreInLocalStorage("connection_status", CONNECTION_STATE_CONNECTING);
   setConnectionStatus(CONNECTION_STATE_CONNECTING);
   Store.dispatch(WebChatConnectionState(CONNECTION_STATE_CONNECTING));
+}
+
+const newFetchedGroups = (oldData, newData) => {
+  const oldFromUserIds = new Set(oldData.filter(item => item.chatType === "groupchat").map(item => item.fromUserId));
+  return newData.filter(newItem => 
+    newItem.chatType === "groupchat" && 
+    !oldFromUserIds.has(newItem.fromUserId)
+  );
+};
+
+const constructNewGroups = async (data) => {
+  const promises = data.map(async (item) => {
+    const groupJid = item.fromUserId + "@mix." + REACT_APP_XMPP_SOCKET_HOST
+    const groupProfile = await SDK.getGroupProfile(groupJid);
+    return groupProfile.data;
+  });
+  const newGroups = await Promise.all(promises);
+  return newGroups;
+};
+
+export const serverReconnect = async() => {
+  console.log("serverReconnect Function")
+  const oldRecentChatData = getRecentChatData();
+  const recentChatsRes = await SDK.getRecentChatsByPagination();
+  let recentChatArr = [];
+  if (recentChatsRes && recentChatsRes.statusCode === 200) {
+    recentChatArr = recentChatsRes.data;
+    recentChatArr.serverReconnect = true;
+    const newRecentGroups = await newFetchedGroups(oldRecentChatData, recentChatArr)
+    if(newRecentGroups && newRecentGroups.length > 0){
+      const newGroupsData = await constructNewGroups(newRecentGroups);
+      console.log("newGroupsData", newGroupsData)
+      newGroupsData.forEach(item => {
+        Store.dispatch(ReConnectGroupDataUpdateAction(item));
+        if (isActiveConversationUserOrGroup(item?.groupId) && item?.isAdminBlocked) {
+          Store.dispatch(ActiveChatResetAction());
+          toast.info("This group is no longer available");
+          Store.dispatch(hideModal());
+        }
+      });
+      await fetchGroupParticipants(newGroupsData);
+    }
+    Store.dispatch(RecentChatAction(recentChatArr));
+  }
+  handleChatHistoryUpdate(recentChatArr, oldRecentChatData);
 }

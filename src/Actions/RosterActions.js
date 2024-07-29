@@ -2,8 +2,7 @@ import uuidv4 from 'uuid/v4';
 import { REACT_APP_API_URL } from '../Components/processENV';
 import SDK from '../Components/SDK';
 import { getFromLocalStorageAndDecrypt, encryptAndStoreInLocalStorage} from '../Components/WebChat/WebChatEncryptDecrypt';
-import { formatUserIdToJid } from '../Helpers/Chat/User';
-import { compare, parsedContacts } from '../Helpers/Utility';
+import { compare } from '../Helpers/Utility';
 import { FETCHING_USER_LIST, ROSTER_DATA, ROSTER_DATA_ADD, ROSTER_DATA_UPSERT, ROSTER_PERMISSION } from './Constants';
 
 const mapColorForTouser =  () => {
@@ -77,62 +76,9 @@ function settings(){
     })
 }
 
-const fetchMailContacts = async(token, data, dispatch) => {
-    await fetch(`${REACT_APP_API_URL}/contacts/mail/`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': token
-        },
-        body: JSON.stringify({
-            "syncTime": ""
-        })
-    }).then(response => response.json())
-        .then(async (res) => {
-            if (res.status === 200) {
-                let mailContacts = res.data.created;
-                // Need to Change these Params in API 
-                mailContacts = mailContacts.map(contact => { 
-                    const status = contact.statusMsg,
-                        userId = contact.username,
-                        userJid = formatUserIdToJid(contact.username);
-                    delete contact.status;
-                    
-                    return {
-                        ...contact, 
-                        isFriend: true,
-                        userId,
-                        userJid,
-                        status,
-                    }
-                })
-                let concateData = [ ...data, ...mailContacts];
-                let parsedData = await parsedContacts(concateData);
-                let contacts = await parsedData.sort(compare);
-                dispatch(RosterData(contacts));
-            } else if (res.status === 401) {
-                let decryptResponse = getFromLocalStorageAndDecrypt("auth_user");
-                const tokenResult = await SDK.getUserToken(decryptResponse.username, decryptResponse.password);
-                if (tokenResult.statusCode === 200) {
-                    encryptAndStoreInLocalStorage("token", tokenResult.userToken);
-                    fetchMailContacts(tokenResult.userToken, data, dispatch);
-                }
-            } else {
-                let contacts = await data.sort(compare);
-                dispatch(RosterData(contacts));
-            }
-        }).catch((error) => {
-            let contacts = data.sort(compare);
-            dispatch(RosterData(contacts));
-            console.log("error message for email contact sync: ", error);
-        });
-}
-
 export const RosterDataAction = (data) => async dispatch => {
-    let token = getFromLocalStorageAndDecrypt('token');
-    if (token !== null) {
-        fetchMailContacts(token, data, dispatch);
-    }
+    let contacts = await data.sort(compare);
+    dispatch(RosterData(contacts));
 }
 
 /**

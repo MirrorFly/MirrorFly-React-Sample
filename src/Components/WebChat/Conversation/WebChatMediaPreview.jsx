@@ -40,7 +40,7 @@ import Store from "../../../Store";
 import { MediaDownloadDataAction } from "../../../Actions/Media";
 import "./Templates/Common/Spinner/Spinner.scss"
 
-const CAPTION_MARGIN = 30;
+const CAPTION_MARGIN = 10;
 class WebChatMediaPreview extends React.Component {
   constructor() {
     super();
@@ -259,7 +259,7 @@ class WebChatMediaPreview extends React.Component {
                       <p
                         className="legend image-caption"
                         id={`video-caption-${msgId}`}
-                        style={{ minHeight: "70px", marginTop: `${CAPTION_MARGIN}px` }}
+                        style={{ minHeight: "45px", marginTop: `${CAPTION_MARGIN}px` }}
                       >
                         {temp.textContent}
                       </p>
@@ -276,14 +276,13 @@ class WebChatMediaPreview extends React.Component {
                 imageURL: thumb_image,
                 media: (
                   <div className="video-wrapper1" id={`video-player-${msgId}`}>
-                    <img src={thumb_image} alt={thumb_image} style={{ height: originalHeight, width: "1000px" }}
-                      className="previewVideoThumbnail" />
+                    <img src={thumb_image} alt={thumb_image} className="previewVideoThumbnail" />
                       <div style={{zIndex:3}}><Spinner /></div>
                     {caption ? (
                       <p
                         className="legend image-caption"
                         id={`video-caption-${msgId}`}
-                        style={{ minHeight: "70px", marginTop: `${CAPTION_MARGIN}px` }}
+                        style={{ minHeight: "45px", marginTop: `${CAPTION_MARGIN}px` }}
                       >
                         {temp.textContent}
                       </p>
