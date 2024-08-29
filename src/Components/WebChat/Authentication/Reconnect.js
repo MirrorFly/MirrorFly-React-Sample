@@ -46,7 +46,9 @@ const handleBlockMethods = async () => {
 };
 
 const getAndUpdateChatMessages = async (chatId, chatType, rowId) => {
-  const chatMessageRes = await SDK.getChatMessages({toJid: formatUserIdToJid(chatId, chatType)});
+  const UnreadUserObjData = Store.getState().UnreadUserObjData;
+  if( UnreadUserObjData[chatId] &&  UnreadUserObjData[chatId].count > 0) return;
+  const chatMessageRes = await SDK.getChatMessages({toJid: formatUserIdToJid(chatId, chatType), includeMsgObj:true});
   if (chatMessageRes && chatMessageRes.statusCode === 200) {
     chatMessageRes.data.reconnectFetch = 1
     chatMessageRes.chatType = chatType;

@@ -1453,7 +1453,6 @@ export const sendNotification = (displayName = "", imageUrl = "", messageBody = 
     os = null;
 
     Push.clear();
-    const sound = new Audio("sounds/notification.mp3")
     const updateDisplayName = displayName ? displayName.toString() : "";
 
     if (macosPlatforms.test(userAgent)) {
@@ -1495,7 +1494,6 @@ export const sendNotification = (displayName = "", imageUrl = "", messageBody = 
         return true;
       }
     } else {
-      sound.play();
       return true;
     }
 
@@ -1505,7 +1503,7 @@ export const sendNotification = (displayName = "", imageUrl = "", messageBody = 
 };
 
 export const validEmail = (email = "") => {
-  const regex = /^([_a-zA-Z0-9-!#$%&+]+(\.[_a-zA-Z0-9-!#$%&+]+)*@[a-zA-Z0-9-]+(\.[a-zA-Z]{2,6})+)$/;
+  const regex = /^\s*([\w+-]+\.)*[\w+]+@([\w+-]+\.)*([\w+-]+\.[a-zA-Z]{2,6})+\s*$/;
   return regex.test(email);
 }
 

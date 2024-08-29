@@ -45,14 +45,14 @@ import {
   chatSeenPendingMsgReducer
 } from "./SingleChatMessageReducer";
 import { TypingReducer } from "./TypingReducer";
-import { UnreadCountReducer } from "./UnreadCountReducer";
+import { groupNotificationMsgCountReducer, UnreadCountReducer, UnreadUserObjReducer } from "./UnreadCountReducer";
 import { VCardContactReducer, VCardReducer } from "./VCardReducer";
 import { callLogReducer } from "./CallLogReducer";
 import { browserNotifyReducer, browserTabReducer, appOnlineStatusReducer, webLocalStorageSettingReducer } from "./BrowserReducer";
 import { scrollBottomChatHistoryReducer } from "./ScrollReducer";
 import { ChatConversationHistoryReducer, EditStatusReducer, LoadMoreChatsMessagesReducer } from "./ChatHistory";
 import { MediaDownloadStateReducer, MediaDropdownStatusReducer, MediaImageThumbDataReducer, UpdateMediaDownloadStateReducer, UpdateMediaUploadStateReducer } from "./Media";
-import { StarredMessagesReducer } from "./StarredReducer";
+import { starMsgPageTypeReducer, StarredMessagesReducer } from "./StarredReducer";
 import { TranslateLanguage } from "./TranslateLanguage";
 import { CommonDataReducer } from "./CommonReducer";
 import { callIntermediateScreenReducer } from "./CallIntermediateScreen";
@@ -93,6 +93,8 @@ export default combineReducers({
   SingleChatSelectedMediaData: SingleChatSelectedMediaReducer,
   GroupChatSelectedMediaData: GroupChatSelectedMediaReducer,
   unreadCountData: UnreadCountReducer,
+  UnreadUserObjData: UnreadUserObjReducer,
+  groupNotificationMsgCount: groupNotificationMsgCountReducer,
   broadCastData: BroadCastReducer,
   popUpData: PopUp,
   currentCallGroupMembersData: currentCallGroupMembersReducer,
@@ -125,5 +127,6 @@ export default combineReducers({
   LoadMoreChatsMessages: LoadMoreChatsMessagesReducer,
   callQualityData: callQualityReducer,
   callQualityPopup: callQualityPopupReducer,
-  callQualityIcon: callQualityIconReducer
+  callQualityIcon: callQualityIconReducer,
+  starMsgPageType: starMsgPageTypeReducer
 });

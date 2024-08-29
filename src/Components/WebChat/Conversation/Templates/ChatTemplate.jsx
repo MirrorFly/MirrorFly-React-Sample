@@ -32,9 +32,9 @@ class ChatTemplate extends Component {
         msgBody,
         msgType,
         msgBody: { message_type = "" } = {}
-      } = msg;
-
-      if (msgType === GROUP_CHAT_PROFILE_UPDATED_NOTIFY) {
+    } = msg;
+    if(msgBody && Object.keys(msgBody).length == 0){
+    if((msgType === "seen" || msgType === GROUP_CHAT_PROFILE_UPDATED_NOTIFY)) {
         const { publisherId, userId, profileUpdatedStatus } = msg;
         const notification = groupstatus(publisherId, userId, profileUpdatedStatus, rosterArray) || "";
         return (
@@ -42,7 +42,7 @@ class ChatTemplate extends Component {
             <span>{notification}</span>
           </div>
         );
-      }
+      }}
       return deleteStatus === 0 ? (
         <CreateTemplate
           message_type={message_type}
@@ -94,11 +94,22 @@ class ChatTemplate extends Component {
     );
   };
 
+  filterValidData = (data) =>{
+    const result = {};
+    for (const key in data) {
+        if (key !== "Invalid") {
+            result[key] = data[key];
+        }
+    }
+    return result;
+}
+
   constructMessageTemplate = () => {
     const { chatmessages } = this.props;
     const updatedMessage = groupBy(chatmessages, (date) => (convertUTCDateToLocalDate(date.createdAt) || "").split(" ")[0]);
-    return Object.keys(updatedMessage).map((messageInDate) => {
-      const { [messageInDate]: splitBlockByDate } = updatedMessage;
+    const filteredMessages = this.filterValidData(updatedMessage)
+    return Object.keys(filteredMessages).map((messageInDate) => {
+      const { [messageInDate]: splitBlockByDate } = filteredMessages;
       return this.dateBlock(splitBlockByDate, messageInDate);
     });
   };

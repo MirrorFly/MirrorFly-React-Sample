@@ -41,7 +41,6 @@ import {
 import { getContactNameFromRoster, getDataFromRoster } from "../Helpers/Chat/User";
 import { handleArchiveActions, handleTempArchivedChats } from "../Helpers/Chat/ChatHelper";
 import { TYPE_DELAY_TIME } from "../Helpers/Constants";
-import { UnreadCountDelete } from "./UnreadCount"
 import SDK from "../Components/SDK";
 
 const getTypingUserDetails = (newChatFrom) => {
@@ -240,9 +239,6 @@ export const MessageAction = (data) => (dispatch, getState) => {
     updateMessageUnreadCount(data, getcurrentState);
   }
 
-  if (msgType === "unreadUpdate") {
-    dispatch(UnreadCountDelete(data));
-  }
 };
 
 export const ReplyMessageAction = (data) => {

@@ -41,6 +41,7 @@ import ActionInfoPopup from '../../ActionInfoPopup';
 import { ClearChatHistoryAction } from '../../../Actions/ChatHistory';
 import { RemoveStaredMessagesClearChat } from '../../../Actions/StarredAction';
 import { encryptAndStoreInLocalStorage, getFromLocalStorageAndDecrypt } from '../WebChatEncryptDecrypt';
+import { ReduceUnreadMsgCount, UnreadCountDelete } from '../../../Actions/UnreadCount';
 class WebChatContactInfo extends React.Component {
 
     /**
@@ -406,6 +407,8 @@ class WebChatContactInfo extends React.Component {
                             Store.dispatch(ClearChatHistoryAction(resId));
                             Store.dispatch(clearLastMessageinRecentChat(resId.fromUserId));
                             Store.dispatch(RemoveStaredMessagesClearChat(resId));
+                            Store.dispatch(UnreadCountDelete({ fromUserId: resId.fromUserId }))
+                            Store.dispatch(ReduceUnreadMsgCount({ count: parseInt(0), fromUserId: resId.fromUserId , fullyViewedChat: true, unreadRealTimeMsgCount: 0 }));
                         }
                     }).catch((error) => {
                         console.log("clearChat error",error)

@@ -65,9 +65,6 @@ const updateMuteRecentChat = (data, stateData) => {
 
 const updateRecentUnreadCount = (data, stateData) => {
   return stateData.map((element) => {
-    if (element.fromUserId === data.fromUserId) {
-      element.unreadCount = 0;
-    }
     return element;
   });
 };

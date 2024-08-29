@@ -87,7 +87,8 @@ class RecentChatItem extends Component {
       pinChat: false,
       archiveChat: false,
       isArchive: true,
-      needToImplement: false
+      needToImplement: false,
+      PrevUnreadCount: 0
     };
     this.localDb = new IndexedDb();
     this.audio = new Audio("sounds/busySignal.mp3");
@@ -319,7 +320,6 @@ class RecentChatItem extends Component {
     // When user switch chat clean it
     // Store.dispatch(clearChatSeenPendingMsg());
     Store.dispatch(chatResetMessage())
-      .then(() => Store.dispatch(UnreadCountDelete({ fromUserId })))
       .then(() => this.props.handleOnclick(status, response));
   };
 
@@ -447,7 +447,7 @@ class RecentChatItem extends Component {
         totalChats++;
         totalCounts = totalCounts + count;
       })
-      if (shouldHideNotification() && browserNotify.isPageHidden) {
+      if (shouldHideNotification() && browserNotify.isPageHidden && totalCounts > 0 ) {
         updateDisplayName = "You have " + totalChats +" new chat" + ((totalChats > 1) ? "s" : "");
         updateMessage = "Total " + totalCounts + " unread message" + ((totalCounts > 1) ? "s" : "");
       }
@@ -545,7 +545,8 @@ class RecentChatItem extends Component {
     const {
       item: { roster: { image, groupImage, thumbImage } = {} } = {},
       callLogData: { callAudioMute = false } = {},
-      pageType = ""
+      pageType = "",
+      UnreadUserObjData
     } = this.props;
     const {
       roster: { groupId, emailId, userId },
@@ -572,7 +573,7 @@ class RecentChatItem extends Component {
     const {
       unreadCountData: { unreadDataObj }
     } = this.props;
-    const unreadCount = (unreadDataObj[fromUserId] && unreadDataObj[fromUserId].count) || 0;
+    let unreadCount = (unreadDataObj[fromUserId] && unreadDataObj[fromUserId].count) || 0;
     const ongoingCallDisplayText =
       "Ongoing " +
       (this.props.callMode && this.props.callMode === "onetomany" ? "group " : " ") +
@@ -585,6 +586,10 @@ class RecentChatItem extends Component {
     let imageToken = "";
     if(!isAdminBlocked) {
         imageToken = (thumbImage && thumbImage !== "") ? thumbImage : image || groupImage;
+    }
+    const msgCounts = UnreadUserObjData[fromUserId] && UnreadUserObjData[fromUserId]?.count
+    if (unreadCount == 0 && msgCounts && msgCounts != 0) {
+          unreadCount = msgCounts;
     }
 
     return (
@@ -619,7 +624,7 @@ class RecentChatItem extends Component {
                 </div>
               </div>
               {lastMessage && (
-                <span className={unreadCount && parseInt(unreadCount) !== 0 ? "messagetime-plus" : "messagetime"}>
+                <span className={unreadCount && parseInt(unreadCount) != 0 ? "messagetime-plus" : "messagetime"}>
                   {messageDeliveryTime}
                 </span>
               )}
@@ -666,8 +671,8 @@ class RecentChatItem extends Component {
                     <IconPinChat style={{ color: "#2698F9" }} />
                   </i>
                 )}
-                {parseInt(unreadCount) !== 0 && (
-                  <p className="notifi">{parseInt(unreadCount) > 99 ? "99+" : unreadCount}</p>
+                {parseInt(unreadCount) != 0 && (
+                  <p className="notifi">{unreadCount}</p>
                 )}
                 {archiveStatus === 1 && searchTerm && <span className="recent-badge">Archived</span>}
                 {enableDropDown && (fromUserId !== callUserJID) && (
@@ -758,7 +763,8 @@ const mapStateToProps = (state, props) => {
     selectedRoster: state.activeChatData,
     contactsWhoBlockedMe: state.contactsWhoBlockedMe,
     groupsData: state.groupsData,
-    callLogData: state.callLogData
+    callLogData: state.callLogData,
+    UnreadUserObjData: state.UnreadUserObjData,
   };
 };
 export default connect(mapStateToProps, null)(RecentChatItem);
