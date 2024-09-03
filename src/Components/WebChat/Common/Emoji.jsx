@@ -30,7 +30,7 @@ export const Emoji = (props = {}) => {
     return (
         <Fragment>
             { emojiState && <span className="emojiPicker-container" style={getEmojiStyle()}>
-            <Picker className="emoji_picker" style={{width : "100%"}} data={data} perLine={23} previewEmoji={false} enableFrequentEmojiSort={false} onEmojiSelect={addEmoji} />
+            <Picker className="emoji_picker" style={{width : "100%"}} dynamicWidth={true} data={data} previewEmoji={false} enableFrequentEmojiSort={false} onEmojiSelect={addEmoji} />
             </span>}
         </Fragment>
     )

@@ -15,22 +15,24 @@ class Title extends Component {
   }
 
   handleUnreadCount = () => {
-    const { unreadCountData: { unreadDataObj = {} } = {} } = this.props;
+    const { unreadCountData: { unreadDataObj = {} } = {},  UnreadUserObjData} = this.props;
     const mutedChats = getMutedChats(),
       archivedChats = getArchivedChats();
     const disabledChats = [...mutedChats, ...archivedChats];
     const unReadUserArr = Object.keys(unreadDataObj).filter((n) => !disabledChats.includes(n));
-
-    if (this.state.count !== unReadUserArr.length) {
-      this.setState(
-        {
-          count: unReadUserArr.length
-        },
-        () => {
-          encryptAndStoreInLocalStorage("unreadMessageCount", this.state.count);
-        }
-      );
-    }
+    setTimeout(()=>{
+      let filteredArray = unReadUserArr.filter(item => !UnreadUserObjData[item] || UnreadUserObjData[item].count !== 0);
+      if (this.state.count !== filteredArray.length) {
+        this.setState(
+          {
+            count: filteredArray.length
+          },
+          () => {
+            encryptAndStoreInLocalStorage("unreadMessageCount", this.state.count);
+          }
+        );
+      }
+    },10)
   };
 
   componentDidMount() {
@@ -53,7 +55,8 @@ const mapStateToProps = (state, props) => {
   return {
     unreadCountData: state.unreadCountData,
     commonData: state?.commonData,
-    recentChatData: state.recentChatData
+    recentChatData: state.recentChatData,
+    UnreadUserObjData: state.UnreadUserObjData
   };
 };
 

@@ -13,7 +13,7 @@ import {
 } from "../../../assets/images";
 import "./StarredMessages.scss";
 import ProfileImage from "../Common/ProfileImage";
-import { downloadMediaFile, getActiveConversationMessageByMsgId, getChatMessageHistoryById, getMessageFromHistoryById, getMsgStatusEle, getReplyMessageFormat, isGroupChat, isSingleChat, offlineReplyHandle } from "../../../Helpers/Chat/ChatHelper";
+import { downloadMediaFile, getActiveConversationChatId, getActiveConversationMessageByMsgId, getChatMessageHistoryById, getMessageFromHistoryById, getMsgStatusEle, getReplyMessageFormat, isGroupChat, isSingleChat, offlineReplyHandle } from "../../../Helpers/Chat/ChatHelper";
 import { initialNameHandle, formatDisplayName, getUserDetails, isLocalUser } from "../../../Helpers/Chat/User";
 import { getGroupData } from "../../../Helpers/Chat/Group";
 import { getMessageTimeElement } from "../../../Helpers/UIElements";
@@ -36,6 +36,7 @@ import { ActiveChatAction } from "../../../Actions/RecentChatActions";
 import { ReplyMessageAction } from "../../../Actions/MessageActions";
 import ReplyMessageBlock from "../../WebChat/Conversation/Templates/Common/ReplyMessage";
 import MeetComponent from "../Conversation/Templates/Chat/MeetComponent";
+import { ReduceUnreadMsgCount, UnreadCountDelete, UnreadUserObj } from "../../../Actions/UnreadCount";
  
  
  
@@ -233,20 +234,26 @@ const StarredMessages = (props = {}) => {
     setUnstarDrop(false);
   };
  
- const scrollToMsg = async (msgId = "") => {
-   setTimeout(() => {
+ const scrollToMsg = async (msgId = "", fromUserId="") => {
+   setTimeout(async() => {
      const container = document && document.getElementById(msgId);
      if (!container) return;
      container.scrollIntoView();
      container.classList.add("animatefinded");
+     const activeConversationId = await getActiveConversationChatId();
+     Store.dispatch(UnreadCountDelete({ activeConversationId }))
+     Store.dispatch(UnreadUserObj({ count: 0, fromUserId: activeConversationId, fullyViewedChat: true, unreadRealTimeMsgCount: 0 }));
+     Store.dispatch(ReduceUnreadMsgCount({ count: 0, fromUserId: activeConversationId,}));
      const activeTimer = setTimeout(() => {
        container.classList.remove("animatefinded");
+       Store.dispatch(callOriginStrMsgAction({ fromPage: "starPage", callOriginStrMsg: false , activeId:fromUserId, msgId: msgId}));
      }, 3000);
      return (() => clearTimeout(activeTimer));
-   }, 300);
+   }, 500);
   }
  
-  const getMsgId = async (msgItem = {}, position = "down") => {
+  const getMsgId = async (msgItem = {}, position = "up") => {
+    Store.dispatch(callOriginStrMsgAction({ fromPage: "starPage", callOriginStrMsg: true , activeId: msgItem.fromUserId, msgId: msgItem.msgId}));
     const storeData = Store.getState();
     const { recentChatData: { rosterData: { recentChatItems = [] } = {} } = {} } = storeData || {};
     const dataFind = recentChatItems.filter((ele) => ele.recent.fromUserId === msgItem.fromUserId);
@@ -263,24 +270,25 @@ const StarredMessages = (props = {}) => {
       
       const dataMsgHistory = getChatMessageHistoryById(msgItem.fromUserId);
       const lastMsgObject = dataMsgHistory && dataMsgHistory[0];
-      const lastMsgId = dataMsgHistory.length == 0 ? msgItem.msgId : lastMsgObject.msgId;
+      const lastMsgId = lastMsgObject?.msgId;
       const findListMagId = dataMsgHistory.find((ele) => ele.msgId === msgItem.msgId);
-      if (findListMagId) {
-        scrollToMsg(findListMagId.msgId);
+      const activeChatId = getActiveConversationChatId();
+      if (findListMagId && (activeChatId == msgItem.fromUserId)) {
+        await scrollToMsg(findListMagId.msgId, msgItem.fromUserId);
+        
       } else {
         Store.dispatch(LoadMoreHistoryAction(true));
-        const chatMessageRes = await SDK.getChatMessages({ toJid: msgItem.fromUserJid, position: position, lastMessageId: lastMsgId, limit: 20 });
+        const chatMessageRes = await SDK.getChatMessages({ toJid: msgItem.fromUserJid, position: position, lastMessageId: lastMsgId, limit: 50, includeMsgObj:true});
         if (chatMessageRes.statusCode == 200) {
           Store.dispatch(ActiveChatAction(dataFind[0]));
-          Store.dispatch(callOriginStrMsgAction({ fromPage: "starPage", callOriginStrMsg: true, callOriginStrMsgId: msgItem }));
           Store.dispatch(ChatMessageHistoryDataAction(chatMessageRes));
         }
         const updatedDataMsgHistory = getChatMessageHistoryById(msgItem.fromUserId);
         const findListMagIdAfterFetch = updatedDataMsgHistory.find((ele) => ele.msgId === msgItem.msgId);
         if (findListMagIdAfterFetch) {
-          setTimeout(()=>{
+          setTimeout(async()=>{
             Store.dispatch(LoadMoreHistoryAction(false));
-            scrollToMsg(findListMagIdAfterFetch.msgId);
+            await scrollToMsg(findListMagIdAfterFetch.msgId, msgItem.fromUserId);
           },500)
         } else {
           await getMsgId(msgItem, "up"); 

@@ -1,4 +1,5 @@
 import {
+  CALL_STAR_ORIGINAL_MESSAGE,
   REMOVE_ALL_STARRED_MESSAGE,
   REMOVE_STARRED_MESSAGE_CLEAR_CHAT,
   REMOVE_STARRED_MESSAGE_DELETE_CHAT,
@@ -12,6 +13,14 @@ const initialState = {
   id: null,
   data: []
 };
+
+const chatHistoryPageType ={
+  id: null,
+  fromPage: null,
+  callOriginStrMsg : false,
+  activeId: null,
+  msgId: null
+}
 
 export function StarredMessagesReducer(state = initialState, action = {}) {
   const { payload: { id, data, originalMsg } = {} } = action;
@@ -50,8 +59,24 @@ export function StarredMessagesReducer(state = initialState, action = {}) {
           data: updatedStarredMessageStatus(data, state.data)
         }
       };
-
     default:
       return state;
+  }
+}
+
+export function starMsgPageTypeReducer(state = chatHistoryPageType, action = {}) {
+  const { payload: { id, data } = {} } = action;
+  if(action.type == CALL_STAR_ORIGINAL_MESSAGE ){
+    return {
+      ...{
+        id: id,
+        fromPage: "starPage",
+        callOriginStrMsg: data.callOriginStrMsg,
+        activeId: data.activeId,
+        msgId: data.msgId
+      }
+    }
+  } else {
+    return state;
   }
 }

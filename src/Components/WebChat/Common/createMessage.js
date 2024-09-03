@@ -2,7 +2,7 @@ import { RecentChatUpdateAction } from "../../../Actions/RecentChatActions";
 import { chatSeenPendingMsg } from "../../../Actions/SingleChatMessageActions";
 import { changeTimeFormat } from "../../../Helpers/Chat/RecentChat";
 import { formatUserIdToJid, isLocalUser } from "../../../Helpers/Chat/User";
-import { getMessageObjReceiver, getMessageObjReceiverEdited, shouldHideNotification } from "../../../Helpers/Utility";
+import { getMessageObjReceiver, getMessageObjReceiverEdited } from "../../../Helpers/Utility";
 import Store from "../../../Store";
 import SDK from "../../SDK";
 import {
@@ -19,11 +19,10 @@ import {
   isGroupChat,
   getChatHistoryMessagesData,
   getRecentChatMessagesData,
-  getActiveConversationGroupId
+  getActiveConversationChatId
 } from "../../../Helpers/Chat/ChatHelper";
-import { UnreadCountUpdate, UnreadCountDelete } from "../../../Actions/UnreadCount";
+import { UnreadCountUpdate, UnreadCountDelete, UnreadUserObj, GroupNotificationCount } from "../../../Actions/UnreadCount";
 import { ChatMessageHistoryDataAction } from "../../../Actions/ChatHistory";
-import browserNotify from "../../../Helpers/Browser/BrowserNotify";
 import {getFromLocalStorageAndDecrypt} from "../WebChatEncryptDecrypt";
 import { MessageActionEdited } from "../../../Actions/MessageActions";
 
@@ -40,8 +39,7 @@ export const updateRecentChatMessage = (messgeObject, stateObject) => {
   const { data: rosterDataArray = [] } = rosterData;
   const { rosterData: { recentChatNames } = {} } = recentChatData;
   const { msgType, fromUserId, fromUserJid, toUserId, msgId, timestamp, chatType, msgBody,
-     publisherId, editedStatus = 0, msgStatus, deleteStatus, archiveStatus } = messgeObject;
-
+     publisherId, editedStatus = 0, msgStatus, deleteStatus, archiveStatus, userId, profileUpdatedStatus } = messgeObject;
   const newChatTo = msgType === "carbonSentMessage" ? toUserId : fromUserId;
   const newChatFrom = chatType === "groupchat" ? publisherId : fromUserId;
   const updateTime = changeTimeFormat(timestamp);
@@ -123,6 +121,8 @@ export const updateRecentChatMessage = (messgeObject, stateObject) => {
       toUserId: toUserId,
       createdAt: updateTime,
       filterBy: newChatTo,
+      userId,
+      profileUpdatedStatus
     };
     Store.dispatch(RecentChatUpdateAction(newMessage));
   }
@@ -136,13 +136,16 @@ export const updateConversationMessage = (messgeObject, currentState) => {
   const singleChat = isSingleChat(messgeObject.chatType);
   const editedStatus = messgeObject?.editedStatus || 0;
   const editMessageId = messgeObject?.editMessageId || "";
+  const UnreadUserObjData = Store.getState().UnreadUserObjData;
 
   if (isActiveConversationUserOrGroup(newChatTo)) {
     const publisherId = singleChat ? newChatTo : messgeObject.publisherId;
     if ([MSG_RECEIVE_STATUS, MSG_RECEIVE_STATUS_CARBON].indexOf(messgeObject.msgType) > -1) {
-      if (currentState?.browserTabData?.isVisible) {
+            if (currentState?.browserTabData?.isVisible) {
         const groupId = singleChat ? "" : newChatTo;
+        if (!UnreadUserObjData[messgeObject.fromUserId] || (UnreadUserObjData[messgeObject.fromUserId] && UnreadUserObjData[messgeObject.fromUserId].count == 0) || (UnreadUserObjData[messgeObject.fromUserId].apiOriginalCount == 0 && UnreadUserObjData[messgeObject.fromUserId].fullyViewedChat && UnreadUserObjData[messgeObject.fromUserId].unreadRealTimeMsgCount >= UnreadUserObjData[messgeObject.fromUserId].count)) {
         SDK.sendSeenStatus(formatUserIdToJid(publisherId), messgeObject.msgId, groupId);
+        }
       } else {
         Store.dispatch(chatSeenPendingMsg(messgeObject));
       }
@@ -177,7 +180,11 @@ export const updateConversationMessage = (messgeObject, currentState) => {
         ? { userJid: formatUserIdToJid(newChatTo) }
         : { groupJid: formatUserIdToJid(newChatTo, CHAT_TYPE_GROUP) })
     };
-    Store.dispatch(ChatMessageHistoryDataAction(dispatchData));
+  
+    if (!UnreadUserObjData[messgeObject.fromUserId] || (UnreadUserObjData[messgeObject.fromUserId] && UnreadUserObjData[messgeObject.fromUserId].count == 0) || (UnreadUserObjData[messgeObject.fromUserId].apiOriginalCount == 0 && UnreadUserObjData[messgeObject.fromUserId].fullyViewedChat && UnreadUserObjData[messgeObject.fromUserId].unreadRealTimeMsgCount >= UnreadUserObjData[messgeObject.fromUserId].count)) {
+      Store.dispatch(ChatMessageHistoryDataAction(dispatchData));
+    }
+    
   }
 };
 
@@ -195,7 +202,11 @@ export const updateMsgSeenStatus = () => {
         if (GROUP_UPDATE_ACTIONS.indexOf(message?.profileUpdatedStatus) > -1) {
           if (!isLocalUser(message.publisherId)) SDK.updateRecentChatUnreadCount(message?.fromUserJid);
         } else {
-          SDK.sendSeenStatus(formatUserIdToJid(fromUserId), message.msgId, groupId);
+          const UnreadUserObjData = Store.getState().UnreadUserObjData;
+          if (!UnreadUserObjData[message.fromUserId] || UnreadUserObjData[message.fromUserId]?.fullyViewedChat || UnreadUserObjData[message.fromUserId]?.count == 0) {
+            SDK.sendSeenStatus(formatUserIdToJid(fromUserId), message.msgId, groupId);
+          }
+          
         }
       }
     });
@@ -208,26 +219,52 @@ export const updateMsgSeenStatus = () => {
  * @param {*} stateObject
  */
 export const updateMessageUnreadCount = (messgeObject, stateObject) => {
-  const { msgType, fromUserId, publisherId, chatType, msgBody, profileUpdatedStatus, toUserId, groupId } = messgeObject;
+  const { msgType, fromUserId, fromUserJid,  publisherId, msgBody, toUserId, groupId, msgId, profileUpdatedStatus } = messgeObject;
   const editedStatus = messgeObject?.editedStatus || 0;
-
   if (
     [MSG_RECEIVE_STATUS, MSG_RECEIVE_STATUS_CARBON].indexOf(msgType) > -1 &&
     !isLocalUser(publisherId) &&
-    ((shouldHideNotification() && browserNotify.isPageHidden ) || !isActiveConversationUserOrGroup(fromUserId, chatType)) &&
     notificationMessageType.indexOf(msgBody) === -1 && editedStatus === 0)
   {
+    const activeConversationId = getActiveConversationChatId();
+    const { unreadDataObj } = Store.getState().unreadCountData;
+    const UnreadUserObjData = Store.getState().UnreadUserObjData;
+    const unreadRealTimeMsgCount = (UnreadUserObjData && UnreadUserObjData[fromUserId]) ? (UnreadUserObjData[fromUserId]?.unreadRealTimeMsgCount + 1 ) : 1;
+    const unreadMsgCount =(unreadDataObj && unreadDataObj[fromUserId]) ? (unreadDataObj[fromUserId]?.count + 1 ) : 1;
+    if(!activeConversationId || (activeConversationId != fromUserId)){
     Store.dispatch(UnreadCountUpdate({ fromUserId }));
+    let unreadMsgId = (unreadMsgCount == 1 ) ? msgId : null;
+    Store.dispatch(UnreadUserObj({ count: parseInt(unreadMsgCount), fromUserId: fromUserId, chatJid: fromUserJid, unreadMsgId, unreadRealTimeMsgCount })); 
+    } else if(activeConversationId && unreadDataObj[fromUserId]?.count != 0 && !unreadDataObj[fromUserId]?.fullyViewedChat){
+      Store.dispatch(UnreadCountUpdate({ fromUserId }));
+      Store.dispatch(UnreadUserObj({ count: parseInt(unreadMsgCount), fromUserId: fromUserId, chatJid: fromUserJid, unreadRealTimeMsgCount })); 
+    }    
   }
 
   if (
-    ((shouldHideNotification()&& browserNotify.isPageHidden ) || !isActiveConversationUserOrGroup(fromUserId, chatType)) &&    GROUP_UPDATE_ACTIONS.indexOf(profileUpdatedStatus) > -1 &&
-    !isLocalUser(publisherId) && editedStatus === 0)
-  {
-    if(getActiveConversationGroupId() != fromUserId ){
-      Store.dispatch(UnreadCountUpdate({ fromUserId }));
+    GROUP_UPDATE_ACTIONS.indexOf(profileUpdatedStatus) > -1 &&
+    !isLocalUser(publisherId) &&
+    editedStatus === 0
+  ) {
+    const { unreadDataObj } = Store.getState().unreadCountData;
+    const UnreadUserObjData = Store.getState().UnreadUserObjData;
+    const groupNotificationMsgCount = Store.getState().groupNotificationMsgCount;
+    const unreadMsgCount = unreadDataObj[fromUserId]?.count || 0;
+    const unreadRealTimeMsgCount = UnreadUserObjData[fromUserId]?.unreadRealTimeMsgCount || 0;
+    const countSet = Math.ceil(unreadRealTimeMsgCount / 21);
+    const setNumber = (countSet == 0 ) ? 1 : countSet;
+    const userNotificationCounts = groupNotificationMsgCount[fromUserId] || {};
+    const previousSetNumberCount = userNotificationCounts[setNumber] || 0;
+    if(unreadMsgCount == 0){
+      Store.dispatch(UnreadUserObj({ count: parseInt(unreadMsgCount), fromUserId: fromUserId, chatJid: fromUserJid, unreadMsgId: msgId })); 
     }
+    Store.dispatch(GroupNotificationCount({
+      fromUserId,
+      setNumber,
+      notificationCount: previousSetNumberCount + 1
+    }));
   }
+  
 
   if ([MSG_SENT_SEEN_STATUS_CARBON].indexOf(msgType) > -1) {
     const updateId = groupId ? groupId : toUserId;

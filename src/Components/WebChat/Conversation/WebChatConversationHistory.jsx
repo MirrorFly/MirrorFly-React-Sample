@@ -32,7 +32,7 @@ import {
   isTextMessage,
   handleTempArchivedChats,
   isGroupChat,
-  getMessagesForReport,
+  getMessagesForReport
 } from "../../../Helpers/Chat/ChatHelper";
 import {
   getMessageObjSender,
@@ -69,6 +69,7 @@ import ActionInfoPopup from "../../ActionInfoPopup";
 import { showModal } from "../../../Actions/PopUp";
 import IndexedDb from "../../../Helpers/IndexedDb";
 import { UpdateStarredMessages } from "../../../Actions/StarredAction";
+import { GroupNotificationCount, ReduceUnreadMsgCount, UnreadCountDelete, UnreadUserObj } from "../../../Actions/UnreadCount";
 
 class WebChatConversationHistory extends Component {
   constructor(props) {
@@ -100,7 +101,8 @@ class WebChatConversationHistory extends Component {
       messageDeletedData: {},
       otherActionClick : false,
       editedDetailsArr: {},
-      prevFetchChatMessageId : ""
+      prevFetchChatMessageId : "",
+      initialFetchingCompleted: false
     };
     this.activeTimer = 0;
     this.rosterConst = "roster.userId";
@@ -133,8 +135,11 @@ class WebChatConversationHistory extends Component {
 
   componentDidMount() {
     const chatType = this.props?.activeChatData?.data?.chatType;
+    const unreadMsgId = this.props?.activeChatData?.data?.recent?.unreadMessageId;
+    let startMsgAction = this.props.starMsgPageType;
     this.handleBlockUserData();
-    this.requestChatMessages(chatType);
+    if(startMsgAction && startMsgAction.callOriginStrMsg) return;
+    this.requestChatMessages(chatType, null, null, CHAT_HISTORY_LIMIT, null, null, unreadMsgId);
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -168,7 +173,7 @@ class WebChatConversationHistory extends Component {
     if (prevProps.activeChatId !== activeChatId) {
       this.handleBlockUserData();
       setTimeout(() => {
-        this.scrollToBottom();
+      this.scrollToBottom();
       }, 60); 
     }
 
@@ -194,12 +199,13 @@ class WebChatConversationHistory extends Component {
       this.setState({ loaderStatus: false, jid: chatId });
     }
 
-    if (prevProps.activeChatData.id !== this.props.activeChatData.id) {
+    if ((prevProps.activeChatData.id !== this.props.activeChatData.id) || (!prevProps.activeChatData.id && this.props.activeChatData.id)) {
       const conversationHistory = this.props.chatConversationHistory.data;
       this.loadMoreUpdate(false);
       this.props.forwardReset();
       this.props.scrollBottomChatHistoryAction();
       this.props.messageInfoShow(false);
+      const { UnreadUserObjData } = this.props;
       if (!Object.keys(conversationHistory).includes(chatId)) {
         this.setState({ jid: chatId, loaderStatus: true, forwardOption: false });
         this.requestChatMessages(chatType);
@@ -207,6 +213,12 @@ class WebChatConversationHistory extends Component {
         updateMsgSeenStatus();
         this.setState({ jid: chatId, loaderStatus: false, forwardOption: false });
       }
+      if(UnreadUserObjData[chatId] && UnreadUserObjData[chatId]?.fullyViewedChat){
+          Store.dispatch(UnreadUserObj({ count: parseInt(0), fromUserId: chatId, fullyViewedChat: true}));
+          Store.dispatch(ReduceUnreadMsgCount({ count: parseInt(0), fromUserId: chatId, fullyViewedChat: true }));
+          Store.dispatch(UnreadCountDelete({ fromUserId: chatId }))
+      }
+      
     }
 
     if (prevProps.scheduleMeetData !== this.props.scheduleMeetData){
@@ -221,7 +233,8 @@ class WebChatConversationHistory extends Component {
     messageId = null,
     limit = CHAT_HISTORY_LIMIT,
     rowId = null,
-    chatMsgId = null
+    chatMsgId = null,
+    unreadMsgId = null
   ) => {
     const activeChatMessages = getActiveChatMessages();
     const activeChatFirstMessage = activeChatMessages && activeChatMessages[0];
@@ -242,7 +255,32 @@ class WebChatConversationHistory extends Component {
       let chatJid = getActiveConversationUserJid(),
         activeConversationId = getActiveConversationChatId();
       if (!chatJid) return true;
-      const chatMessageRes = await SDK.getChatMessages({toJid: chatJid, position: direction, lastMessageId: chatMsgId, limit: limit});
+      let fetchDirection = direction;
+      let fetchMsgId = chatMsgId;
+      let includeMsgObj = false;
+      let unreadMsgCount = this.props?.activeChatData?.data?.recent?.unreadCount;
+      let startMsgAction = this.props.starMsgPageType;
+      const { UnreadUserObjData } = this.props;
+      const groupNotificationMsgCount = this.props.groupNotificationMsgCount;
+      let unreadMsgCounts = 0;
+      if(unreadMsgCount && !UnreadUserObjData[activeConversationId]){
+        unreadMsgCounts = unreadMsgCount; 
+      }else if(UnreadUserObjData[activeConversationId]){
+        unreadMsgCounts = UnreadUserObjData[activeConversationId]?.count; 
+      }
+      if(direction != "up" && unreadMsgCounts > CHAT_HISTORY_LIMIT){
+          fetchDirection = "down";
+          fetchMsgId = unreadMsgId ? unreadMsgId : UnreadUserObjData[activeConversationId].unreadMsgId;
+          includeMsgObj = true;
+          Store.dispatch(UnreadUserObj({ apiOriginalCount: parseInt(unreadMsgCount), count: parseInt(unreadMsgCount), fromUserId: activeConversationId, unreadMsgId, chatJid, fetchDirection }));
+      }
+      if(fetchDirection == "down" && startMsgAction && startMsgAction.callOriginStrMsg) return true;
+      let msgFetchingSet = UnreadUserObjData[activeConversationId]?.msgFetchedSet + 1; 
+      let notificationCount = groupNotificationMsgCount[activeConversationId] && groupNotificationMsgCount[activeConversationId][msgFetchingSet] || 0;
+      let fetchLimit = unreadMsgCount > 0 ? limit + 1 : limit;
+      fetchLimit = notificationCount > 0 ? fetchLimit + notificationCount : fetchLimit;
+      this.setState({ initialFetchingCompleted: false })
+      const chatMessageRes = await SDK.getChatMessages({toJid: chatJid, position: fetchDirection, lastMessageId: fetchMsgId, limit: fetchLimit, includeMsgObj});
       // User may switch another user chat conversation screen when clicked user chat request is in process
       // That's why we check condition(compare userJid from response) here to avoid load the previous user chat history to current users.
       if (chatMessageRes && chatMessageRes.statusCode === 200) {
@@ -250,14 +288,31 @@ class WebChatConversationHistory extends Component {
         if((activeChatFirstMessage && activeChatFirstMessage?.msgId === chatLastMessage?.msgId) || (lastactiveChatId && lastactiveChatId === activeChatLastMessage?.msgId) ){
           this.setState({originalMessageDeleted: true})
         }
-
         chatMessageRes.chatType = chatType;
         chatMessageRes.fetchLimit = limit;
+        if(unreadMsgCount > 0) { chatMessageRes.data.pop() }
         delete chatMessageRes.statusCode;
         delete chatMessageRes.message;
         if (activeConversationId === getIdFromJid(chatMessageRes.userJid || chatMessageRes.groupJid)) {
           Store.dispatch(ChatMessageHistoryDataAction(chatMessageRes));
+          Store.dispatch(GroupNotificationCount({
+            fromUserId : activeConversationId,
+            setNumber : msgFetchingSet,
+            notificationCount: 0
+          }));
+          let reduceFetchCount = chatMessageRes?.data?.length - notificationCount;
+          if(fetchDirection == "down" && unreadMsgCounts > CHAT_HISTORY_LIMIT){
+            Store.dispatch(UnreadUserObj({ count: parseInt(unreadMsgCounts - reduceFetchCount), fromUserId: activeConversationId, fetchLastMsgId: chatMessageRes?.data[0]?.msgId , fullyViewedChat: false, msgFetchedSet: msgFetchingSet}));
+            Store.dispatch(ReduceUnreadMsgCount({ count: parseInt(unreadMsgCounts - reduceFetchCount), fromUserId: activeConversationId }));
+          } else if(fetchDirection == "down" && unreadMsgCounts > 0 || !UnreadUserObjData[activeConversationId] || (UnreadUserObjData[activeConversationId] && (UnreadUserObjData[activeConversationId].unreadRealTimeMsgCount == UnreadUserObjData[activeConversationId].count))){
+            Store.dispatch(UnreadCountDelete({ activeConversationId }))
+            Store.dispatch(UnreadUserObj({ count: 0, fromUserId: activeConversationId, fullyViewedChat: true, unreadRealTimeMsgCount: 0 }));
+            Store.dispatch(ReduceUnreadMsgCount({ count: 0, fromUserId: activeConversationId,}));
+          } 
         }
+        setTimeout(() => {
+          this.setState({ initialFetchingCompleted: true })
+        }, 500)
       }
       return true;
     }
@@ -286,14 +341,13 @@ class WebChatConversationHistory extends Component {
     } = this.props;
 
     if (data[chatId]) {
-      const { messages: currentChatHistory, isScrollNeeded } = data[chatId];
-      if (isScrollNeeded) {
+      const { messages: currentChatHistory } = data[chatId];
+
         this.loadMoreUpdate(true);
         const oldestMessageId = Object.keys(currentChatHistory)[0];
         const oldestMessageData = currentChatHistory[oldestMessageId];
         await this.requestChatMessages(chatType, "up", oldestMessageId, CHAT_HISTORY_LIMIT, oldestMessageData?.rowId, oldestMessageData?.msgId);
         this.loadMoreUpdate(false);
-      }
     }
   };
 
@@ -315,6 +369,10 @@ class WebChatConversationHistory extends Component {
     clearTimeout(this.activeTimer);
   }
 
+  onLoaderMoreStatus = (chatjid, loaderStatus) =>{
+    this.setState({ jid: chatjid, loaderStatus});
+  }
+
   smoothScroll = (elementId) => {
     const container = document.getElementById(elementId);
     if (!container) return;
@@ -325,11 +383,23 @@ class WebChatConversationHistory extends Component {
     }, 500);
   };
 
+  scrollUnreadElement = async() => {
+    console.log("scrollUnreadElement")
+   };
+
   // Show button when page is scorlled upto given distance
   // Set the top cordinate to 0
   // make scrolling smooth
   scrollToBottom = () => {
-    document && document.getElementById("InBottom")?.scrollIntoView({ block: "end" });
+    const { UnreadUserObjData } = this.props;
+    const activeConversationId = getActiveConversationChatId();
+    let startMsgAction = this.props.starMsgPageType;
+    if (startMsgAction && startMsgAction.callOriginStrMsg) return;
+    if (!UnreadUserObjData[activeConversationId] || (UnreadUserObjData[activeConversationId] && UnreadUserObjData[activeConversationId].fetchDirection != "down") || UnreadUserObjData[activeConversationId]?.fullyViewedChat || Object.keys(UnreadUserObjData[activeConversationId]).length == 0) {
+      document && document.getElementById("InBottom")?.scrollIntoView({ block: "end" });
+    } else if (UnreadUserObjData[activeConversationId] && this.state.initialFetchingCompleted) {
+            this.smoothScroll(UnreadUserObjData[activeConversationId].fetchLastMsgId)
+    }
   };
 
   viewOriginalMessage = async (messageId, msgId) => {
@@ -1318,6 +1388,8 @@ class WebChatConversationHistory extends Component {
                 scrollToBottom={this.scrollToBottom}
                 handleTranslateLanguage={this.handleTranslateLanguage}
                 handleShowCallScreen={this.props.handleShowCallScreen}
+                scrollUnreadElement = {this.scrollUnreadElement}
+                onLoaderMoreStatus = {this.onLoaderMoreStatus}
               />
             )}
 
@@ -1520,7 +1592,10 @@ const mapStateToProps = (state) => {
     addMentionedDataReducer: state.addMentionedDataReducer,
     replyMessageData: state.replyMessageData,
     messageEditedData: state.messageEditedData,
-    LoadMoreChatsMessages: state.LoadMoreChatsMessages
+    LoadMoreChatsMessages: state.LoadMoreChatsMessages,
+    UnreadUserObjData: state.UnreadUserObjData,
+    starMsgPageType: state.starMsgPageType,
+    groupNotificationMsgCount: state.groupNotificationMsgCount
   };
 };
 
