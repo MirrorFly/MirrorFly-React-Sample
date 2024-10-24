@@ -128,7 +128,8 @@ function OtpLogin(props = {}) {
       setValidate({
         ...validate,
         getOtpVerfied: false,
-        getProfileDetails: true
+        getProfileDetails: true,
+        getMobileNo: false,
       });
       setPageLoader(false);
     } else {
@@ -212,7 +213,11 @@ function OtpLogin(props = {}) {
         }
       } else {
         toast.error("Login Failed!");
+        setPageLoader(false);
       }
+    } else {
+      toast.error(registerResult.message);
+      setPageLoader(false);
     }
   };
 
