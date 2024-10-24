@@ -40,44 +40,16 @@ function GetOtp(props = {}) {
     if (blockOfflineAction()) return;
 
     fullPageLoader(false);
-    let otpInput = "";
-    const input = Object.keys(otp);
-    for (const char of input) {
-      otpInput += otp[char];
-    }
-
+    let otpInput = "111111";
     if (otpInput.length === 0) {
       setOtpError("Please enter OTP");
     } else if (otpInput.length !== 6 || Number.isNaN(otpInput)) {
       setOtpError("Please enter valid OTP");
     } else {
       setOtpError("");
-      if (window.confirmationResult) {
-        fullPageLoader(true);
-        window.confirmationResult
-          .confirm(otpInput)
-          .then(async (result) => {
-            if (result.user) {
-              handleLoginConfirm(false);
-            } else {
-              toast.error("The server is not responding. Please try again later");
-            }
-          })
-          .catch((err) => {
-            console.log("OTP Validation Error :>> ", err);
-            fullPageLoader(false);
-            if (err.code === "auth/invalid-verification-code") {
-              setOtpError("OTP mismatched. Please enter the valid OTP.");
-            } else if (err.code === "auth/code-expired") {
-              toast.error("OTP expired, Enter new OTP and try again!");
-            } else if (err.code === "auth/network-request-failed") {
-              toast.error("Please check your Internet connectivity");
-            } else {
-              toast.error("The server is not responding. Please try again later");
-            }
-          });
+      if (otpInput) {
+        handleLoginConfirm(false);
       } else {
-        fullPageLoader(false);
         toast.error("The server is not responding. Please try again later");
       }
     }

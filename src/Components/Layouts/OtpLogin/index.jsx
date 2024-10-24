@@ -189,35 +189,31 @@ function OtpLogin(props = {}) {
     setAdminBlocked(true);
   };
 
-  const sendOtp = () => {
-    setTimeout(() => fullPageLoader(true), 100);
-    const countryCode = regMobileNo.countryCode;
-    const phoneValue = regMobileNo.mobileNumber;
-    const phoneNumber = `${countryCode}${phoneValue}`;
-    setOtpverify(otpInitialState);
-    firebase
-      .auth()
-      .signInWithPhoneNumber(phoneNumber, window.recaptchaVerifier)
-      .then(function (confirmationResult) {
-        window.confirmationResult = confirmationResult;
-        handleRegMobileNo();
-        toast.info("OTP is sent to your mobile number");
-      })
-      .catch((err) => {
-        fullPageLoader(false);
-        console.log("Login Error :>> ", err);
-        if (err.code === "auth/too-many-requests") {
-          toast.error("Too Many Requests. Try again later!");
-        } else if (err.code === "auth/network-request-failed") {
-          toast.error("Please check your Internet connectivity");
-        } else if (err.code === "auth/invalid-phone-number") {
-          toast.error("Please enter a valid mobile number");
-        } else if (err.code === "auth/captcha-check-failed") {
-          toast.error("Captcha Check Failed");
-        } else {
-          toast.error("The server is not responding. Please try again later");
+  const sendOtp = async() => {
+    setPageLoader(true);
+    const regexPattern = /\D/g;
+    const userIdentifier = `${regMobileNo.countryCode.replace(regexPattern, "")}${regMobileNo.mobileNumber}`;
+    const registerResult = await SDK.register(userIdentifier, true);
+    if(registerResult.statusCode === 200){
+      const { data: { username = "", password = "", token = ""} = {} } =
+      registerResult;
+      if (username && password) {
+        const loginData = {
+          username,
+          password,
+          type: "web"
+        };
+        encryptAndStoreInLocalStorage("auth_user", loginData);
+        const loginResult = await SDK.connect(username, password);
+        if (loginResult.statusCode === 200) {
+          encryptAndStoreInLocalStorage("token", token);
+          SDK.setUserToken(token);
+          handleOtpverify(userIdentifier, registerResult.data, loginData);
         }
-      });
+      } else {
+        toast.error("Login Failed!");
+      }
+    }
   };
 
   const handleCaptchaOutsideClick = () => {
