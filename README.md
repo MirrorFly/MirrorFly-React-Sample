@@ -1,4 +1,4 @@
-# Mirrorfly-React-Sample-App
+# MirrorFly Chat SDK for React (Sample App)
 
 Welcome to the Mirrorfly sample app, a chat application built using React and Node.js. 
 
