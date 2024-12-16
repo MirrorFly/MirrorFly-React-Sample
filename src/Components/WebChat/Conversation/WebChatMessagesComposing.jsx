@@ -600,8 +600,7 @@ class WebChatMessagesComposing extends Component {
   typingStarted = function () {
     typing = true;
     const { chatId = "" } = _get(this.props, "activeChatData.data", {});
-    if ((this.state.typingMessage.length + 1 !== 0 && Date.now() - lastTypingTime > TYPE_DELAY_TIME) && 
-     (this.state.editableDetails[chatId]?.isEditable && this.state.editableDetails[chatId]?.isEditable === false)) {
+    if (this.state.typingMessage.length + 1 !== 0 && Date.now() - lastTypingTime > TYPE_DELAY_TIME && !this.state.editableDetails[chatId]?.isEditable) {
       lastTypingTime = Date.now();
       this.sentTypingstatus();
     }
