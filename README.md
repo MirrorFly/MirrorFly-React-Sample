@@ -1,6 +1,6 @@
-# Mirrorfly-React-Sample-App
+# MirrorFly React Chat API Sample App
 
-Welcome to the Mirrorfly sample app, a chat application built using React and Node.js. 
+Welcome to the MirrorFly sample app, a chat application built using React and Node.js. 
 
 - **One to One Chat:** Allows users to exchange messages and media privately between two individuals. 
 - **Group Chat:** Enables multiple users to participate in a single chat room, exchanging messages and media.
