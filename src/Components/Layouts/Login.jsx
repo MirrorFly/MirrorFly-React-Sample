@@ -301,6 +301,7 @@ class Login extends React.Component {
         return this.handleLoginToken(loginResponse);
       }
     } catch (error) {
+      this.handleQRCode();
       console.log("handleQRCode error: ", error);
     }
   
@@ -308,6 +309,7 @@ class Login extends React.Component {
   }
   
   handleLoginSuccess = async (data, data1 = null, profileSuccess = false) => {
+    browserNotify.requestPermission();
     SDK.setMediaEncryption(true); //Enable the media encryption
     encryptAndStoreInLocalStorage("auth_user", data);
     if (profileSuccess === true) {

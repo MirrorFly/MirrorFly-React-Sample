@@ -40,7 +40,7 @@
     "lodash.camelcase": "^4.3.0",
     "luxon": "^1.24.1",
     "mic-recorder-to-mp3": "^2.2.2",
-    "mirrorfly-sdk": "^4.25.4",
+    "mirrorfly-sdk": "^4.25.5",
     "moment": "^2.29.4",
     "node-sass": "^7.0.2",
     "prop-types": "^15.7.2",

@@ -950,7 +950,7 @@ class WebChatMessagesComposing extends Component {
     return (
       <footer className={`${loaderStatus ? "v-hidden" : ""} footer `}>
         <OutsideClickHandler onOutsideClick={this.outsideClick}>
-          {recordingStatus && <Emoji emojiState={showEmoji} onEmojiClick={this.handleEmojiText} /> }
+          {recordingStatus && <Emoji emojiState={showEmoji} onEmojiClick={this.handleEmojiText} handleCloseEmojiClick = {this.handleShowEmojis}/> }
 
           {autoReplay ? (
             <ReplyToMessage

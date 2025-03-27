@@ -508,22 +508,23 @@ export const arrayToObject = (arr, key) => {
 };
 
 export const setTempMute = (name, stateData) => {
-    const tempMuteUser = getFromLocalStorageAndDecrypt('tempMuteUser')
-    let parserLocalStorage = tempMuteUser ? JSON.parse(tempMuteUser) : {}
-    const constructObject = {
-        ...parserLocalStorage,
-        [name]: stateData
-    }
-    encryptAndStoreInLocalStorage('tempMuteUser', JSON.stringify(constructObject));
-}
-    export const removeTempMute = (name) => {
-        const tempMuteUser = getFromLocalStorageAndDecrypt('tempMuteUser');
-        if(tempMuteUser){
-            let parserLocalStorage = JSON.parse(tempMuteUser);
-            delete parserLocalStorage[name];
-            encryptAndStoreInLocalStorage('tempMuteUser', JSON.stringify(parserLocalStorage));
-        }
-    }
+  const tempMuteUser = getFromLocalStorageAndDecrypt("tempMuteUser");
+  const parserLocalStorage = tempMuteUser ? JSON.parse(tempMuteUser) : {};
+  const constructObject = {
+    ...parserLocalStorage,
+    [name]: { fromUserId: name, isMuted: stateData }
+  };
+  encryptAndStoreInLocalStorage("tempMuteUser", JSON.stringify(constructObject));
+};
+
+export const removeTempMute = (name) => {
+  const tempMuteUser = getFromLocalStorageAndDecrypt("tempMuteUser");
+  if (tempMuteUser) {
+    let parserLocalStorage = JSON.parse(tempMuteUser);
+    delete parserLocalStorage[name];
+    encryptAndStoreInLocalStorage("tempMuteUser", JSON.stringify(parserLocalStorage));
+  }
+};
 
 
 export const getChatHistoryData = (data, stateData) => {

@@ -33,6 +33,9 @@ const browserNotify = {
             false
           );
     },
+    requestPermission: function(){
+        Push.Permission.request(() => {},() => {}); 
+    },
     hasPermission: function(){
         const webSettings = getFromLocalStorageAndDecrypt('websettings')
         let parseredWebSettings = webSettings ? JSON.parse(webSettings) : {}

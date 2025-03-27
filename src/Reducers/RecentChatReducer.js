@@ -20,11 +20,12 @@ import {
   UPDATE_ARCHIVE_RECENT_CHAT,
   UNREAD_MESSAGE_DELETE,
   UPDATE_MESSAGE_STATUS,
-  CLEAR_ALL_CHAT
+  CLEAR_ALL_CHAT,
+  UPDATE_ACTIVE_CHAT_DATA
 } from "../Actions/Constants";
 import { updateRecall, emptyMessage } from "../Helpers/Chat/Recall";
 import { MEDIA_MESSAGE_TYPES } from "../Helpers/Constants";
-import { getMsgStatusInOrder, removeTempMute, setTempMute } from "../Helpers/Chat/ChatHelper";
+import { getMsgStatusInOrder } from "../Helpers/Chat/ChatHelper";
 
 const updateRecentChat = (filterBy, newMessage, recentChatArray = []) => {
   const checkalreadyExist = recentChatArray.find((message) => message.fromUserId === filterBy);
@@ -45,22 +46,12 @@ const updateRecentChat = (filterBy, newMessage, recentChatArray = []) => {
 };
 
 const updateMuteRecentChat = (data, stateData) => {
-  let i = 0;
-  const newstate = stateData.map((element) => {
+  return stateData.map((element) => {
     if (element.fromUserId === data.fromUserId) {
       element.muteStatus = data.isMuted ? 1 : 0;
-    } else {
-      i++;
     }
     return element;
   });
-  if (i === newstate.length) {
-    if (data.isMuted) setTempMute(data.fromUserId, true);
-  }
-  if (!data.isMuted) {
-    removeTempMute(data.fromUserId);
-  }
-  return newstate;
 };
 
 const updateRecentUnreadCount = (data, stateData) => {
@@ -289,15 +280,56 @@ export function ActiveChatReducer(state = [], action = {}) {
         roster: updatedData
       };
     case UPDATE_MUTE_RECENT_CHAT:
+      if (!state.data) return state;
+      {
+        const {
+          chatId,
+          recent: { muteStatus }
+        } = state.data || {};
+        const { fromUserId, isMuted } = action.payload.data;
+        const newMuteStatus = chatId === fromUserId ? Number(isMuted) : muteStatus;
+        return {
+          ...state,
+          id: uuidv4(),
+          data: {
+            ...state.data,
+            recent: {
+              ...state.data.recent,
+              muteStatus: newMuteStatus
+            }
+          }
+        };
+      }
+    case UPDATE_ARCHIVE_RECENT_CHAT:
+      if (!state.data) return state;
+      {
+        const {
+          chatId,
+          recent: { archiveStatus }
+        } = state.data || {};
+        const { fromUserId, isArchived } = action.payload.data;
+        const newArchiveStatus = chatId === fromUserId ? Number(isArchived) : archiveStatus;
+        return {
+          ...state,
+          id: uuidv4(),
+          data: {
+            ...state.data,
+            recent: {
+              ...state.data.recent,
+              archiveStatus: newArchiveStatus
+            }
+          }
+        };
+      }
+    case UPDATE_ACTIVE_CHAT_DATA:
       return {
         ...state,
         id: uuidv4(),
-        ...state.data,
         data: {
           ...state.data,
           recent: {
             ...state.data.recent,
-            muteStatus: action.payload?.data?.isMuted ? 1 : 0
+            ...action.payload.data
           }
         }
       };
