@@ -5,6 +5,8 @@ import { BlockedIcon, chat as ChatIcon, InfoIcon, InformationIcon, LogoutIcon, N
 import { ENABLE_NOTIFICATIONS } from '../../processENV';
 import { blockOfflineAction, getLocalWebsettings, setLocalWebsettings } from '../../../Helpers/Utility';
 import { getFromLocalStorageAndDecrypt, encryptAndStoreInLocalStorage} from '../WebChatEncryptDecrypt';
+import SDK from '../../SDK';
+import { useSelector } from 'react-redux';
 
 const imageComponent = {
     chat: ChatIcon,
@@ -21,6 +23,7 @@ const imageComponent = {
 
 export const SettingCheckBox = (props = {}) => {
     const { id, label, getaAtion, chat = false, children, dafaultSetting } = props;
+    const settingsData = useSelector((state) => state.settingsData.data[id]);
     const [activeSettings, setSettings] = useState(dafaultSetting || false);
 
     const chatSetting = (event) => {
@@ -30,6 +33,7 @@ export const SettingCheckBox = (props = {}) => {
     };
 
     const settingListener = (event) => {
+        if (blockOfflineAction()) return;
         const { checked, name } = event.target;
         if (Notification.permission === 'denied' || Notification.permission === 'default') {
             setSettings(false);
@@ -38,12 +42,14 @@ export const SettingCheckBox = (props = {}) => {
             })
         }
         else {
-            setSettings(checked)
+            const muteEnabled = !checked;
+            setSettings(checked);
+            SDK.updateMuteNotificationSettings(muteEnabled);
             const webSettings = getFromLocalStorageAndDecrypt('websettings')
             let parserLocalStorage = webSettings ? JSON.parse(webSettings) : {}
             const constructObject = {
                 ...parserLocalStorage,
-                [name]: checked
+                [name]: muteEnabled
             }
             encryptAndStoreInLocalStorage('websettings', JSON.stringify(constructObject));
         }
@@ -67,7 +73,7 @@ export const SettingCheckBox = (props = {}) => {
                 }
             }
         }
-    }, []);
+    }, [settingsData]);
 
     return (
 

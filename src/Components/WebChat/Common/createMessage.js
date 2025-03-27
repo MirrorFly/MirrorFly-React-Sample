@@ -101,9 +101,6 @@ export const updateRecentChatMessage = (messgeObject, stateObject) => {
     const getMute = getFromLocalStorageAndDecrypt("tempMuteUser");
     let parserLocalStorage = getMute ? JSON.parse(getMute) : {};
     const isMuted = parserLocalStorage[newChatTo]?.isMuted ? 1 : 0;
-    if (isMuted) {
-      SDK.updateMuteNotification(formatUserIdToJid(newChatTo, chatType), true);
-    }
     const newMessage = {
       archiveStatus: editedStatus === 1 ? archiveStatus : 0,
       chatType: chatType,

@@ -31,10 +31,10 @@ import {
 import { getExtension } from "../Components/WebChat/Common/FileUploadValidation";
 import { REACT_APP_LICENSE_KEY, REACT_APP_SITE_DOMAIN, REACT_APP_AUTOMATION_CHROME_USER, REACT_APP_AUTOMATION_CHROME_PASS, REACT_APP_AUTOMATION_EDGE_USER, REACT_APP_AUTOMATION_FIREFOX_USER, REACT_APP_AUTOMATION_FIREFOX_PASS, REACT_APP_AUTOMATION_EDGE_PASS, REACT_APP_HIDE_NOTIFICATION_CONTENT } from "../Components/processENV";
 import Store from "../Store";
-import { getContactNameFromRoster, formatUserIdToJid, isSingleChatJID, getLocalUserDetails, handleMentionedUser } from "./Chat/User";
+import { getContactNameFromRoster, formatUserIdToJid, isSingleChatJID, getLocalUserDetails, handleMentionedUser, getDataFromRoster } from "./Chat/User";
 import { MSG_PROCESSING_STATUS, GROUP_CHAT_PROFILE_UPDATED_NOTIFY, MSG_SENT_STATUS_CARBON, CHAT_TYPE_SINGLE, CHAT_TYPE_GROUP, SERVER_LOGOUT } from "./Chat/Constant";
 import toastr from "toastr";
-import { isGroupChat } from "./Chat/ChatHelper";
+import { isGroupChat, removeTempMute, setTempMute } from "./Chat/ChatHelper";
 import Push from "push.js";
 import { callbacks } from "../Components/callbacks";
 import config from "../config";
@@ -43,6 +43,7 @@ import { UnreadCountDelete } from "../Actions/UnreadCount"
 import { callIntermediateScreen } from "../Actions/CallAction";
 import { getFromLocalStorageAndDecrypt, encryptAndStoreInLocalStorage} from "../Components/WebChat/WebChatEncryptDecrypt";
 import userList from "../Components/WebChat/RecentChat/userList";
+import { SettingsDataAction } from "../Actions/SettingsAction";
 
 const HtmlToReactParser = require('html-to-react').Parser;
 const htmlToReactParser = new HtmlToReactParser();
@@ -1028,10 +1029,8 @@ export const getRecentMsgObjEdited = (dataObj, storeData) => {
     }
     const getMute = getFromLocalStorageAndDecrypt("tempMuteUser");
     let parserLocalStorage = getMute ? JSON.parse(getMute) : {};
-    const isMuted = parserLocalStorage[fromUserId] && parserLocalStorage[fromUserId].isMuted ? 1 : 0;
-    if (isMuted) {
-      setTimeout(( ) =>  SDK.updateMuteNotification(jid, true), 1000);
-    }
+    const isMuted =
+      (parserLocalStorage[fromUserId] && parserLocalStorage[fromUserId].isMuted ? 1 : 0) || getMuteStatus(fromUserId);
 
     return {
       chatType: chatType,
@@ -1089,10 +1088,8 @@ export const getRecentChatMsgObj = (dataObj) => {
   const fromUserId = getUserIdFromJid(jid);
   const getMute = getFromLocalStorageAndDecrypt("tempMuteUser");
   let parserLocalStorage = getMute ? JSON.parse(getMute) : {};
-  const isMuted = parserLocalStorage[fromUserId] && parserLocalStorage[fromUserId].isMuted ? 1 : 0;
-  if (isMuted){
-    setTimeout(( ) =>  SDK.updateMuteNotification(jid, true), 1000);
-  }
+  const isMuted =
+    (parserLocalStorage[fromUserId] && parserLocalStorage[fromUserId].isMuted ? 1 : 0) || getMuteStatus(fromUserId);
 
   return {
     chatType: chatType,
@@ -1113,6 +1110,12 @@ export const getRecentChatMsgObj = (dataObj) => {
     filterBy: fromUserId
   };
 };
+
+export const getMuteStatus = (fromUserId) => {
+  const recentChat = Store.getState().recentChatData.data.find((chat) => chat.fromUserId === fromUserId)?.muteStatus;
+  const roster = getDataFromRoster(getUserIdFromJid(fromUserId))?.isMuted;
+  return recentChat || roster || 0;
+}
 
 export const fileToBlob = async (file) => new Blob([new Uint8Array(await file.arrayBuffer())], { type: file.type });
 
@@ -1292,6 +1295,12 @@ export const getRecentChatMsgObjForward = (originalMsg, toJid, newMsgId, msdIdIn
   const senderId = vcardData.fromUser;
   const timestamp = new Date(createdAt).getTime() + msdIdIndex;
 
+  const fromUserId = getUserIdFromJid(toJid);
+  const getMute = getFromLocalStorageAndDecrypt("tempMuteUser");
+  let parserLocalStorage = getMute ? JSON.parse(getMute) : {};
+  const isMuted =
+    (parserLocalStorage[fromUserId] && parserLocalStorage[fromUserId].isMuted ? 1 : 0) || getMuteStatus(fromUserId);
+
   return {
     ...originalMsg,
     timestamp,
@@ -1300,11 +1309,12 @@ export const getRecentChatMsgObjForward = (originalMsg, toJid, newMsgId, msdIdIn
     msgId: newMsgId,
     fromUserJid: toJid,
     fromUserId: getUserIdFromJid(toJid),
-    chatType: isSingleChatJID(toJid) ? CHAT_TYPE_SINGLE: CHAT_TYPE_GROUP,
+    chatType: isSingleChatJID(toJid) ? CHAT_TYPE_SINGLE : CHAT_TYPE_GROUP,
     publisherId: senderId,
     deleteStatus: 0,
     editedStatus: 0,
     notificationTo: "",
+    muteStatus: isMuted,
     toUserId: getUserIdFromJid(toJid),
     unreadCount: 0,
     filterBy: getUserIdFromJid(toJid),
@@ -1316,7 +1326,7 @@ export const getRecentChatMsgObjForward = (originalMsg, toJid, newMsgId, msdIdIn
       media: {
         ...originalMsg.msgBody.media
       }
-    },
+    }
   };
 };
 
@@ -1503,7 +1513,7 @@ export const sendNotification = (displayName = "", imageUrl = "", messageBody = 
 };
 
 export const validEmail = (email = "") => {
-  const regex = /^\s*([\w+-]+\.)*[\w+]+@([\w+-]+\.)*([\w+-]+\.[a-zA-Z]{2,6})+\s*$/;
+  const regex = /^([_a-zA-Z0-9-!#$%&+]+(\.[_a-zA-Z0-9-!#$%&+]+)*@[a-zA-Z0-9-]+(\.[a-zA-Z]{2,6})+)$/;
   return regex.test(email);
 }
 
@@ -1604,7 +1614,7 @@ export const handleFilterBlockedContact = (rosterData) => {
   return data;
 }
 
-const deleteAllIndexedDb = async() => {
+export const deleteAllIndexedDb = async() => {
   window.indexedDB.deleteDatabase("mirrorflydb");
 }
 
@@ -1680,4 +1690,22 @@ export const generateImageThumbnail = (file, fileExtension) =>
 // Helper function to calculate the scale factor
 const calculateScaleFactor = (width, height, targetWidth) => {
   return targetWidth / width;
+};
+
+// Helper function to update the mute settings
+export const updateMuteSettings = (isMuted) => {
+  const isNotificationEnabled = !isMuted;
+  const constructObject = {
+    ["Notifications"]: isNotificationEnabled
+  };
+  Store.dispatch(SettingsDataAction(constructObject));
+  setLocalWebsettings("Notifications", isNotificationEnabled);
+};
+
+export const updateMuteNotification = (data) => {
+  if (data.isMuted) {
+    setTempMute(data.fromUserId, true);
+  } else {
+    removeTempMute(data.fromUserId);
+  }
 };

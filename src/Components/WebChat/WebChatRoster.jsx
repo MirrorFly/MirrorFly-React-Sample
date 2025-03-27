@@ -1,10 +1,10 @@
 import React, { Fragment } from 'react';
 import { connect } from 'react-redux';
 import { chatResetMessage } from '../../Actions/GroupChatMessageActions';
-import { ActiveChatAction } from '../../Actions/RecentChatActions';
+import { ActiveChatAction, updateMuteStatusRecentChat } from '../../Actions/RecentChatActions';
 import { ArrowBack, loaderSVG, MailIcon, EmptySearch, EmptyContact, BlockedIcon } from '../../assets/images';
 import "../../assets/scss/minEmoji.scss";
-import { getHighlightedText, getValidSearchVal, handleFilterBlockedContact } from '../../Helpers/Utility';
+import { getHighlightedText, getValidSearchVal, handleFilterBlockedContact, updateMuteNotification } from '../../Helpers/Utility';
 import Store from '../../Store';
 import ImageComponent from '../WebChat/Common/ImageComponent';
 import WebChatSearch from "./WebChatSearch";
@@ -94,6 +94,14 @@ class WebChatRoster extends React.Component {
             data.chatId = response.userId;
             data.chatJid = formatUserIdToJid(response.userId);
             Store.dispatch(ActiveChatAction(data));
+            if (response.isMuted) {
+              const dispatchData = {
+                fromUserId: response.userId,
+                isMuted: response.isMuted
+              };
+              updateMuteNotification(dispatchData);
+              Store.dispatch(updateMuteStatusRecentChat(dispatchData));
+            }
             this.props.handleBackStatus(true);
         })
     }

@@ -30,7 +30,7 @@ import UserStatus from '../Common/UserStatus';
 import { isUserWhoBlockedMe } from '../../../Helpers/Chat/BlockContact';
 import ProfileImage from '../Common/ProfileImage';
 import { getSelectedText, removeMoreNumberChar, setInputCaretPosition } from '../../../Helpers/Chat/ContentEditableEle';
-import { blockOfflineAction, getFormatPhoneNumber, getUserIdFromJid, isAppOnline } from '../../../Helpers/Utility';
+import { blockOfflineAction, getFormatPhoneNumber, getUserIdFromJid, isAppOnline, updateMuteNotification } from '../../../Helpers/Utility';
 import ContactInfoProfileUpdate from '../WebChatVCard/ContactInfoProfileUpdate';
 import ClearDeleteOption from './ClearDeleteOption';
 import BlockUnBlockOption from './BlockUnBlockOption';
@@ -577,18 +577,12 @@ class WebChatContactInfo extends React.Component {
         if (blockOfflineAction()) return;
 
         const chatJid = getActiveConversationChatJid();
-        SDK.updateMuteNotification(chatJid, muteStatus);
+        SDK.updateMuteNotification([chatJid], muteStatus);
         const dispatchData = {
             fromUserId: getUserIdFromJid(chatJid),
             isMuted: muteStatus
         }
-        const mutedConversationId = JSON.parse(getFromLocalStorageAndDecrypt('tempMuteUser'));
-        const userId = dispatchData.fromUserId;
-        const constructObj = {
-            ...mutedConversationId,
-            [userId]: dispatchData
-        };
-        encryptAndStoreInLocalStorage('tempMuteUser', JSON.stringify(constructObj));
+        updateMuteNotification(dispatchData);
         Store.dispatch(updateMuteStatusRecentChat(dispatchData));
     };
 

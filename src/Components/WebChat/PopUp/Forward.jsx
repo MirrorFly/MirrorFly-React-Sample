@@ -291,11 +291,12 @@ class ForwardPopUp extends Component {
     SDK.forwardMessagesToMultipleUsers(contactsToForward, isForwardNormal ? msgIds : editedmsgIds, true, newMsgIds, mentionedUserIds);
     const chatToOpen = contactsToForward[contactsToForward.length - 1];
     const response = this.findLastChat(chatToOpen);
-    const { recent: { chatType } = {} } = response[0];
+    const { recent: { chatType } = {}, roster: { isMuted = 0 } = {} } = response[0];
     if (chatType) {
       response[0].chatType = chatType;
       response[0].chatId = getUserIdFromJid(chatToOpen);
       response[0].chatJid = chatToOpen;
+      response[0].muteStatus = isMuted;
       Store.dispatch(ActiveChatAction(response[0]));
     }
 

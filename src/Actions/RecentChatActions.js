@@ -7,7 +7,8 @@ import {
     MODAL_ACTIVE_CLASS,
     RECONNECT_RECENT_CHAT_UPDATE,
     UPDATE_MUTE_RECENT_CHAT,
-    UPDATE_ARCHIVE_RECENT_CHAT
+    UPDATE_ARCHIVE_RECENT_CHAT,
+    UPDATE_ACTIVE_CHAT_DATA
 } from './Constants';
 
 export const RecentChatAction = (data, refreshUnreadCount) => {
@@ -76,6 +77,16 @@ export const ResetActiveChatAction = () => {
 export const ActiveChatAction = (data) => {
     return {
         type: ACTIVE_CHAT_DATA,
+        payload: {
+            id: uuidv4(),
+            data
+        }
+    }
+}
+
+export const UpdateActiveChatAction = (data) => {
+    return {
+        type: UPDATE_ACTIVE_CHAT_DATA,
         payload: {
             id: uuidv4(),
             data

@@ -58,6 +58,7 @@ import { CommonDataReducer } from "./CommonReducer";
 import { callIntermediateScreenReducer } from "./CallIntermediateScreen";
 import { RosterPermissionReducer } from "./RosterPermissionReducer";
 import { AdminBlockReducer } from "./AdminBlockReducer";
+import { SettingsReducer } from "./SettingsDataReducer";
 
 export default combineReducers({
   TranslateLanguage:TranslateLanguage,
@@ -128,5 +129,6 @@ export default combineReducers({
   callQualityData: callQualityReducer,
   callQualityPopup: callQualityPopupReducer,
   callQualityIcon: callQualityIconReducer,
-  starMsgPageType: starMsgPageTypeReducer
+  starMsgPageType: starMsgPageTypeReducer,
+  settingsData: SettingsReducer,
 });

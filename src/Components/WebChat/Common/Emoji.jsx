@@ -18,7 +18,23 @@ const styles = {
 };
 
 export const Emoji = (props = {}) => {
-    const { onEmojiClick, emojiState = true } = props
+    const { onEmojiClick, emojiState = true, handleCloseEmojiClick = () => {} } = props;
+
+    const handleOnKeyPress = React.useCallback(
+      (event) => {
+        if (event.key === "Escape") {
+          handleCloseEmojiClick();
+        }
+      },
+      [handleCloseEmojiClick]
+    );
+
+    React.useEffect(() => {
+      if (!emojiState) return;
+      document.addEventListener("keydown", handleOnKeyPress, false);
+      return () => document.removeEventListener("keydown", handleOnKeyPress, false);
+    }, [emojiState, handleOnKeyPress]); 
+      
     /**
      * addEmoji() method to pass emojis to parent.
      */

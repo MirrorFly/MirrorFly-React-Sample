@@ -135,6 +135,26 @@ class RecentChatSection extends Component {
     });
   }
 
+  isSameRecentChats = (data1, data2) =>{
+    if (data1.length == 0 || data2.length == 0 || data1.length != data2.length) {
+      return false;
+    } else if (data1.length > 0 && data2.length > 0) {
+      const ids1 = data1?.map((msg) => msg.msgId).sort();
+      const ids2 = data2?.map((msg) => msg.msgId).sort();
+      if (JSON.stringify(ids1) !== JSON.stringify(ids2)) {
+        return false;
+      }
+      const map2 = new Map(data2?.map((msg) => [msg.msgId, msg]));
+      for (const msg1 of data1) {
+        const msg2 = map2.get(msg1.msgId);
+        if (JSON.stringify(msg1) !== JSON.stringify(msg2)) {
+          return false;
+        }
+      }
+      return true;
+    }
+  }
+
   componentDidMount() {
     let {recentChatItems, recentChatNames, recentchatId} = this.getRecentChatsItems();
     if (recentchatId) {
@@ -164,6 +184,7 @@ class RecentChatSection extends Component {
 
     if ((prevProps.rosterData.id !== rosterId) || ((!prevProps.recentChatData.id && recentchatId) || (prevProps.recentChatData.id !== recentchatId))|| isRefreshed) {
       if (!recentchatId) return;
+      if (prevProps.recentChatData.id && (prevProps.recentChatData.id != this.props.recentChatData.id) && this.isSameRecentChats(prevProps.recentChatData.data, this.props.recentChatData.data)) return;
       let { recentChatItems,recentChatNames } = this.getRecentChatsItems();
       this.setState(
         {

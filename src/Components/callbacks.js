@@ -53,10 +53,13 @@ import {
     VCardDataAction
 } from '../Actions/VCardActions';
 import {
+    deleteAllIndexedDb,
     getUserIdFromJid,
     logout,
     setLocalWebsettings,
-    stopRecorder
+    stopRecorder,
+    updateMuteNotification,
+    updateMuteSettings
 } from '../Helpers/Utility';
 import callLogs from './WebCall/CallLogs/callLog';
 import {
@@ -124,7 +127,8 @@ import {
     MSG_DELETE_CHAT,
     MSG_DELETE_CHAT_CARBON,
     CONNECTION_STATE_CONNECTING,
-    DELETE_CALL_LOG
+    DELETE_CALL_LOG,
+    CARBON_LOGOUT
 } from '../Helpers/Chat/Constant';
 import {
     setGroupParticipants,
@@ -1066,16 +1070,16 @@ export const callbacks = {
         }));
     },
     messageListener: async function (res) {
-        if (res.msgType === LOGOUT) {
+        if (res.msgType === LOGOUT || res.msgType === CARBON_LOGOUT) {
             encryptAndStoreInSessionStorage("isLogout", true);
-            setTimeout(() => {
-                if (isSameSession()) {
-                    deleteItemFromLocalStorage('username');
-                    deleteItemFromLocalStorage("auth_user");
-                    deleteItemFromLocalStorage('getuserprofile');
-                    window.location.reload();
-                }
-
+            setTimeout(async () => {
+              if (isSameSession()) {
+                await deleteAllIndexedDb();
+                deleteItemFromLocalStorage("username");
+                deleteItemFromLocalStorage("auth_user");
+                deleteItemFromLocalStorage("getuserprofile");
+                window.location.reload();
+              }
             }, 2000);
             return;
         }
@@ -1257,8 +1261,11 @@ export const callbacks = {
         Store.dispatch(updateMsgByLastMsgId(res));
     },
     muteChatListener: function (res) {
-        if (res?.type === "carbon") {
-            Store.dispatch(updateMuteStatusRecentChat(res));
+        if (res.muteSetting) {
+          updateMuteSettings(res.isMuted);
+        } else {
+          updateMuteNotification(res);
+          Store.dispatch(updateMuteStatusRecentChat(res));
         }
     },
     archiveChatListener: function (res) {

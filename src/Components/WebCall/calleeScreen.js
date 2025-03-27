@@ -133,7 +133,7 @@ class CalleScreen extends Component {
                 resetCallData();
                 localCallDataClearAndDiscardUi();
             } else {
-                console.log("Error occured ", call.errorMessage)
+                console.log("Error occured in declineCall", call.errorMessage)
             }
         }
     }

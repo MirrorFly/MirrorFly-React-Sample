@@ -3,7 +3,7 @@ import { encryptAndStoreInLocalStorage, getFromLocalStorageAndDecrypt } from "..
 import Store from "../../../Store";
 import { formatToArrayofJid, setContactWhoBleckedMe } from "../../../Helpers/Chat/BlockContact";
 import { blockedContactAction } from "../../../Actions/BlockAction";
-import { isAppOnline } from "../../../Helpers/Utility";
+import { isAppOnline, updateMuteSettings } from "../../../Helpers/Utility";
 import { setConnectionStatus } from "../Common/FileUploadValidation";
 import { CHAT_TYPE_GROUP, CONNECTION_STATE_CONNECTING } from "../../../Helpers/Chat/Constant";
 import { WebChatConnectionState } from "../../../Actions/ConnectionState";
@@ -15,14 +15,16 @@ import {
   handleUserSettings,
   isActiveConversationUserOrGroup,
   isGroupChat,
-  arrayToObject
+  arrayToObject,
+  getActiveConversationChatId,
+  removeTempMute
 } from "../../../Helpers/Chat/ChatHelper";
 import { getIdFromJid, formatUserIdToJid, isLocalUser } from "../../../Helpers/Chat/User";
 import { ChatMessageHistoryDataAction, UpdateFavouriteStatus } from "../../../Actions/ChatHistory";
 import { StarredMessagesList } from "../../../Actions/StarredAction";
 import { chatSeenPendingMsg } from "../../../Actions/SingleChatMessageActions";
 import { toast } from 'react-toastify';
-import { ActiveChatResetAction, RecentChatAction } from "../../../Actions/RecentChatActions"
+import { ActiveChatResetAction, RecentChatAction, UpdateActiveChatAction } from "../../../Actions/RecentChatActions"
 import { hideModal } from '../../../Actions/PopUp';
 import { messageInfoAction } from "../../../Actions/MessageActions";
 import { GroupsDataAction, ReConnectGroupDataUpdateAction } from "../../../Actions/GroupsAction";
@@ -172,6 +174,7 @@ export async function login() {
         Store.dispatch(FeatureEnableState(featureData));
         encryptAndStoreInLocalStorage("featureRestrictionFlags", featureData);
       }
+      updateMuteStatus();
 
       if (featureData.isGroupChatEnabled) {
         const groupListRes = await SDK.getGroupsList();
@@ -272,12 +275,16 @@ const constructNewGroups = async (data) => {
 
 export const serverReconnect = async() => {
   console.log("serverReconnect Function")
+  updateMuteStatus();
   const oldRecentChatData = getRecentChatData();
   const recentChatsRes = await SDK.getRecentChatsByPagination();
   let recentChatArr = [];
   if (recentChatsRes && recentChatsRes.statusCode === 200) {
     recentChatArr = recentChatsRes.data;
     recentChatArr.serverReconnect = true;
+    const activeChatUserId = getActiveConversationChatId();
+    const isActiveChat = recentChatArr.find((res) => res.fromUserId === activeChatUserId) || "";
+    isActiveChat && Store.dispatch(UpdateActiveChatAction(isActiveChat));
     const newRecentGroups = await newFetchedGroups(oldRecentChatData, recentChatArr)
     if(newRecentGroups && newRecentGroups.length > 0){
       const newGroupsData = await constructNewGroups(newRecentGroups);
@@ -296,3 +303,23 @@ export const serverReconnect = async() => {
   }
   handleChatHistoryUpdate(recentChatArr, oldRecentChatData);
 }
+
+const updateMuteStatus = async () => {
+  const mutedResponse = await SDK.getMutedUsers();
+  if (mutedResponse.statusCode === 200) {
+    const { muteSettingStatus = false, mutedChats = [] } = mutedResponse.data || {};
+    updateMuteSettings(muteSettingStatus);
+    const tempUser = mutedChats.reduce((acc, { chatId, chatType }) => {
+      acc[chatId] = { fromUserId: chatId, chatType, isMuted: true };
+      return acc;
+    }, {});
+    const mutedChat = JSON.parse(getFromLocalStorageAndDecrypt("tempMuteUser")) || {};
+    const getUnMutedChat = Object.keys(mutedChat).filter((chatId) => !(chatId in tempUser));
+    if (getUnMutedChat.length) {
+      getUnMutedChat.forEach(removeTempMute);
+    }
+    if (Object.keys(tempUser).length) {
+      encryptAndStoreInLocalStorage("tempMuteUser", JSON.stringify(tempUser));
+    }
+  }
+};
