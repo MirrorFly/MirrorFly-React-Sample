@@ -41,7 +41,6 @@ import {
     updateMsgByLastMsgId,
     deleteActiveChatAction,
     ActiveChatResetAction,
-    updateMuteStatusRecentChat,
     updateArchiveStatusRecentChat
 } from '../Actions/RecentChatActions';
 import {
@@ -58,8 +57,8 @@ import {
     logout,
     setLocalWebsettings,
     stopRecorder,
-    updateMuteNotification,
-    updateMuteSettings
+    updateMuteSettings,
+    updateMuteStatus
 } from '../Helpers/Utility';
 import callLogs from './WebCall/CallLogs/callLog';
 import {
@@ -1264,8 +1263,7 @@ export const callbacks = {
         if (res.muteSetting) {
           updateMuteSettings(res.isMuted);
         } else {
-          updateMuteNotification(res);
-          Store.dispatch(updateMuteStatusRecentChat(res));
+          updateMuteStatus(res);
         }
     },
     archiveChatListener: function (res) {
