@@ -38,7 +38,7 @@ import { isGroupChat, removeTempMute, setTempMute } from "./Chat/ChatHelper";
 import Push from "push.js";
 import { callbacks } from "../Components/callbacks";
 import config from "../config";
-import { ActiveChatAction } from "../Actions/RecentChatActions";
+import { ActiveChatAction, updateMuteStatusRecentChat } from "../Actions/RecentChatActions";
 import { UnreadCountDelete } from "../Actions/UnreadCount"
 import { callIntermediateScreen } from "../Actions/CallAction";
 import { getFromLocalStorageAndDecrypt, encryptAndStoreInLocalStorage} from "../Components/WebChat/WebChatEncryptDecrypt";
@@ -1709,3 +1709,19 @@ export const updateMuteNotification = (data) => {
     removeTempMute(data.fromUserId);
   }
 };
+
+export const updateMuteStatus = (data) => {
+  const { fromUserJid = "" } = data;
+  const userJids = fromUserJid.split(",");
+  userJids.forEach((jid) => {
+    const fromUserId = getUserIdFromJid(jid);
+    const constructObject = {
+      ...data,
+      fromUserJid: jid,
+      fromUserId,
+      isMuted: data.isMuted
+    };
+    updateMuteNotification(constructObject);
+    Store.dispatch(updateMuteStatusRecentChat(constructObject));
+  });
+};  
