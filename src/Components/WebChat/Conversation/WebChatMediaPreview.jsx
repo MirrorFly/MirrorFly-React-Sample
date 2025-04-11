@@ -150,13 +150,13 @@ class WebChatMediaPreview extends React.Component {
                       {({ zoomIn, zoomOut, resetTransform, ...rest }) => (
                         <React.Fragment>
                           <div className="tools zoomTools">
-                            <button onClick={zoomIn}>
+                            <button onClick={()=>zoomIn()}>
                               <ZoomIn />
                             </button>
-                            <button onClick={zoomOut}>
+                            <button onClick={()=>zoomOut()}>
                               <ZoomOut />
                             </button>
-                            <button onClick={resetTransform}>
+                            <button onClick={()=>resetTransform()}>
                               <ZoomRestore />
                             </button>
                           </div>

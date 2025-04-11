@@ -358,12 +358,12 @@ button {
           &:hover {
             background-color: #edf4f9;
               .recentMenu{
-                svg,path{
-                  fill:#3f95fb;
-                }
                 width:1.5em !important;
                 height: auto !important;
                 transition: 200ms linear;
+                svg,path{
+                  fill:#3f95fb;
+                } 
               }
             .recentchats .recent-message-block .recent-message-icon i.downarrow {
               display: block;
@@ -452,6 +452,7 @@ button {
               @include flexbox();
               @include justify-content(center);
               @include align-items(center);
+              box-shadow: 0px 1px 8px #0000001F;
               &:hover{
                 background-color: rgb(226, 226, 226);
               }
@@ -483,7 +484,6 @@ button {
                 margin-right: 0.6875em;
                 margin-left: 0.6875em;
               }
-              box-shadow: 0px 1px 8px #0000001F;
             }
         }
           &.activeIncommingCall {
@@ -1585,6 +1585,7 @@ i{
         height: 100%;
         overflow-y: auto;
         padding-top: 0;
+        @include chatMessageStyle;
 
         input[type=checkbox] {
           opacity: 0;
@@ -1618,7 +1619,6 @@ i{
             }
           }
         }
-        @include chatMessageStyle;
 
         .receiver,
         .sender {
@@ -5078,14 +5078,13 @@ width: calc(100% - 3.875em);
     @include align-items(center);
 
     .CloseSelectedMessageOption {
-      span {
-        font-size: $font18;
-        color: $bgc-selectedMessage-close;
-      }
-
       display: flex;
       justify-content: space-between;
       align-items: center;
+      span {
+        font-size: $font18;
+        color: $bgc-selectedMessage-close;
+      } 
 
       i {
         width: 0.938em;
@@ -5133,16 +5132,14 @@ width: calc(100% - 3.875em);
 
   //audio reply style start 
   &.sender-audio-group {
-    max-width: 14em !important;
+    max-width: 14em !important;   
 
     .audio-message-container {
+      flex-wrap: wrap;
+      padding-top: .250em;
       .sender-name {
         padding: 0 !important;
       }
-
-      flex-wrap: wrap;
-      padding-top: .250em;
-
       .reply-container {
         flex: 101% 0 1;
         margin: 0 .13em 0.350em -0.250em !important
@@ -5171,12 +5168,11 @@ width: calc(100% - 3.875em);
     .document-message-block,
     .contact-message-block {
       padding: 0.250em .1em 0.625em 0.475em !important;
+      flex-wrap: wrap;
 
       .sender-name {
         padding: 0 !important;
       }
-
-      flex-wrap: wrap;
 
       .reply-container {
         flex: 101% 0 1;
@@ -5275,10 +5271,10 @@ width: calc(100% - 3.875em);
 // custom max width for all file types fix for long reply text
 &.sender-text-group,&.reply-text {
   padding: .250em !important;
+  max-width: 21.5em!important;
   .reply-text-message {
     width: 100% !important;
   }
-    max-width: 21.5em!important;
 }
 &.location-message.image-block {
   max-width: 13em!important;
@@ -6584,11 +6580,11 @@ footer {
       border-bottom: none;
       padding: 0.813em 2.813em 0.813em 1.250em;
       i {
+        height: 1.500em;
+        width: 1.500em;
         svg {
           fill: $white;
-        }
-          height: 1.500em;
-          width: 1.500em;
+        }         
       }
       h5 {
         text-align: center;
@@ -6652,11 +6648,6 @@ footer {
       }
     }
     .popup-controls {
-      img {
-        background: none;
-        height: 2.438em;
-        width: 2.438em;
-      }
       text-align: right;
       padding: 0em 1em 0 0;
       width: 30%;
@@ -6664,6 +6655,12 @@ footer {
       position: relative;
       top: -1.938em;
       margin-bottom: -1.75em;
+      img {
+        background: none;
+        height: 2.438em;
+        width: 2.438em;
+      }
+    
       i {
         height: 2.438em;
         width: 2.438em;
@@ -6677,10 +6674,6 @@ footer {
 // call button
 .callButton {
   cursor: pointer;
-  i{
-    margin-right: 1em;
-    height: 1em;
-  }
   height: 3.5em;
   width: 100%;
   display: flex;
@@ -6689,6 +6682,11 @@ footer {
   color: #fff;
   background: #3276E2;
   transition: 200ms linear;
+  i{
+    margin-right: 1em;
+    height: 1em;
+  }
+ 
   &:hover{
     background: #4879f9;
     transition: 200ms linear;
@@ -6863,6 +6861,9 @@ width: 100%;
 .meetinglink {
   color: #fff;
   cursor: pointer; 
+  padding:0 !important;
+  max-width: 14.5em !important;
+  width: auto;
   .sender-name{
     left: 0 !important;
     padding-left: .4em;
@@ -6890,9 +6891,7 @@ width: 100%;
   --clr_meeting_link_color:#4879F9;
   --fill_call_icon:#c2c2c2;
 }
-  padding:0 !important;
-  max-width: 14.5em !important;
-  width: auto;
+ 
 // meeting link style
 .message_meeting_link {
   user-select: text;

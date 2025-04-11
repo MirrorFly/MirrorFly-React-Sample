@@ -373,11 +373,11 @@
 			background-color: #EDEDED;
 			color:#000000;
 			.closePopup{
-				svg path{
-					fill:#000;
-				}
 				width:0.938em;
 				position: absolute;
+				svg path{
+					fill:#000;
+				} 
 			}
 			h5{
 				width: calc(100% - 0.938em);

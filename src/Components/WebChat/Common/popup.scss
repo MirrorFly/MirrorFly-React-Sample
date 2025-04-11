@@ -314,15 +314,6 @@
               }
             }
             .popup-controls {
-              img {
-                background: none;
-                height: 2.438em;
-                width: 2.438em;
-                position: absolute;
-                top: 50%;
-                left: 70%;
-                transform: translate(-30%, -50%);
-              }
               text-align: right;
               padding: 0em 1em 0 0;
               width: 30%;
@@ -331,6 +322,15 @@
               top: -1.938em;
               height: 2.5em;
               margin-bottom: -1.75em;
+              img {
+                background: none;
+                height: 2.438em;
+                width: 2.438em;
+                position: absolute;
+                top: 50%;
+                left: 70%;
+                transform: translate(-30%, -50%);
+              }            
               i {
                 height: 2.438em;
                 width: 2.438em;

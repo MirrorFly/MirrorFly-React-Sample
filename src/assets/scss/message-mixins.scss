@@ -248,10 +248,10 @@
   }
   }
   .sender.image-block {
+    padding: 0.25em;
     .image-wrapper{
       position: relative;
     }
-    padding: 0.25em;
     .message-time {
       right: 0.36em;
       bottom: 0.36em;
@@ -268,12 +268,12 @@
     }
   }
   .sender.contact-message {
+    padding: 0;
+    min-width: 11.375em;
     > .sender-name{
       @extend .sender-name-style;
       margin: 0.250em 0.250em -0.250em 0.40em !important;
-    }
-    padding: 0;
-    min-width: 11.375em;
+    }   
     .contact-message-block {
       position: relative;
       padding: 0.938em;
@@ -581,10 +581,10 @@
       margin-top: 0.625em;
     }
     .receiver.image-block {
+      padding: 0.25em;
       .image-wrapper{
         position: relative;
       }
-      padding: 0.25em;
       .message-time {
         right: 0.36em;
         bottom: 0.36em;
@@ -601,12 +601,12 @@
       }
     }
     .receiver.contact-message {
+      padding: 0;
+      min-width: 11.375em;
       > .sender-name{
         @extend .sender-name-style;
         margin: 0.250em 0.250em -0.250em 0.40em !important;
-      }
-      padding: 0;
-      min-width: 11.375em;
+      } 
       .contact-message-block {
         position: relative;
         padding: 0.938em;
@@ -1082,10 +1082,10 @@
     }
   }
   .document-message, .file-message {
+    border-radius:  0.5625em !important;
     > .sender-name{
       margin: 0.250em 0.250em -0.250em 0.40em !important;
     }
-    border-radius:  0.5625em !important;
     .message-time{
     right: 0.30em !important;
     bottom: 0.5em !important;

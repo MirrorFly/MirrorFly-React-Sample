@@ -212,12 +212,12 @@
                   .emojiPicker-container{
                     width: 300px;
                     em-emoji-picker{
+                      position: absolute !important;
                       width: 100%;
                       .preview-placeholder{
                         font-size: 12px;
                       }
                     }
-                    position: absolute !important;
                   }
                   i{
                     margin: 0;

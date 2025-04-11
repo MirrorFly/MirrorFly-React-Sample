@@ -10,4 +10,5 @@ npm-debug.log
 .env
 # testing
 /coverage
+package-lock.json
 

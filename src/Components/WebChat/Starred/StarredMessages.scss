@@ -17,7 +17,9 @@
         overflow: hidden auto;
         width: 100%;
         flex: 1 1 auto;
+        &{
         @include chatMessageStyle;
+        }
             .receiver-row,.sender-row{
                 padding: 0 2.7em;
                 .message-text span:after {
