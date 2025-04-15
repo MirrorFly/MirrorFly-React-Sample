@@ -198,10 +198,11 @@
                 font-size: 14px;
                 margin-bottom: 4px;
             }
-            p{  @media(min-width:1800px){
+            p{  
+              margin-bottom: 14px;
+              @media(min-width:1800px){
                 width: 315px;
               }
-                margin-bottom: 14px;
             }
             .join_new_meeting{
               margin:0;

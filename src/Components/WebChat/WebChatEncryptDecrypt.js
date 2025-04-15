@@ -1,6 +1,6 @@
 import { ls } from '../../Helpers/LocalStorage';
-import Cryptlib from "cryptlib";
 import { REACT_APP_ENCRYPT_KEY, REACT_APP_LICENSE_KEY } from '../processENV';
+import CryptoJS from 'crypto-js';
 
 /**
  * Encrypt the json object and store into localstorage
@@ -67,11 +67,23 @@ export function deleteItemFromSessionStorage(key) {
 }
 
 const encrypt = (data, key) => {
-    const encryptKey = Cryptlib.getHashSha256(key, 32);
-    return Cryptlib.encrypt(encodeURIComponent(data), encryptKey, REACT_APP_ENCRYPT_KEY);
+  const encryptKey = CryptoJS.enc.Utf8.parse(CryptoJS.SHA256(key).toString().substring(0, 32));
+  const iv = CryptoJS.enc.Utf8.parse(REACT_APP_ENCRYPT_KEY.substring(0, 16));
+  return CryptoJS.AES.encrypt(encodeURIComponent(data), encryptKey, {
+    iv: iv,
+    mode: CryptoJS.mode.CBC,
+    padding: CryptoJS.pad.Pkcs7
+  }).toString();
 };
   
 const decrypt = (data, key) => {
-    const decryptKey = Cryptlib.getHashSha256(key, 32);
-    return decodeURIComponent(Cryptlib.decrypt(data, decryptKey, REACT_APP_ENCRYPT_KEY));
+  const decryptKey = CryptoJS.enc.Utf8.parse(CryptoJS.SHA256(key).toString().substring(0, 32));
+  const iv = CryptoJS.enc.Utf8.parse(REACT_APP_ENCRYPT_KEY.substring(0, 16));
+  return decodeURIComponent(
+    CryptoJS.AES.decrypt(data, decryptKey, {
+      iv: iv,
+      mode: CryptoJS.mode.CBC,
+      padding: CryptoJS.pad.Pkcs7
+    }).toString(CryptoJS.enc.Utf8)
+  );
 };

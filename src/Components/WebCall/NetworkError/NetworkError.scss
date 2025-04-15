@@ -1,5 +1,5 @@
-
-  .NetworkError {
+@use "sass:math";
+  .NetworkError {   
       position: fixed;
       z-index: 100;
     display: flex;
@@ -13,6 +13,9 @@
     padding: 1.875em;
     font-family: SFUIDisplayRegular,sans-serif;
     flex-wrap: wrap-reverse;
+    $size: 4.688rem;
+    $border: math.div($size, 15); 
+ 
    
   .wrapper {
     flex-grow: 2;
@@ -85,8 +88,6 @@
   
   // BLACKHOLE
   
-  $size: 4.688rem;
-  $border: $size/15;
   
   .space {
     // width: $size;

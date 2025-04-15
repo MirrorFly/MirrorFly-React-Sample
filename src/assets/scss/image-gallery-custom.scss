@@ -572,6 +572,8 @@
 
   .vjs-modal-dialog-content,.vjs-big-play-button{
     display: none;
+    font-size: 14px;
+    overflow: hidden;
       }
     
     
@@ -639,8 +641,6 @@
           }
         }
       
-        font-size: 14px;
-        overflow: hidden;
       
         .vjs-menu-button-inline:hover, &.vjs-no-flex .vjs-menu-button-inline {
           width: 8.35em;
@@ -726,12 +726,12 @@
         }
       
         &.vjs-no-flex .vjs-time-control {
-          &.vjs-remaining-time {
-            display: none;
-          }
-      
           display: table-cell;
           width: 4em;
+          &.vjs-remaining-time {
+            display: none;
+          }   
+      
         }
       
         &.not-hover.vjs-has-started {

@@ -1,9 +1,9 @@
 .button-group-center{
     .not-allowed{
+        cursor: not-allowed !important;
         >*{
             cursor: not-allowed;
         }
-        cursor: not-allowed !important;
     }
     .disabled-btn{
         color: #fff;
