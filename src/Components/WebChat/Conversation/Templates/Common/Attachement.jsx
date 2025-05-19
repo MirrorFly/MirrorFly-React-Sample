@@ -176,7 +176,7 @@ export default class Attachement extends Component {
           onChange={(e) => this.selectFile(e, "imagevideo")}
           onClick={this.clickedFileInput}
           accept={
-            ".webm,.mp4,.x-m4v,.png,.jpeg,.jpg,video/x-m4v"
+            ".webm,.mp4,.x-m4v,.png,.jpeg,.jpg,video/x-m4v,.mov"
           }
           multiple
         />
@@ -200,7 +200,7 @@ export default class Attachement extends Component {
           onChange={(e) => this.selectFile(e, "video")}
           onClick={this.clickedFileInput}
           accept={
-            ".webm,.mp4,.x-m4v,video/x-m4v"
+            ".webm,.mp4,.x-m4v, video/x-m4v,.mov"
           }
           multiple
         />

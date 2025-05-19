@@ -7,7 +7,7 @@ import { AudioFile, dragDrop } from "../../../assets/images";
 import "../../../assets/scss/image-gallery-custom.scss";
 import Config from "../../../config";
 import { INLINE_FLEX, FEATURE_RESTRICTION_ERROR_MESSAGE } from "../../../Helpers/Constants";
-import { getMessageType, getThumbBase64URL, millisToMinutesAndSeconds, blockOfflineMsgAction, generateImageThumbnail } from "../../../Helpers/Utility";
+import { getMessageType, getThumbBase64URL, millisToMinutesAndSeconds, blockOfflineMsgAction, generateImageThumbnail, convertVideoFile } from "../../../Helpers/Utility";
 import { getExtension, sendErrorMessage, validateFile } from "../../WebChat/Common/FileUploadValidation";
 import getFileFromType from "../Conversation/Templates/Common/getFileFromType";
 import Spinner from "../Conversation/Templates/Common/Spinner";
@@ -155,7 +155,7 @@ export default class MediaPreview extends Component {
       this.state.selectedFiles.length >= maxAllowedMediaCount ? "none" : INLINE_FLEX
     }">
             <div><label for="addfile"><input id="addfile" class="uploadfileinput" type="file"
-            accept=".webm,.mp4,.x-m4v,.png,.jpeg,.jpg,video/x-m4v" multiple /></label>
+            accept=".webm,.mp4,.x-m4v,.png,.jpeg,.jpg,video/x-m4v,.mov" multiple /></label>
             <i class="addIcon"></i><span>ADD FILE</span></div></div>`;
     }
     else if(mediaType === "image") {
@@ -171,7 +171,7 @@ export default class MediaPreview extends Component {
         this.state.selectedFiles.length >= maxAllowedMediaCount ? "none" : INLINE_FLEX
       }">
               <div><label for="addfile"><input id="addfile" class="uploadfileinput" type="file"
-              accept=".webm,.mp4,.x-m4v,video/x-m4v" multiple /></label>
+              accept=".webm,.mp4,.x-m4v,video/x-m4v,.mov" multiple /></label>
               <i class="addIcon"></i><span>ADD FILE</span></div></div>`;
     }
     else if(mediaType === "audio") {
@@ -205,8 +205,17 @@ export default class MediaPreview extends Component {
     }
   
     child = child.firstChild;
-    child.querySelector(".uploadfileinput").addEventListener("change", (event) => {
-      this.handleFiles(event.target.files, mediaType, "new");
+    child.querySelector(".uploadfileinput").addEventListener("change", async (event) => {
+      const convertedFiles = await Promise.all(
+        Array.from(event.target.files).map(async (file) => {
+          if (file.type.startsWith("video/") && file.type !== "video/mp4") {
+            const converted = await convertVideoFile(file);
+            return converted || null;
+          }
+          return file;
+        })
+      );
+      this.handleFiles(convertedFiles.filter(Boolean), mediaType, "new");
     });
     thumbsWrapper.appendChild(child);
     let sendButtonChild = document.createElement("div");

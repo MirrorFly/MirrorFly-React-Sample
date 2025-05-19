@@ -37,7 +37,7 @@
     "lodash.camelcase": "^4.3.0",
     "luxon": "^1.24.1",
     "mic-recorder-to-mp3": "^2.2.2",
-    "mirrorfly-sdk": "^4.25.5",
+    "mirrorfly-sdk": "^4.25.7",
     "moment": "^2.29.4",
     "prop-types": "^15.7.2",
     "push.js": "^1.0.12",
@@ -91,6 +91,8 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
+    "@ffmpeg/ffmpeg": "^0.12.15",
+    "@ffmpeg/util": "^0.12.2",
     "@testing-library/react": "^9.5.0",
     "ajv": "^8.17.1",
     "assert": "^2.0.0",
