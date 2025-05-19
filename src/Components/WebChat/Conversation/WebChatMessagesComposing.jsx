@@ -18,7 +18,7 @@ import { setCaretPosition } from "../../../Helpers/Chat/ContentEditableEle";
 import Camera from "../Camera";
 import { getCameraPermission } from "./Templates/Common/Media";
 import { TYPE_DELAY_TIME } from "../../../Helpers/Constants";
-import { blockOfflineAction, blockOfflineMsgAction, isAppOnline, isBoxedLayoutEnabled, placeCaretAtEnd } from "../../../Helpers/Utility";
+import { blockOfflineAction, blockOfflineMsgAction, convertVideoFile, isAppOnline, isBoxedLayoutEnabled, placeCaretAtEnd } from "../../../Helpers/Utility";
 import { get as _get } from "lodash";
 import Store from "../../../Store";
 import { UpdateTypedMessage } from "../../../Actions/ChatHistory";
@@ -525,12 +525,21 @@ class WebChatMessagesComposing extends Component {
     window.removeEventListener('paste', this.pasteEventListener);
   };
 
-  selectFile = (event, mediaType) => {
+  selectFile = async(event, mediaType) => {
+    const convertedFiles = await Promise.all(
+      Array.from(event.target.files).map(async (file) => {
+        if (file.type.startsWith("video/") && file.type !== "video/mp4") {
+          const converted = await convertVideoFile(file);
+          return converted || null;
+        }
+        return file;
+      })
+    );
     this.setState({
       showPreview: true,
       seletedFiles: {
         filesId: uuidv4(),
-        files: event.target.files,
+        files: convertedFiles.filter(Boolean),
         mediaType,
         chatType: this.props.chatType
       }

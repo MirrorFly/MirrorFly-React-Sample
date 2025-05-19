@@ -44,6 +44,9 @@ import { callIntermediateScreen } from "../Actions/CallAction";
 import { getFromLocalStorageAndDecrypt, encryptAndStoreInLocalStorage} from "../Components/WebChat/WebChatEncryptDecrypt";
 import userList from "../Components/WebChat/RecentChat/userList";
 import { SettingsDataAction } from "../Actions/SettingsAction";
+import { FFmpeg } from "@ffmpeg/ffmpeg";
+import { fetchFile } from "@ffmpeg/util";
+import { toast } from "react-toastify";
 
 const HtmlToReactParser = require('html-to-react').Parser;
 const htmlToReactParser = new HtmlToReactParser();
@@ -1724,4 +1727,50 @@ export const updateMuteStatus = (data) => {
     updateMuteNotification(constructObject);
     Store.dispatch(updateMuteStatusRecentChat(constructObject));
   });
-};  
+};
+
+export const loadFFMPEG = async () => {
+  try {
+    const ffmpeg = new FFmpeg({
+      log: true
+    });
+    if (!ffmpeg.loaded) {
+      await ffmpeg.load();
+    }
+    return ffmpeg;
+  } catch (err) {
+    console.log("loadFFMPEG", err);
+  }
+};
+
+export const convertVideoFile = async (file) => {
+  const ffmpeg = await loadFFMPEG();
+  const inputName = file.name;
+  const outputName = file.name.replace(/\.[^/.]+$/, ".mp4");
+  const fileURL = URL.createObjectURL(file);
+  const cleanUpFFmpeg = async () => {
+    try {
+      URL.revokeObjectURL(fileURL);
+      await ffmpeg.deleteFile(inputName);
+      await ffmpeg.deleteFile(outputName);
+    } catch (e) {
+      console.warn("FFmpeg cleanup error:", e);
+    }
+  };
+  try {
+    await ffmpeg.writeFile(inputName, await fetchFile(fileURL));
+    await ffmpeg.exec(["-i", inputName, "-c", "copy", outputName]);
+    const data = await ffmpeg.readFile(outputName);
+    const convertedFile = new File([data.buffer], outputName, {
+      type: "video/mp4",
+      lastModified: file.lastModified
+    });
+    return convertedFile;
+  } catch (err) {
+    console.error("convertVideoFile error:", err);
+    toast.error("Unable to convert the file");
+  } finally {
+    await cleanUpFFmpeg();
+    ffmpeg.terminate();
+  }
+};
