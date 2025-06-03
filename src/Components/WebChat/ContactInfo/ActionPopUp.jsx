@@ -10,25 +10,37 @@ export default class ActionPopUp extends Component {
         Store.dispatch(hideModal())
     }
 
-    handleAction = () => {
+    handleAction = async() => {
         if (!isAppOnline()) {
             blockOfflineAction()
             return
         }
         const { modalProps: { displayName = "", groupuniqueId = "", userjid = "", action = "" } = {} } = this.props || {};
         if (action === 'groupMakeAdmin') {
-            SDK && SDK.makeAsAdmin(groupuniqueId, userjid)
-            const toastMessage = `${displayName} is now admin`;
-            toast.success(toastMessage, "success");
+            let response = await SDK.makeAsAdmin(groupuniqueId, userjid);
+            if (response?.statusCode === 200) {
+              const toastMessage = `${displayName} is now admin`;
+              toast.success(toastMessage, "success");
+            } else {
+              toast.error(response.message);
+            }
         } else if (action === "ExitGroup") {
-            SDK && SDK.userExitGroup(groupuniqueId, userjid);
-            const toastMessage = `You were no longer from the group.`;
-            toast.info(toastMessage);
+            let response = await SDK.userExitGroup(groupuniqueId, userjid);
+            if (response?.statusCode === 200) {
+              const toastMessage = `You were no longer from the group.`;
+              toast.info(toastMessage);
+            } else {
+              toast.error(response.message);
+            }
         }
         else {
-            SDK && SDK.removeParticipant(groupuniqueId, userjid)
-            const toastMessage = `${displayName} is removed from group`
-            toast.success(toastMessage);
+            let response = await SDK.removeParticipant(groupuniqueId, userjid);
+            if (response?.statusCode === 200) {
+              const toastMessage = `${displayName} is removed from group`;
+              toast.success(toastMessage);
+            } else {
+              toast.error(response.message);
+            }
         }
         this.cancelAction()
     }
