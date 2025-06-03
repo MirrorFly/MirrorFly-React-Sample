@@ -12,6 +12,7 @@ import { NO_SEARCH_CHAT_CONTACT_FOUND, REACT_APP_CONTACT_SYNC, REACT_APP_XMPP_SO
 import { getContactNameFromRoster, getUserInfoForSearch, getFriendsFromRosters, formatUserIdToJid } from '../../../Helpers/Chat/User';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import userList from '../RecentChat/userList';
+import { toast } from 'react-toastify';
 
 class ParticipantPopUp extends Component {
 
@@ -187,15 +188,19 @@ class ParticipantPopUp extends Component {
             return
         }
         if (membersCount < 239) {
-            this.setState({
-                errorMesage: ''
-            }, () => {
-                participantToAdd.forEach(({ userId }) => {
-                    const jid = userId + "@" + REACT_APP_XMPP_SOCKET_HOST;
-                    SDK.addParticipants(groupuniqueId, groupName, [jid]);
-                })
-                this.props.closePopup()
-            })
+          this.setState(
+            {
+              errorMesage: ""
+            },
+            async () => {
+              const participantAdd = participantToAdd.map((res) => res.userJid);
+              const addParticipantResponse = await SDK.addParticipants(groupuniqueId, groupName, participantAdd);
+              if (addParticipantResponse.statusCode !== 200) {
+                toast.error(addParticipantResponse.message);
+              }
+              this.props.closePopup();
+            }
+          );
         }
     }
 
