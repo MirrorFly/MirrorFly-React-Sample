@@ -13,7 +13,7 @@ const TypingStatus = (props) => {
         <> {isTyping ? <span className="txtTyping">{displayName}</span> :
             <>
                 {chatType === 'chat' && <LastSeen jid={jid} />}
-                {chatType === 'groupchat' && <h6>{contactNames}</h6>}
+                {chatType === 'groupchat' && <h6>{`${contactNames}`}</h6>}
             </>
           }
         </>

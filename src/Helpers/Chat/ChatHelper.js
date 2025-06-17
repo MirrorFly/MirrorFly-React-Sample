@@ -1186,7 +1186,7 @@ export const handleArchiveActions = async (listenerData = {}) => {
       if (replyTo) {
         const mutedChats = getMutedChats();
         if (isGroupChat(chatType) && !isActiveConversationUserOrGroup(fromUserId) && !mutedChats.includes(fromUserId)) {
-          const orgMsg = await SDK.getMessageById(replyTo);
+          const orgMsg = await SDK.getMessageById(replyTo, getActiveConversationUserJid());
           if (orgMsg.statusCode === 200 && orgMsg.data) {
             const { publisherId = "" } = orgMsg.data || {};
             if (isLocalUser(publisherId) && editedStatus !== 1) {
