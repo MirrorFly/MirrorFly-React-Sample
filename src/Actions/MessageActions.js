@@ -39,7 +39,7 @@ import {
   MSG_SEEN_STATUS_ID
 } from "../Helpers/Chat/Constant";
 import { getContactNameFromRoster, getDataFromRoster } from "../Helpers/Chat/User";
-import { handleArchiveActions, handleTempArchivedChats } from "../Helpers/Chat/ChatHelper";
+import { getActiveConversationUserJid, handleArchiveActions, handleTempArchivedChats } from "../Helpers/Chat/ChatHelper";
 import { TYPE_DELAY_TIME } from "../Helpers/Constants";
 import SDK from "../Components/SDK";
 
@@ -159,7 +159,7 @@ export const MessageAction = (data) => (dispatch, getState) => {
     }
     
     if ((msgType === MSG_DELETE_STATUS || msgType === MSG_DELETE_STATUS_CARBON) && data.lastMsgId) {
-      SDK.getMessageById(data.lastMsgId);
+      SDK.getMessageById(data.lastMsgId, getActiveConversationUserJid());
     }
   }
 

@@ -21,7 +21,7 @@ export default class PreviewAudio extends Component {
     htmlElement.addEventListener("loadedmetadata", () => {
       this.setState(
         {
-          videoSrc: htmlElement.src
+          videoSrc: URL.createObjectURL(file) || htmlElement.src
         },
         () => {
           this.props.updateMedia(this.props.media, {

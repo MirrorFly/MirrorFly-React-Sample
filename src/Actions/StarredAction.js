@@ -1,7 +1,7 @@
 import uuidv4 from 'uuid/v4';
 import { get as _get } from "lodash";
 import SDK from '../Components/SDK';
-import { getFavaouriteMsgObj } from '../Helpers/Chat/ChatHelper';
+import { getActiveConversationUserJid, getFavaouriteMsgObj } from '../Helpers/Chat/ChatHelper';
 import { CALL_STAR_ORIGINAL_MESSAGE, CALL_STAR_ORIGINAL_MESSAGE_ROW_DATA, REMOVE_ALL_STARRED_MESSAGE, REMOVE_STARRED_MESSAGE_CLEAR_CHAT, REMOVE_STARRED_MESSAGE_DELETE_CHAT, STARRED_MESSAGEE_LIST, UPDATE_STARRED_MESSAGE_LIST } from "./Constants";
  
 export const StarredMessagesList = (data) => {
@@ -15,7 +15,7 @@ export const StarredMessagesList = (data) => {
 };
  
 const startSdkCall = async (msgId = "") => {
- const msgResult = await SDK.getMessageById(msgId)
+ const msgResult = await SDK.getMessageById(msgId, getActiveConversationUserJid())
  if (msgResult && msgResult.statusCode === 200) {
    return getFavaouriteMsgObj(msgResult.data, msgResult.data.fromUserId);
  }
