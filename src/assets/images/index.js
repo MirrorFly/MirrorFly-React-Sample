@@ -4,7 +4,7 @@ export { ReactComponent as NewChat } from './newchat-new.svg';
 export { ReactComponent as NewGroup } from './newgroup.svg';
 export { ReactComponent as DotMenu } from './optionmenu-new.svg';
 export { ReactComponent as Settings } from './settings.svg';
-export { ReactComponent as ChatMute } from './chatMute.svg';
+export { ReactComponent as ChatMute } from './chatmute.svg';
 export { ReactComponent as ChatMuteOff } from './chatmute-off.svg';
 export { ReactComponent as IconMeetingVideo } from './meeting-link-video.svg';
 export { ReactComponent as IconMissedCallAudio } from './missedCallAudio.svg';
