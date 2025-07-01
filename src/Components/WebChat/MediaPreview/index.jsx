@@ -261,6 +261,7 @@ export default class MediaPreview extends Component {
             ].slice(0, maxAllowedMediaCount)
           },
           () => {
+            this.thumbImageCreation(this.state.selectedFiles) // Add this in-between
             this.setState(
               {
                 previewData: this.handleDisplayMedia(type),
