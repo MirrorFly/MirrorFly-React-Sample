@@ -1,10 +1,8 @@
-# Mirrorfly-React-Sample-App
+# **MirrorFly React SDK For Video Chat & Calls**
 
-# **MirrorFly Flutter SDK For Video Chat & Calls**
+This repository contains samples of how to use MirrorFly to add in-app messaging, voice calling and video calling using React. You can find more information in the [React SDK Documentation](https://www.mirrorfly.com/docs/audio-video/react/quick-start/) on MirrorFly’s official website.
 
-MirrorFly Flutter Plugin is a custom real-time communication solution that adds 1000+ features including video, voice, chat, live streaming and activity feeds into any app. The solution is fully customizable and comprises over 500+ AI-powered features like  AI voice agents, chatbots, speech-to-text API, AI contact centers and AI video KYC.
-
-This custom plug-and-play solution helps build a white-label Flutter app in just 10 mins with full data control. Choose self-hosting, on-premise server or cloud deployment to host and maintain your Flutter app anywhere you prefer. 
+MirrorFly React SDK is a set of prebuilt components that allows you to easily add in-app messaging and calling capabilities with all the essential communication features. Our development kit includes customizable features with support for deployment across any server. Every feature and workflow can be customized, with full access to source code and complete control over the security and infrastructure.
 
 # **🤹 Key Product Offerings** 
 
@@ -17,335 +15,402 @@ MirrorFly helps build omni-channel communication apps for any kind of business
 **🤖 [AI Chatbot](https://www.mirrorfly.com/conversational-ai/chatbot/)** \- Deploy white-label AI chatbots that drive autonomous conversations across any web or mobile app.  
 **🦾 [Live Streaming](https://www.mirrorfly.com/live-streaming-sdk.php)** \- Broadcast video content to millions of viewers around the world, within your own enterprise app. 
 
-### **⚒️MirrorFly Flutter Chat & Video Calls Plugin** 
+### **⚒️Chat & Call SDKs For React**
 
-### [**Requirements**](https://www.mirrorfly.com/docs/chat/flutter-plugin/v1/quick-start#requirements)
+### [**Getting Started**](https://www.mirrorfly.com/docs/chat/react/v2/quick-start#things-to-be-noted-before-you-get-started)
 
-The requirements for Android
+To get the License Key,  
+**Step 1:** Register [here](https://www.mirrorfly.com/contact-sales.php) to get a MirrorFly User account.  
+**Step 2:** [Login](https://console.mirrorfly.com/) to your Account  
+**Step 3:** Get the License key from the application Info’ section  
 
-* Android Lollipop 5.0 (API Level 21) or above  
-* Java 8 or higher  
-* Gradle 4.1.0 or higher  
-* targetSdkVersion 34 or above  
-* compileSdk 34
+![license-key][image2]
 
-The minimum requirements for iOS
+### [**Integrate Chat SDK into Your React App**](https://www.mirrorfly.com/docs/chat/react/v2/quick-start#integrate-chat-sdk-into-your-react-app)
 
-* iOS 13.0
+**Step 1:** Install Mirrorfly SDK in your application
 
-### [**Get MirrorFly License Key**](https://www.mirrorfly.com/docs/chat/flutter-plugin/v1/quick-start#mirrorfly-license-key)
+```bash
+npm i mirrorfly-sdk
+```
 
-To obtain your license key, follow these steps:
+**Step 2:** Import the SDK into your application where you want
 
-* **Sign up** for a free MirrorFly account at [MirrorFly Console](https://console.mirrorfly.com/register). If you already have an account, simply sign in.  
-* **Access your account:** Navigate to the Overview page in your MirrorFly account to view your license key.  
-* **Copy the license key** from the Application Info section for use in the integration process.
+```js
+import * as SDK from "mirrorfly-sdk";
+```
 
+#### **Integrate Using SDK Files**
 
-<img src="https://www.mirrorfly.com/docs/assets/images/license-key-a1173e922ebff14b6ae1a2428f822eec.png" data-canonical-src="https://www.mirrorfly.com/docs/assets/images/license-key-a1173e922ebff14b6ae1a2428f822eec.png" width="100%"  alt=""/>
+**Step 1:** To download the files from the React SDKs, click on the Download button.  
+**Step 2:** Extract the files from the downloaded zip file and copy them into your application.  
+**Step 3:** Once the file has been copied, include the script file into your index.html
 
+```html
+<script src="./index.js"></script>
+```
 
-### [**Create Android Dependency**](https://www.mirrorfly.com/docs/chat/flutter-plugin/v1/quick-start#create-android-dependency)
+**Step 4:** Create a new file `SDK.js` in the project root and paste the below code,
 
-Add the following to your root `build.gradle` file in your Android folder.
+```js
+const SDK = window.SDK;
+export default SDK;
+```
 
-```gradle
-allprojects {
-  repositories {
-      ...
-      ...
-      jcenter()
-      maven {
-          url "https://repo.mirrorfly.com/release"
+**Step 5:** Import the SDK into your application
+
+```js
+import SDK from "./SDK";
+```
+
+## [**Initialize Chat SDK**](https://www.mirrorfly.com/docs/chat/react/v2/quick-start#initialize-chat-sdk)
+
+To begin the chat SDK initialization, you need certain data to track connection status changes in the client app. Paste your license key into the `licenseKey` parameter and use the method below to pass this data to the SDK for further processing.
+
+```js
+const initializeObj = {
+  licenseKey: `LICENSE_KEY`,
+  callbackListeners: {},
+};
+
+await SDK.initializeSDK(initializeObj);
+```
+
+### [**Register User**](https://www.mirrorfly.com/docs/chat/react/v2/quick-start#register-user)
+
+**Step 1:** Use the method below to register a new user.  
+**Step 2:** After registration, you will receive a username and password, which can be used to connect to the server via the connect method.
+
+```js
+await SDK.register(`USER_IDENTIFIER`);
+```
+
+```json
+{
+  "statusCode": 200,
+  "message": "Success",
+  "data": {
+    "username": "123456789",
+    "password": "987654321",
+    "isProfileUpdated": true,
+    "isSandbox": true,
+    "userJid": "1234567890@xmppdomain"
+  }
+}
+```
+
+### [**Connect to MirrorFly Server**](https://www.mirrorfly.com/docs/chat/react/v2/quick-start#connect-to-mirrorfly-server)
+
+* **Step 1:** Use the credentials obtained during registration to connect to the server.  
+* **Step 2:** Upon a successful connection, you will receive an approval message with a statusCode of 200; otherwise, an execution error will occur.  
+* **Step 3:** You can monitor the connection status via the `connectionListener` callback function.  
+* **Step 4:** If an error occurs while connecting to the server, an error message will be returned through the callback.
+
+```js
+await SDK.connect(`USERNAME`, `PASSWORD`);
+```
+
+#### [**Sample Response**](https://www.mirrorfly.com/docs/chat/react/v2/quick-start#sample-response-1)**:**
+
+```json
+{
+  "message": "Login Success",
+  "statusCode": 200
+}
+```
+
+### [**Preparing user jid**](https://www.mirrorfly.com/docs/chat/react/v2/quick-start#preparing-user-jid)
+
+To generate a JID for any user, use the below method.
+
+```js
+const userJid = SDK.getJid(USER_NAME);
+```
+
+## [Send a Message](https://www.mirrorfly.com/docs/chat/react/v2/quick-start#send-a-message)
+
+Finally, to send a message to another user you can use the below given method,
+
+```js
+await SDK.sendTextMessage({
+  toJid: "",
+  messageText: "",
+});
+```
+
+#### **Response Format:**
+
+```js
+status code: "", // Number - status code
+message: "",     // String - Success/Error Message
+data: {
+  chatType: "",       // String - Chat Type - "chat"
+  createdAt: "",      // String - Message Created Time
+  deleteStatus: "",   // Number - Delete Status
+  favouriteBy: "",    // String - Favourited By - User
+  favouriteStatus: "",// Number - Favourite status
+  fromUserId: "",     // String - From User Id
+  fromUserJid: "",    // String - From User Jid
+  metaData: {},       // Object - Meta data for the message
+  msgBody: {
+    mentionedUsersIds: [], // Array of mentioned users
+    message: "",           // String - Message Body
+    message_type: "",      // String - Message Type
+    nickname: "",          // String - nick name
+  },
+  msgId: "",           // String - Unique Message Id
+  msgType: "",         // String - Message Type
+  publisherId: "",     // String - user Id
+  timestamp: 1681185232000, // Number - TimeStamp - Milliseconds
+  toUserId: "",        // String - toUser Id
+  toUserJid: "",       // String - toUser Jid
+  topicId: "",         // String - Topic id for the message
+}
+```
+
+##  [Receive a Message](https://www.mirrorfly.com/docs/chat/react/v2/quick-start#receive-a-message)
+
+To receive messages from another user, implement the `messageListener` function. This function is triggered whenever a new message or related event occurs in one-to-one or group chats. Additionally, during SDK initialization, add the following callback method to handle these events.
+
+```js
+function messageListener(response) {
+  console.log("Message Listener", response);
+}
+```
+
+# **Making a call**
+
+### [**Make a voice call**](https://www.mirrorfly.com/docs/audio-video/react/making-a-call/#make-a-voice-call)
+
+Initiate a call by passing the callee’s user JID to the `makeVoiceCall` method. Once the call is successfully initiated, the `callStatusListener` callback will be triggered, providing the callee’s call status.
+
+```js
+SDK.makeVoiceCall(['USER_JID'], null, metadata, (success, error) => {
+  if (error) {
+    // Error occured while making the call
+  }
+  if (success) {
+    // Call has been made successfully
+  }
+});
+```
+
+#### **Success response:**
+
+```json
+{
+  "statusCode": 200, // Number - status code
+  "message": "",     // String - Success/Error Message
+  "callType": "",    // String - Call Type - "audio"
+  "roomId": ""       // String - Unique room ID
+}
+```
+
+#### [**Sample Javascript code to play the track**](https://www.mirrorfly.com/docs/audio-video/react/making-a-call/#sample-javascript-code-to-play-the-track)
+
+```html
+<html>
+  <audio id="audio" autoplay playsinline></audio>
+  <script>
+    //let track = TRACK_OBJECT from the callback method
+    //let element = ELEMENT_OBJECT in which you need to play the audio
+    let stream = new MediaStream([track]);
+    try {
+      element.srcObject = stream;
+    } catch (e) {
+      try {
+        element.src = URL.createObjectURL(stream);
+      } catch (e) {
+        console.error("Error attaching stream to element", e);
       }
-  }
-}
-
-android {
-  compileSdk 34
-  ...
-  defaultConfig {
-    ...
-    minSdkVersion 21
-    targetSdkVersion 34 // or higher
-  }
-}
-```
-
-### [**Create iOS dependency**](https://www.mirrorfly.com/docs/chat/flutter-plugin/v1/quick-start#create-ios-dependency)
-
-Check and Add the following code at end of your `ios/Podfile`
-
-```ruby
-post_install do |installer|
-  installer.aggregate_targets.each do |target|
-    target.xcconfigs.each do |variant, xcconfig|
-      xcconfig_path = target.client_root + target.xcconfig_relative_path(variant)
-      IO.write(
-        xcconfig_path,
-        IO.read(xcconfig_path).gsub("DT_TOOLCHAIN_DIR", "TOOLCHAIN_DIR")
-      )
-    end
-  end
-
-  installer.pods_project.targets.each do |target|
-    flutter_additional_ios_build_settings(target)
-    target.build_configurations.each do |config|
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET']         = '12.1'
-      config.build_settings['ENABLE_BITCODE']                      = 'NO'
-      config.build_settings['APPLICATION_EXTENSION_API_ONLY']      = 'No'
-      config.build_settings['BUILD_LIBRARY_FOR_DISTRIBUTION']      = 'YES'
-      config.build_settings["EXCLUDED_ARCHS[sdk=iphonesimulator*]"] = 'arm64'
-
-      shell_script_path = "Pods/Target Support Files/#{target.name}/#{target.name}-frameworks.sh"
-
-      if File::exist?(shell_script_path)
-        shell_script_input_lines  = File.readlines(shell_script_path)
-        shell_script_output_lines = shell_script_input_lines.map { |line|
-          line.sub(
-            "source=\"$(readlink \"${source}\")\"",
-            "source=\"$(readlink -f \"${source}\")\""
-          )
-        }
-
-        File.open(shell_script_path, 'w') do |f|
-          shell_script_output_lines.each do |line|
-            f.write line
-          end
-        end
-      end
-    end
-  end
-end
-```
-
-Now, enable all the below mentioned capabilities into your project.
-
-```txt
-Goto Project -> Target -> Signing & Capabilities -> Click + at the top left corner -> Search for the capabilities below
-```
-
-![AppGroups][image3]
-
-## [Create Flutter dependency](https://www.mirrorfly.com/docs/chat/flutter-plugin/v1/quick-start#create-flutter-dependency)
-
-Add the below dependencies in `pubspec.yaml`.
-
-```yaml
-dependencies:
-  mirrorfly_plugin: ^1.5.0
-```
-
-Run the `flutter pub get` command in your project directory. You can then access all classes and methods using the following import statement.
-
-```dart
-import 'package:mirrorfly_plugin/mirrorfly.dart';
-```
-
-## [Initialize MirrorFly Plugin](https://www.mirrorfly.com/docs/chat/flutter-plugin/v1/quick-start#initialize-mirrorfly-plugin)
-
-To initialize the plugin, add the following code in your **main.dart** file inside the `main` function before calling **runApp()**.
-
-```dart
-void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-  Mirrorfly.initializeSDK(
-    licenseKey: LICENSE_KEY,
-    iOSContainerID: iOS_APP_GROUP_ID,
-    chatHistoryEnable: ENABLE_CHAT_HISTORY,
-    enableDebugLog: ENABLE_DEBUG_LOG, // to enable logs for debug
-    flyCallback: (FlyResponse response) {
-      runApp(const MyApp());
-    },
-  );
-}
-```
-
-#### [**Chat init Function Description**](https://www.mirrorfly.com/docs/chat/flutter-plugin/v1/quick-start#chat-init-function-description)
-
-**Note:** The **Chat History** feature lets you retrieve conversation history whenever you log in on a new device. Chat history is stored securely, ensuring users can access the same conversation threads across devices without any data loss.
-
-## [Login](https://www.mirrorfly.com/docs/chat/flutter-plugin/v1/quick-start#login)
-
-Use the following method to log in a user in sandbox Live mode.
-
-**Important:** Do not call the login method more than once in an application unless you have logged out the current session.
-
-**Note:** During registration, this login method can optionally accept the `FCM_TOKEN` parameter. The connection will be established automatically upon registration completion, so a separate login is not required.
-
-```dart
-Mirrorfly.login(
-  userIdentifier: userIdentifier,
-  fcmToken: token,
-  isForceRegister: isForceRegister,
-  identifierMetaData: identifierMetaData,
-  flyCallback: (FlyResponse response) {
-    if (response.isSuccess && response.hasData) {
-      // you will get the user registration response
-      var userData = registerModelFromJson(value);
     }
-  },
-);
+  </script>
+</html>
 ```
 
-## [Send a One-to-One Message](https://www.mirrorfly.com/docs/chat/flutter-plugin/v1/quick-start#send-a-one-to-one-message)
+You need to attach the track object received in the callback method to the appropriate audio element, based on the type of track provided.
 
-Use the below method to send a text message to other user,
+### [**Make a video call**](https://www.mirrorfly.com/docs/audio-video/react/making-a-call/#make-a-video-call)
 
-```dart
-var textMessage = MessageParams.text(
-  toJid: toJid,
-  replyMessageId: replyMessageId, // Optional
-  topicId: topicId,               // Optional
-  textMessageParams: TextMessageParams(
-    messageText: messageText,
-  ),
-);
+Initiate a call by passing the callee’s user JID to the `makeVideoCall` method. Once the call is successfully initiated, the `callStatusListener` callback will be triggered, providing the callee’s call status.
 
-Mirrorfly.sendMessage(
-  messageParams: textMessage,
-  flyCallback: (response) {
-    if (response.isSuccess) {
-    }
-  },
-);
-```
-
-## [Receive a One-to-One Message](https://www.mirrorfly.com/docs/chat/flutter-plugin/v1/quick-start#receive-a-one-to-one-message)
-
-These listeners are triggered only when a new message is received from another user. For more details, refer to the [callback listeners](https://www.mirrorfly.com/docs/chat/flutter-plugin/v1/callback-listeners/#observing-the-message-events) documentation.
-
-```dart
-Mirrorfly.onMessageReceived.listen((result) {
-  // you will get the new messages
-  var chatMessage = sendMessageModelFromJson(result);
+```js
+SDK.makeVideoCall(['USER_JID'], null, metadata, (success, error) => {
+  if (error) {
+    // Error occured while making the call
+  }
+  if (success) {
+    // Call has been made successfully
+  }
 });
 ```
 
-# **Voice & Video Call Integration**
+#### **Success**
 
-## [Make a call](https://www.mirrorfly.com/docs/audio-video/flutter/v1/making-a-call/#make-a-call)
-
-The Call feature is essential for modern communication. The Call SDK enables users to make one-to-one audio or video calls with another SDK user.
-
-**Note:** Ensure all required permissions are granted before using the call feature.
-
-## [**Required permissions**](https://www.mirrorfly.com/docs/audio-video/flutter/v1/making-a-call/#required-permissions)
-
-For audio call, the below permissions:
-
-```txt
-Microphone Permission
+```json
+{
+  "statusCode": 200, // Number - status code
+  "message": "",     // String - Success/Error Message
+  "callType": "",    // String - Call Type - "video"
+  "roomId": ""       // String - Unique room ID
+}
 ```
 
-For video call, we need below permissions:
+#### [**Sample Javascript code to play the track**](https://www.mirrorfly.com/docs/audio-video/react/making-a-call/#sample-javascript-code-to-play-the-track-1)
 
-```txt
-Microphone Permission
-Camera Permission
-```
-
-### [**Make a Voice Call**](https://www.mirrorfly.com/docs/audio-video/flutter/v1/making-a-call/#make-a-voice-call)
-
-To make a one to one voice call, call the below method.
-
-```dart
-Mirrorfly.makeVoiceCall(
-  toUserJid: USER_JID,
-  flyCallBack: (FlyResponse response) {
-    if (response.isSuccess) {
+```html
+<html>
+  <audio id="audio" autoplay playsinline></audio>
+  <video id="video" autoplay playsinline></video>
+  <script>
+    //let track = TRACK_OBJECT from the callback method
+    //let element = ELEMENT_OBJECT in which you need to play the audio/video
+    let stream = new MediaStream([track]);
+    try {
+      element.srcObject = stream;
+    } catch (e) {
+      try {
+        element.src = URL.createObjectURL(stream);
+      } catch (e) {
+        console.error("Error attaching stream to element", e);
+      }
     }
-  },
+  </script>
+</html>
+```
+
+Attach the track object received in the callback method to the appropriate audio element, depending on the type of track provided.
+
+### [**Make a group voice call**](https://www.mirrorfly.com/docs/audio-video/react/making-a-call/#make-a-group-voice-call)
+
+Initiate a group voice call by passing the callee’s user JID and Group ID to the `makeVoiceCall` method. Once the call is successfully initiated, the `callStatusListener` callback will be triggered, providing the call status of each callee.
+
+```js
+SDK.makeVoiceCall(
+  ['USER1_JID', 'USER2_JID'...],
+  'GROUP_ID',
+  metadata,
+  (success, error) => {
+    if (error) {
+      // Error occured while making the call
+    }
+    if (success) {
+      // Call has been made successfully
+    }
+  }
 );
 ```
 
-### [**Make a video call**](https://www.mirrorfly.com/docs/audio-video/flutter/v1/making-a-call/#make-a-video-call)
+#### **Success Format**
 
-The Video Call feature allows users to make a one-to-one video call with another SDK user. Use the following method to initiate a video call.
+```json
+{
+  "statusCode": 200, // Number - status code
+  "message": "",     // String - Success/Error Message
+  "callType": "",    // String - Call Type - "audio"
+  "roomId": ""       // String - Unique room ID
+}
+```
 
-```dart
-Mirrorfly.makeVideoCall(
-  toUserJid: USER_JID,
-  flyCallBack: (FlyResponse response) {
-    if (response.isSuccess) {
+### [**Make a group video call**](https://www.mirrorfly.com/docs/audio-video/react/making-a-call/#make-a-group-video-call)
+
+Initiate a group video call by passing the callee’s user JID and Group ID to the `makeVideoCall` method. Once the call is successfully initiated, the `callStatusListener` callback will be triggered, providing the call status of each participant.
+
+```js
+await SDK.makeVideoCall(
+  ['USER1_JID', 'USER2_JID'...],
+  'GROUP_ID',
+  metadata,
+  (success, error) => {
+    if (error) {
+      // Error occured while making the call
     }
-  },
+    if (success) {
+      // Call has been made successfully
+    }
+  }
 );
 ```
 
-### [**Make a group voice call**](https://www.mirrorfly.com/docs/audio-video/flutter/v1/making-a-call/#make-a-group-voice-call)
+#### **Success**
 
-Make group voice call feature allows users to make a voice call with multiple users. You can make a group voice call using the below method.
-
-```dart
-Mirrorfly.makeGroupVoiceCall(
-  groupJid: GROUP_JID,
-  toUserJidList: USER_LIST,
-  flyCallBack: (FlyResponse response) {
-    if (response.isSuccess) {
-    }
-  },
-);
+```json
+{
+  "statusCode": 200, // Number - status code
+  "message": "",     // String - Success/Error Message
+  "callType": "",    // String - Call Type - "video"
+  "roomId": ""       // String - Unique room ID
+}
 ```
 
-### [**Make a group video call**](https://www.mirrorfly.com/docs/audio-video/flutter/v1/making-a-call/#make-a-group-video-call)
+## [**Receive incoming call**](https://www.mirrorfly.com/docs/audio-video/react/making-a-call/#receive-incoming-call)
 
-The Group Video Call feature allows users to initiate a video call with multiple participants. You can start a group video call using the following method.
+To receive an incoming call, the `incomingCallListener` callback must be registered in the callee’s client app. When a user initiates a call, the callee receives the call data through this callback.
 
-```dart
-Mirrorfly.makeGroupVideoCall(
-  groupJid: GROUP_JID,
-  toUserJidList: USER_LIST,
-  flyCallBack: (FlyResponse response) {
-    if (response.isSuccess) {
-    }
-  },
-);
+```js
+// Callback Response Argument Structure
+{
+  allUsers: ["USER1_JID", "USER2_JID", ...],
+  callMode: "onetoone|onetomany",
+  callTime: 1681905421215,
+  callType: "audio|video",
+  from: "USER_JID|FROM_USER_JID",
+  groupId: null | GROUP_ID,
+  localUser: BOOLEAN,
+  roomId: "wmupbheao",
+  roomLink: "ndy-bmkb-eui",
+  status: "calling",
+  to: "FROM_USER_JID|GROUP_JID",
+  toUsers: ["USER_JID"],
+  userDetails: {},
+  userJid: "FROM_USER_JID",
+  usersStatus: [{}]
+}
 ```
 
-### [**Add participants to the call**](https://www.mirrorfly.com/docs/audio-video/flutter/v1/making-a-call/#add-participants-to-the-call)
+### [**Answer a call**](https://www.mirrorfly.com/docs/audio-video/react/making-a-call/#answer-a-call)
 
-After a call is connected, you can add more users to the ongoing session. Use the following methods to invite users; once they accept the incoming call, they will join the ongoing call.
+To answer a call use the `answerCall` method.
 
-```dart
-Mirrorfly.inviteUsersToOngoingCall(
-  jidList: USER_LIST,
-  flyCallback: (FlyResponse response) {
-    if (response.isSuccess) {
-    }
-  },
-);
-```
-
-### [**Receiving an incoming audio/video call**](https://www.mirrorfly.com/docs/audio-video/flutter/v1/making-a-call/#receiving-a-incoming-audiovideo-call)
-
-When you receive an audio or video call from another SDK user, the SDK reports the call, and the plugin displays an Incoming Call Notification.
-
-### [**Answer the incoming call**](https://www.mirrorfly.com/docs/audio-video/flutter/v1/making-a-call/#answer-the-incoming-call)
-
-When a call is presented with Accept and Reject buttons, you can either accept or reject it. If you accept the call, the `onCallStatusUpdated` event listener is triggered, and the call status will be set to Attended.
-
-```dart
-Mirrorfly.onCallStatusUpdated.listen((event) {
-  var statusUpdateReceived = jsonDecode(event);
-  var callMode   = statusUpdateReceived["callMode"].toString();
-  var userJid    = statusUpdateReceived["userJid"].toString();
-  var callType   = statusUpdateReceived["callType"].toString();
-  var callStatus = statusUpdateReceived["callStatus"].toString();
+```js
+SDK.answerCall((success, error) => {
+  if (error) {
+    // Error occured while answering the call
+  }
+  if (success) {
+    // Call has been answered successfully
+  }
 });
 ```
 
-### [**Disconnect the ongoing call**](https://www.mirrorfly.com/docs/audio-video/flutter/v1/making-a-call/#disconnect-the-ongoing-call)
+### [**End a call**](https://www.mirrorfly.com/docs/audio-video/react/making-a-call/#end-a-call)
 
-When making an audio or video call to another SDK user, you may need to disconnect the call either before the connection is established or after the conversation ends. Whenever the user presses the disconnect button in your call UI, call the following SDK method to disconnect the call and notify the other party.
+To end a call use the `endCall` method.
 
-```dart
-Mirrorfly.disconnectCall(
-  flyCallBack: (FlyResponse response) {
-    if (response.isSuccess) {
-    }
-  },
-);
+```js
+SDK.endCall((success, error) => {
+  if (error) {
+    // Error occured while ending the call
+  }
+  if (success) {
+    // Call has been ended successfully
+  }
+});
+```
+
+### [**Decline a call**](https://www.mirrorfly.com/docs/audio-video/react/making-a-call/#decline-a-call)
+
+To decline a call use the `declineCall` method.
+
+```js
+SDK.declineCall((success, error) => {
+  if (error) {
+    // Error occured while declining the call
+  }
+  if (success) {
+    // Call has been declined successfully
+  }
+});
 ```
 
 # **☁️ Deployment Models \- Self-hosted and Cloud**
@@ -356,20 +421,16 @@ MirrorFly offers full freedom with the hosting options:
 **Cloud:** Host your client on MirrorFly’s multi-tenant cloud servers.   
 [Check out our multi-tenant cloud hosting](https://www.mirrorfly.com/multi-tenant-chat-for-saas.php)
 
-
 # **📱 Mobile Client**
 
-MirrorFly offers a fully-built client SafeTalk that is available in:
-- iOS
-- Android
-- 
+MirrorFly offers a fully-built client **SafeTalk** that is available in:  
+![Rocket.Chat on Apple App Store][image3] ![Rocket.Chat on Google Play][image4]   
 You can use this client as a messaging app, or customize, rebrand & white-label it as your chat client. 
 
 # **📚 Learn More**
 
 * [Developer Documentation](https://www.mirrorfly.com/docs/)  
 * [Product Tutorials](https://www.mirrorfly.com/tutorials/)  
-* [MirrorFly Flutter Solution](https://www.mirrorfly.com/flutter-chat-sdk.php)  
 * [Dart Documentation](https://pub.dev/packages/mirrorfly_plugin)  
 * [Pubdev Documentation](https://pub.dev/packages/mirrorfly_plugin)  
 * [Npmjs Documentation](https://www.npmjs.com/~contus)  
@@ -396,4 +457,3 @@ We're always on the lookout for talented developers, support specialists, and pr
 * [LinkedIn](https://www.linkedin.com/showcase/mirrorfly-official/)  
 * [Youtube](https://www.youtube.com/@mirrorflyofficial)  
 * [Instagram](https://www.instagram.com/mirrorflyofficial/)
-
