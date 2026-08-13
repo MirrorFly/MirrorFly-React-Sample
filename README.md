@@ -8,7 +8,7 @@ MirrorFly React SDK is a set of prebuilt components that allows you to easily ad
 
 MirrorFly helps build omni-channel communication apps for any kind of business
 
-**💬 [In-app Messaging](https://www.mirrorfly.com/chat-api-solution.php)** \- Connect users individually or as groups via instant messaging features.  
+**💬 [In-app Messaging](https://www.mirrorfly.com/chat/)** \- Connect users individually or as groups via instant messaging features.  
 **🎯 [HD Video Calling](https://www.mirrorfly.com/video-call-solution.php)**\- Engage users over face-to-face conversations anytime, and from anywhere.   
 **🦾 [HQ Voice Calling](https://www.mirrorfly.com/voice-call-solution.php)** \- Deliver crystal clear audio calling experiences with latency as low as 3ms.   
 🤖 [**AI Voice Agent**](https://www.mirrorfly.com/conversational-ai/voice-agent/) \- Build custom  AI voicebots that can understand, act and respond to user questions.   
@@ -436,6 +436,7 @@ You can use this client as a messaging app, or customize, rebrand & white-label 
 * [Npmjs Documentation](https://www.npmjs.com/~contus)  
 * [On-premise Deployment](https://www.mirrorfly.com/on-premises-chat-server.php)   
 * [See who's using MirrorFly](https://www.mirrorfly.com/chat-use-cases.php)
+* [Chat App Architecture](https://www.mirrorfly.com/blog/chat-app-system-design/)
 
 # **🧑‍💻 Hire Experts**
 
