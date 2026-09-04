@@ -430,7 +430,7 @@ You can use this client as a messaging app, or customize, rebrand & white-label 
 # **📚 Learn More**
 
 * [Developer Documentation](https://www.mirrorfly.com/docs/)  
-* [Product Tutorials](https://www.mirrorfly.com/tutorials/)  
+* [How To Build React Video Chat App](https://www.mirrorfly.com/blog/build-a-video-chat-app-using-react-js/))  
 * [Dart Documentation](https://pub.dev/packages/mirrorfly_plugin)  
 * [Pubdev Documentation](https://pub.dev/packages/mirrorfly_plugin)  
 * [Npmjs Documentation](https://www.npmjs.com/~contus)  
